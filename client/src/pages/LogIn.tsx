@@ -77,7 +77,7 @@ export const LogIn = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="flex justify-end mb-[38px]">
+          <div className="flex justify-end w-[353px] mb-[38px]">
             <button className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
               Forgot password?
             </button>
