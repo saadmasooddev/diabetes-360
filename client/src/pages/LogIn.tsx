@@ -63,19 +63,18 @@ export const LogIn = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 mb-[18px]">
+          <div className="flex flex-col gap-1.5 mb-[38px]">
             <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
               Password
             </Label>
-            <div className="flex w-[353px] items-center justify-end gap-2.5 px-4 py-[18px] bg-white rounded-[10px] border border-solid border-[#d8dadc]">
+            <div className="flex w-[353px] items-center gap-2.5 px-4 py-[18px] bg-white rounded-[10px] border border-solid border-[#d8dadc]">
+              <div className="flex gap-1 flex-1">
+                {passwordDots.map((_, index) => (
+                  <div key={index} className="w-1.5 h-1.5 bg-black rounded-[3px]" />
+                ))}
+              </div>
               <EyeIcon className="w-5 h-5" />
             </div>
-          </div>
-
-          <div className="flex gap-1 mb-[28px] ml-4">
-            {passwordDots.map((_, index) => (
-              <div key={index} className="w-1.5 h-1.5 bg-black rounded-[3px]" />
-            ))}
           </div>
 
           <div className="flex justify-end mb-[38px]">
