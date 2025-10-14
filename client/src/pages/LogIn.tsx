@@ -89,7 +89,7 @@ export const LogIn = (): JSX.Element => {
             </span>
           </Button>
 
-          <div className="flex items-center gap-[9px] mb-[22px]">
+          <div className="flex items-center gap-[9px] w-[353px] mb-[22px]">
             <Separator className="flex-1 bg-[#d8dadc]" />
             <span className="[font-family:'Inter',Helvetica] font-normal text-[#000000b2] text-sm tracking-[0] leading-[17.5px]">
               Or Login with
