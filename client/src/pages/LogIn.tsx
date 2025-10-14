@@ -47,7 +47,7 @@ export const LogIn = (): JSX.Element => {
       </section>
 
       {/* Right Section - Login Form */}
-      <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-0">
+      <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12">
         <div className="w-full max-w-[447px] flex flex-col">
           {/* Back Button - Only show on mobile */}
           <button className="lg:hidden flex items-center mb-6 text-black">
