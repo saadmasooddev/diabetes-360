@@ -105,25 +105,30 @@ export const LogIn = (): JSX.Element => {
               <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
                 Email address
               </Label>
-              <div className="relative">
+              <div className="relative w-full lg:w-[353px]">
                 <Input
                   type="email"
                   placeholder="helloworld@gmail.com"
-                  className={`w-full lg:w-[353px] h-auto px-4 py-[18px] bg-white rounded-[10px] border border-solid ${
+                  maxLength={50}
+                  className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${
                     errors.email
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base`}
+                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("email", {
                     required: "Email is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: "Invalid email address",
                     },
+                    maxLength: {
+                      value: 50,
+                      message: "Email is too long",
+                    },
                   })}
                 />
                 {isEmailValid && (
-                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f]" />
+                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" />
                 )}
               </div>
               {errors.email && (
@@ -137,32 +142,37 @@ export const LogIn = (): JSX.Element => {
               <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
                 Password
               </Label>
-              <div className="relative">
+              <div className="relative w-full lg:w-[353px]">
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`w-full lg:w-[353px] h-auto px-4 py-[18px] bg-white rounded-[10px] border border-solid ${
+                  maxLength={128}
+                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${
                     errors.password
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base pr-12`}
+                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("password", {
                     required: "Password is required",
                     minLength: {
                       value: 8,
                       message: "Password must be at least 8 characters",
                     },
+                    maxLength: {
+                      value: 128,
+                      message: "Password is too long",
+                    },
                   })}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10"
                 >
                   {showPassword ? (
-                    <EyeOffIcon className="w-5 h-5" />
+                    <EyeOffIcon className="w-5 h-5 text-gray-600" />
                   ) : (
-                    <EyeIcon className="w-5 h-5" />
+                    <EyeIcon className="w-5 h-5 text-gray-600" />
                   )}
                 </button>
               </div>
