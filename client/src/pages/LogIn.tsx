@@ -109,7 +109,7 @@ export const LogIn = (): JSX.Element => {
             ))}
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center w-[353px]">
             <p className="[font-family:'Inter',Helvetica] font-normal text-sm tracking-[0] leading-[17.5px]">
               <span className="text-[#000000b2]">
                 Don&apos;t have an account?
