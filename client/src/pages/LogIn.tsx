@@ -1,4 +1,4 @@
-import { CheckIcon, EyeIcon } from "lucide-react";
+import { CheckIcon, EyeIcon, ArrowLeft } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,11 @@ export const LogIn = (): JSX.Element => {
       {/* Right Section - Login Form */}
       <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-0">
         <div className="w-full max-w-[447px] flex flex-col">
+          {/* Back Button - Only show on mobile */}
+          <button className="lg:hidden flex items-center mb-6 text-black">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+
           <h2 className="[font-family:'Poppins',Helvetica] font-bold text-[#00856f] text-3xl tracking-[-0.30px] leading-[39px] mb-8 lg:mb-[77px]">
             Log in
           </h2>
@@ -99,7 +104,7 @@ export const LogIn = (): JSX.Element => {
             <Separator className="flex-1 bg-[#d8dadc]" />
           </div>
 
-          <div className="flex gap-[15px] mb-8 lg:mb-[117px] justify-center lg:justify-start">
+          <div className="flex gap-[15px] mb-12 lg:mb-[117px] justify-center lg:justify-start">
             {socialButtons.map((social, index) => (
               <Button
                 key={index}
