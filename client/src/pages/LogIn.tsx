@@ -61,9 +61,9 @@ export const LogIn = (): JSX.Element => {
   const isEmailValid = emailValue && !errors.email;
 
   return (
-    <div className="bg-white w-full min-h-screen flex flex-col lg:flex-row">
+    <div className="bg-white w-full min-h-screen lg:h-screen flex flex-col lg:flex-row">
       {/* Left Section - Hero Image (Hidden on mobile, shown on desktop) */}
-      <section className="hidden lg:block lg:w-1/2 relative bg-[#f7f9f9]">
+      <section className="hidden lg:flex lg:w-1/2 lg:flex-shrink-0 lg:h-full relative bg-[#f7f9f9]">
         <img
           className="absolute inset-0 w-full h-full object-cover"
           alt="Isens usa"
@@ -85,8 +85,8 @@ export const LogIn = (): JSX.Element => {
       </section>
 
       {/* Right Section - Login Form */}
-      <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12">
-        <div className="w-full max-w-[447px] flex flex-col">
+      <section className="w-full lg:w-1/2 lg:flex-shrink-0 lg:h-full bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12 lg:overflow-y-auto">
+        <div className="w-full max-w-[447px] flex flex-col lg:my-auto">
           {/* Back Button - Only show on mobile */}
           <button 
             className="lg:hidden flex items-center mb-6 text-black"
@@ -161,6 +161,17 @@ export const LogIn = (): JSX.Element => {
                     maxLength: {
                       value: 128,
                       message: "Password is too long",
+                    },
+                    validate: {
+                      hasUpperCase: (value) =>
+                        /[A-Z]/.test(value) || "Password must contain at least one uppercase letter",
+                      hasLowerCase: (value) =>
+                        /[a-z]/.test(value) || "Password must contain at least one lowercase letter",
+                      hasNumber: (value) =>
+                        /[0-9]/.test(value) || "Password must contain at least one number",
+                      hasSpecialChar: (value) =>
+                        /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value) ||
+                        "Password must contain at least one special character",
                     },
                   })}
                 />
