@@ -38,7 +38,7 @@ export const LogIn = (): JSX.Element => {
 
           <div className="relative inline-flex items-center h-[79px]">
             <div className="absolute left-0 top-0 h-full bg-[#00856f] rounded-[5px] px-3" style={{ width: 'auto', minWidth: '68.81%' }} />
-            <h2 className="relative [font-family:'Open_Sauce_Sans-ExtraBold',Helvetica] font-extrabold text-white text-[64px] tracking-[-0.20px] leading-[79px] whitespace-nowrap">
+            <h2 className="relative pl-3 [font-family:'Open_Sauce_Sans-ExtraBold',Helvetica] font-extrabold text-white text-[64px] tracking-[-0.20px] leading-[79px] whitespace-nowrap">
               Diabetes <span>360</span>
             </h2>
           </div>
