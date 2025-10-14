@@ -49,14 +49,6 @@ export const LogIn = (): JSX.Element => {
       {/* Right Section - Login Form */}
       <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-0">
         <div className="w-full max-w-[447px] flex flex-col">
-          {/* Mobile Header - Only show on mobile */}
-          <div className="lg:hidden mb-8 text-center">
-            <h1 className="[font-family:'Open_Sauce_Sans-ExtraBold',Helvetica] font-extrabold text-[#00856f] text-4xl mb-2">
-              Diabetes 360
-            </h1>
-            <p className="[font-family:'Inter',Helvetica] text-gray-600">Welcome back</p>
-          </div>
-
           <h2 className="[font-family:'Poppins',Helvetica] font-bold text-[#00856f] text-3xl tracking-[-0.30px] leading-[39px] mb-8 lg:mb-[77px]">
             Log in
           </h2>
