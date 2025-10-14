@@ -1,27 +1,65 @@
-import { CheckIcon, EyeIcon, ArrowLeft } from "lucide-react";
-import React from "react";
+import { CheckIcon, EyeIcon, EyeOffIcon, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 
 const socialButtons = [
   {
     icon: "/figmaAssets/social-icon---facebook.svg",
     alt: "Facebook",
+    name: "Facebook",
   },
   {
     icon: "/figmaAssets/social-icon---google.svg",
     alt: "Google",
+    name: "Google",
   },
   {
     icon: "/figmaAssets/social-icon---apple.svg",
     alt: "Apple",
+    name: "Apple",
   },
 ];
 
-const passwordDots = Array(8).fill(null);
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
 export const LogIn = (): JSX.Element => {
+  const [, navigate] = useLocation();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm<LoginFormData>({
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const emailValue = watch("email");
+  const passwordValue = watch("password");
+
+  const onSubmit = (data: LoginFormData) => {
+    console.log("Form submitted:", data);
+  };
+
+  const handleSocialLogin = (platform: string) => {
+    console.log(`${platform} login clicked`);
+  };
+
+  const isEmailValid = emailValue && !errors.email;
+
   return (
     <div className="bg-white w-full min-h-screen flex flex-col lg:flex-row">
       {/* Left Section - Hero Image (Hidden on mobile, shown on desktop) */}
@@ -50,7 +88,11 @@ export const LogIn = (): JSX.Element => {
       <section className="w-full lg:w-1/2 bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12">
         <div className="w-full max-w-[447px] flex flex-col">
           {/* Back Button - Only show on mobile */}
-          <button className="lg:hidden flex items-center mb-6 text-black">
+          <button 
+            className="lg:hidden flex items-center mb-6 text-black"
+            onClick={() => navigate("/")}
+            type="button"
+          >
             <ArrowLeft className="w-6 h-6" />
           </button>
 
@@ -58,43 +100,98 @@ export const LogIn = (): JSX.Element => {
             Log in
           </h2>
 
-          <div className="flex flex-col gap-1.5 mb-[16px]">
-            <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
-              Email address
-            </Label>
-            <div className="flex w-full lg:w-[353px] items-center gap-2.5 px-4 py-[18px] bg-white rounded-[10px] border border-solid border-[#d8dadc]">
-              <span className="flex-1 [font-family:'Inter',Helvetica] font-normal text-black text-base tracking-[0] leading-5">
-                helloworld@gmail.com
-              </span>
-              <CheckIcon className="w-5 h-5 text-[#00856f]" />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mb-6 lg:mb-[38px]">
-            <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
-              Password
-            </Label>
-            <div className="flex w-full lg:w-[353px] items-center gap-2.5 px-4 py-[18px] bg-white rounded-[10px] border border-solid border-[#d8dadc]">
-              <div className="flex gap-1 flex-1">
-                {passwordDots.map((_, index) => (
-                  <div key={index} className="w-1.5 h-1.5 bg-black rounded-[3px]" />
-                ))}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="flex flex-col gap-1.5 mb-[16px]">
+              <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
+                Email address
+              </Label>
+              <div className="relative">
+                <Input
+                  type="email"
+                  placeholder="helloworld@gmail.com"
+                  className={`w-full lg:w-[353px] h-auto px-4 py-[18px] bg-white rounded-[10px] border border-solid ${
+                    errors.email
+                      ? "border-red-500"
+                      : "border-[#d8dadc]"
+                  } [font-family:'Inter',Helvetica] font-normal text-black text-base`}
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  })}
+                />
+                {isEmailValid && (
+                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f]" />
+                )}
               </div>
-              <EyeIcon className="w-5 h-5" />
+              {errors.email && (
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]">
+                  {errors.email.message}
+                </span>
+              )}
             </div>
-          </div>
 
-          <div className="flex justify-end w-full lg:w-[353px] mb-6 lg:mb-[38px]">
-            <button className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
-              Forgot password?
-            </button>
-          </div>
+            <div className="flex flex-col gap-1.5 mb-6 lg:mb-[38px]">
+              <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className={`w-full lg:w-[353px] h-auto px-4 py-[18px] bg-white rounded-[10px] border border-solid ${
+                    errors.password
+                      ? "border-red-500"
+                      : "border-[#d8dadc]"
+                  } [font-family:'Inter',Helvetica] font-normal text-black text-base pr-12`}
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                  })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]">
+                  {errors.password.message}
+                </span>
+              )}
+            </div>
 
-          <Button className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] mb-[19px]">
-            <span className="[font-family:'Inter',Helvetica] font-semibold text-white text-base tracking-[0] leading-5">
-              Log in
-            </span>
-          </Button>
+            <div className="flex justify-end w-full lg:w-[353px] mb-6 lg:mb-[38px]">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] mb-[19px]"
+            >
+              <span className="[font-family:'Inter',Helvetica] font-semibold text-white text-base tracking-[0] leading-5">
+                Log in
+              </span>
+            </Button>
+          </form>
 
           <div className="flex items-center gap-[9px] w-full lg:w-[353px] mb-[22px]">
             <Separator className="flex-1 bg-[#d8dadc]" />
@@ -108,7 +205,9 @@ export const LogIn = (): JSX.Element => {
             {socialButtons.map((social, index) => (
               <Button
                 key={index}
+                type="button"
                 variant="outline"
+                onClick={() => handleSocialLogin(social.name)}
                 className="w-[108px] h-auto px-[45px] py-[18px] bg-white rounded-[10px] border border-solid border-[#00856f] hover:bg-[#00856f]/5"
               >
                 <img className="w-5 h-5" alt={social.alt} src={social.icon} />
@@ -122,7 +221,13 @@ export const LogIn = (): JSX.Element => {
                 Don&apos;t have an account?
               </span>
               <span className="text-black">&nbsp;</span>
-              <button className="font-semibold text-black">Sign up</button>
+              <button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="font-semibold text-black"
+              >
+                Sign up
+              </button>
             </p>
           </div>
         </div>
