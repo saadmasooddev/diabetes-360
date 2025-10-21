@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, TrendingUp } from 'lucide-react';
 import { useLocation } from 'wouter';
@@ -37,6 +37,28 @@ export function MetricsHistory() {
   });
 
   const selectedMetricData = metricOptions.find(m => m.value === selectedMetric);
+
+  // Filter metrics based on selected metric type
+  const filteredMetrics = useMemo(() => {
+    if (!metrics) return [];
+    
+    return metrics.filter(metric => {
+      switch (selectedMetric) {
+        case 'bloodSugar':
+          return metric.bloodSugar !== null;
+        case 'bloodPressure':
+          return metric.bloodPressureSystolic !== null && metric.bloodPressureDiastolic !== null;
+        case 'heartRate':
+          return metric.heartRate !== null;
+        case 'weight':
+          return metric.weight !== null;
+        case 'steps':
+          return metric.steps !== null;
+        default:
+          return false;
+      }
+    });
+  }, [metrics, selectedMetric]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
@@ -130,9 +152,9 @@ export function MetricsHistory() {
                   <div className="flex h-[300px] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   </div>
-                ) : metrics && metrics.length > 0 ? (
+                ) : filteredMetrics.length > 0 ? (
                   <MetricsChart
-                    data={metrics}
+                    data={filteredMetrics}
                     metricType={selectedMetric}
                     unit={selectedMetricData?.unit || ''}
                     timeRange={timeRange}
@@ -155,9 +177,9 @@ export function MetricsHistory() {
                   </div>
                 </CardContent>
               </Card>
-            ) : metrics && metrics.length > 0 ? (
+            ) : filteredMetrics.length > 0 ? (
               <MetricsList
-                data={metrics}
+                data={filteredMetrics}
                 metricType={selectedMetric}
                 unit={selectedMetricData?.unit || ''}
                 timeRange={timeRange}
