@@ -55,11 +55,26 @@ The application uses shadcn/ui components, a collection of re-usable components 
 
 ### Current Pages
 
+**Authentication Pages**:
 1. **Login Page** (`/`) - Authentication with email/password, social login UI
 2. **Sign Up Page** (`/signup`) - User registration with form validation
 3. **Forgot Password Page** (`/forgot-password`) - Password recovery flow
-4. **Dashboard Page** (`/dashboard`) - Health metrics tracking and visualization
-5. **404 Page** - Fallback for undefined routes
+
+**Main Application Pages**:
+4. **Home Page** (`/home`) - Main landing page with hero banner, stats, feature cards
+5. **Dashboard Page** (`/dashboard`) - Health metrics tracking and visualization
+6. **Metrics History** (`/metrics`) - Historical health data with charts and list views
+
+**Feature Pages** (Coming Soon placeholders):
+7. **Instant Consultation** (`/consultation`) - Connect with healthcare professionals
+8. **Find a Doctor** (`/doctors`) - Search for diabetes specialists
+9. **Food Scanner** (`/food-scanner`) - Scan food to analyze nutritional content
+10. **Tips & Exercises** (`/tips`) - Health tips and exercise routines
+11. **Medical Records** (`/records`) - View and manage medical history
+12. **DiaBot** (`/diabot`) - AI health chatbot assistant
+13. **Health Blogs** (`/blogs`) - Articles and insights about diabetes management
+14. **Settings** (`/settings`) - App preferences and account settings
+15. **404 Page** - Fallback for undefined routes
 
 ### Feature-Based Architecture
 
@@ -69,14 +84,30 @@ The application follows a feature-based folder structure in `client/src/features
   - `pages/`: LogIn, SignUp, ForgotPassword pages
   - `services/`: Authentication API service layer (planned)
   
+- **`features/home/`**: Main homepage
+  - `pages/Home.tsx`: Landing page with hero, stats, feature cards
+  
 - **`features/dashboard/`**: Health metrics dashboard
   - `pages/Dashboard.tsx`: Main dashboard view with health metrics
   - `components/`: MetricCard, QuickActions, AddMetricDialog
   - `services/healthService.ts`: API service for health metrics
 
+- **`features/metrics/`**: Metrics history and visualization
+  - `pages/MetricsHistory.tsx`: Historical data with time range filtering
+  - `components/`: MetricsChart, MetricsList for data visualization
+
+### Layout Components
+
+- **`components/layout/Sidebar.tsx`**: Responsive navigation sidebar with mobile toggle
+  - User profile section
+  - Main navigation (Home, Dashboard, all feature pages)
+  - Settings section
+  - Help and logout actions
+  - Mobile-responsive with hamburger menu and backdrop overlay
+
 ### Centralized Configuration
 
-- **`config/routes.ts`**: Centralized route path definitions
+- **`config/routes.ts`**: Centralized route path definitions for all 15+ pages
 - **`config/endpoints.ts`**: Centralized API endpoint definitions
 - **`stores/authStore.ts`**: Zustand store for authentication state with persistence
 
@@ -202,12 +233,19 @@ The application appears to be designed for traditional email/password authentica
 - ⏳ Rate limiting (planned for production)
 
 **Recent Changes (October 21, 2025)**:
-- Added comprehensive health dashboard with metrics tracking
-- Implemented health metrics data model (blood sugar, BP, heart rate, weight, steps)
-- Created interactive dashboard with metric cards and quick actions
-- Built add metrics dialog with form validation
-- Integrated React Query for data fetching and cache management
-- Proper query invalidation on mutations for real-time UI updates
+- ✅ Built main Home page with hero banner, clinical outcomes stats, and feature cards
+- ✅ Created responsive Sidebar navigation component with mobile toggle
+- ✅ Added 8 placeholder "Coming Soon" pages for future features (consultation, doctors, food scanner, tips, records, diabot, blogs, settings)
+- ✅ Implemented Metrics History page with interactive charts and data visualization
+- ✅ Added time range filtering (7d, 30d, 90d, all) for health metrics
+- ✅ Built toggle between chart view and list view for metrics
+- ✅ Fixed metric filtering to show only selected metric type (blood sugar, BP, heart rate, weight, steps)
+- ✅ Added comprehensive health dashboard with metrics tracking
+- ✅ Implemented health metrics data model (blood sugar, BP, heart rate, weight, steps)
+- ✅ Created interactive dashboard with metric cards and quick actions
+- ✅ Built add metrics dialog with form validation
+- ✅ Integrated React Query for data fetching and cache management
+- ✅ Proper query invalidation on mutations for real-time UI updates
 
 ### Environment Variables
 
