@@ -57,7 +57,7 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new Error(error.message || 'Request failed');
     }
 

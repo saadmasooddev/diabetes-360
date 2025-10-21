@@ -1,11 +1,15 @@
 import { CheckIcon, EyeIcon, EyeOffIcon, ArrowLeft } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { loginSchema, type LoginFormData } from "@/schemas/auth.schema";
+import { useLogin } from "@/hooks/mutations/useLogin";
+import { ROUTES } from "@/config/routes";
 
 const socialButtons = [
   {
@@ -25,14 +29,10 @@ const socialButtons = [
   },
 ];
 
-interface LoginFormData {
-  email: string;
-  password: string;
-}
-
 export const LogIn = (): JSX.Element => {
   const [, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  const { mutate: login, isPending } = useLogin();
 
   const {
     register,
@@ -40,6 +40,7 @@ export const LogIn = (): JSX.Element => {
     formState: { errors },
     watch,
   } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     mode: "onChange",
     defaultValues: {
       email: "",
@@ -51,7 +52,7 @@ export const LogIn = (): JSX.Element => {
   const passwordValue = watch("password");
 
   const onSubmit = (data: LoginFormData) => {
-    console.log("Form submitted:", data);
+    login(data);
   };
 
   const handleSocialLogin = (platform: string) => {
@@ -90,13 +91,14 @@ export const LogIn = (): JSX.Element => {
           {/* Back Button - Only show on mobile */}
           <button 
             className="lg:hidden flex items-center mb-6 text-black"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(ROUTES.HOME)}
             type="button"
+            data-testid="button-back"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
 
-          <h2 className="[font-family:'Poppins',Helvetica] font-bold text-[#00856f] text-3xl tracking-[-0.30px] leading-[39px] mb-8 lg:mb-[77px]">
+          <h2 className="[font-family:'Poppins',Helvetica] font-bold text-[#00856f] text-3xl tracking-[-0.30px] leading-[39px] mb-8 lg:mb-[77px]" data-testid="text-heading">
             Log in
           </h2>
 
@@ -115,24 +117,15 @@ export const LogIn = (): JSX.Element => {
                       ? "border-red-500"
                       : "border-[#d8dadc]"
                   } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                    maxLength: {
-                      value: 50,
-                      message: "Email is too long",
-                    },
-                  })}
+                  {...register("email")}
+                  data-testid="input-email"
                 />
                 {isEmailValid && (
-                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" />
+                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" data-testid="icon-email-valid" />
                 )}
               </div>
               {errors.email && (
-                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]">
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]" data-testid="error-email">
                   {errors.email.message}
                 </span>
               )}
@@ -152,33 +145,14 @@ export const LogIn = (): JSX.Element => {
                       ? "border-red-500"
                       : "border-[#d8dadc]"
                   } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
-                  {...register("password", {
-                    required: "Password is required",
-                    minLength: {
-                      value: 8,
-                      message: "Password must be at least 8 characters",
-                    },
-                    maxLength: {
-                      value: 128,
-                      message: "Password is too long",
-                    },
-                    validate: {
-                      hasUpperCase: (value) =>
-                        /[A-Z]/.test(value) || "Password must contain at least one uppercase letter",
-                      hasLowerCase: (value) =>
-                        /[a-z]/.test(value) || "Password must contain at least one lowercase letter",
-                      hasNumber: (value) =>
-                        /[0-9]/.test(value) || "Password must contain at least one number",
-                      hasSpecialChar: (value) =>
-                        /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value) ||
-                        "Password must contain at least one special character",
-                    },
-                  })}
+                  {...register("password")}
+                  data-testid="input-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 z-10"
+                  data-testid="button-toggle-password"
                 >
                   {showPassword ? (
                     <EyeOffIcon className="w-5 h-5 text-gray-600" />
@@ -188,7 +162,7 @@ export const LogIn = (): JSX.Element => {
                 </button>
               </div>
               {errors.password && (
-                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]">
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]" data-testid="error-password">
                   {errors.password.message}
                 </span>
               )}
@@ -197,8 +171,9 @@ export const LogIn = (): JSX.Element => {
             <div className="flex justify-end w-full lg:w-[353px] mb-6 lg:mb-[38px]">
               <button
                 type="button"
-                onClick={() => navigate("/forgot-password")}
+                onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
                 className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]"
+                data-testid="link-forgot-password"
               >
                 Forgot password?
               </button>
@@ -206,10 +181,12 @@ export const LogIn = (): JSX.Element => {
 
             <Button
               type="submit"
-              className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] mb-[19px]"
+              disabled={isPending}
+              className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] mb-[19px] disabled:opacity-50"
+              data-testid="button-login"
             >
               <span className="[font-family:'Inter',Helvetica] font-semibold text-white text-base tracking-[0] leading-5">
-                Log in
+                {isPending ? "Logging in..." : "Log in"}
               </span>
             </Button>
           </form>
@@ -230,6 +207,7 @@ export const LogIn = (): JSX.Element => {
                 variant="outline"
                 onClick={() => handleSocialLogin(social.name)}
                 className="w-[108px] h-auto px-[45px] py-[18px] bg-white rounded-[10px] border border-solid border-[#00856f] hover:bg-[#00856f]/5"
+                data-testid={`button-social-${social.name.toLowerCase()}`}
               >
                 <img className="w-5 h-5" alt={social.alt} src={social.icon} />
               </Button>
@@ -244,8 +222,9 @@ export const LogIn = (): JSX.Element => {
               <span className="text-black">&nbsp;</span>
               <button
                 type="button"
-                onClick={() => navigate("/signup")}
+                onClick={() => navigate(ROUTES.SIGNUP)}
                 className="font-semibold text-black"
+                data-testid="link-signup"
               >
                 Sign up
               </button>

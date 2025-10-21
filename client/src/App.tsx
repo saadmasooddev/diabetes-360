@@ -5,15 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-import { LogIn } from "@/pages/LogIn";
-import { ForgotPassword } from "@/pages/ForgotPassword";
+import { LogIn } from "@/features/auth/pages/LogIn";
+import { ForgotPassword } from "@/features/auth/pages/ForgotPassword";
 import { SignUp } from "@/features/auth/pages/SignUp";
 import { ROUTES } from "@/config/routes";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
+      {/* Auth pages */}
       <Route path={ROUTES.LOGIN} component={LogIn} />
       <Route path={ROUTES.SIGNUP} component={SignUp} />
       <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
