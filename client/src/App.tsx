@@ -9,6 +9,7 @@ import { LogIn } from "@/features/auth/pages/LogIn";
 import { ForgotPassword } from "@/features/auth/pages/ForgotPassword";
 import { SignUp } from "@/features/auth/pages/SignUp";
 import { Dashboard } from "@/features/dashboard/pages/Dashboard";
+import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { ROUTES } from "@/config/routes";
 
 function Router() {
@@ -20,6 +21,8 @@ function Router() {
       <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
       {/* Dashboard */}
       <Route path={ROUTES.DASHBOARD} component={Dashboard} />
+      {/* Metrics */}
+      <Route path={ROUTES.METRICS_HISTORY} component={MetricsHistory} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

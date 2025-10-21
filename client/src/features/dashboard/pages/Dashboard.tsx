@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Droplets, Heart, Activity, Weight, TrendingUp, LogOut } from 'lucide-react';
+import { Droplets, Heart, Activity, Weight, TrendingUp, LogOut, BarChart3 } from 'lucide-react';
 import { MetricCard } from '../components/MetricCard';
 import { QuickActions } from '../components/QuickActions';
 import { AddMetricDialog } from '../components/AddMetricDialog';
@@ -41,14 +41,24 @@ export function Dashboard() {
               Welcome back, {user?.fullName || user?.username}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setLocation(ROUTES.METRICS_HISTORY)}
+              data-testid="button-view-metrics"
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              View Metrics
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (

@@ -4,6 +4,7 @@ export const ROUTES = {
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
+  METRICS_HISTORY: '/metrics',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
