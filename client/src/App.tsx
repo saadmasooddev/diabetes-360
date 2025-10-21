@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import { LogIn } from "@/features/auth/pages/LogIn";
 import { ForgotPassword } from "@/features/auth/pages/ForgotPassword";
 import { SignUp } from "@/features/auth/pages/SignUp";
+import { Dashboard } from "@/features/dashboard/pages/Dashboard";
 import { ROUTES } from "@/config/routes";
 
 function Router() {
@@ -17,6 +18,8 @@ function Router() {
       <Route path={ROUTES.LOGIN} component={LogIn} />
       <Route path={ROUTES.SIGNUP} component={SignUp} />
       <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
+      {/* Dashboard */}
+      <Route path={ROUTES.DASHBOARD} component={Dashboard} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

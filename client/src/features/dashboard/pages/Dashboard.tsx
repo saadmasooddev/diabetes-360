@@ -16,15 +16,16 @@ export function Dashboard() {
   const [, setLocation] = useLocation();
   const [addMetricOpen, setAddMetricOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const clearUser = useAuthStore((state) => state.clearUser);
+  const logout = useAuthStore((state) => state.logout);
 
   const { data: latestMetrics, isLoading } = useQuery({
-    queryKey: [API_ENDPOINTS.HEALTH.LATEST],
-    queryFn: () => healthService.getLatestMetrics(),
+    queryKey: [API_ENDPOINTS.HEALTH.LATEST, user?.id],
+    queryFn: () => healthService.getLatestMetrics(user?.id || ''),
+    enabled: !!user?.id,
   });
 
   const handleLogout = () => {
-    clearUser();
+    logout();
     setLocation(ROUTES.LOGIN);
   };
 
@@ -64,7 +65,7 @@ export function Dashboard() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <MetricCard
               title="Blood Sugar"
-              value={latestMetrics?.bloodSugar}
+              value={latestMetrics?.bloodSugar ?? null}
               unit="mg/dL"
               icon={Droplets}
               color="bg-blue-500"
@@ -84,7 +85,7 @@ export function Dashboard() {
             />
             <MetricCard
               title="Heart Rate"
-              value={latestMetrics?.heartRate}
+              value={latestMetrics?.heartRate ?? null}
               unit="bpm"
               icon={Activity}
               color="bg-pink-500"
@@ -92,7 +93,7 @@ export function Dashboard() {
             />
             <MetricCard
               title="Weight"
-              value={latestMetrics?.weight}
+              value={latestMetrics?.weight ?? null}
               unit="kg"
               icon={Weight}
               color="bg-green-500"
@@ -100,7 +101,7 @@ export function Dashboard() {
             />
             <MetricCard
               title="Steps"
-              value={latestMetrics?.steps}
+              value={latestMetrics?.steps ?? null}
               unit="steps"
               icon={TrendingUp}
               color="bg-purple-500"

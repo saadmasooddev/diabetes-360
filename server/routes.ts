@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, insertHealthMetricSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import bcrypt from "bcrypt";
 
@@ -127,6 +127,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Forgot password error:", error);
       res.status(500).json({ 
         message: "Unable to process request" 
+      });
+    }
+  });
+
+  // Health Metrics Routes
+  
+  // Get latest health metrics for current user
+  app.get("/api/health/metrics/latest", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          message: "User ID is required" 
+        });
+      }
+
+      const latestMetric = await storage.getLatestHealthMetric(userId);
+      
+      if (!latestMetric) {
+        return res.status(404).json({ 
+          message: "No metrics found" 
+        });
+      }
+
+      res.json(latestMetric);
+    } catch (error: any) {
+      console.error("Get latest metrics error:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch metrics" 
+      });
+    }
+  });
+
+  // Get all health metrics for current user
+  app.get("/api/health/metrics", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      if (!userId) {
+        return res.status(400).json({ 
+          message: "User ID is required" 
+        });
+      }
+
+      const metrics = await storage.getHealthMetrics(userId, limit);
+      res.json(metrics);
+    } catch (error: any) {
+      console.error("Get metrics error:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch metrics" 
+      });
+    }
+  });
+
+  // Add new health metric
+  app.post("/api/health/metrics/add", async (req, res) => {
+    try {
+      const validatedData = insertHealthMetricSchema.parse(req.body);
+      
+      const metric = await storage.addHealthMetric(validatedData);
+      res.status(201).json(metric);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        const validationError = fromError(error);
+        return res.status(400).json({ 
+          message: validationError.message 
+        });
+      }
+      
+      console.error("Add metric error:", error);
+      res.status(500).json({ 
+        message: "Failed to add metric" 
       });
     }
   });
