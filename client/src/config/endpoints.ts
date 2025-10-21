@@ -11,4 +11,9 @@ export const API_ENDPOINTS = {
     PROFILE: '/api/user/profile',
     UPDATE: '/api/user/update',
   },
+  HEALTH: {
+    METRICS: '/api/health/metrics',
+    LATEST: '/api/health/metrics/latest',
+    ADD: '/api/health/metrics/add',
+  },
 } as const;
