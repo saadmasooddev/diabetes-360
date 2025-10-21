@@ -19,6 +19,8 @@ import { Separator } from '@/components/ui/separator';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -46,6 +48,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -53,10 +56,31 @@ export function Sidebar({ className }: SidebarProps) {
   };
 
   return (
-    <aside className={cn(
-      "flex h-screen w-64 flex-col border-r bg-white dark:bg-gray-900",
-      className
-    )}>
+    <>
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed left-4 top-4 z-50 lg:hidden"
+        onClick={() => setIsOpen(!isOpen)}
+        data-testid="button-mobile-menu"
+      >
+        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </Button>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside className={cn(
+        "fixed z-40 flex h-screen w-64 flex-col border-r bg-white transition-transform dark:bg-gray-900 lg:static lg:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        className
+      )}>
       {/* User Profile */}
       <div className="border-b p-4">
         <div className="flex items-center gap-3">
@@ -86,22 +110,22 @@ export function Sidebar({ className }: SidebarProps) {
           {mainNavItems.map((item) => {
             const isActive = location === item.path;
             return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  data-testid={item.testId}
-                  className={cn(
-                    "flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </a>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={cn(
+                  "flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                )}
+                data-testid={item.testId}
+              >
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
               </Link>
             );
           })}
@@ -114,22 +138,21 @@ export function Sidebar({ className }: SidebarProps) {
           <p className="text-xs font-semibold text-teal-600 dark:text-teal-400">SETTINGS</p>
         </div>
         <nav className="space-y-1 px-2">
-          <Link href={ROUTES.SETTINGS}>
-            <a
-              data-testid="nav-settings"
-              className={cn(
-                "flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                location === ROUTES.SETTINGS
-                  ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Settings className="h-5 w-5" />
-                <span>Settings</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            </a>
+          <Link
+            href={ROUTES.SETTINGS}
+            className={cn(
+              "flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              location === ROUTES.SETTINGS
+                ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            )}
+            data-testid="nav-settings"
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="h-5 w-5" />
+              <span>Settings</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
           </Link>
         </nav>
       </div>
@@ -155,5 +178,6 @@ export function Sidebar({ className }: SidebarProps) {
         </Button>
       </div>
     </aside>
+    </>
   );
 }

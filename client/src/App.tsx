@@ -11,6 +11,14 @@ import { SignUp } from "@/features/auth/pages/SignUp";
 import { Dashboard } from "@/features/dashboard/pages/Dashboard";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
+import { Blogs } from "@/pages/Blogs";
+import { InstantConsultation } from "@/pages/InstantConsultation";
+import { FindDoctor } from "@/pages/FindDoctor";
+import { FoodScanner } from "@/pages/FoodScanner";
+import { TipsExercises } from "@/pages/TipsExercises";
+import { MedicalRecords } from "@/pages/MedicalRecords";
+import { DiaBot } from "@/pages/DiaBot";
+import { Settings } from "@/pages/Settings";
 import { ROUTES } from "@/config/routes";
 
 function Router() {
@@ -24,6 +32,15 @@ function Router() {
       <Route path={ROUTES.HOME} component={Home} />
       <Route path={ROUTES.DASHBOARD} component={Dashboard} />
       <Route path={ROUTES.METRICS_HISTORY} component={MetricsHistory} />
+      {/* Feature Pages */}
+      <Route path={ROUTES.INSTANT_CONSULTATION} component={InstantConsultation} />
+      <Route path={ROUTES.FIND_DOCTOR} component={FindDoctor} />
+      <Route path={ROUTES.FOOD_SCANNER} component={FoodScanner} />
+      <Route path={ROUTES.TIPS_EXERCISES} component={TipsExercises} />
+      <Route path={ROUTES.MEDICAL_RECORDS} component={MedicalRecords} />
+      <Route path={ROUTES.DIABOT} component={DiaBot} />
+      <Route path={ROUTES.BLOGS} component={Blogs} />
+      <Route path={ROUTES.SETTINGS} component={Settings} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

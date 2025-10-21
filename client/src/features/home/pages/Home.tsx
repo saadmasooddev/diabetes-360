@@ -10,10 +10,10 @@ export function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
         <div className="mx-auto max-w-6xl px-6 py-8">
           {/* Hero Section */}
           <Card className="mb-8 overflow-hidden border-none shadow-lg">
@@ -94,6 +94,7 @@ export function Home() {
               <Button
                 size="lg"
                 className="bg-teal-600 px-8 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+                onClick={() => setLocation(ROUTES.DASHBOARD)}
                 data-testid="button-join-program"
               >
                 Join Our Care Program
@@ -148,6 +149,7 @@ export function Home() {
             {/* Health Blogs */}
             <Card
               className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              onClick={() => setLocation(ROUTES.BLOGS)}
               data-testid="card-blogs"
             >
               <div className="relative">
@@ -184,6 +186,7 @@ export function Home() {
                     <Button
                       variant="outline"
                       className="w-fit"
+                      onClick={() => setLocation(ROUTES.DIABOT)}
                       data-testid="button-meet-diabot"
                     >
                       Chat Now

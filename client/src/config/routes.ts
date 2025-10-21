@@ -12,6 +12,7 @@ export const ROUTES = {
   MEDICAL_RECORDS: '/records',
   DIABOT: '/diabot',
   SETTINGS: '/settings',
+  BLOGS: '/blogs',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
