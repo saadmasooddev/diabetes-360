@@ -7,13 +7,16 @@ import NotFound from "@/pages/not-found";
 
 import { LogIn } from "@/pages/LogIn";
 import { ForgotPassword } from "@/pages/ForgotPassword";
+import { SignUp } from "@/features/auth/pages/SignUp";
+import { ROUTES } from "@/config/routes";
 
 function Router() {
   return (
     <Switch>
       {/* Add pages below */}
-      <Route path="/" component={LogIn} />
-      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path={ROUTES.LOGIN} component={LogIn} />
+      <Route path={ROUTES.SIGNUP} component={SignUp} />
+      <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
