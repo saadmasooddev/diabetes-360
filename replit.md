@@ -1,13 +1,14 @@
 # Overview
 
-This is a full-stack web application built with React, Express, and PostgreSQL. The application features a modern authentication system with login and password recovery functionality. It uses a monorepo structure with shared code between the client and server, TypeScript for type safety, and shadcn/ui components for the user interface.
+This is HealthSync/Diabetes 360, a full-stack health tracking web application built with React, Express, and PostgreSQL. The application features a comprehensive authentication system and an interactive health metrics dashboard for tracking diabetes-related health data. It uses a monorepo structure with shared code between the client and server, TypeScript for type safety, and shadcn/ui components for the user interface.
 
 The stack includes:
-- **Frontend**: React with Vite, TanStack Query for state management, Wouter for routing
-- **Backend**: Express.js with TypeScript
+- **Frontend**: React with Vite, TanStack Query for state management, Wouter for routing, Zustand for client state
+- **Backend**: Express.js with TypeScript, bcrypt for password hashing
 - **Database**: PostgreSQL with Drizzle ORM (configured for Neon serverless)
 - **UI**: shadcn/ui components built on Radix UI primitives with Tailwind CSS
 - **Styling**: Tailwind CSS with a custom design system
+- **Validation**: Zod schemas with React Hook Form integration
 
 # User Preferences
 
@@ -55,8 +56,29 @@ The application uses shadcn/ui components, a collection of re-usable components 
 ### Current Pages
 
 1. **Login Page** (`/`) - Authentication with email/password, social login UI
-2. **Forgot Password Page** (`/forgot-password`) - Password recovery flow
-3. **404 Page** - Fallback for undefined routes
+2. **Sign Up Page** (`/signup`) - User registration with form validation
+3. **Forgot Password Page** (`/forgot-password`) - Password recovery flow
+4. **Dashboard Page** (`/dashboard`) - Health metrics tracking and visualization
+5. **404 Page** - Fallback for undefined routes
+
+### Feature-Based Architecture
+
+The application follows a feature-based folder structure in `client/src/features/`:
+
+- **`features/auth/`**: Authentication-related components
+  - `pages/`: LogIn, SignUp, ForgotPassword pages
+  - `services/`: Authentication API service layer (planned)
+  
+- **`features/dashboard/`**: Health metrics dashboard
+  - `pages/Dashboard.tsx`: Main dashboard view with health metrics
+  - `components/`: MetricCard, QuickActions, AddMetricDialog
+  - `services/healthService.ts`: API service for health metrics
+
+### Centralized Configuration
+
+- **`config/routes.ts`**: Centralized route path definitions
+- **`config/endpoints.ts`**: Centralized API endpoint definitions
+- **`stores/authStore.ts`**: Zustand store for authentication state with persistence
 
 ## Backend Architecture
 
@@ -87,7 +109,10 @@ The application uses an abstraction layer (`IStorage` interface in `server/stora
 1. **MemStorage**: In-memory storage (current default)
 2. **Database Storage**: To be implemented using Drizzle ORM
 
-**Current Implementation**: MemStorage provides a simple Map-based storage for development. It includes basic CRUD operations for users.
+**Current Implementation**: MemStorage provides a simple Map-based storage for development. It includes:
+- User CRUD operations (create, get by ID, get by username)
+- Health metrics CRUD operations (add metric, get latest, get all with limit)
+- In-memory data persistence during session
 
 **Future Implementation**: Database storage will use Drizzle ORM with PostgreSQL, maintaining the same interface.
 
@@ -105,12 +130,24 @@ The application uses an abstraction layer (`IStorage` interface in `server/stora
 
 ### Current Schema
 
-**Users Table**:
-- `id`: UUID primary key (auto-generated)
-- `username`: Unique text field
-- `password`: Text field (should be hashed before storage)
+**Users Table** (`users`):
+- `id`: UUID primary key (auto-generated via `gen_random_uuid()`)
+- `username`: Unique text field (used for email)
+- `fullName`: Text field for user's full name (optional)
+- `password`: Text field (bcrypt hashed with 10 salt rounds)
 
-**Rationale**: Drizzle provides excellent TypeScript integration with minimal overhead. Defining schemas in the shared directory allows type sharing between frontend and backend. The schema uses Drizzle-Zod for runtime validation.
+**Health Metrics Table** (`health_metrics`):
+- `id`: UUID primary key (auto-generated)
+- `userId`: Foreign key reference to users table
+- `bloodSugar`: Numeric field for blood glucose levels (mg/dL)
+- `bloodPressureSystolic`: Integer field for systolic blood pressure
+- `bloodPressureDiastolic`: Integer field for diastolic blood pressure
+- `heartRate`: Integer field for heart rate (bpm)
+- `weight`: Numeric field for body weight (kg)
+- `steps`: Integer field for daily step count
+- `recordedAt`: Timestamp (auto-generated on insert)
+
+**Rationale**: Drizzle provides excellent TypeScript integration with minimal overhead. Defining schemas in the shared directory allows type sharing between frontend and backend. The schema uses Drizzle-Zod for runtime validation and insert schema generation.
 
 ### Migration Strategy
 
@@ -153,13 +190,24 @@ The application uses an abstraction layer (`IStorage` interface in `server/stora
 
 The application appears to be designed for traditional email/password authentication with provisions for social login (Facebook, Google, Apple UI elements present).
 
-**Current Status**: UI exists for login and password recovery, but backend authentication logic needs implementation.
+**Current Status**: Fully functional authentication system with:
+- ✅ User registration with form validation
+- ✅ Login with email/password
+- ✅ Password hashing using bcrypt (10 salt rounds)
+- ✅ Client-side state management with Zustand (persisted to localStorage)
+- ✅ Password recovery UI flow
+- ✅ Automatic redirect to dashboard on successful login
+- ⏳ Session-based authentication (planned for production)
+- ⏳ CSRF protection (planned for production)
+- ⏳ Rate limiting (planned for production)
 
-**Recommended Implementation**:
-- Password hashing with bcrypt or argon2
-- Session-based authentication using connect-pg-simple
-- CSRF protection for state-changing operations
-- Rate limiting for login attempts
+**Recent Changes (October 21, 2025)**:
+- Added comprehensive health dashboard with metrics tracking
+- Implemented health metrics data model (blood sugar, BP, heart rate, weight, steps)
+- Created interactive dashboard with metric cards and quick actions
+- Built add metrics dialog with form validation
+- Integrated React Query for data fetching and cache management
+- Proper query invalidation on mutations for real-time UI updates
 
 ### Environment Variables
 
