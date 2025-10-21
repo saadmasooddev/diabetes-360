@@ -1,10 +1,17 @@
 export const ROUTES = {
-  HOME: '/',
+  HOME: '/home',
   LOGIN: '/',
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
   METRICS_HISTORY: '/metrics',
+  INSTANT_CONSULTATION: '/consultation',
+  FIND_DOCTOR: '/doctors',
+  FOOD_SCANNER: '/food-scanner',
+  TIPS_EXERCISES: '/tips',
+  MEDICAL_RECORDS: '/records',
+  DIABOT: '/diabot',
+  SETTINGS: '/settings',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
