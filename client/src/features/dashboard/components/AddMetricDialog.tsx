@@ -67,8 +67,8 @@ export function AddMetricDialog({ open, onOpenChange }: AddMetricDialogProps) {
         title: 'Success',
         description: 'Health metrics added successfully',
       });
-      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.LATEST] });
-      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.METRICS] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.LATEST, user?.id] });
+      queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.METRICS, user?.id] });
       form.reset();
       onOpenChange(false);
     },
