@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,10 +8,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { paymentDetails } from '@/mocks/payments';
+import { ROUTES } from '@/config/routes';
 
 type PaymentMethod = 'card' | 'bank' | 'transfer';
+type PaymentStep = 'form' | 'success';
 
 export function Payments() {
+  const [, setLocation] = useLocation();
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>('form');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [cardNumber, setCardNumber] = useState('');
   const [expirationDate, setExpirationDate] = useState('');
@@ -29,8 +34,97 @@ export function Payments() {
       cvv,
       saveCard,
     });
+    // Show success screen
+    setPaymentStep('success');
   };
 
+  const handleContinue = () => {
+    // Navigate to dashboard or home
+    setLocation(ROUTES.DASHBOARD);
+  };
+
+  // Payment Success Screen
+  if (paymentStep === 'success') {
+    return (
+      <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
+        <Sidebar />
+
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
+          <div className="w-full max-w-[700px]">
+            <Card
+              className="p-12 flex flex-col items-center justify-center"
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                minHeight: '400px',
+              }}
+              data-testid="card-payment-success"
+            >
+              {/* Success Icon */}
+              <div
+                className="mb-8"
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: '#00856F',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                data-testid="icon-success"
+              >
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <path
+                    d="M33.3333 10L15 28.3333L6.66667 20"
+                    stroke="#FFFFFF"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              {/* Payment Completed Text */}
+              <h1
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 700,
+                  color: '#00856F',
+                  textAlign: 'center',
+                  marginBottom: '48px',
+                }}
+                data-testid="text-payment-completed"
+              >
+                Payment Completed
+              </h1>
+
+              {/* Continue Button */}
+              <Button
+                onClick={handleContinue}
+                className="w-full max-w-[700px]"
+                style={{
+                  background: '#00856F',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  height: 'auto',
+                }}
+                data-testid="button-continue"
+              >
+                Continue
+              </Button>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Payment Form Screen
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
