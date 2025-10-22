@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { healthService } from '../services/healthService';
 import { API_ENDPOINTS } from '@/config/endpoints';
 import { useAuthStore } from '@/stores/authStore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import type { HealthMetric } from '@shared/schema';
 
 const glucoseData = [
   { time: '7 AM', value: 85 },
@@ -43,9 +42,8 @@ export function Dashboard() {
   const user = useAuthStore((state) => state.user);
   const { toast } = useToast();
 
-  const { data: latestMetrics } = useQuery({
-    queryKey: [API_ENDPOINTS.HEALTH.LATEST, user?.id],
-    queryFn: () => healthService.getLatestMetrics(user?.id || ''),
+  const { data: latestMetrics } = useQuery<HealthMetric | null>({
+    queryKey: [`${API_ENDPOINTS.HEALTH.LATEST}?userId=${user?.id}`],
     enabled: !!user?.id,
   });
 
@@ -75,6 +73,21 @@ export function Dashboard() {
       title: "Upgrade to Paid Plan",
       description: "Unlock unlimited logging and premium features",
     });
+  };
+
+  const formatGlucoseValue = () => {
+    if (!latestMetrics?.bloodSugar) return '—';
+    return latestMetrics.bloodSugar;
+  };
+
+  const formatStepsValue = () => {
+    if (!latestMetrics?.steps) return '—';
+    return latestMetrics.steps.toLocaleString();
+  };
+
+  const formatWaterValue = () => {
+    if (!latestMetrics) return '—';
+    return '—';
   };
 
   return (
@@ -108,7 +121,7 @@ export function Dashboard() {
                 Current Glucose
               </h3>
               <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+                <span style={{ fontSize: '24px' }}>{formatGlucoseValue()}</span> mg/dL
               </div>
               <div className="flex gap-2">
                 <Button
@@ -184,7 +197,7 @@ export function Dashboard() {
                 Steps Walked
               </h3>
               <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+                <span style={{ fontSize: '24px' }}>{formatStepsValue()}</span> steps
               </div>
               <div className="flex gap-2">
                 <Button
@@ -243,7 +256,7 @@ export function Dashboard() {
                 Water Intake
               </h3>
               <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+                <span style={{ fontSize: '24px' }}>{formatWaterValue()}</span> L
               </div>
               <div className="flex gap-2">
                 <Button
@@ -285,7 +298,7 @@ export function Dashboard() {
             <Button
               onClick={handleHealthAssessment}
               style={{
-                background: '#D3D3D3',
+                background: '#00856F',
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontSize: '16px',
@@ -326,8 +339,8 @@ export function Dashboard() {
                 <AreaChart data={glucoseData}>
                   <defs>
                     <linearGradient id="glucoseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
-                      <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                      <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
@@ -355,7 +368,7 @@ export function Dashboard() {
                   <Area
                     type="monotone"
                     dataKey="value"
-                    stroke="#90EE90"
+                    stroke="#00856F"
                     strokeWidth={2}
                     fill="url(#glucoseGradient)"
                   />
@@ -390,8 +403,8 @@ export function Dashboard() {
                   <AreaChart data={stepsData}>
                     <defs>
                       <linearGradient id="stepsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                        <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
@@ -418,7 +431,7 @@ export function Dashboard() {
                     <Area
                       type="monotone"
                       dataKey="value"
-                      stroke="#90EE90"
+                      stroke="#00856F"
                       strokeWidth={2}
                       fill="url(#stepsGradient)"
                     />
@@ -451,8 +464,8 @@ export function Dashboard() {
                   <AreaChart data={waterData}>
                     <defs>
                       <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                        <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
@@ -480,7 +493,7 @@ export function Dashboard() {
                     <Area
                       type="monotone"
                       dataKey="value"
-                      stroke="#90EE90"
+                      stroke="#00856F"
                       strokeWidth={2}
                       fill="url(#waterGradient)"
                     />
