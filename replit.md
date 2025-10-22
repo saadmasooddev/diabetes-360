@@ -14,7 +14,15 @@ The application uses a monorepo structure with `client/` for the React frontend,
 
 ## Frontend Architecture
 
-The frontend is built with React, Vite, TanStack Query for server state management, Wouter for routing, and Zustand for client state. UI components are from shadcn/ui, based on Radix UI primitives and styled with Tailwind CSS, following a custom "New York" theme. Form handling uses React Hook Form with Zod for validation. The application features authentication pages (Login, Sign Up, Forgot Password) and core application pages including Home, Dashboard, and Metrics History, along with placeholders for future features like Instant Consultation, Food Scanner, and an AI chatbot (DiaBot). A feature-based folder structure organizes code for scalability.
+The frontend is built with React, Vite, TanStack Query for server state management, Wouter for routing, and Zustand for client state. UI components are from shadcn/ui, based on Radix UI primitives and styled with Tailwind CSS, following a custom "New York" theme. Form handling uses React Hook Form with Zod for validation. 
+
+The application features authentication pages (Login, Sign Up, Forgot Password) and core application pages:
+- **Home**: Marketing landing page with hero section, stats, and feature highlights
+- **Dashboard**: Main health tracking dashboard with metric cards (glucose, steps, water intake), trend arrows, and interactive charts
+- **Health Assessment** (`/dashboard/health-assessment`): Comprehensive health analysis page with circular gauge charts showing daily/weekly/monthly averages for glucose, hydration, and activity metrics
+- **Metrics History**: Historical health data visualization with time range filtering
+
+Additional placeholder pages exist for future features like Instant Consultation, Food Scanner, and an AI chatbot (DiaBot). A feature-based folder structure organizes code for scalability.
 
 ## Backend Architecture
 
@@ -23,6 +31,24 @@ The backend is an Express.js server developed with TypeScript and ESM modules. I
 ## Database Architecture
 
 PostgreSQL is used as the database, configured for Neon serverless, with Drizzle ORM for type-safe SQL querying and schema management. The schema, defined in `shared/schema.ts`, includes `users` (with UUIDs, unique usernames, hashed passwords) and `health_metrics` (tracking blood sugar, blood pressure, heart rate, weight, steps, and water intake, linked to users). Drizzle Kit manages database migrations.
+
+## Recent Updates (October 22, 2025)
+
+### Health Assessment Page
+- Created new Health Assessment page at `/dashboard/health-assessment` accessible from the main dashboard
+- Implemented custom circular gauge charts using SVG for visual health metric displays
+- Shows glucose, hydration, and activity analysis with daily, weekly, and monthly averages
+- All gauges have unique data-testid attributes for testing (e.g., `gauge-glucose-daily-average`, `gauge-hydration-weekly-average`)
+- Responsive layout using Tailwind's `lg:ml-[295px]` to properly center content on all screen sizes
+- Updated Sidebar to show Health Assessment as an expandable sub-item under My Dashboard
+- Integrated with existing TanStack Query for real-time data fetching from the backend
+
+### Dashboard Improvements
+- Fixed dashboard centering by removing hardcoded margins and using flex utilities
+- Implemented functional "Add New Log" dialog with single text input and validation
+- Added trend arrows (green up/red down) to all metric cards comparing latest vs previous readings
+- Integrated water intake tracking throughout the application (database schema, API, UI)
+- React Query cache invalidation ensures real-time UI updates after metric submissions
 
 ## Authentication Strategy
 
