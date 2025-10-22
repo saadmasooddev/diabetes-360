@@ -14,10 +14,10 @@ import { InstantConsultation } from "@/features/dashboard/pages/InstantConsultat
 import { FindDoctor } from "@/features/dashboard/pages/FindDoctor";
 import { FoodScanner } from "@/features/dashboard/pages/FoodScanner";
 import { TipsExercises } from "@/features/dashboard/pages/TipsExercises";
+import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
 import { Blogs } from "@/pages/Blogs";
-import { MedicalRecords } from "@/pages/MedicalRecords";
 import { DiaBot } from "@/pages/DiaBot";
 import { Settings } from "@/pages/Settings";
 import { ROUTES } from "@/config/routes";
