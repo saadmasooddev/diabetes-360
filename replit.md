@@ -26,6 +26,7 @@ Key features include:
 -   **Food Scanner**: Three-step flow for uploading food images, scanning, and displaying nutritional analysis results with premium features.
 -   **Medical Records**: Four sections for tracking health data: Glucose Logs, Consultations table, Medications (premium-locked with clean dashed border design), and Lab Reports with empty states and action buttons.
 -   **DiaBot (AI Chatbot)**: Functional chat interface with auto-scroll to latest messages, user/bot message differentiation, typing indicators, simulated bot responses (1.5s delay), and real-time message timestamps. Supports Enter key to send and displays online status.
+-   **Health Plans**: Subscription pricing page with Monthly/Yearly billing toggle, displaying Silver Plan and Gold Plan with features list and Subscribe Now buttons.
 
 ## Backend Architecture
 
