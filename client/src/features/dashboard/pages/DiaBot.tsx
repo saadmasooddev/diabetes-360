@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Smile } from 'lucide-react';
+import { Send } from 'lucide-react';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { initialChatMessages, botResponses, ChatMessage } from '@/mocks/diabot';
@@ -69,65 +70,62 @@ export default function DiaBot() {
   };
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{
-        background: '#F7F9F9',
-        maxHeight: 'calc(100vh - 32px)',
-      }}
-      data-testid="page-diabot"
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-8 py-6 mb-6"
-        style={{
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-        }}
-        data-testid="header-diabot"
-      >
-        <h1
-          style={{
-            fontSize: '28px',
-            fontWeight: 700,
-            color: '#00856F',
-          }}
-          data-testid="text-diabot-title"
-        >
-          DiaBot
-        </h1>
-        <div className="flex items-center gap-2" data-testid="status-online">
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#00856F',
-            }}
-          />
-          <span
-            style={{
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#00856F',
-            }}
-          >
-            Online
-          </span>
-        </div>
-      </div>
+    <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
+      <Sidebar />
 
-      {/* Chat Messages Container */}
-      <div
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-8 pb-4"
-        style={{
-          scrollBehavior: 'smooth',
-        }}
-        data-testid="container-chat-messages"
-      >
-        <div className="space-y-4">
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full max-w-[1200px] mx-auto flex flex-col" style={{ height: 'calc(100vh - 4rem)' }}>
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-8 py-4 mb-6"
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '50px',
+              border: '2px solid rgba(0, 133, 111, 0.3)',
+            }}
+            data-testid="header-diabot"
+          >
+            <h1
+              style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: '#00856F',
+              }}
+              data-testid="text-diabot-title"
+            >
+              DiaBot
+            </h1>
+            <div className="flex items-center gap-2" data-testid="status-online">
+              <div
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  background: '#00856F',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#00856F',
+                }}
+              >
+                Online
+              </span>
+            </div>
+          </div>
+
+          {/* Chat Messages Container */}
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto pb-4"
+            style={{
+              scrollBehavior: 'smooth',
+            }}
+            data-testid="container-chat-messages"
+          >
+            <div className="space-y-4">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -276,69 +274,53 @@ export default function DiaBot() {
             </div>
           )}
 
-          <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Input Area */}
+          <div className="py-4">
+            <div
+              className="flex items-center gap-3 px-4 py-3"
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '12px',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+              }}
+              data-testid="container-input"
+            >
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Start typing..."
+                className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 400,
+                  color: '#263238',
+                }}
+                data-testid="input-message"
+              />
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim()}
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0"
+                style={{
+                  color: inputValue.trim() ? '#00856F' : '#B0BEC5',
+                }}
+                aria-label="Send message"
+                data-testid="button-send"
+              >
+                <Send size={20} />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Input Area */}
-      <div
-        className="px-8 py-6"
-        style={{
-          background: '#F7F9F9',
-        }}
-      >
-        <div
-          className="flex items-center gap-3 px-4 py-3"
-          style={{
-            background: '#FFFFFF',
-            borderRadius: '12px',
-            border: '1px solid rgba(0, 0, 0, 0.1)',
-          }}
-          data-testid="container-input"
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex-shrink-0"
-            style={{
-              color: '#00856F',
-            }}
-            aria-label="Add emoji"
-            data-testid="button-emoji"
-          >
-            <Smile size={20} />
-          </Button>
-
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Start typing..."
-            className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            style={{
-              fontSize: '14px',
-              fontWeight: 400,
-              color: '#263238',
-            }}
-            data-testid="input-message"
-          />
-
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim()}
-            variant="ghost"
-            size="icon"
-            className="flex-shrink-0"
-            style={{
-              color: inputValue.trim() ? '#00856F' : '#B0BEC5',
-            }}
-            aria-label="Send message"
-            data-testid="button-send"
-          >
-            <Send size={20} />
-          </Button>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
