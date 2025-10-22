@@ -192,7 +192,7 @@ export function HealthAssessment() {
                   maxValue={5}
                   label="Daily Average"
                   unit="L"
-                  size={110}
+                  size={140}
                   metricType="hydration"
                 />
                 <CircularGauge
@@ -200,7 +200,7 @@ export function HealthAssessment() {
                   maxValue={5}
                   label="Weekly Average"
                   unit="L"
-                  size={110}
+                  size={140}
                   metricType="hydration"
                 />
                 <CircularGauge
@@ -208,7 +208,7 @@ export function HealthAssessment() {
                   maxValue={5}
                   label="Monthly Average"
                   unit="L"
-                  size={110}
+                  size={140}
                   metricType="hydration"
                 />
               </div>
@@ -240,7 +240,7 @@ export function HealthAssessment() {
                   maxValue={15000}
                   label="Daily Average"
                   unit=" steps"
-                  size={110}
+                  size={140}
                   metricType="activity"
                 />
                 <CircularGauge
@@ -248,7 +248,7 @@ export function HealthAssessment() {
                   maxValue={15000}
                   label="Weekly Average"
                   unit=" steps"
-                  size={110}
+                  size={140}
                   metricType="activity"
                 />
                 <CircularGauge
@@ -256,7 +256,7 @@ export function HealthAssessment() {
                   maxValue={15000}
                   label="Monthly Average"
                   unit=" steps"
-                  size={110}
+                  size={140}
                   metricType="activity"
                 />
               </div>
