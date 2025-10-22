@@ -364,7 +364,7 @@ export function Home() {
           <div className="grid gap-6 md:grid-cols-2">
             {/* Meet DiaBot */}
             <Card
-              className=" w-full cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
               style={{
                 width: "450px",
                 height: "147px",
