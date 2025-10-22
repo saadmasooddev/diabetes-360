@@ -18,7 +18,7 @@ import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
 import { Blogs } from "@/pages/Blogs";
-import { DiaBot } from "@/pages/DiaBot";
+import DiaBot from "@/features/dashboard/pages/DiaBot";
 import { Settings } from "@/pages/Settings";
 import { ROUTES } from "@/config/routes";
 
