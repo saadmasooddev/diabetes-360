@@ -43,9 +43,7 @@ function Router() {
         component={InstantConsultation}
       />
       <Route path={ROUTES.FIND_DOCTOR} component={FindDoctor} />
-      <Route path={ROUTES.FOOD_SCANNER}>
-        {() => <FoodScanner isPremium={false} />}
-      </Route>
+      <Route path={ROUTES.FOOD_SCANNER} component={() =>} />
       <Route path={ROUTES.TIPS_EXERCISES}>
         {() => <TipsExercises isPremium={false} />}
       </Route>
