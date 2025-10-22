@@ -254,17 +254,18 @@ export function Payments() {
                   </div>
 
                   {/* Save Card Checkbox */}
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-3">
                     <Checkbox
                       id="saveCard"
                       checked={saveCard}
                       onCheckedChange={(checked) => setSaveCard(checked as boolean)}
+                      className="mt-0.5"
                       style={{
                         borderColor: '#00856F',
                       }}
                       data-testid="checkbox-save-card"
                     />
-                    <div>
+                    <div className="flex-1">
                       <Label
                         htmlFor="saveCard"
                         style={{
@@ -272,6 +273,7 @@ export function Payments() {
                           fontWeight: 500,
                           color: '#00453A',
                           cursor: 'pointer',
+                          display: 'block',
                         }}
                       >
                         Save card details
@@ -307,8 +309,9 @@ export function Payments() {
                     >
                       <svg width="40" height="13" viewBox="0 0 40 13" fill="none">
                         <text
-                          x="0"
+                          x="20"
                           y="10"
+                          textAnchor="middle"
                           style={{
                             fontSize: '10px',
                             fontWeight: 700,
