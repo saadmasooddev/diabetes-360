@@ -232,7 +232,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {dayOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-birth-day-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -260,7 +264,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {monthOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-birth-month-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -288,7 +296,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {yearOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-birth-year-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -346,7 +358,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {dayOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-diagnosis-day-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -374,7 +390,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {monthOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-diagnosis-month-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -402,7 +422,11 @@ export function ProfileData() {
                                 </FormControl>
                                 <SelectContent>
                                   {yearOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                      data-testid={`option-diagnosis-year-${option.value}`}
+                                    >
                                       {option.label}
                                     </SelectItem>
                                   ))}
@@ -440,7 +464,11 @@ export function ProfileData() {
                               </FormControl>
                               <SelectContent>
                                 {weightOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                    data-testid={`option-weight-${option.value}`}
+                                  >
                                     {option.label}
                                   </SelectItem>
                                 ))}
@@ -474,7 +502,11 @@ export function ProfileData() {
                               </FormControl>
                               <SelectContent>
                                 {heightOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                    data-testid={`option-height-${option.value}`}
+                                  >
                                     {option.label}
                                   </SelectItem>
                                 ))}
