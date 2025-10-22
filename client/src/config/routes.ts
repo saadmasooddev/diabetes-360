@@ -25,6 +25,7 @@ export const ROUTES = {
   // Other Routes
   BLOGS: "/blogs",
   SETTINGS: "/settings",
+  PROFILE_DATA: "/profile-data",
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

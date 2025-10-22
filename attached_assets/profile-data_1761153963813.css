@@ -1,0 +1,1366 @@
+/* Profile Data */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+
+background: #FFFFFF;
+
+
+/* Rectangle 263 */
+
+position: absolute;
+width: 1440px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #F7F9F9;
+
+
+/* Tell Us about Yourself */
+
+position: absolute;
+width: 620px;
+height: 62px;
+left: calc(50% - 620px/2 + 124px);
+top: 104px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 48px;
+line-height: 130%;
+/* or 62px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Personal Details */
+
+position: absolute;
+width: 620px;
+height: 42px;
+left: calc(50% - 620px/2 + 124px);
+top: 225px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 32px;
+line-height: 130%;
+/* identical to box height, or 42px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Diagnosis */
+
+position: absolute;
+width: 620px;
+height: 42px;
+left: calc(50% - 620px/2 + 124px);
+top: 554px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 32px;
+line-height: 130%;
+/* identical to box height, or 42px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 353px;
+height: 91px;
+left: 536px;
+top: 305px;
+
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* First Name */
+
+width: 103px;
+height: 25px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 20px;
+line-height: 125%;
+/* identical to box height, or 25px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+width: 353px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* First Name */
+
+width: 321px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: rgba(0, 0, 0, 0.5);
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 353px;
+height: 91px;
+left: 945px;
+top: 305px;
+
+
+
+/* Last Name */
+
+width: 102px;
+height: 25px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 20px;
+line-height: 125%;
+/* identical to box height, or 25px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+width: 353px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Last Name */
+
+width: 321px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: rgba(0, 0, 0, 0.5);
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 6px;
+
+position: absolute;
+width: 121px;
+height: 25px;
+left: 948.35px;
+top: 419.29px;
+
+
+
+/* title */
+
+width: 121px;
+height: 25px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 20px;
+line-height: 125%;
+/* identical to box height, or 25px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+display: none;
+width: 353px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Rectangle 8 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 951.35px;
+top: 462.29px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Rectangle 9 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 1063.35px;
+top: 462.29px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Rectangle 10 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 1175.35px;
+top: 462.29px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* DD */
+
+position: absolute;
+width: 23px;
+height: 20px;
+left: 974.35px;
+top: 475.29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* MM */
+
+position: absolute;
+width: 29px;
+height: 20px;
+left: 1086.35px;
+top: 475.29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* YYYY */
+
+position: absolute;
+width: 43px;
+height: 20px;
+left: 1189.35px;
+top: 475.29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* Arrow 2 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 1015.35px;
+top: 488.29px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Arrow 3 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 1127.35px;
+top: 488.29px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Arrow 4 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 1247.35px;
+top: 488.29px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+width: 356px;
+height: 91px;
+left: 537.35px;
+top: 419.29px;
+
+
+
+/* Gender */
+
+width: 70px;
+height: 25px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 20px;
+line-height: 125%;
+/* identical to box height, or 25px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+width: 356px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Text */
+
+width: 291px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: rgba(0, 0, 0, 0.5);
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Group 36691 */
+
+position: absolute;
+width: 321px;
+height: 78px;
+left: calc(50% - 321px/2 - 22.5px);
+top: 619px;
+
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 6px;
+
+position: absolute;
+width: 100px;
+height: 18px;
+left: 537px;
+top: 619px;
+
+
+
+/* title */
+
+width: 100px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+display: none;
+width: 353px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Rectangle 11 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 540px;
+top: 651px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Rectangle 12 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 652px;
+top: 651px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Rectangle 13 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 764px;
+top: 651px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* DD */
+
+position: absolute;
+width: 23px;
+height: 20px;
+left: 563px;
+top: 664px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* MM */
+
+position: absolute;
+width: 29px;
+height: 20px;
+left: 675px;
+top: 664px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* YYYY */
+
+position: absolute;
+width: 43px;
+height: 20px;
+left: 778px;
+top: 664px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* Arrow 5 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 604px;
+top: 677px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Arrow 6 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 716px;
+top: 677px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Arrow 7 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 836px;
+top: 677px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Group 36692 */
+
+position: absolute;
+width: 235px;
+height: 78px;
+left: calc(50% - 235px/2 + 348.5px);
+top: 619px;
+
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 6px;
+
+position: absolute;
+width: 72px;
+height: 18px;
+left: 951px;
+top: 619px;
+
+
+
+/* title */
+
+width: 72px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+display: none;
+width: 353px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Height(cm) */
+
+position: absolute;
+width: 74px;
+height: 18px;
+left: 1089px;
+top: 619px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+
+/* Rectangle 11 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 954px;
+top: 651px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Rectangle 12 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 94px;
+height: 46px;
+left: 1092px;
+top: 651px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* 0 */
+
+position: absolute;
+width: 10px;
+height: 20px;
+left: 975px;
+top: 664px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* 0 */
+
+position: absolute;
+width: 10px;
+height: 20px;
+left: 1112px;
+top: 664px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #808080;
+
+
+
+/* Arrow 5 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 1016px;
+top: 677px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Arrow 6 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 1160px;
+top: 677px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Input */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 6px;
+
+position: absolute;
+width: 323px;
+height: 80px;
+left: calc(50% - 323px/2 - 21.5px);
+top: 724px;
+
+
+
+/* title */
+
+width: 113px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #000000;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+width: 323px;
+height: 56px;
+
+background: #FFFFFF;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Text */
+
+width: 291px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: rgba(0, 0, 0, 0.5);
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Error */
+
+display: none;
+width: 31px;
+height: 16px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 13px;
+line-height: 125%;
+/* or 16px */
+display: flex;
+align-items: flex-end;
+
+color: #E64646;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Arrow 7 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1px;
+height: 0px;
+left: 836px;
+top: 779px;
+
+border: 2px solid #808080;
+transform: rotate(90deg);
+
+
+/* Rectangle 265 */
+
+position: absolute;
+width: 435px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: radial-gradient(87.04% 17.5% at 83.33% 85.69%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, #00856F;
+
+
+/* Rectangle 266 */
+
+position: absolute;
+width: 435px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: radial-gradient(81.03% 66.6% at 18.97% 10.5%, rgba(0, 133, 111, 0) 0%, #00856F 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, radial-gradient(87.04% 17.5% at 83.33% 85.69%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, #00856F;
+
+
+/* Rectangle 267 */
+
+position: absolute;
+width: 435px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: radial-gradient(81.03% 66.6% at 18.97% 10.5%, rgba(0, 133, 111, 0) 0%, #00856F 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, radial-gradient(87.04% 17.5% at 83.33% 85.69%, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 100%) /* warning: gradient uses a rotation that is not supported by CSS and may not behave as expected */, #00856F;
+
+
+/* Help our App understand you! */
+
+position: absolute;
+width: 325px;
+height: 175px;
+left: 55px;
+top: 422px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 48px;
+line-height: 130%;
+/* or 62px */
+letter-spacing: -0.01em;
+
+color: #FFFFFF;
+
+
+
+/* Frame 36746 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 761px;
+height: 62px;
+left: 537px;
+top: 850px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Submit Details */
+
+width: 145px;
+height: 25px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 25px;
+/* identical to box height */
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+

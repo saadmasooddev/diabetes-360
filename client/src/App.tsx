@@ -17,6 +17,7 @@ import { TipsExercises } from "@/features/dashboard/pages/TipsExercises";
 import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
 import { HealthPlans } from "@/features/dashboard/pages/HealthPlans";
 import { Payments } from "@/features/dashboard/pages/Payments";
+import { ProfileData } from "@/features/dashboard/pages/ProfileData";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
 import { Blogs } from "@/pages/Blogs";
@@ -49,6 +50,7 @@ function Router() {
       <Route path={ROUTES.DIABOT} component={DiaBot} />
       <Route path={ROUTES.HEALTH_PLANS} component={HealthPlans} />
       <Route path={ROUTES.PAYMENTS} component={Payments} />
+      <Route path={ROUTES.PROFILE_DATA} component={ProfileData} />
       <Route path={ROUTES.BLOGS} component={Blogs} />
       <Route path={ROUTES.SETTINGS} component={Settings} />
       {/* Fallback to 404 */}

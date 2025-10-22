@@ -1,0 +1,32 @@
+React Frontend Development Guidelines:
+
+1. Client-side routes should be in a separate file - All navigation routes should reside in `/config/routes.ts` with route guards and lazy loading.
+
+2. Use React Query for APIs - API calls abstracted in `/services` folder, React Query hooks abstracted in `/hooks/queries` and `/hooks/mutations`.
+
+3. Use React Hook Form for forms - Properly manage states, error messages, and validation with Zod schemas in `/schemas`.
+
+4. Centralized toast configuration - API error messages displayed with proper toasts, configurable theme in `/config/toast.config.ts`.
+
+5. Consistent folder structure - Split large components into smaller, manageable components following feature-based organization.
+
+6. Use Zustand for global state - Separate stores for different domains in `/stores` directory with persistence where needed.
+
+7. Mock API data centrally - Fake data and mocked API responses in `/mocks` folder using MSW for simulation.
+
+8. Centralized API endpoints - All backend endpoints defined in single `/config/endpoints.ts` file.
+
+9. Configuration files in separate directories - All config files under `/config` directory organized by purpose.
+
+10. Custom hooks for shared logic - Extract reusable business logic into custom hooks in `/hooks/common`.
+
+11. Separate common components - Reusable components that can be used across multiple features in `/components/common`.
+
+12. TypeScript strict mode - Enable strict type checking with comprehensive type definitions in `/types`.
+
+13. Performance optimization - Implement code splitting, memoization, and bundle optimization strategies.
+
+14. Authentication flow - JWT-based auth with refresh token handling and protected routes using axios and interceptors in a centralized place and should be protected where specified based on the role.
+
+15. Responsive design - Mobile-first approach with consistent loading states and accessibility compliance. All the pages should be interactive with every user interactive element fully functional. The design should follow the figma as closely as possible. Make sure to use the  existing side bar and charting library if required
+
