@@ -1,8 +1,55 @@
+import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
+import { Star, ArrowLeft, Stethoscope, Apple, Heart, Activity } from 'lucide-react';
 import { mockDoctors, type Doctor } from '@/mocks/doctors';
+import { mockConcerns, type Concern } from '@/mocks/concerns';
+
+const concernIcons = {
+  stethoscope: Stethoscope,
+  apple: Apple,
+  'heart-pulse': Heart,
+  activity: Activity,
+};
+
+function ConcernCard({ concern, onClick }: { concern: Concern; onClick: () => void }) {
+  const IconComponent = concernIcons[concern.icon as keyof typeof concernIcons] || Stethoscope;
+  
+  return (
+    <Card
+      className="p-6 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
+      style={{
+        background: concern.id === '1' ? '#E0F2F1' : '#FFFFFF',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        borderRadius: '12px',
+      }}
+      onClick={onClick}
+      data-testid={`card-concern-${concern.id}`}
+    >
+      <div
+        className="flex items-center justify-center rounded-full"
+        style={{
+          width: '48px',
+          height: '48px',
+          background: '#00856F',
+        }}
+      >
+        <IconComponent size={24} color="#FFFFFF" />
+      </div>
+      <h3
+        style={{
+          fontSize: '18px',
+          fontWeight: 600,
+          color: '#00453A',
+        }}
+        data-testid={`text-concern-${concern.id}`}
+      >
+        {concern.name}
+      </h3>
+    </Card>
+  );
+}
 
 function DoctorCard({ doctor }: { doctor: Doctor }) {
   return (
@@ -150,20 +197,95 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 }
 
 export function InstantConsultation() {
+  const [selectedConcern, setSelectedConcern] = useState<string | null>(null);
+
+  const filteredDoctors = selectedConcern
+    ? mockDoctors.filter((doctor) => doctor.specialty === selectedConcern)
+    : [];
+
+  const handleConcernSelect = (concernSpecialty: string) => {
+    setSelectedConcern(concernSpecialty);
+  };
+
+  const handleBack = () => {
+    setSelectedConcern(null);
+  };
+
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
 
       <main className="flex-1 flex justify-center items-start pt-8">
         <div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
-          <div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-            data-testid="section-doctors-list"
-          >
-            {mockDoctors.map((doctor) => (
-              <DoctorCard key={doctor.id} doctor={doctor} />
-            ))}
-          </div>
+          {!selectedConcern ? (
+            <div data-testid="section-concern-selection">
+              <div className="flex items-center gap-4 mb-8">
+                <h1
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 600,
+                    color: '#00453A',
+                  }}
+                  data-testid="text-title"
+                >
+                  Select your Concern
+                </h1>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {mockConcerns.map((concern) => (
+                  <ConcernCard
+                    key={concern.id}
+                    concern={concern}
+                    onClick={() => handleConcernSelect(concern.specialty)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div data-testid="section-doctors-list">
+              <div className="flex items-center gap-4 mb-8">
+                <button
+                  onClick={handleBack}
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  data-testid="button-back"
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <ArrowLeft size={24} color="#00453A" />
+                </button>
+                <h1
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 600,
+                    color: '#00453A',
+                  }}
+                  data-testid="text-selected-concern"
+                >
+                  {selectedConcern}
+                </h1>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredDoctors.length > 0 ? (
+                  filteredDoctors.map((doctor) => (
+                    <DoctorCard key={doctor.id} doctor={doctor} />
+                  ))
+                ) : (
+                  <div
+                    className="col-span-full text-center py-12"
+                    data-testid="text-no-doctors"
+                  >
+                    <p style={{ fontSize: '16px', color: '#546E7A' }}>
+                      No doctors available for this specialty at the moment.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

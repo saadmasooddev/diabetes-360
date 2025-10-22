@@ -38,10 +38,15 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 ## Recent Updates (October 22, 2025)
 
 ### Instant Consultation Page
-- Created Instant Consultation page at `/dashboard/consultation` following Figma design specifications
-- Implemented DoctorCard component with online/offline status indicators, profile images, specialty information, experience, and 5-star ratings
+- Created two-step consultation flow at `/dashboard/consultation` following Figma design specifications:
+  1. **Step 1 - Concern Selection**: User selects their concern (Diabetologist, Nutritionist, Health Coach, Endocrinologist) from card-based UI with icons
+  2. **Step 2 - Doctor List**: Shows filtered doctors based on selected concern with back navigation
+- Implemented React state management (`useState`) to track selected concern and control flow between screens
+- DoctorCard component with online/offline status indicators, profile images, specialty information, experience, and 5-star ratings
 - 2-column responsive grid layout (desktop) that adapts to single column on mobile
-- Mock doctor data centralized in `/mocks/doctors.ts` following React development guidelines
+- Mock data centralized following React development guidelines:
+  - `/mocks/doctors.ts`: 9 doctors across 4 specialties with varied names and experience
+  - `/mocks/concerns.ts`: 4 concern types with associated icons
 - All interactive elements have data-testid attributes for comprehensive testing
 - Feature-based organization: page located in `features/dashboard/pages/InstantConsultation.tsx`
 
