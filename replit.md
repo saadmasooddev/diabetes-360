@@ -89,12 +89,29 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 - Fixed gauge overflow issues by adjusting SVG radius and stroke width
 
 ### Food Scanner Page
-- Created Food Scanner page at `/food-scanner` with file upload functionality
-- Clean, centered design with large upload area featuring upload icon
-- Click-to-upload interaction with file input handler
-- Image preview functionality showing uploaded image with filename
-- "Upload Picture" button in teal theme color matching application design
-- Responsive layout with proper spacing and centering
+- Created three-step Food Scanner flow at `/food-scanner`:
+  1. **Step 1 - Upload**: Large upload area with dashed border, upload icon, "Upload Picture" button
+  2. **Step 2 - Scanning**: Image grayed out (grayscale filter + brightness reduction), animated teal scanning line moving up and down, "Scanning.." button disabled
+  3. **Step 3 - Results**: Displays nutrition information with food name, serving size, calories, macronutrients, vitamins, and minerals with percentages
+- Implemented React state management (`useState`) to track:
+  - `currentStep`: Controls which step is shown (upload/scanning/results)
+  - `selectedFile`: Tracks uploaded image file
+  - `previewUrl`: Stores image preview URL
+  - `scanLinePosition`: Controls scanning animation position
+- Image preview uses `object-fit: cover` to fill entire upload div (min-height: 400px)
+- Scanning animation implemented with `useEffect` hook:
+  - Teal line (#00856F) moves up and down with box-shadow glow effect
+  - Animation runs for 3 seconds before transitioning to results
+  - Uses interval to update position every 20ms
+- Mock nutrition data centralized in `/mocks/scanResults.ts` with TypeScript interfaces
+- Results screen shows:
+  - Food name card with serving size and calories
+  - Macronutrients card (carbs, protein, fat, fiber) with amounts and daily value percentages
+  - Vitamins card (A, C, K) with amounts and percentages
+  - Minerals card (calcium, iron, potassium) with amounts and percentages
+  - "Scan Another Food" button to restart flow
+- Header with back navigation button appears after upload
+- Button text dynamically changes: "Upload Picture" → "Scan" → "Scanning.."
 - All interactive elements have data-testid attributes for comprehensive testing
 - Feature-based organization: page located in `features/dashboard/pages/FoodScanner.tsx`
 
