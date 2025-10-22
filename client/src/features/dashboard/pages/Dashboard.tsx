@@ -1,159 +1,496 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Droplets, Heart, Activity, Weight, TrendingUp, LogOut, BarChart3 } from 'lucide-react';
-import { MetricCard } from '../components/MetricCard';
-import { QuickActions } from '../components/QuickActions';
-import { AddMetricDialog } from '../components/AddMetricDialog';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { healthService } from '../services/healthService';
 import { API_ENDPOINTS } from '@/config/endpoints';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/stores/authStore';
-import { ROUTES } from '@/config/routes';
-import { useLocation } from 'wouter';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
+
+const glucoseData = [
+  { time: '7 AM', value: 85 },
+  { time: '9 AM', value: 95 },
+  { time: '11 AM', value: 110 },
+  { time: '12 PM', value: 105 },
+  { time: '2 PM', value: 90 },
+  { time: '4 PM', value: 115 },
+  { time: '6 PM', value: 108 },
+];
+
+const stepsData = [
+  { time: '7 AM', value: 500 },
+  { time: '9 AM', value: 2500 },
+  { time: '11 AM', value: 5000 },
+  { time: '12 PM', value: 6200 },
+  { time: '2 PM', value: 4800 },
+  { time: '4 PM', value: 8000 },
+  { time: '6 PM', value: 10200 },
+];
+
+const waterData = [
+  { time: '7 AM', value: 0.5 },
+  { time: '9 AM', value: 1.2 },
+  { time: '11 AM', value: 2.0 },
+  { time: '12 PM', value: 2.5 },
+  { time: '2 PM', value: 2.8 },
+  { time: '4 PM', value: 3.5 },
+  { time: '6 PM', value: 3.8 },
+];
 
 export function Dashboard() {
-  const [, setLocation] = useLocation();
-  const [addMetricOpen, setAddMetricOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+  const { toast } = useToast();
 
-  const { data: latestMetrics, isLoading } = useQuery({
+  const { data: latestMetrics } = useQuery({
     queryKey: [API_ENDPOINTS.HEALTH.LATEST, user?.id],
     queryFn: () => healthService.getLatestMetrics(user?.id || ''),
     enabled: !!user?.id,
   });
 
-  const handleLogout = () => {
-    logout();
-    setLocation(ROUTES.LOGIN);
+  const handleAddLog = (metricType: string) => {
+    toast({
+      title: "Add New Log",
+      description: `Add a new ${metricType} entry`,
+    });
+  };
+
+  const handleUploadPicture = () => {
+    toast({
+      title: "Upload Picture",
+      description: "Upload a picture for glucose tracking",
+    });
+  };
+
+  const handleHealthAssessment = () => {
+    toast({
+      title: "Health Assessment",
+      description: "Start your health assessment",
+    });
+  };
+
+  const handleUpgrade = () => {
+    toast({
+      title: "Upgrade to Paid Plan",
+      description: "Unlock unlimited logging and premium features",
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-dashboard-title">
-              Health Dashboard
-            </h1>
-            <p className="mt-1 text-gray-600 dark:text-gray-400" data-testid="text-welcome-message">
-              Welcome back, {user?.fullName || user?.username}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setLocation(ROUTES.METRICS_HISTORY)}
-              data-testid="button-view-metrics"
+    <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
+      <Sidebar />
+      
+      <main className="flex-1" style={{ marginLeft: '295px', padding: '32px' }}>
+        <div className="mx-auto" style={{ maxWidth: '1145px' }}>
+          {/* Metric Cards Row */}
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {/* Current Glucose Card */}
+            <Card
+              className="overflow-hidden"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                padding: '24px',
+              }}
+              data-testid="card-current-glucose"
             >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              View Metrics
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
+              <h3
+                className="mb-4 font-semibold"
+                style={{
+                  color: '#00453A',
+                  fontSize: '18px',
+                  lineHeight: '24px',
+                  fontWeight: 600,
+                }}
+              >
+                Current Glucose
+              </h3>
+              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleAddLog('glucose')}
+                  style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    border: '1px solid #00856F',
+                    borderRadius: '8px',
+                    color: '#00856F',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '10px 16px',
+                  }}
+                  data-testid="button-add-glucose-log"
+                >
+                  Add New Log
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleUploadPicture}
+                  style={{
+                    flex: 1,
+                    background: '#FFFFFF',
+                    border: '1px solid #00856F',
+                    borderRadius: '8px',
+                    color: '#00856F',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '10px 16px',
+                  }}
+                  data-testid="button-upload-picture"
+                >
+                  Upload Picture
+                </Button>
+              </div>
+              <p
+                className="mt-3 text-xs"
+                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
+              >
+                *limited to 2 logs per day.{' '}
+                <button
+                  onClick={handleUpgrade}
+                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  data-testid="link-upgrade-glucose"
+                >
+                  Upgrade to Paid Plan
+                </button>
+              </p>
+            </Card>
 
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-20 rounded bg-gray-200 dark:bg-gray-700" />
-                </CardContent>
-              </Card>
-            ))}
+            {/* Steps Walked Card */}
+            <Card
+              className="overflow-hidden"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                padding: '24px',
+              }}
+              data-testid="card-steps-walked"
+            >
+              <h3
+                className="mb-4 font-semibold"
+                style={{
+                  color: '#00453A',
+                  fontSize: '18px',
+                  lineHeight: '24px',
+                  fontWeight: 600,
+                }}
+              >
+                Steps Walked
+              </h3>
+              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleAddLog('steps')}
+                  style={{
+                    width: '100%',
+                    background: '#FFFFFF',
+                    border: '1px solid #00856F',
+                    borderRadius: '8px',
+                    color: '#00856F',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '10px 16px',
+                  }}
+                  data-testid="button-add-steps-log"
+                >
+                  Add New Log
+                </Button>
+              </div>
+              <p
+                className="mt-3 text-xs"
+                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
+              >
+                *limited to 2 logs per day.{' '}
+                <button
+                  onClick={handleUpgrade}
+                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  data-testid="link-upgrade-steps"
+                >
+                  Upgrade to Paid Plan
+                </button>
+              </p>
+            </Card>
+
+            {/* Water Intake Card */}
+            <Card
+              className="overflow-hidden"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                padding: '24px',
+              }}
+              data-testid="card-water-intake"
+            >
+              <h3
+                className="mb-4 font-semibold"
+                style={{
+                  color: '#00453A',
+                  fontSize: '18px',
+                  lineHeight: '24px',
+                  fontWeight: 600,
+                }}
+              >
+                Water Intake
+              </h3>
+              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>—</span> mg/dL
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleAddLog('water')}
+                  style={{
+                    width: '100%',
+                    background: '#FFFFFF',
+                    border: '1px solid #00856F',
+                    borderRadius: '8px',
+                    color: '#00856F',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '10px 16px',
+                  }}
+                  data-testid="button-add-water-log"
+                >
+                  Add New Log
+                </Button>
+              </div>
+              <p
+                className="mt-3 text-xs"
+                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
+              >
+                *limited to 2 logs per day.{' '}
+                <button
+                  onClick={handleUpgrade}
+                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                  data-testid="link-upgrade-water"
+                >
+                  Upgrade to Paid Plan
+                </button>
+              </p>
+            </Card>
           </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <MetricCard
-              title="Blood Sugar"
-              value={latestMetrics?.bloodSugar ?? null}
-              unit="mg/dL"
-              icon={Droplets}
-              color="bg-blue-500"
-              onClick={() => setAddMetricOpen(true)}
-            />
-            <MetricCard
-              title="Blood Pressure"
-              value={
-                latestMetrics?.bloodPressureSystolic && latestMetrics?.bloodPressureDiastolic
-                  ? `${latestMetrics.bloodPressureSystolic}/${latestMetrics.bloodPressureDiastolic}`
-                  : null
-              }
-              unit="mmHg"
-              icon={Heart}
-              color="bg-red-500"
-              onClick={() => setAddMetricOpen(true)}
-            />
-            <MetricCard
-              title="Heart Rate"
-              value={latestMetrics?.heartRate ?? null}
-              unit="bpm"
-              icon={Activity}
-              color="bg-pink-500"
-              onClick={() => setAddMetricOpen(true)}
-            />
-            <MetricCard
-              title="Weight"
-              value={latestMetrics?.weight ?? null}
-              unit="kg"
-              icon={Weight}
-              color="bg-green-500"
-              onClick={() => setAddMetricOpen(true)}
-            />
-            <MetricCard
-              title="Steps"
-              value={latestMetrics?.steps ?? null}
-              unit="steps"
-              icon={TrendingUp}
-              color="bg-purple-500"
-              onClick={() => setAddMetricOpen(true)}
-            />
-            <div className="md:col-span-2 lg:col-span-1">
-              <QuickActions onAddMetric={() => setAddMetricOpen(true)} />
+
+          {/* Health Assessment Button */}
+          <div className="mb-8 flex justify-center">
+            <Button
+              onClick={handleHealthAssessment}
+              style={{
+                background: '#D3D3D3',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 600,
+                padding: '14px 48px',
+                border: 'none',
+              }}
+              data-testid="button-health-assessment"
+            >
+              Health Assessment
+            </Button>
+          </div>
+
+          {/* Charts Section */}
+          <div className="space-y-8">
+            {/* Glucose Trend Chart */}
+            <Card
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '12px',
+                padding: '24px',
+              }}
+              data-testid="card-glucose-trend"
+            >
+              <h3
+                className="mb-6 font-semibold"
+                style={{
+                  color: '#00453A',
+                  fontSize: '20px',
+                  lineHeight: '28px',
+                  fontWeight: 600,
+                }}
+              >
+                Glucose Trend
+              </h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={glucoseData}>
+                  <defs>
+                    <linearGradient id="glucoseGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
+                  <XAxis
+                    dataKey="time"
+                    tick={{ fill: '#546E7A', fontSize: 12 }}
+                    axisLine={{ stroke: '#E0E0E0' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: '#546E7A', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    domain={[0, 120]}
+                    ticks={[0, 70, 80, 90, 100]}
+                    label={{ value: '100mg/dL', position: 'insideLeft', fill: '#546E7A', fontSize: 11 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E0E0E0',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#90EE90"
+                    strokeWidth={2}
+                    fill="url(#glucoseGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Card>
+
+            {/* Steps and Water Charts Side by Side */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Steps Walked Trend */}
+              <Card
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                }}
+                data-testid="card-steps-trend"
+              >
+                <h3
+                  className="mb-6 font-semibold"
+                  style={{
+                    color: '#00453A',
+                    fontSize: '20px',
+                    lineHeight: '28px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Steps Walked Trend
+                </h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={stepsData}>
+                    <defs>
+                      <linearGradient id="stepsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fill: '#546E7A', fontSize: 12 }}
+                      axisLine={{ stroke: '#E0E0E0' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: '#546E7A', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 11000]}
+                      ticks={[0, 3000, 6000, 9000, 11000]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#90EE90"
+                      strokeWidth={2}
+                      fill="url(#stepsGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Card>
+
+              {/* Water Intake Trend */}
+              <Card
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: '12px',
+                  padding: '24px',
+                }}
+                data-testid="card-water-trend"
+              >
+                <h3
+                  className="mb-6 font-semibold"
+                  style={{
+                    color: '#00453A',
+                    fontSize: '20px',
+                    lineHeight: '28px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Water Intake Trend
+                </h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={waterData}>
+                    <defs>
+                      <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#90EE90" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="#90EE90" stopOpacity={0.2} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fill: '#546E7A', fontSize: 12 }}
+                      axisLine={{ stroke: '#E0E0E0' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: '#546E7A', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      domain={[0, 4]}
+                      ticks={[0, 1, 2, 3, 4]}
+                      label={{ value: '4 Litre', position: 'insideTopLeft', fill: '#546E7A', fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#FFFFFF',
+                        border: '1px solid #E0E0E0',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#90EE90"
+                      strokeWidth={2}
+                      fill="url(#waterGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Card>
             </div>
           </div>
-        )}
-
-        {!isLoading && !latestMetrics && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>Get Started</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
-                You haven't logged any health metrics yet. Start tracking your health by adding your first measurements.
-              </p>
-              <Button onClick={() => setAddMetricOpen(true)} data-testid="button-get-started">
-                Add Your First Metrics
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {latestMetrics && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>Latest Reading</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-400" data-testid="text-last-updated">
-                Last updated: {new Date(latestMetrics.recordedAt).toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      <AddMetricDialog open={addMetricOpen} onOpenChange={setAddMetricOpen} />
+        </div>
+      </main>
     </div>
   );
 }
