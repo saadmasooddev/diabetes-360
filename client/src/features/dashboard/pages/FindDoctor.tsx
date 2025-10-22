@@ -23,7 +23,7 @@ interface DoctorCardProps {
 function DoctorCard({ doctor, onConsultClick }: DoctorCardProps) {
   return (
     <Card
-      className="p-6 flex gap-6"
+      className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6"
       style={{
         background: '#FFFFFF',
         border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -31,7 +31,7 @@ function DoctorCard({ doctor, onConsultClick }: DoctorCardProps) {
       }}
       data-testid={`card-doctor-${doctor.id}`}
     >
-      <div className="relative flex-shrink-0">
+      <div className="relative flex-shrink-0 mx-auto sm:mx-0">
         <img
           src={doctor.image}
           alt={doctor.name}
@@ -67,7 +67,7 @@ function DoctorCard({ doctor, onConsultClick }: DoctorCardProps) {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-between min-w-0">
+      <div className="flex-1 flex flex-col justify-between min-w-0 text-center sm:text-left">
         <div>
           <h3
             className="mb-1"
@@ -92,7 +92,7 @@ function DoctorCard({ doctor, onConsultClick }: DoctorCardProps) {
             {doctor.specialty}
           </p>
 
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4 mb-2">
             <div className="flex items-center gap-2">
               <span
                 style={{
@@ -116,7 +116,7 @@ function DoctorCard({ doctor, onConsultClick }: DoctorCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
             <span
               style={{
                 fontSize: '12px',
@@ -181,7 +181,7 @@ function BookingScreen({ doctor, onBack, onProceed }: BookingScreenProps) {
   return (
     <div className="w-full max-w-[800px]">
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6 sm:mb-8">
         <button
           onClick={onBack}
           className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#E0F2F1] transition-colors"
@@ -191,10 +191,11 @@ function BookingScreen({ doctor, onBack, onProceed }: BookingScreenProps) {
         </button>
         <h1
           style={{
-            fontSize: '24px',
+            fontSize: '20px',
             fontWeight: 600,
             color: '#00856F',
           }}
+          className="sm:text-2xl"
           data-testid="text-page-title"
         >
           Book a Consultation
@@ -202,7 +203,7 @@ function BookingScreen({ doctor, onBack, onProceed }: BookingScreenProps) {
       </div>
 
       {/* Doctor Information */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <h2
           style={{
             fontSize: '20px',
@@ -227,7 +228,7 @@ function BookingScreen({ doctor, onBack, onProceed }: BookingScreenProps) {
 
       {/* Calendar */}
       <Card
-        className="p-6 mb-6"
+        className="p-4 sm:p-6 mb-4 sm:mb-6"
         style={{
           background: '#FFFFFF',
           border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -239,12 +240,12 @@ function BookingScreen({ doctor, onBack, onProceed }: BookingScreenProps) {
       </Card>
 
       {/* Time Picker */}
-      <div className="mb-6" data-testid="section-time-picker">
+      <div className="mb-4 sm:mb-6" data-testid="section-time-picker">
         <TimePicker selectedTime={selectedTime} onTimeChange={setSelectedTime} />
       </div>
 
       {/* Hospital Selection */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {mockHospitals.map((hospital) => (
             <button
@@ -315,7 +316,7 @@ function ConfirmationScreen({ doctor, date, time, hospital, onBack }: Confirmati
   return (
     <div className="w-full max-w-[800px]">
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6 sm:mb-8">
         <button
           onClick={onBack}
           className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#E0F2F1] transition-colors"
@@ -325,10 +326,11 @@ function ConfirmationScreen({ doctor, date, time, hospital, onBack }: Confirmati
         </button>
         <h1
           style={{
-            fontSize: '24px',
+            fontSize: '20px',
             fontWeight: 600,
             color: '#00856F',
           }}
+          className="sm:text-2xl"
           data-testid="text-confirmation-title"
         >
           Confirmation
@@ -337,7 +339,7 @@ function ConfirmationScreen({ doctor, date, time, hospital, onBack }: Confirmati
 
       {/* Confirmation Card */}
       <Card
-        className="p-8 mb-6"
+        className="p-4 sm:p-8 mb-4 sm:mb-6"
         style={{
           background: '#FFFFFF',
           border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -519,9 +521,9 @@ export function FindDoctor() {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
-      <Sidebar />
+      <Sidebar className="hidden lg:flex" />
 
-      <main className="flex-1 flex justify-center items-start pt-8 pb-8">
+      <main className="flex-1 flex justify-center items-start pt-4 sm:pt-8 pb-4 sm:pb-8">
         {currentStep === 1 ? (
           <div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
             {/* Search Bar */}
@@ -551,13 +553,13 @@ export function FindDoctor() {
             </div>
 
             {/* Specialty Filter Tabs */}
-            <div className="flex gap-3 mb-8 overflow-x-auto pb-2" data-testid="section-specialty-tabs">
+            <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2" data-testid="section-specialty-tabs">
               {specialtyTabs.map((specialty) => (
                 <button
                   key={specialty}
                   onClick={() => setSelectedSpecialty(specialty)}
                   className={cn(
-                    'px-6 py-2 rounded-full whitespace-nowrap transition-all',
+                    'px-4 sm:px-6 py-2 rounded-full whitespace-nowrap transition-all',
                     selectedSpecialty === specialty
                       ? 'shadow-sm'
                       : ''
