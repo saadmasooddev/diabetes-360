@@ -233,68 +233,85 @@ export function MedicalRecords({ isPremium = false }: MedicalRecordsProps) {
               Medications
             </h2>
 
-            <Card
-              className="p-6 flex items-center justify-between"
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                position: 'relative',
-              }}
-              data-testid="card-medications"
-            >
-              {!isPremium && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-95 rounded-lg">
-                  <div className="text-center">
-                    <div
-                      className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                      style={{ background: '#E8F5F3' }}
-                    >
-                      <Lock size={32} color="#00856F" />
-                    </div>
-                    <p
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        color: '#546E7A',
-                        maxWidth: '300px',
-                      }}
-                    >
-                      Subscribe to Premium
-                      <br />
-                      to unlock smart medication reminders and logs.
-                    </p>
+            {!isPremium ? (
+              <Card
+                className="p-6 flex items-center justify-center"
+                style={{
+                  background: '#F7F9F9',
+                  borderRadius: '12px',
+                  border: '2px dashed rgba(0, 133, 111, 0.3)',
+                  minHeight: '160px',
+                }}
+                data-testid="card-medications-locked"
+              >
+                <div className="text-center">
+                  <div
+                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                    style={{ background: '#E8F5F3' }}
+                  >
+                    <Lock size={32} color="#00856F" />
                   </div>
+                  <p
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#546E7A',
+                      maxWidth: '300px',
+                    }}
+                  >
+                    Subscribe to Premium
+                    <br />
+                    to unlock smart medication reminders and logs.
+                  </p>
                 </div>
-              )}
-
-              <p
+              </Card>
+            ) : medications.length === 0 ? (
+              <Card
+                className="p-6 flex items-center justify-between"
                 style={{
-                  fontSize: '16px',
-                  fontWeight: 400,
-                  color: '#D3D3D3',
+                  background: '#FFFFFF',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                }}
+                data-testid="card-medications-empty"
+              >
+                <p
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: 400,
+                    color: '#546E7A',
+                  }}
+                >
+                  You haven't added any medications. Tap{' '}
+                  <span style={{ fontWeight: 600, color: '#00856F' }}>Add Medication</span> to keep track of doses.
+                </p>
+                <Button
+                  style={{
+                    background: '#00856F',
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    height: 'auto',
+                  }}
+                  aria-label="Add new medication"
+                  data-testid="button-add-medication"
+                >
+                  Add new Medication
+                </Button>
+              </Card>
+            ) : (
+              <Card
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
                 }}
               >
-                You haven't added any medications. Tap{' '}
-                <span style={{ fontWeight: 600 }}>Add Medication</span> to keep track of doses.
-              </p>
-              <Button
-                disabled={!isPremium}
-                style={{
-                  background: isPremium ? '#00856F' : '#E0E0E0',
-                  color: isPremium ? '#FFFFFF' : '#9E9E9E',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  height: 'auto',
-                }}
-                aria-label={isPremium ? 'Add new medication' : 'Medication tracking requires premium subscription'}
-                data-testid="button-add-medication"
-              >
-                Add new Medication
-              </Button>
-            </Card>
+                {/* Medications list would go here */}
+              </Card>
+            )}
           </div>
 
           {/* Lab Reports Section */}
