@@ -184,8 +184,8 @@ function DoctorCard({
                   <Star
                     key={i}
                     size={14}
-                    fill={i < doctor.rating ? '#00856F' : 'none'}
-                    stroke={i < doctor.rating ? '#00856F' : '#B0BEC5'}
+                    fill={i < Math.floor(doctor.rating) ? '#00856F' : 'none'}
+                    stroke={i < Math.floor(doctor.rating) ? '#00856F' : '#B0BEC5'}
                     data-testid={`star-${i + 1}-${doctor.id}`}
                   />
                 ))}

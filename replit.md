@@ -21,6 +21,7 @@ The application features authentication pages (Login, Sign Up, Forgot Password) 
 - **Dashboard**: Main health tracking dashboard with metric cards (glucose, steps, water intake), trend arrows, and interactive charts
 - **Health Assessment** (`/dashboard/health-assessment`): Comprehensive health analysis page with circular gauge charts showing daily/weekly/monthly averages for glucose, hydration, and activity metrics
 - **Instant Consultation** (`/dashboard/consultation`): Doctor consultation page with grid layout displaying doctor cards showing availability status, specialty, experience, ratings, and consultation buttons
+- **Find a Doctor** (`/doctors`): Search and browse doctors page with search functionality, specialty filter tabs, and 2-column responsive grid displaying doctor cards with online/offline status, experience, ratings, and consult buttons
 - **Metrics History**: Historical health data visualization with time range filtering
 
 Additional placeholder pages exist for future features like Food Scanner and an AI chatbot (DiaBot). A feature-based folder structure organizes code for scalability.
@@ -36,6 +37,17 @@ The backend is an Express.js server developed with TypeScript and ESM modules. I
 PostgreSQL is used as the database, configured for Neon serverless, with Drizzle ORM for type-safe SQL querying and schema management. The schema, defined in `shared/schema.ts`, includes `users` (with UUIDs, unique usernames, hashed passwords) and `health_metrics` (tracking blood sugar, blood pressure, heart rate, weight, steps, and water intake, linked to users). Drizzle Kit manages database migrations.
 
 ## Recent Updates (October 22, 2025)
+
+### Find a Doctor Page
+- Created Find a Doctor page at `/doctors` with search and filter functionality
+- Search bar allows users to search by doctor name or specialty
+- Specialty filter tabs (All Doctors, Diabetologists, Nutritionists, Health Coaches) for quick filtering
+- 2-column responsive grid layout displaying all doctors
+- Reuses centralized doctor mock data from `/mocks/doctors.ts`
+- Each doctor card shows: profile image, online/offline status, name, specialty, experience, 5-star ratings, and "Consult Now" button
+- Real-time search and filter with React state management
+- All interactive elements have data-testid attributes for comprehensive testing
+- Feature-based organization: page located in `features/dashboard/pages/FindDoctor.tsx`
 
 ### Instant Consultation Page
 - Created three-step consultation flow at `/dashboard/consultation` following Figma design specifications:
