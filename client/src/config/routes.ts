@@ -20,6 +20,7 @@ export const ROUTES = {
   MEDICAL_RECORDS: "/records",
   DIABOT: "/diabot",
   HEALTH_PLANS: "/plans",
+  PAYMENTS: "/payments",
   
   // Other Routes
   BLOGS: "/blogs",
