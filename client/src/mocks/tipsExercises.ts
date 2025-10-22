@@ -66,14 +66,6 @@ export const exercisePlans: ExercisePlan[] = [
     image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop",
     isLocked: false,
   },
-  {
-    id: 4,
-    title: "Custom Exercise",
-    duration: "15-30 minutes",
-    description: "Subscribe to Premium to add your own exercise plans tailored to your needs.",
-    image: "",
-    isLocked: true,
-  },
 ];
 
 export const weeklyChallenges: WeeklyChallenge[] = [

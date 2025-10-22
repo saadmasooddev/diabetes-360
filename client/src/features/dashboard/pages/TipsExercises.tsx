@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { healthTips, exercisePlans, weeklyChallenges } from '@/mocks/tipsExercises';
 
 interface TipsExercisesProps {
@@ -270,8 +270,40 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                 </Card>
               ))}
 
-              {/* Show locked placeholder only if not premium */}
-              {!isPremium && (
+              {/* Show "Add your Own Exercise" if premium, otherwise show locked placeholder */}
+              {isPremium ? (
+                <Card
+                  className="overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:shadow-lg transition-shadow"
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    minHeight: '400px',
+                  }}
+                  data-testid="card-exercise-add"
+                >
+                  <div className="text-center p-6">
+                    <div
+                      className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
+                      style={{ background: '#00856F' }}
+                    >
+                      <Plus size={40} color="#FFFFFF" strokeWidth={3} />
+                    </div>
+                    <h4
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#00453A',
+                      }}
+                      data-testid="text-add-exercise-title"
+                    >
+                      Add your Own
+                      <br />
+                      Exercise
+                    </h4>
+                  </div>
+                </Card>
+              ) : (
                 <Card
                   className="overflow-hidden flex items-center justify-center"
                   style={{
