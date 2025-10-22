@@ -12,15 +12,20 @@ interface CircularGaugeProps {
   label: string;
   unit: string;
   size?: number;
+  metricType?: string;
 }
 
-function CircularGauge({ value, maxValue, label, unit, size = 180 }: CircularGaugeProps) {
+function CircularGauge({ value, maxValue, label, unit, size = 180, metricType = '' }: CircularGaugeProps) {
   const percentage = Math.min((value / maxValue) * 100, 100);
   const circumference = 2 * Math.PI * 70;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
+  const testId = metricType 
+    ? `gauge-${metricType}-${label.toLowerCase().replace(/\s/g, '-')}`
+    : `gauge-${label.toLowerCase().replace(/\s/g, '-')}`;
+
   return (
-    <div className="flex flex-col items-center" data-testid={`gauge-${label.toLowerCase().replace(/\s/g, '-')}`}>
+    <div className="flex flex-col items-center" data-testid={testId}>
       <div className="relative" style={{ width: size, height: size }}>
         <svg className="transform -rotate-90" width={size} height={size}>
           <circle
@@ -102,7 +107,7 @@ export function HealthAssessment() {
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
-      <main className="flex-1 flex justify-center" style={{ marginLeft: '295px' }}>
+      <main className="flex-1 flex justify-center lg:ml-[295px]">
         <div className="w-full max-w-[1100px] p-8">
           <h1
             className="mb-8"
@@ -133,18 +138,21 @@ export function HealthAssessment() {
                 maxValue={200}
                 label="Daily Average"
                 unit="mg/dL"
+                metricType="glucose"
               />
               <CircularGauge
                 value={glucoseWeekly}
                 maxValue={200}
                 label="Weekly Average"
                 unit="mg/dL"
+                metricType="glucose"
               />
               <CircularGauge
                 value={glucoseMonthly}
                 maxValue={200}
                 label="Monthly Average"
                 unit="mg/dL"
+                metricType="glucose"
               />
             </div>
           </Card>
@@ -178,6 +186,7 @@ export function HealthAssessment() {
                   label="Daily Average"
                   unit="L"
                   size={140}
+                  metricType="hydration"
                 />
                 <CircularGauge
                   value={parseFloat(waterWeekly)}
@@ -185,6 +194,7 @@ export function HealthAssessment() {
                   label="Weekly Average"
                   unit="L"
                   size={140}
+                  metricType="hydration"
                 />
                 <CircularGauge
                   value={parseFloat(waterMonthly)}
@@ -192,6 +202,7 @@ export function HealthAssessment() {
                   label="Monthly Average"
                   unit="L"
                   size={140}
+                  metricType="hydration"
                 />
               </div>
             </Card>
@@ -223,6 +234,7 @@ export function HealthAssessment() {
                   label="Daily Average"
                   unit=" steps"
                   size={140}
+                  metricType="activity"
                 />
                 <CircularGauge
                   value={stepsWeekly}
@@ -230,6 +242,7 @@ export function HealthAssessment() {
                   label="Weekly Average"
                   unit=" steps"
                   size={140}
+                  metricType="activity"
                 />
                 <CircularGauge
                   value={stepsMonthly}
@@ -237,6 +250,7 @@ export function HealthAssessment() {
                   label="Monthly Average"
                   unit=" steps"
                   size={140}
+                  metricType="activity"
                 />
               </div>
             </Card>
