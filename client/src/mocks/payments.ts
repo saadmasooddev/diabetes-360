@@ -12,7 +12,7 @@ export interface PaymentDetails {
 }
 
 export const paymentDetails: PaymentDetails = {
-  amount: 14000,
+  amount: 15000,
   date: '04/10/2025',
   orderItems: [
     {
