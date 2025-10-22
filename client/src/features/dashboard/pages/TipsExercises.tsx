@@ -64,6 +64,7 @@ export function TipsExercises() {
                 borderRadius: '8px',
                 height: 'auto',
               }}
+              aria-label="View premium subscription plans"
               data-testid="button-see-plans"
             >
               See Plans
@@ -96,6 +97,7 @@ export function TipsExercises() {
                 <button
                   onClick={prevTip}
                   className="flex-shrink-0 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  aria-label="Previous health tip"
                   data-testid="button-tip-prev"
                 >
                   <ChevronLeft size={20} color="#00856F" />
@@ -103,7 +105,7 @@ export function TipsExercises() {
 
                 <div className="flex-1 overflow-hidden">
                   <div
-                    className="flex transition-transform duration-300 ease-in-out gap-4"
+                    className="flex transition-transform duration-300 ease-in-out"
                     style={{
                       transform: `translateX(-${currentTipIndex * 100}%)`,
                     }}
@@ -113,7 +115,7 @@ export function TipsExercises() {
                         key={tip.id}
                         className="flex-shrink-0 p-6"
                         style={{
-                          width: 'calc(100% - 100px)',
+                          width: '100%',
                           background: '#FFFFFF',
                           borderRadius: '12px',
                           border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -139,6 +141,7 @@ export function TipsExercises() {
                 <button
                   onClick={nextTip}
                   className="flex-shrink-0 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  aria-label="Next health tip"
                   data-testid="button-tip-next"
                 >
                   <ChevronRight size={20} color="#00856F" />
@@ -146,7 +149,7 @@ export function TipsExercises() {
               </div>
 
               {/* Dots indicator */}
-              <div className="flex justify-center gap-2 mt-4">
+              <div className="flex justify-center gap-2 mt-4" role="group" aria-label="Health tips pagination">
                 {healthTips.map((_, index) => (
                   <button
                     key={index}
@@ -158,6 +161,8 @@ export function TipsExercises() {
                       borderRadius: '4px',
                       background: index === currentTipIndex ? '#00856F' : '#D9D9D9',
                     }}
+                    aria-label={`Go to tip ${index + 1}`}
+                    aria-current={index === currentTipIndex ? 'true' : 'false'}
                     data-testid={`dot-indicator-${index}`}
                   />
                 ))}
@@ -276,6 +281,7 @@ export function TipsExercises() {
                         padding: '12px',
                         height: 'auto',
                       }}
+                      aria-label={plan.isLocked ? `${plan.title} requires premium subscription` : `Start ${plan.title} exercise plan`}
                       data-testid={`button-start-${plan.id}`}
                     >
                       Start Now
