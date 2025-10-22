@@ -308,24 +308,29 @@ export function Home() {
             {/* Meet DiaBot */}
             <Card
               className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
-              style={{ borderRadius: '10px', border: 'none' }}
+              style={{ 
+                borderRadius: '10px',
+                border: '3px solid #00BCD4',
+                background: '#FFFFFF',
+                height: '172px'
+              }}
               onClick={() => setLocation(ROUTES.DIABOT)}
               data-testid="card-diabot"
             >
-              <div className="relative grid grid-cols-[1fr_auto] gap-4">
+              <div className="relative flex h-full items-center gap-0">
                 <div 
-                  className="flex flex-col justify-center p-6"
-                  style={{ background: '#DCE9E2', borderRadius: '10px 0 0 10px' }}
+                  className="flex h-full flex-1 flex-col justify-center px-6 py-4"
+                  style={{ background: '#E0F2F1' }}
                 >
                   <h3 
-                    className="mb-2 text-xl font-bold"
-                    style={{ color: '#00453A', fontSize: '20px', lineHeight: '15px' }}
+                    className="mb-1 text-xl font-bold"
+                    style={{ color: '#00453A', fontSize: '20px', lineHeight: '1.2', fontWeight: 700 }}
                   >
                     Meet DiaBot
                   </h3>
                   <p 
-                    className="mb-4 text-xs"
-                    style={{ color: '#00856F', fontSize: '12px', lineHeight: '15px' }}
+                    className="mb-3 text-sm"
+                    style={{ color: '#00856F', fontSize: '13px', lineHeight: '1.3', fontWeight: 500 }}
                   >
                     Your Friendly AI Health Companion
                   </p>
@@ -334,10 +339,11 @@ export function Home() {
                       background: '#00856F',
                       color: '#FFFFFF',
                       borderRadius: '5px',
-                      padding: '6px 24px',
-                      fontSize: '10px',
+                      padding: '8px 20px',
+                      fontSize: '12px',
                       fontWeight: 700,
-                      width: 'fit-content'
+                      width: 'fit-content',
+                      height: 'auto'
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -349,15 +355,15 @@ export function Home() {
                   </Button>
                 </div>
                 <div 
-                  className="flex items-center justify-center p-4"
-                  style={{ background: '#DCE9E2' }}
+                  className="flex h-full items-center justify-center px-6"
+                  style={{ background: '#E0F2F1' }}
                 >
                   <img
                     src={diaBotImg}
                     alt="DiaBot AI"
-                    className="h-40 w-auto object-contain"
+                    className="h-32 w-auto object-contain"
                     style={{
-                      filter: 'drop-shadow(0px 16px 35px rgba(0, 0, 0, 0.05))'
+                      filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.1))'
                     }}
                   />
                 </div>
@@ -367,56 +373,43 @@ export function Home() {
             {/* Food Scanner */}
             <Card
               className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
-              style={{ borderRadius: '10px', border: 'none' }}
+              style={{ 
+                borderRadius: '10px',
+                border: '3px solid #00BCD4',
+                background: '#FFFFFF',
+                height: '172px'
+              }}
               onClick={() => setLocation(ROUTES.FOOD_SCANNER)}
               data-testid="card-food-scanner"
             >
-              <div className="relative grid grid-cols-[1fr_auto] gap-4">
+              <div className="relative flex h-full items-center gap-0">
                 <div 
-                  className="flex flex-col justify-center p-6"
-                  style={{ background: '#DCE9E2', borderRadius: '10px 0 0 10px' }}
+                  className="flex h-full flex-1 flex-col justify-center px-6 py-4"
+                  style={{ background: '#E0F2F1' }}
                 >
                   <h3 
-                    className="mb-2 text-xl font-bold leading-tight"
-                    style={{ color: '#00453A', fontSize: '20px', lineHeight: '20px' }}
+                    className="mb-1 text-lg font-bold leading-tight"
+                    style={{ color: '#00453A', fontSize: '18px', lineHeight: '1.2', fontWeight: 700 }}
                   >
                     Scan Food to Make Healthier Choices
                   </h3>
                   <p 
-                    className="mb-4 text-xs"
-                    style={{ color: '#212529', fontSize: '10px', lineHeight: '13px' }}
+                    className="text-xs"
+                    style={{ color: '#546E7A', fontSize: '12px', lineHeight: '1.4', fontWeight: 400 }}
                   >
-                    Try our Food Scanner to scan your food and see your glucose content
+                    Try our Food Scanner to scan your meals using your phone's camera
                   </p>
-                  <Button
-                    style={{
-                      background: '#00856F',
-                      color: '#FFFFFF',
-                      borderRadius: '5px',
-                      padding: '6px 24px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      width: 'fit-content'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLocation(ROUTES.FOOD_SCANNER);
-                    }}
-                    data-testid="button-try-scanner"
-                  >
-                    Try Now
-                  </Button>
                 </div>
                 <div 
-                  className="flex items-center justify-center p-4"
-                  style={{ background: '#DCE9E2' }}
+                  className="flex h-full items-center justify-center px-4"
+                  style={{ background: '#E0F2F1' }}
                 >
                   <img
                     src={foodScannerImg}
                     alt="Food Scanner App"
-                    className="h-60 w-auto object-contain"
+                    className="h-40 w-auto object-contain"
                     style={{
-                      filter: 'drop-shadow(0px 16px 35px rgba(0, 0, 0, 0.05))'
+                      filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.1))'
                     }}
                   />
                 </div>
