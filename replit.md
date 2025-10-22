@@ -25,6 +25,7 @@ Key features include:
 -   **Tips & Exercises**: Personalized health tips carousel, exercise plans grid, and weekly challenges grid, with premium content differentiation.
 -   **Food Scanner**: Three-step flow for uploading food images, scanning, and displaying nutritional analysis results with premium features.
 -   **Medical Records**: Four sections for tracking health data: Glucose Logs, Consultations table, Medications (premium-locked with clean dashed border design), and Lab Reports with empty states and action buttons.
+-   **DiaBot (AI Chatbot)**: Functional chat interface with auto-scroll to latest messages, user/bot message differentiation, typing indicators, simulated bot responses (1.5s delay), and real-time message timestamps. Supports Enter key to send and displays online status.
 
 ## Backend Architecture
 
