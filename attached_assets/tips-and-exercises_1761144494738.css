@@ -1,0 +1,3119 @@
+/* Tips & Exercises(Desktop) */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+overflow-y: scroll;
+
+background: #F7F9F9;
+
+
+/* Rectangle 117 */
+
+position: absolute;
+width: 1038px;
+height: 351px;
+left: 344px;
+top: 470px;
+
+background: #FFFFFF;
+border-radius: 10px;
+
+
+/* Sidebar - Open */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 24px;
+gap: 20px;
+
+position: absolute;
+width: 295px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border-right: 1px solid rgba(0, 0, 0, 0.1);
+border-radius: 12px;
+
+
+/* Profil */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 247px;
+height: 44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Avatar */
+
+width: 44px;
+height: 44px;
+
+background: url(.png);
+border-radius: 36.2214px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Content */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+width: 191px;
+height: 36px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* OVERLINE */
+
+width: 191px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Title */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+width: 247px;
+height: 420px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle 266 */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: -1px;
+top: 273px;
+
+background: #F7F9F9;
+border-radius: 5px;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+position: absolute;
+width: 247px;
+height: 12px;
+left: 0px;
+top: 0px;
+
+
+
+/* OVERLINE */
+
+width: 28px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 23px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 5%;
+right: 15%;
+top: 10%;
+bottom: 10%;
+
+border: 1.5px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 30%;
+right: 40%;
+top: 75%;
+bottom: 25%;
+
+border: 1.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 74px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 0%;
+right: 20%;
+top: calc(50% - 16px/2 - 1px);
+
+background: #000000;
+border: 2.4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 18px 10px 12px;
+gap: 15px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 125px;
+
+border-radius: 8px;
+
+
+/* Icon / User 1 */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36734 */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* chat-square-check_svgrepo.com */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 17px;
+left: 5%;
+right: 10%;
+top: calc(50% - 17px/2 + 0.5px);
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 4px;
+left: 35%;
+right: 35%;
+top: calc(50% - 4px/2);
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 136px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 176px;
+
+border-radius: 8px;
+
+
+/* Icon / Page */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 18px;
+left: 20%;
+right: 0%;
+top: calc(50% - 18px/2);
+
+background: #000000;
+border: 4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 227px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36733 */
+
+position: absolute;
+height: 16px;
+left: 10%;
+right: 9.99%;
+top: 2px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 1.6px;
+left: 26%;
+right: 26%;
+top: calc(50% - 1.6px/2 + 0px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 278px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36732 */
+
+position: absolute;
+height: 19.87px;
+left: 20%;
+right: 0.01%;
+top: 1px;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 329px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 5%;
+right: 20%;
+top: calc(50% - 16px/2);
+
+background: #1C274C;
+border: 2.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 380px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+position: absolute;
+left: 50%;
+right: 50%;
+top: 27.78%;
+bottom: 54.44%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 63.33%;
+right: 27.78%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 41.11%;
+right: 41.11%;
+top: 10%;
+bottom: 72.22%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 27.77%;
+right: 63.34%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 10%;
+right: 10%;
+top: 45.56%;
+bottom: 10%;
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 320px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 1;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+width: 247px;
+height: 12px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* OVERLINE */
+
+width: 53px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Settings */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 163px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 20.84%;
+right: 20.83%;
+top: 33.33%;
+bottom: 33.33%;
+
+background: #00856F;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 88px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 5;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Help-circle */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Log-out */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 16.67%;
+right: 16.66%;
+top: 8.33%;
+bottom: 8.33%;
+
+background: #D55F5A;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #D55F5A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Frame 36774 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 26px 48px;
+gap: 99px;
+
+position: absolute;
+width: 1038px;
+height: 109px;
+left: 348px;
+top: 37px;
+
+background: #00856F;
+border-radius: 10px;
+
+
+/* Upgrade to get personalized Tips & Exercises */
+
+width: 506px;
+height: 77px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 28px;
+line-height: 130%;
+/* or 36px */
+letter-spacing: -0.01em;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36766 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 30px 84px;
+gap: 10px;
+
+width: 258px;
+height: 53px;
+
+background: #FFFAF1;
+border-radius: 10px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* See Plans */
+
+width: 99px;
+height: 26px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 20px;
+line-height: 130%;
+/* identical to box height, or 26px */
+letter-spacing: -0.01em;
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Health Tips */
+
+position: absolute;
+width: 1038px;
+height: 286px;
+left: 348px;
+top: 185px;
+overflow-x: scroll;
+
+
+
+/* Rectangle 117 */
+
+position: absolute;
+width: 1038px;
+height: 265px;
+left: 0px;
+top: 0px;
+
+background: #DCE9E2;
+border-radius: 10px;
+
+
+/* Health Tips for Diabetes */
+
+position: absolute;
+width: 426px;
+height: 31px;
+left: 39px;
+top: 20px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 130%;
+/* or 31px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Frame 36767 */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: flex-start;
+padding: 14px 6px;
+gap: 10px;
+
+position: absolute;
+width: 283px;
+height: 113px;
+left: 39px;
+top: 81px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* “Drink a glass of water before meals to control hunger and prevent overeating.” */
+
+width: 234px;
+height: 63px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 16px;
+line-height: 130%;
+/* or 21px */
+letter-spacing: -0.01em;
+
+color: #595959;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36768 */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 14px 6px;
+gap: 10px;
+
+position: absolute;
+width: 283px;
+height: 113px;
+left: 360px;
+top: 81px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* “Aim for 30 minutes of moderate exercise every day to help regulate blood sugar levels.” */
+
+width: 234px;
+height: 84px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 16px;
+line-height: 130%;
+/* or 21px */
+letter-spacing: -0.01em;
+
+color: #595959;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36769 */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 14px 6px;
+gap: 10px;
+
+position: absolute;
+width: 283px;
+height: 113px;
+left: 681px;
+top: 81px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* “Add more fiber to your meals (e.g., whole grains, fruits, vegetables) to improve glucose control.” */
+
+width: 234px;
+height: 84px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 16px;
+line-height: 130%;
+/* or 21px */
+letter-spacing: -0.01em;
+
+color: #595959;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36770 */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 14px 6px;
+gap: 10px;
+
+position: absolute;
+width: 283px;
+height: 113px;
+left: 1002px;
+top: 81px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* “Practice mindfulness or meditation to reduce stress, which can impact blood sugar levels.” */
+
+width: 234px;
+height: 84px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 16px;
+line-height: 130%;
+/* or 21px */
+letter-spacing: -0.01em;
+
+color: #595959;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Component 8 */
+
+position: absolute;
+width: 268px;
+height: 7px;
+left: 385px;
+top: 224px;
+
+
+
+/* Rectangle 108 */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #FFFFFF;
+border-radius: 50px;
+
+
+/* Rectangle 109 */
+
+position: absolute;
+left: 0%;
+right: 72.01%;
+top: 0%;
+bottom: 0%;
+
+background: #00856F;
+border-radius: 50px;
+
+
+/* Exercise Plans for Diabetes */
+
+position: absolute;
+width: 322px;
+height: 31px;
+left: 392px;
+top: 490px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 130%;
+/* or 31px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Weekly Exercise Challenges */
+
+position: absolute;
+width: 338px;
+height: 31px;
+left: 356px;
+top: 846px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 130%;
+/* or 31px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Group 36724 */
+
+position: absolute;
+width: 207px;
+height: 240px;
+left: 847px;
+top: 550px;
+
+
+
+/* Rectangle 114 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 207px;
+height: 240px;
+left: 847px;
+top: 550px;
+
+background: #F7F9F9;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Rectangle 115 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 185.24px;
+height: 103.68px;
+left: 857.7px;
+top: 559.68px;
+
+background: url(carl-barcelo-nqUHQkuVj3c-unsplash.jpg);
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Yoga helps reduce stress and lower blood sugar, plus improves flexibility and mobility. */
+
+position: absolute;
+width: 171.42px;
+height: 23.5px;
+left: 866px;
+top: 714.77px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+
+color: #7D7D7D;
+
+
+
+/* Group 36721 */
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 863.23px;
+top: 754px;
+
+
+
+/* Frame 36771 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 7px 66px;
+gap: 10px;
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 863.23px;
+top: 754px;
+
+background: #00856F;
+border-radius: 2px;
+
+
+/* Start Now */
+
+width: 40px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Yoga or Stretching */
+
+position: absolute;
+width: 147px;
+height: 10px;
+left: 866px;
+top: 695px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 17px;
+
+color: #00453A;
+
+
+
+/* clock-circle_svgrepo.com */
+
+position: absolute;
+width: 11.06px;
+height: 11.06px;
+left: 984.88px;
+top: 675.8px;
+
+
+
+/* Group 36723 */
+
+position: absolute;
+width: 208px;
+height: 240px;
+left: 617px;
+top: 550px;
+
+
+
+/* Rectangle 111 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 208px;
+height: 240px;
+left: 617px;
+top: 550px;
+
+background: #F7F9F9;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Rectangle 112 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 185.24px;
+height: 103.68px;
+left: 628.46px;
+top: 559.68px;
+
+background: url(gabin-vallet-J154nEkpzlQ-unsplash.jpg);
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Strength training improves muscle mass, which helps your body use insulin more effectively. */
+
+position: absolute;
+width: 171.42px;
+height: 23.5px;
+left: 636.75px;
+top: 714.77px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+
+color: #7D7D7D;
+
+
+
+/* Group 36720 */
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 633.98px;
+top: 754px;
+
+
+
+/* Frame 36772 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 7px 66px;
+gap: 10px;
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 633.98px;
+top: 754px;
+
+background: #00856F;
+border-radius: 2px;
+
+
+/* Start Now */
+
+width: 40px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Strength Training */
+
+position: absolute;
+width: 153px;
+height: 14px;
+left: 637px;
+top: 695px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 17px;
+
+color: #00453A;
+
+
+
+/* clock-circle_svgrepo.com */
+
+position: absolute;
+width: 11.06px;
+height: 11.06px;
+left: 755.63px;
+top: 675.8px;
+
+
+
+/* Group 36722 */
+
+position: absolute;
+width: 207px;
+height: 240px;
+left: 387px;
+top: 550px;
+
+
+
+/* Rectangle 106 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 207px;
+height: 240px;
+left: 387px;
+top: 550px;
+
+background: #F7F9F9;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Rectangle 107 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 185.24px;
+height: 103.68px;
+left: 398.06px;
+top: 559.68px;
+
+background: url(jordan-mcqueen-956I1peiMi4-unsplash.jpg);
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Improves insulin sensitivity and lowers blood sugar after meals. */
+
+position: absolute;
+width: 171.42px;
+height: 23.5px;
+left: 406.36px;
+top: 714.77px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+
+color: #7D7D7D;
+
+
+
+/* Group 36719 */
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 403.59px;
+top: 754px;
+
+
+
+/* Frame 36773 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 7px 66px;
+gap: 10px;
+
+position: absolute;
+width: 174.18px;
+height: 23.5px;
+left: 403.59px;
+top: 754px;
+
+background: #00856F;
+border-radius: 2px;
+
+
+/* Start Now */
+
+width: 40px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Morning Walk */
+
+position: absolute;
+width: 130px;
+height: 14px;
+left: 406px;
+top: 695px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 17px;
+
+color: #00453A;
+
+
+
+/* clock-circle_svgrepo.com */
+
+position: absolute;
+width: 11.06px;
+height: 11.06px;
+left: 525.24px;
+top: 675.8px;
+
+
+
+/* Frame 36715 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 3px 4px;
+gap: 10px;
+
+position: absolute;
+width: 64px;
+height: 16px;
+left: 406px;
+top: 673px;
+
+background: #DCE9E2;
+border-radius: 2px;
+
+
+/* 10–15 minutes */
+
+width: 56px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36767 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 3px 4px;
+gap: 10px;
+
+position: absolute;
+width: 64px;
+height: 16px;
+left: 637px;
+top: 673px;
+
+background: #DCE9E2;
+border-radius: 2px;
+
+
+/* 10–15 minutes */
+
+width: 56px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36768 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 3px 4px;
+gap: 10px;
+
+position: absolute;
+width: 64px;
+height: 16px;
+left: 868px;
+top: 673px;
+
+background: #DCE9E2;
+border-radius: 2px;
+
+
+/* 10–15 minutes */
+
+width: 56px;
+height: 10px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36725 */
+
+position: absolute;
+width: 207.36px;
+height: 240px;
+left: 1092px;
+top: 550px;
+
+
+
+/* Rectangle 114 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 207.36px;
+height: 240px;
+left: 1092px;
+top: 550px;
+
+background: #F7F9F9;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Group 36721 */
+
+position: absolute;
+width: 41.47px;
+height: 10.18px;
+left: 1174.95px;
+top: 755.09px;
+
+
+
+/* Start Now */
+
+position: absolute;
+width: 41.47px;
+height: 10.18px;
+left: 1174.95px;
+top: 755.09px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 6px;
+line-height: 7px;
+
+color: #FFFFFF;
+
+
+
+/* clock-circle_svgrepo.com */
+
+position: absolute;
+width: 11.06px;
+height: 11.64px;
+left: 1230.24px;
+top: 682.36px;
+
+
+
+/* Add your Own Exercise */
+
+position: absolute;
+width: 139px;
+height: 44px;
+left: 1126px;
+top: 689px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* or 143% */
+text-align: center;
+
+color: #00453A;
+
+
+
+/* Rectangle 108 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 335px;
+height: 122px;
+left: 344px;
+top: 895px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Rectangle 118 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 334px;
+height: 122px;
+left: 696px;
+top: 895px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Rectangle 119 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 335px;
+height: 122px;
+left: 1047px;
+top: 895px;
+
+background: #FFFFFF;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Week 1 : Step It Up! */
+
+position: absolute;
+width: 257px;
+height: 20px;
+left: 363px;
+top: 909px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* Week 1 : Step It Up! */
+
+position: absolute;
+width: 242px;
+height: 20px;
+left: 715px;
+top: 909px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* Week 1 : Step It Up! */
+
+position: absolute;
+width: 247px;
+height: 20px;
+left: 1066px;
+top: 909px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* Goal: Complete 10,000 steps every day for a week. */
+
+position: absolute;
+width: 285px;
+height: 30px;
+left: 363px;
+top: 934px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 15px;
+
+color: #00856F;
+
+
+
+/* Goal: Complete 10,000 steps every day for a week. */
+
+position: absolute;
+width: 285px;
+height: 30px;
+left: 715px;
+top: 934px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 15px;
+
+color: #00856F;
+
+
+
+/* Goal: Complete 10,000 steps every day for a week. */
+
+position: absolute;
+width: 286px;
+height: 30px;
+left: 1066px;
+top: 934px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 12px;
+line-height: 15px;
+
+color: #00856F;
+
+
+
+/* Group 36726 */
+
+position: absolute;
+width: 325.94px;
+height: 48px;
+left: 361.06px;
+top: 959px;
+
+
+
+/* Goal: 70,000 steps. Start Now! */
+
+position: absolute;
+width: 156px;
+height: 10px;
+left: 369px;
+top: 997px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Rectangle 78 */
+
+position: absolute;
+width: 304.29px;
+height: 18px;
+left: 361.06px;
+top: 972px;
+
+background: #F7F9F9;
+border-radius: 9px;
+
+
+/* Rectangle 79 */
+
+position: absolute;
+width: 19.91px;
+height: 18px;
+left: 361.06px;
+top: 972px;
+
+background: #FFE0B5;
+border-radius: 9px;
+
+
+/* 0 */
+
+position: absolute;
+width: 5.69px;
+height: 10px;
+left: 368.65px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* 70000 */
+
+position: absolute;
+width: 72px;
+height: 10px;
+left: 615px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Weekly Goal */
+
+position: absolute;
+width: 78px;
+height: 10px;
+left: 609px;
+top: 959px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Group 36727 */
+
+position: absolute;
+width: 330.25px;
+height: 48px;
+left: 712.75px;
+top: 959px;
+
+
+
+/* Goal: 70,000 steps. Start Now! */
+
+position: absolute;
+width: 176px;
+height: 10px;
+left: 720px;
+top: 997px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Rectangle 78 */
+
+position: absolute;
+width: 304.29px;
+height: 18px;
+left: 712.75px;
+top: 972px;
+
+background: #F7F9F9;
+border-radius: 9px;
+
+
+/* Rectangle 79 */
+
+position: absolute;
+width: 19.91px;
+height: 18px;
+left: 712.75px;
+top: 972px;
+
+background: #FFE0B5;
+border-radius: 9px;
+
+
+/* 0 */
+
+position: absolute;
+width: 5.69px;
+height: 10px;
+left: 720.33px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* 70000 */
+
+position: absolute;
+width: 50px;
+height: 10px;
+left: 967px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Weekly Goal */
+
+position: absolute;
+width: 82px;
+height: 10px;
+left: 961px;
+top: 959px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Group 36728 */
+
+position: absolute;
+width: 317.56px;
+height: 48px;
+left: 1064.44px;
+top: 959px;
+
+
+
+/* Goal: 70,000 steps. Start Now! */
+
+position: absolute;
+width: 182px;
+height: 10px;
+left: 1072px;
+top: 997px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Rectangle 78 */
+
+position: absolute;
+width: 304.29px;
+height: 18px;
+left: 1064.44px;
+top: 972px;
+
+background: #F7F9F9;
+border-radius: 9px;
+
+
+/* Rectangle 79 */
+
+position: absolute;
+width: 19.91px;
+height: 18px;
+left: 1064.44px;
+top: 972px;
+
+background: #FFE0B5;
+border-radius: 9px;
+
+
+/* 0 */
+
+position: absolute;
+width: 5.69px;
+height: 10px;
+left: 1072.02px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* 70000 */
+
+position: absolute;
+width: 51px;
+height: 10px;
+left: 1318px;
+top: 976px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Weekly Goal */
+
+position: absolute;
+width: 69px;
+height: 10px;
+left: 1313px;
+top: 959px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 8px;
+line-height: 10px;
+/* identical to box height */
+
+color: #2C2C2C;
+
+
+
+/* Rectangle 120 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 334px;
+height: 122px;
+left: 697px;
+top: 895px;
+
+background: #FFFFFF;
+opacity: 0.74;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 10px;
+
+
+/* Rectangle 121 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 334px;
+height: 122px;
+left: 1048px;
+top: 895px;
+
+background: #FFFFFF;
+opacity: 0.74;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Component 9 */
+
+position: absolute;
+width: 53.75px;
+height: 53.75px;
+left: 1169px;
+top: 619.12px;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 32.56%;
+right: 32.56%;
+top: 32.56%;
+bottom: 32.56%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: #00856F;
+
+
+/* Rectangle 115 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 207.36px;
+height: 240px;
+left: 1092px;
+top: 550px;
+
+background: #F7F9F9;
+opacity: 0.81;
+border: 0.5px solid rgba(0, 133, 111, 0.15);
+border-radius: 5px;
+
+
+/* Vector */
+
+position: absolute;
+left: 58.12%;
+right: 39.65%;
+top: 90.33%;
+bottom: 5.47%;
+
+background: rgba(0, 133, 111, 0.5);
+
+
+/* Vector */
+
+position: absolute;
+left: 83.82%;
+right: 13.96%;
+top: 90.33%;
+bottom: 5.47%;
+
+background: rgba(0, 133, 111, 0.5);
+
+
+/* Vector */
+
+position: absolute;
+left: 81.94%;
+right: 15.83%;
+top: 62.5%;
+bottom: 33.3%;
+
+background: rgba(0, 133, 111, 0.5);
+
+
+/* Subscribe to Premium to access monthly challenges */
+
+position: absolute;
+width: 146px;
+height: 22px;
+left: 1150px;
+top: 975px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 10px;
+line-height: 11px;
+/* or 110% */
+text-align: center;
+
+color: #00453A;
+
+
+
+/* Subscribe to Premium to access monthly challenges */
+
+position: absolute;
+width: 146px;
+height: 22px;
+left: 780px;
+top: 975px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 10px;
+line-height: 11px;
+/* or 110% */
+text-align: center;
+
+color: #00453A;
+
+
+
+/* Subscribe to Premium to add your own exercise */
+
+position: absolute;
+width: 123px;
+height: 22px;
+left: 1135px;
+top: 690px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 10px;
+line-height: 11px;
+/* or 110% */
+text-align: center;
+
+color: #00453A;
+
+
