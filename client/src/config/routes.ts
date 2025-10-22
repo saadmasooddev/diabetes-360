@@ -15,7 +15,7 @@ export const ROUTES = {
   
   // Feature Routes
   METRICS_HISTORY: "/metrics",
-  FOOD_SCANNER: "/food-scanner",
+  FOOD_SCANNER: "/dashboard/food-scanner",
   TIPS_EXERCISES: "/tips",
   MEDICAL_RECORDS: "/records",
   DIABOT: "/diabot",
@@ -25,7 +25,6 @@ export const ROUTES = {
   // Other Routes
   BLOGS: "/blogs",
   SETTINGS: "/settings",
-  PROFILE_DATA: "/profile-data",
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
