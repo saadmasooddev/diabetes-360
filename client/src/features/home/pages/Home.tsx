@@ -309,18 +309,19 @@ export function Home() {
             <Card
               className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
               style={{ 
+                width: '450px',
+                height: '147px',
+                background: '#DCE9E2',
                 borderRadius: '10px',
-                border: '3px solid #00BCD4',
-                background: '#FFFFFF',
-                height: '172px'
+                border: 'none'
               }}
               onClick={() => setLocation(ROUTES.DIABOT)}
               data-testid="card-diabot"
             >
               <div className="relative flex h-full items-center gap-0">
                 <div 
-                  className="flex h-full flex-1 flex-col justify-center px-6 py-4"
-                  style={{ background: '#E0F2F1' }}
+                  className="flex h-full flex-1 flex-col justify-center px-6 py-3"
+                  style={{ background: '#DCE9E2' }}
                 >
                   <h3 
                     className="mb-1 text-xl font-bold"
@@ -329,7 +330,7 @@ export function Home() {
                     Meet DiaBot
                   </h3>
                   <p 
-                    className="mb-3 text-sm"
+                    className="mb-2 text-sm"
                     style={{ color: '#00856F', fontSize: '13px', lineHeight: '1.3', fontWeight: 500 }}
                   >
                     Your Friendly AI Health Companion
@@ -339,7 +340,7 @@ export function Home() {
                       background: '#00856F',
                       color: '#FFFFFF',
                       borderRadius: '5px',
-                      padding: '8px 20px',
+                      padding: '6px 18px',
                       fontSize: '12px',
                       fontWeight: 700,
                       width: 'fit-content',
@@ -355,13 +356,13 @@ export function Home() {
                   </Button>
                 </div>
                 <div 
-                  className="flex h-full items-center justify-center px-6"
-                  style={{ background: '#E0F2F1' }}
+                  className="flex h-full items-center justify-center px-4"
+                  style={{ background: '#DCE9E2' }}
                 >
                   <img
                     src={diaBotImg}
                     alt="DiaBot AI"
-                    className="h-32 w-auto object-contain"
+                    className="h-28 w-auto object-contain"
                     style={{
                       filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.1))'
                     }}
@@ -374,18 +375,19 @@ export function Home() {
             <Card
               className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
               style={{ 
+                width: '450px',
+                height: '147px',
+                background: '#DCE9E2',
                 borderRadius: '10px',
-                border: '3px solid #00BCD4',
-                background: '#FFFFFF',
-                height: '172px'
+                border: 'none'
               }}
               onClick={() => setLocation(ROUTES.FOOD_SCANNER)}
               data-testid="card-food-scanner"
             >
               <div className="relative flex h-full items-center gap-0">
                 <div 
-                  className="flex h-full flex-1 flex-col justify-center px-6 py-4"
-                  style={{ background: '#E0F2F1' }}
+                  className="flex h-full flex-1 flex-col justify-center px-6 py-3"
+                  style={{ background: '#DCE9E2' }}
                 >
                   <h3 
                     className="mb-1 text-lg font-bold leading-tight"
@@ -402,12 +404,12 @@ export function Home() {
                 </div>
                 <div 
                   className="flex h-full items-center justify-center px-4"
-                  style={{ background: '#E0F2F1' }}
+                  style={{ background: '#DCE9E2' }}
                 >
                   <img
                     src={foodScannerImg}
                     alt="Food Scanner App"
-                    className="h-40 w-auto object-contain"
+                    className="h-32 w-auto object-contain"
                     style={{
                       filter: 'drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.1))'
                     }}
