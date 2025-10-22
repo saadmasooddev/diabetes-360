@@ -1,0 +1,3014 @@
+/* AI Bot(Desktop) */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+overflow-y: scroll;
+
+background: #F7F9F9;
+
+
+/* Sidebar - Open */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 24px;
+gap: 20px;
+
+position: absolute;
+width: 295px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border-right: 1px solid rgba(0, 0, 0, 0.1);
+border-radius: 12px;
+
+
+/* Profil */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 247px;
+height: 44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Avatar */
+
+width: 44px;
+height: 44px;
+
+background: url(.png);
+border-radius: 36.2214px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Content */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+width: 191px;
+height: 36px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* OVERLINE */
+
+width: 191px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Title */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+width: 247px;
+height: 420px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle 266 */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: -1px;
+top: 376px;
+
+background: #F7F9F9;
+border-radius: 5px;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+position: absolute;
+width: 247px;
+height: 12px;
+left: 0px;
+top: 0px;
+
+
+
+/* OVERLINE */
+
+width: 28px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 23px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 5%;
+right: 15%;
+top: 10%;
+bottom: 10%;
+
+border: 1.5px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 30%;
+right: 40%;
+top: 75%;
+bottom: 25%;
+
+border: 1.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 74px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 0%;
+right: 20%;
+top: calc(50% - 16px/2 - 1px);
+
+background: #000000;
+border: 2.4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 18px 10px 12px;
+gap: 15px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 125px;
+
+border-radius: 8px;
+
+
+/* Icon / User 1 */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36734 */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* chat-square-check_svgrepo.com */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 17px;
+left: 5%;
+right: 10%;
+top: calc(50% - 17px/2 + 0.5px);
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 4px;
+left: 35%;
+right: 35%;
+top: calc(50% - 4px/2);
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 136px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 176px;
+
+border-radius: 8px;
+
+
+/* Icon / Page */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 18px;
+left: 20%;
+right: 0%;
+top: calc(50% - 18px/2);
+
+background: #000000;
+border: 4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 227px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36733 */
+
+position: absolute;
+height: 16px;
+left: 10%;
+right: 9.99%;
+top: 2px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 1.6px;
+left: 26%;
+right: 26%;
+top: calc(50% - 1.6px/2 + 0px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 278px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36732 */
+
+position: absolute;
+height: 19.87px;
+left: 20%;
+right: 0.01%;
+top: 1px;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 278px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36732 */
+
+position: absolute;
+height: 19.87px;
+left: 20%;
+right: 0.01%;
+top: 1px;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.3%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 329px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 5%;
+right: 20%;
+top: calc(50% - 16px/2);
+
+background: #1C274C;
+border: 2.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 380px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+position: absolute;
+left: 50%;
+right: 50%;
+top: 27.78%;
+bottom: 54.44%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 63.33%;
+right: 27.78%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 41.11%;
+right: 41.11%;
+top: 10%;
+bottom: 72.22%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 27.77%;
+right: 63.34%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 10%;
+right: 10%;
+top: 45.56%;
+bottom: 10%;
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 320px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 1;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+width: 247px;
+height: 12px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* OVERLINE */
+
+width: 53px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Settings */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 163px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 20.84%;
+right: 20.83%;
+top: 33.33%;
+bottom: 33.33%;
+
+background: #00856F;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 88px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 5;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Help-circle */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Log-out */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 16.67%;
+right: 16.66%;
+top: 8.33%;
+bottom: 8.33%;
+
+background: #D55F5A;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #D55F5A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Rectangle 255 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 1019px;
+height: 69px;
+left: calc(50% - 1019px/2 + 146.5px);
+top: 109px;
+
+background: #FFFFFF;
+border: 1px solid #00856F;
+border-radius: 40.5px;
+
+
+/* DiaBot */
+
+position: absolute;
+width: 1213px;
+height: 31px;
+left: 429px;
+top: 127px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 130%;
+/* or 31px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Online */
+
+position: absolute;
+width: 125px;
+height: 31px;
+left: 1193px;
+top: 128px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 24px;
+line-height: 130%;
+/* or 31px */
+letter-spacing: -0.01em;
+
+color: #00856F;
+
+
+
+/* Ellipse 215 */
+
+position: absolute;
+width: 15px;
+height: 15px;
+left: 1169px;
+top: 137px;
+
+background: #00856F;
+
+
+/* Message bubble */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 479px;
+height: 79px;
+right: 64px;
+top: 254px;
+
+
+
+/* Bubble right */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 4px 0px 4px 8px;
+
+width: 160px;
+height: 39px;
+
+background: #00856F;
+border-radius: 6px 0px 0px 6px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 152px;
+height: 31px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 152px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+width: 77px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* message body */
+
+width: 77px;
+height: 20px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height, or 125% */
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* spacer */
+
+width: 77px;
+height: 1px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Time/read receipt */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame 2886 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* 11:31 AM */
+
+width: 47px;
+height: 14px;
+
+font-family: 'Eloquia Text';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 14px;
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 2882 */
+
+width: 16px;
+height: 8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* read receipt */
+
+position: absolute;
+left: 0%;
+right: -0.01%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* check */
+
+position: absolute;
+left: 0%;
+right: 32.5%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* check */
+
+position: absolute;
+left: 36.32%;
+right: 1.59%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* Bubble left */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-start;
+padding: 0px;
+
+width: 15px;
+height: 79px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Bubble tip */
+
+width: 15px;
+height: 12px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* top-vector-tip */
+
+position: absolute;
+width: 8.72px;
+height: 11.12px;
+left: 5.78px;
+top: 0px;
+
+background: #00856F;
+
+
+/* top-rectangle */
+
+position: absolute;
+width: 6px;
+height: 12px;
+left: 0px;
+top: 0px;
+
+background: #00856F;
+
+
+/* bottom-curve-rectangle */
+
+width: 6px;
+height: 60px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* bottom-curve-vector */
+
+width: 6px;
+height: 7px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Message bubble */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 758px;
+height: 80px;
+right: 76px;
+top: 323px;
+
+
+
+/* Bubble right */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 4px 8px;
+
+width: 300px;
+height: 39px;
+
+background: #00856F;
+border-radius: 6px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 284px;
+height: 31px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 284px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+width: 209px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* message body */
+
+width: 209px;
+height: 20px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height, or 125% */
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* spacer */
+
+width: 209px;
+height: 1px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Time/read receipt */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame 2886 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* 11:31 AM */
+
+width: 47px;
+height: 14px;
+
+font-family: 'Eloquia Text';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 14px;
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 2882 */
+
+width: 16px;
+height: 8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* read receipt */
+
+position: absolute;
+left: 0%;
+right: -0.01%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* check */
+
+position: absolute;
+left: 0%;
+right: 32.5%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* check */
+
+position: absolute;
+left: 36.32%;
+right: 1.59%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* Message bubble */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: flex-end;
+align-items: center;
+padding: 0px;
+
+position: absolute;
+width: 758px;
+height: 120px;
+right: 92px;
+top: 566px;
+
+
+
+/* Bubble right */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 4px 8px;
+
+width: 313px;
+height: 59px;
+
+background: #00856F;
+border-radius: 6px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 297px;
+height: 51px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 297px;
+height: 51px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Message */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+width: 222px;
+height: 51px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* message body */
+
+width: 222px;
+height: 40px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 20px;
+/* or 125% */
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* spacer */
+
+width: 222px;
+height: 1px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Time/read receipt */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 51px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Frame 2886 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 67px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* 11:31 AM */
+
+width: 47px;
+height: 14px;
+
+font-family: 'Eloquia Text';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 14px;
+display: flex;
+align-items: center;
+
+/* White/white */
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 2882 */
+
+width: 16px;
+height: 8px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* read receipt */
+
+position: absolute;
+left: 0%;
+right: -0.01%;
+top: 0%;
+bottom: 0%;
+
+
+
+/* check */
+
+position: absolute;
+left: 0%;
+right: 32.5%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* check */
+
+position: absolute;
+left: 36.32%;
+right: 1.59%;
+top: 0%;
+bottom: 4.79%;
+
+/* Green/green.3 */
+border: 1px solid #81E299;
+transform: matrix(1, -0.04, 0.03, 1, 0, 0);
+
+
+/* Message bubble */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+position: absolute;
+width: 760px;
+height: 124px;
+left: 393px;
+top: 498px;
+
+
+
+/* avatar-with-online-indicator */
+
+width: 32px;
+height: 32px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* avatar
+
+Circle - 16px
+(use for human entities)
+*/
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 0px;
+top: 0px;
+
+
+
+/* __avatar_url */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 0px;
+top: 0px;
+
+
+
+/* __avatar_url */
+
+box-sizing: border-box;
+
+position: absolute;
+left: 0%;
+right: 0%;
+top: 0%;
+bottom: 0%;
+
+background: url(.jpg);
+/* Border/blackfade10 */
+border: 2px solid rgba(30, 30, 30, 0.1);
+border-radius: 200px;
+
+
+/* ToyFaces_Colored_BG_29 1 */
+
+position: absolute;
+width: 1px;
+height: 1px;
+left: 16px;
+top: 13px;
+
+background: url(.jpg);
+
+
+/* Online indicator */
+
+box-sizing: border-box;
+
+position: absolute;
+visibility: hidden;
+width: 10px;
+height: 10px;
+left: 22.12px;
+top: 22px;
+
+/* Green/green.5 */
+background: #34C759;
+/* White/white */
+border: 1.25px solid #FFFFFF;
+
+
+/* Message bubble */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+
+width: 360px;
+height: 61px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Bubble left */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-end;
+padding: 0px;
+
+width: 15px;
+height: 61px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Bubble tip */
+
+width: 15px;
+height: 12px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* top-vector-tip */
+
+position: absolute;
+width: 8.72px;
+height: 11.12px;
+left: 0.5px;
+top: 0px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+
+/* top-rectangle */
+
+position: absolute;
+width: 6px;
+height: 12px;
+left: 9px;
+top: 0px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+
+/* bottom-curve-rectangle */
+
+width: 6px;
+height: 42px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* bottom-curve-vector */
+
+width: 6px;
+height: 7px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Bubble right */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 4px 8px 4px 0px;
+
+width: 345px;
+height: 61px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+border-radius: 0px 6px 6px 0px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Message frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: flex-end;
+padding: 0px;
+gap: 4px;
+
+width: 337px;
+height: 53px;
+
+transform: matrix(-1, 0, 0, 1, 0, 0);
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Sender */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 10px;
+
+width: 38px;
+height: 18px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* name */
+
+width: 38px;
+height: 18px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 18px;
+/* identical to box height, or 112% */
+display: flex;
+align-items: center;
+
+/* Text/grayDark */
+color: #2C2C2E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* role */
+
+display: none;
+width: 69px;
+height: 15px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 15px;
+/* identical to box height */
+display: flex;
+align-items: center;
+
+/* Text/gray */
+color: #666668;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Body */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 337px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Message */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+width: 279px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* message body */
+
+width: 279px;
+height: 20px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 20px;
+/* identical to box height, or 125% */
+display: flex;
+align-items: center;
+
+/* Text/grayDark */
+color: #2C2C2E;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* spacer */
+
+width: 279px;
+height: 1px;
+
+/* Gray/gray.1 */
+background: #F2F2F7;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Time */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: flex-end;
+align-items: flex-start;
+padding: 0px;
+gap: 24px;
+
+width: 50px;
+height: 31px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* 11:35 AM */
+
+width: 50px;
+height: 14px;
+
+font-family: 'Eloquia Text';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 14px;
+display: flex;
+align-items: center;
+
+/* Text/gray */
+color: #666668;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36779 */
+
+position: absolute;
+width: 988px;
+height: 61px;
+left: 357px;
+top: 928px;
+
+background: #FFFFFF;
+border-radius: 30.5px;
+
+
+/* Icon */
+
+position: absolute;
+width: 24px;
+height: 24px;
+left: 33px;
+top: 19px;
+
+background: #00856F;
+
+
+/* Start typing... */
+
+position: absolute;
+width: 89px;
+height: 20px;
+left: 76px;
+top: 20.5px;
+
+font-family: 'Open Sauce Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+display: flex;
+align-items: center;
+
+/* Text/gray */
+color: #666668;
+
+
+
+/* Icon */
+
+position: absolute;
+width: 21px;
+height: 22px;
+left: 876px;
+top: 23px;
+
+background: #00856F;
+
+
+/* Icon */
+
+position: absolute;
+width: 21px;
+height: 20px;
+left: 921.1px;
+top: 23px;
+
+background: #00856F;
+
