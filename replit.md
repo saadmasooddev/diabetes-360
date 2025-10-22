@@ -20,9 +20,12 @@ The application features authentication pages (Login, Sign Up, Forgot Password) 
 - **Home**: Marketing landing page with hero section, stats, and feature highlights
 - **Dashboard**: Main health tracking dashboard with metric cards (glucose, steps, water intake), trend arrows, and interactive charts
 - **Health Assessment** (`/dashboard/health-assessment`): Comprehensive health analysis page with circular gauge charts showing daily/weekly/monthly averages for glucose, hydration, and activity metrics
+- **Instant Consultation** (`/dashboard/consultation`): Doctor consultation page with grid layout displaying doctor cards showing availability status, specialty, experience, ratings, and consultation buttons
 - **Metrics History**: Historical health data visualization with time range filtering
 
-Additional placeholder pages exist for future features like Instant Consultation, Food Scanner, and an AI chatbot (DiaBot). A feature-based folder structure organizes code for scalability.
+Additional placeholder pages exist for future features like Food Scanner and an AI chatbot (DiaBot). A feature-based folder structure organizes code for scalability.
+
+Mock data is centralized in the `/mocks` folder following React development best practices.
 
 ## Backend Architecture
 
@@ -34,14 +37,22 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 
 ## Recent Updates (October 22, 2025)
 
+### Instant Consultation Page
+- Created Instant Consultation page at `/dashboard/consultation` following Figma design specifications
+- Implemented DoctorCard component with online/offline status indicators, profile images, specialty information, experience, and 5-star ratings
+- 2-column responsive grid layout (desktop) that adapts to single column on mobile
+- Mock doctor data centralized in `/mocks/doctors.ts` following React development guidelines
+- All interactive elements have data-testid attributes for comprehensive testing
+- Feature-based organization: page located in `features/dashboard/pages/InstantConsultation.tsx`
+
 ### Health Assessment Page
 - Created new Health Assessment page at `/dashboard/health-assessment` accessible from the main dashboard
 - Implemented custom circular gauge charts using SVG for visual health metric displays
 - Shows glucose, hydration, and activity analysis with daily, weekly, and monthly averages
 - All gauges have unique data-testid attributes for testing (e.g., `gauge-glucose-daily-average`, `gauge-hydration-weekly-average`)
-- Responsive layout using Tailwind's `lg:ml-[295px]` to properly center content on all screen sizes
+- Responsive flexbox layout with proper centering on all screen sizes
 - Updated Sidebar to show Health Assessment as an expandable sub-item under My Dashboard
-- Integrated with existing TanStack Query for real-time data fetching from the backend
+- Fixed gauge overflow issues by adjusting SVG radius and stroke width
 
 ### Dashboard Improvements
 - Fixed dashboard centering by removing hardcoded margins and using flex utilities
