@@ -64,16 +64,15 @@ export function ProfileData() {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
-      {/* Left Sidebar */}
+      {/* Left Sidebar - Hidden on mobile, visible on large screens */}
       <div
-        className="w-[309px] flex items-center justify-center px-8"
+        className="hidden lg:flex w-[309px] items-center justify-center px-8"
         style={{ background: '#00856F' }}
       >
         <h1
-          className="text-white font-bold leading-[130%] tracking-[-0.01em]"
+          className="text-white font-bold leading-[130%] tracking-[-0.01em] text-3xl lg:text-[48px]"
           style={{
             fontFamily: "'Open Sauce Sans', sans-serif",
-            fontSize: '48px',
           }}
           data-testid="text-sidebar-heading"
         >
@@ -82,14 +81,13 @@ export function ProfileData() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 px-16 py-12">
+      <main className="flex-1 px-4 sm:px-8 lg:px-16 py-8 lg:py-12">
         <div className="max-w-[762px] mx-auto">
           {/* Page Title */}
           <h1
-            className="font-bold leading-[130%] tracking-[-0.01em] mb-12"
+            className="font-bold leading-[130%] tracking-[-0.01em] mb-8 lg:mb-12 text-3xl sm:text-4xl lg:text-[48px]"
             style={{
               fontFamily: "'Open Sauce Sans', sans-serif",
-              fontSize: '48px',
               color: '#00856F',
             }}
             data-testid="text-page-heading"
@@ -98,14 +96,13 @@ export function ProfileData() {
           </h1>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 lg:space-y-12">
               {/* Personal Details Section */}
               <div>
                 <h2
-                  className="font-bold leading-[130%] tracking-[-0.01em] mb-8"
+                  className="font-bold leading-[130%] tracking-[-0.01em] mb-6 lg:mb-8 text-2xl sm:text-3xl lg:text-[32px]"
                   style={{
                     fontFamily: "'Open Sauce Sans', sans-serif",
-                    fontSize: '32px',
                     color: '#00856F',
                   }}
                   data-testid="text-personal-details"
@@ -115,7 +112,7 @@ export function ProfileData() {
 
                 <div className="space-y-6">
                   {/* First Name and Last Name Row */}
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="firstName"
@@ -168,7 +165,7 @@ export function ProfileData() {
                   </div>
 
                   {/* Gender and Date of Birth Row */}
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="gender"
@@ -319,10 +316,9 @@ export function ProfileData() {
               {/* Diagnosis Section */}
               <div>
                 <h2
-                  className="font-bold leading-[130%] tracking-[-0.01em] mb-8"
+                  className="font-bold leading-[130%] tracking-[-0.01em] mb-6 lg:mb-8 text-2xl sm:text-3xl lg:text-[32px]"
                   style={{
                     fontFamily: "'Open Sauce Sans', sans-serif",
-                    fontSize: '32px',
                     color: '#00856F',
                   }}
                   data-testid="text-diagnosis"
@@ -332,7 +328,7 @@ export function ProfileData() {
 
                 <div className="space-y-6">
                   {/* Diagnosis Date Row */}
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <FormLabel
                         className="text-[20px] font-normal block mb-2"
@@ -520,7 +516,7 @@ export function ProfileData() {
                   </div>
 
                   {/* Type of Diabetes */}
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
                       name="diabetesType"
