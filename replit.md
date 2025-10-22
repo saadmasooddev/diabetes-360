@@ -102,7 +102,7 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 - Scanning animation implemented with `useEffect` hook:
   - Teal line (#00856F) moves up and down with box-shadow glow effect
   - Animation runs for 3 seconds before transitioning to results
-  - Uses interval to update position every 20ms
+  - Ultra-smooth animation: updates every 10ms with 0.8% increments and CSS transitions
 - Mock nutrition data centralized in `/mocks/scanResults.ts` with TypeScript interfaces
 - **Results screen layout (2-column grid)**:
   - **Left Column**:

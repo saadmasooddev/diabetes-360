@@ -105,14 +105,14 @@ export function FoodScanner() {
     setScanLinePosition(0);
   };
 
-  // Scanning animation effect
+  // Scanning animation effect - Smoother version
   useEffect(() => {
     if (currentStep === 'scanning') {
       let position = 0;
       let direction = 1;
       
       const interval = setInterval(() => {
-        position += direction * 2;
+        position += direction * 0.8; // Smaller increment for smoother movement
         
         if (position >= 100) {
           direction = -1;
@@ -123,7 +123,7 @@ export function FoodScanner() {
         }
         
         setScanLinePosition(position);
-      }, 20);
+      }, 10); // More frequent updates (10ms instead of 20ms)
 
       // Complete scanning after 3 seconds
       const timeout = setTimeout(() => {
@@ -448,11 +448,12 @@ export function FoodScanner() {
                     {/* Scanning Line Animation */}
                     {currentStep === 'scanning' && (
                       <div
-                        className="absolute left-0 right-0 h-1 transition-all"
+                        className="absolute left-0 right-0 h-1"
                         style={{
                           top: `${scanLinePosition}%`,
                           background: '#00856F',
                           boxShadow: '0 0 10px rgba(0, 133, 111, 0.6)',
+                          transition: 'top 0.05s linear',
                         }}
                         data-testid="scan-line"
                       />
