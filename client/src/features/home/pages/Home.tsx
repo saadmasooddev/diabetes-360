@@ -1,41 +1,68 @@
-import { ArrowRight, Users, Dumbbell, BookOpen, Bot, ScanLine } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ROUTES } from '@/config/routes';
 import { Sidebar } from '@/components/layout/Sidebar';
-import heroImage from '@assets/Main Homepage (Desktop)_1761070506278.png';
+import diabetesTestingImg from '@assets/5aaf99d1f9b3c79c814d4956017fda1dfea783e6_1761129643123.jpg';
+import doctorImg from '@assets/f74b7c32a8d920183ab34367c07cd6efa5afb4cc_1761129643123.png';
+import exerciseImg from '@assets/998dd4468701cfe07ad82ef7315ec5abee1cf1c6_1761129643123.jpg';
+import healthyFoodImg from '@assets/55ff7c0e103d474de22c65ec97f5ff150c7ef2af_1761129643122.jpg';
+import diaBotImg from '@assets/ChatGPT Image Jul 28, 2025, 11_00_42 PM 1_1761129643124.png';
+import foodScannerImg from '@assets/750x750bb 2_1761129643123.png';
 
 export function Home() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
       <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
-        <div className="mx-auto max-w-6xl px-6 py-8">
+        <div className="mx-auto max-w-[1135px] px-4 py-8 lg:px-10 lg:py-10">
+          
           {/* Hero Section */}
-          <Card className="mb-8 overflow-hidden border-none shadow-lg">
-            <div className="grid gap-0 md:grid-cols-2">
-              <div className="relative h-64 md:h-auto">
+          <Card 
+            className="mb-8 overflow-hidden border-none shadow-lg"
+            style={{ background: '#DCE9E2', borderRadius: '5px' }}
+            data-testid="card-hero"
+          >
+            <div className="grid gap-0 md:grid-cols-[503px_1fr]">
+              <div className="relative h-64 md:h-60" style={{ background: '#00453A' }}>
                 <img
-                  src={heroImage}
+                  src={diabetesTestingImg}
                   alt="Diabetes care"
                   className="h-full w-full object-cover"
+                  style={{ borderRadius: '5px 0 0 5px' }}
                   data-testid="img-hero"
                 />
               </div>
-              <div className="flex flex-col justify-center bg-gradient-to-br from-teal-50 to-teal-100 p-8 dark:from-teal-900/30 dark:to-teal-800/30">
-                <p className="mb-2 text-sm font-medium text-teal-700 dark:text-teal-300" data-testid="text-hero-subtitle">
+              <div className="flex flex-col justify-center px-8 py-8 md:px-12">
+                <p 
+                  className="mb-3 text-base font-bold leading-tight"
+                  style={{ color: '#00856F' }}
+                  data-testid="text-hero-subtitle"
+                >
                   Going through the Stress of Diabetes.
                 </p>
-                <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white lg:text-4xl" data-testid="text-hero-title">
-                  Try our Free <span className="text-teal-600 dark:text-teal-400">20 Minute</span> Consultation
+                <h1 
+                  className="mb-6 text-3xl font-extrabold leading-tight md:text-[32px]"
+                  style={{ color: '#00453A' }}
+                  data-testid="text-hero-title"
+                >
+                  Try our Free 20 Minute Consultation
                 </h1>
                 <Button
-                  className="w-full bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 md:w-auto"
-                  size="lg"
+                  className="w-full md:w-auto"
+                  style={{ 
+                    background: '#00856F', 
+                    color: '#FFFFFF',
+                    borderRadius: '5px',
+                    padding: '9px 48px',
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    height: '48px'
+                  }}
                   onClick={() => setLocation(ROUTES.INSTANT_CONSULTATION)}
                   data-testid="button-consult-now"
                 >
@@ -48,52 +75,103 @@ export function Home() {
 
           {/* Clinically Backed Outcomes */}
           <div className="mb-8">
-            <h2 className="mb-6 text-center text-2xl font-bold text-gray-900 dark:text-white lg:text-3xl" data-testid="text-outcomes-title">
-              Clinically Backed Outcomes with <span className="text-teal-600 dark:text-teal-400">HealthSync</span>
+            <h2 
+              className="mb-8 text-center text-3xl font-bold leading-10"
+              style={{ color: '#212529' }}
+              data-testid="text-outcomes-title"
+            >
+              Clinically Backed Outcomes with <span style={{ color: '#00856F' }}>HealthSync</span>
             </h2>
             
-            <div className="mb-6 grid gap-4 md:grid-cols-3">
-              <Card className="border-2 border-gray-200 transition-shadow hover:shadow-lg dark:border-gray-700">
-                <CardContent className="p-6 text-center">
-                  <p className="mb-2 text-4xl font-bold text-teal-600 dark:text-teal-400" data-testid="text-stat-glucose">
-                    12%
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Reduction in Average<br />
-                    <span className="font-semibold">Blood Glucose</span> in 3 Months
-                  </p>
-                </CardContent>
+            <div className="mb-8 grid gap-6 md:grid-cols-3">
+              {/* Stat Card 1 */}
+              <Card 
+                className="p-5 text-center"
+                style={{ 
+                  background: '#FFFAF1',
+                  border: '0.5px solid #00856F',
+                  borderRadius: '5px'
+                }}
+                data-testid="card-stat-glucose"
+              >
+                <p 
+                  className="mb-2 text-4xl font-bold"
+                  style={{ color: '#00856F', fontSize: '36px', lineHeight: '130%' }}
+                  data-testid="text-stat-glucose"
+                >
+                  12%
+                </p>
+                <p 
+                  className="text-xs"
+                  style={{ color: '#000000', fontSize: '12px', lineHeight: '150%' }}
+                >
+                  Reduction in Average Blood Glucose in 3 Months
+                </p>
               </Card>
 
-              <Card className="border-2 border-gray-200 transition-shadow hover:shadow-lg dark:border-gray-700">
-                <CardContent className="p-6 text-center">
-                  <p className="mb-2 text-4xl font-bold text-teal-600 dark:text-teal-400" data-testid="text-stat-hba1c">
-                    0.5%
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Reduction in <span className="font-semibold">HbA1c</span><br />
-                    in 3 Months
-                  </p>
-                </CardContent>
+              {/* Stat Card 2 */}
+              <Card 
+                className="p-5 text-center"
+                style={{ 
+                  background: '#FFFAF1',
+                  border: '0.5px solid #00856F',
+                  borderRadius: '5px'
+                }}
+                data-testid="card-stat-hba1c"
+              >
+                <p 
+                  className="mb-2 text-4xl font-bold"
+                  style={{ color: '#00856F', fontSize: '36px', lineHeight: '130%' }}
+                  data-testid="text-stat-hba1c"
+                >
+                  0.5%
+                </p>
+                <p 
+                  className="text-xs"
+                  style={{ color: '#000000', fontSize: '12px', lineHeight: '150%' }}
+                >
+                  Reduction in HbA1c in 3 Months
+                </p>
               </Card>
 
-              <Card className="border-2 border-gray-200 transition-shadow hover:shadow-lg dark:border-gray-700">
-                <CardContent className="p-6 text-center">
-                  <p className="mb-2 text-4xl font-bold text-teal-600 dark:text-teal-400" data-testid="text-stat-hyperglycemic">
-                    9.4%
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Drop in <span className="font-semibold">Hyperglycemic</span><br />
-                    events in 3 Months
-                  </p>
-                </CardContent>
+              {/* Stat Card 3 */}
+              <Card 
+                className="p-5 text-center"
+                style={{ 
+                  background: '#FFFAF1',
+                  border: '0.5px solid #00856F',
+                  borderRadius: '5px'
+                }}
+                data-testid="card-stat-hyperglycemic"
+              >
+                <p 
+                  className="mb-2 text-4xl font-bold"
+                  style={{ color: '#00856F', fontSize: '36px', lineHeight: '130%' }}
+                  data-testid="text-stat-hyperglycemic"
+                >
+                  9.4%
+                </p>
+                <p 
+                  className="text-xs"
+                  style={{ color: '#000000', fontSize: '12px', lineHeight: '150%' }}
+                >
+                  Drop in Hyperglycemic events in 3 Months
+                </p>
               </Card>
             </div>
 
-            <div className="flex justify-center">
+            <div className="mb-10 flex justify-center">
               <Button
-                size="lg"
-                className="bg-teal-600 px-8 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+                style={{
+                  background: '#00856F',
+                  color: '#FFFFFF',
+                  borderRadius: '5px',
+                  padding: '18px 16px',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  height: '63px',
+                  minWidth: '406px'
+                }}
                 onClick={() => setLocation(ROUTES.DASHBOARD)}
                 data-testid="button-join-program"
               >
@@ -103,124 +181,246 @@ export function Home() {
           </div>
 
           {/* Feature Cards */}
-          <div className="mb-8 grid gap-6 md:grid-cols-3">
+          <div className="mb-10 grid gap-6 md:grid-cols-3">
             {/* Doctors */}
             <Card
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              style={{ 
+                background: '#FFFFFF',
+                border: '1px solid #EAEAEA',
+                borderRadius: '10px'
+              }}
               onClick={() => setLocation(ROUTES.FIND_DOCTOR)}
               data-testid="card-doctors"
             >
-              <div className="relative">
-                <div className="flex items-center justify-between bg-white p-4 dark:bg-gray-800">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Doctors</h3>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600">
-                    <ArrowRight className="h-4 w-4 text-white" />
+              <div className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <h3 
+                    className="text-lg font-semibold"
+                    style={{ color: '#00453A', fontSize: '18px', fontWeight: 600 }}
+                  >
+                    Doctors
+                  </h3>
+                  <div 
+                    className="flex h-10 w-10 items-center justify-center"
+                    style={{
+                      background: '#00856F',
+                      borderRadius: '50%',
+                      transform: 'rotate(-45deg)'
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4" style={{ color: '#F7F9F9' }} />
                   </div>
                 </div>
-                <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30">
-                  <div className="flex h-full items-center justify-center">
-                    <Users className="h-24 w-24 text-blue-300 dark:text-blue-600" />
-                  </div>
-                </div>
+              </div>
+              <div className="h-28 overflow-hidden" style={{ borderRadius: '0 0 10px 10px' }}>
+                <img
+                  src={doctorImg}
+                  alt="Doctors"
+                  className="h-full w-full object-cover"
+                />
               </div>
             </Card>
 
             {/* Tips & Exercises */}
             <Card
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              style={{ 
+                background: '#FFFFFF',
+                border: '1px solid #EAEAEA',
+                borderRadius: '10px'
+              }}
               onClick={() => setLocation(ROUTES.TIPS_EXERCISES)}
               data-testid="card-tips"
             >
-              <div className="relative">
-                <div className="flex items-center justify-between bg-white p-4 dark:bg-gray-800">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tips & Exercises</h3>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600">
-                    <ArrowRight className="h-4 w-4 text-white" />
+              <div className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <h3 
+                    className="text-lg font-semibold"
+                    style={{ color: '#00453A', fontSize: '18px', fontWeight: 600 }}
+                  >
+                    Tips & Exercises
+                  </h3>
+                  <div 
+                    className="flex h-10 w-10 items-center justify-center"
+                    style={{
+                      background: '#00856F',
+                      borderRadius: '50%',
+                      transform: 'rotate(-45deg)'
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4" style={{ color: '#F7F9F9' }} />
                   </div>
                 </div>
-                <div className="h-48 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30">
-                  <div className="flex h-full items-center justify-center">
-                    <Dumbbell className="h-24 w-24 text-orange-300 dark:text-orange-600" />
-                  </div>
-                </div>
+              </div>
+              <div className="h-28 overflow-hidden" style={{ borderRadius: '0 0 10px 10px' }}>
+                <img
+                  src={exerciseImg}
+                  alt="Tips & Exercises"
+                  className="h-full w-full object-cover object-center"
+                />
               </div>
             </Card>
 
             {/* Health Blogs */}
             <Card
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              style={{ 
+                background: '#FFFFFF',
+                border: '1px solid #EAEAEA',
+                borderRadius: '10px'
+              }}
               onClick={() => setLocation(ROUTES.BLOGS)}
               data-testid="card-blogs"
             >
-              <div className="relative">
-                <div className="flex items-center justify-between bg-white p-4 dark:bg-gray-800">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Health Blogs</h3>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-600">
-                    <ArrowRight className="h-4 w-4 text-white" />
+              <div className="p-4 pb-2">
+                <div className="flex items-center justify-between">
+                  <h3 
+                    className="text-lg font-semibold"
+                    style={{ color: '#00453A', fontSize: '18px', fontWeight: 600 }}
+                  >
+                    Health Blogs
+                  </h3>
+                  <div 
+                    className="flex h-10 w-10 items-center justify-center"
+                    style={{
+                      background: '#00856F',
+                      borderRadius: '50%',
+                      transform: 'rotate(-45deg)'
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4" style={{ color: '#F7F9F9' }} />
                   </div>
                 </div>
-                <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30">
-                  <div className="flex h-full items-center justify-center">
-                    <BookOpen className="h-24 w-24 text-green-300 dark:text-green-600" />
-                  </div>
-                </div>
+              </div>
+              <div className="h-28 overflow-hidden" style={{ borderRadius: '0 0 10px 10px' }}>
+                <img
+                  src={healthyFoodImg}
+                  alt="Health Blogs"
+                  className="h-full w-full object-cover object-center"
+                />
               </div>
             </Card>
           </div>
 
-          {/* Bottom Feature Cards */}
+          {/* Bottom Section - DiaBot and Food Scanner */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Meet DiaBot */}
             <Card
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              style={{ borderRadius: '10px', border: 'none' }}
               onClick={() => setLocation(ROUTES.DIABOT)}
               data-testid="card-diabot"
             >
-              <CardContent className="p-0">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col justify-center p-6">
-                    <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">Meet DiaBot</h3>
-                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                      Your Friendly AI Health Companion
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="w-fit"
-                      onClick={() => setLocation(ROUTES.DIABOT)}
-                      data-testid="button-meet-diabot"
-                    >
-                      Chat Now
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-center bg-gradient-to-br from-cyan-50 to-cyan-100 p-6 dark:from-cyan-900/30 dark:to-cyan-800/30">
-                    <Bot className="h-32 w-32 text-cyan-600 dark:text-cyan-400" />
-                  </div>
+              <div className="relative grid grid-cols-[1fr_auto] gap-4">
+                <div 
+                  className="flex flex-col justify-center p-6"
+                  style={{ background: '#DCE9E2', borderRadius: '10px 0 0 10px' }}
+                >
+                  <h3 
+                    className="mb-2 text-xl font-bold"
+                    style={{ color: '#00453A', fontSize: '20px', lineHeight: '15px' }}
+                  >
+                    Meet DiaBot
+                  </h3>
+                  <p 
+                    className="mb-4 text-xs"
+                    style={{ color: '#00856F', fontSize: '12px', lineHeight: '15px' }}
+                  >
+                    Your Friendly AI Health Companion
+                  </p>
+                  <Button
+                    style={{
+                      background: '#00856F',
+                      color: '#FFFFFF',
+                      borderRadius: '5px',
+                      padding: '6px 24px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      width: 'fit-content'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(ROUTES.DIABOT);
+                    }}
+                    data-testid="button-chat-diabot"
+                  >
+                    Chat Now
+                  </Button>
                 </div>
-              </CardContent>
+                <div 
+                  className="flex items-center justify-center p-4"
+                  style={{ background: '#DCE9E2' }}
+                >
+                  <img
+                    src={diaBotImg}
+                    alt="DiaBot AI"
+                    className="h-40 w-auto object-contain"
+                    style={{
+                      filter: 'drop-shadow(0px 16px 35px rgba(0, 0, 0, 0.05))'
+                    }}
+                  />
+                </div>
+              </div>
             </Card>
 
             {/* Food Scanner */}
             <Card
-              className="group cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              className="cursor-pointer overflow-hidden transition-all hover:shadow-xl"
+              style={{ borderRadius: '10px', border: 'none' }}
               onClick={() => setLocation(ROUTES.FOOD_SCANNER)}
               data-testid="card-food-scanner"
             >
-              <CardContent className="p-0">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col justify-center p-6">
-                    <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">
-                      Scan Food to Make Healthier Choices
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Try our Food Scanner to scan your food and see your glucose content
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 p-6 dark:from-amber-900/30 dark:to-amber-800/30">
-                    <ScanLine className="h-32 w-32 text-amber-600 dark:text-amber-400" />
-                  </div>
+              <div className="relative grid grid-cols-[1fr_auto] gap-4">
+                <div 
+                  className="flex flex-col justify-center p-6"
+                  style={{ background: '#DCE9E2', borderRadius: '10px 0 0 10px' }}
+                >
+                  <h3 
+                    className="mb-2 text-xl font-bold leading-tight"
+                    style={{ color: '#00453A', fontSize: '20px', lineHeight: '20px' }}
+                  >
+                    Scan Food to Make Healthier Choices
+                  </h3>
+                  <p 
+                    className="mb-4 text-xs"
+                    style={{ color: '#212529', fontSize: '10px', lineHeight: '13px' }}
+                  >
+                    Try our Food Scanner to scan your food and see your glucose content
+                  </p>
+                  <Button
+                    style={{
+                      background: '#00856F',
+                      color: '#FFFFFF',
+                      borderRadius: '5px',
+                      padding: '6px 24px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      width: 'fit-content'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLocation(ROUTES.FOOD_SCANNER);
+                    }}
+                    data-testid="button-try-scanner"
+                  >
+                    Try Now
+                  </Button>
                 </div>
-              </CardContent>
+                <div 
+                  className="flex items-center justify-center p-4"
+                  style={{ background: '#DCE9E2' }}
+                >
+                  <img
+                    src={foodScannerImg}
+                    alt="Food Scanner App"
+                    className="h-60 w-auto object-contain"
+                    style={{
+                      filter: 'drop-shadow(0px 16px 35px rgba(0, 0, 0, 0.05))'
+                    }}
+                  />
+                </div>
+              </div>
             </Card>
           </div>
         </div>
