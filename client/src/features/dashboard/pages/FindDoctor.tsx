@@ -521,7 +521,7 @@ export function FindDoctor() {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
-      <Sidebar className="hidden lg:flex" />
+      <Sidebar />
 
       <main className="flex-1 flex justify-center items-start pt-4 sm:pt-8 pb-4 sm:pb-8">
         {currentStep === 1 ? (
