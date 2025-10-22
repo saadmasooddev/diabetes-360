@@ -91,24 +91,31 @@ export function HealthAssessment() {
     return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
   };
 
-  const glucoseDaily = calculateAverage('bloodSugar', 1);
-  const glucoseWeekly = calculateAverage('bloodSugar', 7);
-  const glucoseMonthly = calculateAverage('bloodSugar', 30);
+  // Calculate averages or use sample data if no metrics exist
+  const glucoseDaily = calculateAverage('bloodSugar', 1) || 135;
+  const glucoseWeekly = calculateAverage('bloodSugar', 7) || 98;
+  const glucoseMonthly = calculateAverage('bloodSugar', 30) || 106;
 
-  const waterDaily = (calculateAverage('waterIntake', 1) / 10).toFixed(1);
-  const waterWeekly = (calculateAverage('waterIntake', 7) / 10).toFixed(1);
-  const waterMonthly = (calculateAverage('waterIntake', 30) / 10).toFixed(1);
+  const waterDaily = metrics.length 
+    ? (calculateAverage('waterIntake', 1) / 10).toFixed(1)
+    : '1.2';
+  const waterWeekly = metrics.length
+    ? (calculateAverage('waterIntake', 7) / 10).toFixed(1)
+    : '0.8';
+  const waterMonthly = metrics.length
+    ? (calculateAverage('waterIntake', 30) / 10).toFixed(1)
+    : '2.0';
 
-  const stepsDaily = calculateAverage('steps', 1);
-  const stepsWeekly = calculateAverage('steps', 7);
-  const stepsMonthly = calculateAverage('steps', 30);
+  const stepsDaily = calculateAverage('steps', 1) || 3000;
+  const stepsWeekly = calculateAverage('steps', 7) || 6600;
+  const stepsMonthly = calculateAverage('steps', 30) || 8700;
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
-      <main className="flex-1 w-full lg:pl-[295px]">
-        <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
+      <main className="flex-1 w-full">
+        <div className="w-full px-4 py-8 sm:px-6 lg:pl-[320px] lg:pr-8 xl:pl-[340px] xl:pr-12">
           <h1
             className="mb-8"
             style={{
