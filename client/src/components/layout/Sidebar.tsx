@@ -118,26 +118,38 @@ export function Sidebar({ className }: SidebarProps) {
         <nav className="space-y-1 px-2">
           {/* My Dashboard with sub-menu */}
           <div>
-            <button
-              onClick={() => setIsDashboardExpanded(!isDashboardExpanded)}
+            <div
               className={cn(
-                "flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex w-full items-center justify-between rounded-lg text-sm font-medium transition-colors",
                 isDashboardRoute
                   ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
                   : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               )}
-              data-testid="nav-dashboard"
             >
-              <div className="flex items-center gap-3">
+              <Link
+                href={ROUTES.DASHBOARD}
+                className="flex flex-1 cursor-pointer items-center gap-3 px-3 py-2.5"
+                data-testid="nav-dashboard"
+              >
                 <LayoutDashboard className="h-5 w-5" />
                 <span>My Dashboard</span>
-              </div>
-              {isDashboardExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-              )}
-            </button>
+              </Link>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDashboardExpanded(!isDashboardExpanded);
+                }}
+                className="px-3 py-2.5 hover:opacity-70 transition-opacity"
+                data-testid="button-dashboard-expand"
+                aria-label="Toggle dashboard submenu"
+              >
+                {isDashboardExpanded ? (
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+            </div>
             
             {/* Dashboard sub-menu */}
             {isDashboardExpanded && (
