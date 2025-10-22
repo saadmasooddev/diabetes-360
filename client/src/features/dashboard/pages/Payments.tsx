@@ -35,8 +35,8 @@ export function Payments() {
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-        <div className="w-full max-w-[1200px] mx-auto">
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="w-full max-w-[1200px]">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
             {/* Payment Form Section */}
             <Card
