@@ -39,15 +39,15 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 ## Recent Updates (October 22, 2025)
 
 ### Find a Doctor Page
-- Created two-step Find a Doctor flow at `/dashboard/doctors` with search, filter, and booking functionality:
+- Created three-step Find a Doctor flow at `/dashboard/doctors` with search, filter, booking, and confirmation:
   1. **Step 1 - Doctor List**: Search bar for name/specialty, specialty filter tabs (All Doctors, Diabetologists, Nutritionists, Health Coaches), 2-column responsive grid displaying all doctors
   2. **Step 2 - Book Consultation**: Calendar for date selection, time picker with AM/PM toggle, hospital location selection (South City Hospital, Liaquat National Hospital), and "Proceed Booking" button
+  3. **Step 3 - Confirmation**: Displays booking confirmation with doctor info, selected date/time, hospital location, and "Appointment Booked" success banner
 - Implemented React state management (`useState`) to track:
-  - `currentStep`: Controls which step is shown (doctor list/booking)
+  - `currentStep`: Controls which step is shown (1, 2, or 3)
   - `selectedDoctor`: Tracks which doctor user selected for consultation
-  - `selectedDate`: User's chosen appointment date
-  - `selectedTime`: User's chosen appointment time with AM/PM
-  - `selectedHospital`: User's chosen hospital location
+  - `bookingDetails`: Stores date, time, and hospital for confirmation screen
+  - Search query and specialty filter for doctor list
 - Created custom Calendar component in `/components/common/Calendar.tsx` using date-fns for date manipulation
 - Created custom TimePicker component in `/components/common/TimePicker.tsx` with hour/minute inputs and AM/PM toggle
 - Centralized mock data:
@@ -55,6 +55,8 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
   - `/mocks/hospitals.ts`: 2 hospital locations with IDs and names
 - Each doctor card shows: profile image, online/offline status, name, specialty, experience, 5-star ratings with Math.floor() for accurate rendering, and "Consult Now" button
 - Booking screen includes: back navigation, doctor info display, interactive calendar with month navigation, time picker, hospital selection with visual feedback, and proceed booking button (disabled until date and hospital selected)
+- Confirmation screen displays: back navigation, doctor name and specialty, formatted date (e.g., "4 June 2025"), time (e.g., "7:45 PM"), hospital location, and green success banner
+- Date formatting uses date-fns format() function to match Figma design
 - Real-time search and filter with React state management
 - All interactive elements have data-testid attributes for comprehensive testing
 - Feature-based organization: page located in `features/dashboard/pages/FindDoctor.tsx`
