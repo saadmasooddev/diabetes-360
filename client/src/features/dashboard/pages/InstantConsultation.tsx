@@ -13,14 +13,22 @@ const concernIcons = {
   activity: Activity,
 };
 
-function ConcernCard({ concern, onClick }: { concern: Concern; onClick: () => void }) {
+function ConcernCard({ 
+  concern, 
+  isSelected, 
+  onClick 
+}: { 
+  concern: Concern; 
+  isSelected: boolean;
+  onClick: () => void;
+}) {
   const IconComponent = concernIcons[concern.icon as keyof typeof concernIcons] || Stethoscope;
   
   return (
     <Card
       className="p-6 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
       style={{
-        background: concern.id === '1' ? '#E0F2F1' : '#FFFFFF',
+        background: isSelected ? '#E0F2F1' : '#FFFFFF',
         border: '1px solid rgba(0, 0, 0, 0.1)',
         borderRadius: '12px',
       }}
@@ -198,6 +206,7 @@ function DoctorCard({ doctor }: { doctor: Doctor }) {
 
 export function InstantConsultation() {
   const [selectedConcern, setSelectedConcern] = useState<string | null>(null);
+  const [showDoctors, setShowDoctors] = useState(false);
 
   const filteredDoctors = selectedConcern
     ? mockDoctors.filter((doctor) => doctor.specialty === selectedConcern)
@@ -207,7 +216,14 @@ export function InstantConsultation() {
     setSelectedConcern(concernSpecialty);
   };
 
+  const handleConsultNow = () => {
+    if (selectedConcern) {
+      setShowDoctors(true);
+    }
+  };
+
   const handleBack = () => {
+    setShowDoctors(false);
     setSelectedConcern(null);
   };
 
@@ -215,10 +231,10 @@ export function InstantConsultation() {
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
 
-      <main className="flex-1 flex justify-center items-start pt-8">
+      <main className="flex-1 flex justify-center items-start pt-8 pb-8">
         <div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
-          {!selectedConcern ? (
-            <div data-testid="section-concern-selection">
+          {!showDoctors ? (
+            <div data-testid="section-concern-selection" className="flex flex-col min-h-[calc(100vh-4rem)]">
               <div className="flex items-center gap-4 mb-8">
                 <h1
                   style={{
@@ -232,14 +248,38 @@ export function InstantConsultation() {
                 </h1>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 flex-1">
                 {mockConcerns.map((concern) => (
                   <ConcernCard
                     key={concern.id}
                     concern={concern}
+                    isSelected={selectedConcern === concern.specialty}
                     onClick={() => handleConcernSelect(concern.specialty)}
                   />
                 ))}
+              </div>
+
+              {/* Consult Now Button at the bottom */}
+              <div className="mt-auto pt-8">
+                <Button
+                  onClick={handleConsultNow}
+                  disabled={!selectedConcern}
+                  className="w-full"
+                  style={{
+                    background: selectedConcern ? '#00856F' : '#B0BEC5',
+                    color: '#FFFFFF',
+                    fontWeight: 600,
+                    fontSize: '16px',
+                    padding: '16px 32px',
+                    borderRadius: '8px',
+                    height: 'auto',
+                    cursor: selectedConcern ? 'pointer' : 'not-allowed',
+                    opacity: selectedConcern ? 1 : 0.6,
+                  }}
+                  data-testid="button-consult-now"
+                >
+                  Consult Now
+                </Button>
               </div>
             </div>
           ) : (
