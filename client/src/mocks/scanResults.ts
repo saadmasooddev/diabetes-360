@@ -1,36 +1,85 @@
-export interface NutritionInfo {
+export interface BreakdownItem {
   name: string;
-  amount: string;
-  percentage?: string;
+  value: string | number;
+  unit: string;
+  position: number; // Position on progress bar (0-100)
+  status: 'good' | 'average' | 'danger';
+  isLocked?: boolean;
+  isGrayed?: boolean;
 }
 
 export interface ScanResult {
   foodName: string;
-  servingSize: string;
-  calories: string;
-  macros: NutritionInfo[];
-  vitamins: NutritionInfo[];
-  minerals: NutritionInfo[];
+  foodCategory: string;
+  foodImage: string; // Will use the uploaded image
+  breakdown: {
+    carbs: BreakdownItem;
+    fiber: BreakdownItem;
+    sugars: BreakdownItem;
+    protein: BreakdownItem;
+    fat: BreakdownItem;
+    calories: BreakdownItem;
+  };
+  nutritionalHighlight: {
+    carbohydrateCount: string;
+    glycemicIndex: string | null; // null means locked
+  };
 }
 
 export const mockScanResult: ScanResult = {
-  foodName: "Mixed Vegetable Salad",
-  servingSize: "1 bowl (250g)",
-  calories: "120 kcal",
-  macros: [
-    { name: "Carbohydrates", amount: "18g", percentage: "6%" },
-    { name: "Protein", amount: "4g", percentage: "8%" },
-    { name: "Fat", amount: "4g", percentage: "6%" },
-    { name: "Fiber", amount: "6g", percentage: "24%" },
-  ],
-  vitamins: [
-    { name: "Vitamin A", amount: "850 IU", percentage: "17%" },
-    { name: "Vitamin C", amount: "45mg", percentage: "75%" },
-    { name: "Vitamin K", amount: "120mcg", percentage: "150%" },
-  ],
-  minerals: [
-    { name: "Calcium", amount: "80mg", percentage: "8%" },
-    { name: "Iron", amount: "2mg", percentage: "11%" },
-    { name: "Potassium", amount: "450mg", percentage: "13%" },
-  ],
+  foodName: "Tomatoes,Cucumber,Green Chilli",
+  foodCategory: "Vegetables",
+  foodImage: "", // Will be replaced with actual uploaded image
+  breakdown: {
+    carbs: {
+      name: "Carbs",
+      value: 28,
+      unit: "g",
+      position: 25,
+      status: 'good',
+    },
+    fiber: {
+      name: "Fiber",
+      value: 45,
+      unit: "g",
+      position: 50,
+      status: 'average',
+    },
+    sugars: {
+      name: "Sugars",
+      value: 0,
+      unit: "g",
+      position: 0,
+      status: 'good',
+      isGrayed: true,
+    },
+    protein: {
+      name: "Protein",
+      value: 0,
+      unit: "g",
+      position: 0,
+      status: 'danger',
+      isLocked: true,
+    },
+    fat: {
+      name: "Fat",
+      value: 0,
+      unit: "g",
+      position: 0,
+      status: 'danger',
+      isGrayed: true,
+    },
+    calories: {
+      name: "Calories",
+      value: 0,
+      unit: "",
+      position: 0,
+      status: 'average',
+      isGrayed: true,
+    },
+  },
+  nutritionalHighlight: {
+    carbohydrateCount: "28g",
+    glycemicIndex: null, // Locked - requires premium
+  },
 };

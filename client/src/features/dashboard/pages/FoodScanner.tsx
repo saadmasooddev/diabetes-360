@@ -2,10 +2,77 @@ import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, ArrowLeft } from 'lucide-react';
-import { mockScanResult } from '@/mocks/scanResults';
+import { Upload, ArrowLeft, Lock } from 'lucide-react';
+import { mockScanResult, type BreakdownItem } from '@/mocks/scanResults';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
+
+// Progress bar component for breakdown items
+function ProgressBar({ item }: { item: BreakdownItem }) {
+  return (
+    <div
+      className={`flex items-center justify-between py-4 border-b border-gray-100 last:border-0 ${
+        item.isGrayed ? 'opacity-40' : ''
+      }`}
+      data-testid={`row-breakdown-${item.name.toLowerCase()}`}
+    >
+      <span
+        style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: '#00453A',
+          width: '80px',
+        }}
+      >
+        {item.name}
+      </span>
+
+      {item.isLocked ? (
+        <div className="flex-1 flex items-center justify-center gap-2">
+          <Lock size={16} color="#00856F" />
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 500,
+              color: '#00856F',
+            }}
+          >
+            Subscribe to Premium to access more sections
+          </span>
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 relative h-6 mx-4">
+            {/* Background track with three zones */}
+            <div className="absolute inset-0 flex rounded-full overflow-hidden">
+              <div className="flex-1 bg-green-200" />
+              <div className="flex-1 bg-yellow-200" />
+              <div className="flex-1 bg-red-200" />
+            </div>
+            {/* Position indicator */}
+            <div
+              className="absolute top-0 bottom-0 w-1 bg-black rounded-full"
+              style={{ left: `${item.position}%` }}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: '#00453A',
+                minWidth: '50px',
+                textAlign: 'right',
+              }}
+            >
+              {item.value}{item.unit}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function FoodScanner() {
   const [currentStep, setCurrentStep] = useState<ScanStep>('upload');
@@ -74,7 +141,7 @@ export function FoodScanner() {
   const getHeaderTitle = () => {
     if (currentStep === 'upload' && previewUrl) return 'Upload Complete';
     if (currentStep === 'scanning') return 'Scanning';
-    if (currentStep === 'results') return 'Scan Results';
+    if (currentStep === 'results') return 'Results';
     return '';
   };
 
@@ -85,7 +152,7 @@ export function FoodScanner() {
       <Sidebar />
 
       <main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-8">
-        <div className="w-full max-w-[800px] mx-auto">
+        <div className="w-full max-w-[1200px] mx-auto">
           {/* Header with back button */}
           {showHeader && (
             <div className="flex items-center gap-4 mb-8">
@@ -110,254 +177,249 @@ export function FoodScanner() {
           )}
 
           {currentStep === 'results' ? (
-            /* Results Screen */
-            <div className="space-y-6" data-testid="container-results">
-              {/* Food Name Card */}
-              <Card
-                className="p-6"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <h2
+            /* Results Screen - New Figma Design */
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="container-results">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Food Overview */}
+                <Card
+                  className="p-6"
                   style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#00453A',
-                    marginBottom: '8px',
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
                   }}
-                  data-testid="text-food-name"
+                  data-testid="card-food-overview"
                 >
-                  {mockScanResult.foodName}
-                </h2>
-                <div className="flex gap-4 text-sm" style={{ color: '#546E7A' }}>
-                  <span data-testid="text-serving-size">
-                    Serving: {mockScanResult.servingSize}
-                  </span>
-                  <span data-testid="text-calories">
-                    {mockScanResult.calories}
-                  </span>
-                </div>
-              </Card>
+                  <h3
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      color: '#00453A',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    Food Overview
+                  </h3>
+                  <div className="flex gap-4">
+                    <img
+                      src={previewUrl || ''}
+                      alt="Food"
+                      className="w-32 h-32 rounded-2xl object-cover"
+                      data-testid="img-food-overview"
+                    />
+                    <div className="flex flex-col justify-center gap-3">
+                      <div>
+                        <p
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            color: '#546E7A',
+                            marginBottom: '4px',
+                          }}
+                        >
+                          Food Name
+                        </p>
+                        <p
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: '#00453A',
+                          }}
+                          data-testid="text-food-name"
+                        >
+                          {mockScanResult.foodName}
+                        </p>
+                      </div>
+                      <div>
+                        <p
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            color: '#546E7A',
+                            marginBottom: '4px',
+                          }}
+                        >
+                          Food Category
+                        </p>
+                        <p
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: '#00453A',
+                          }}
+                          data-testid="text-food-category"
+                        >
+                          {mockScanResult.foodCategory}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
 
-              {/* Macros Card */}
-              <Card
-                className="p-6"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <h3
+                {/* Breakdown Section */}
+                <Card
+                  className="p-6"
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: '#00453A',
-                    marginBottom: '16px',
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
                   }}
-                  data-testid="text-macros-title"
+                  data-testid="card-breakdown"
                 >
-                  Macronutrients
-                </h3>
-                <div className="space-y-3">
-                  {mockScanResult.macros.map((macro, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center pb-3 border-b border-gray-100 last:border-0"
-                      data-testid={`row-macro-${index}`}
-                    >
-                      <span
+                  <h3
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      color: '#00453A',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    Breakdown Section
+                  </h3>
+                  <div>
+                    <ProgressBar item={mockScanResult.breakdown.carbs} />
+                    <ProgressBar item={mockScanResult.breakdown.fiber} />
+                    <ProgressBar item={mockScanResult.breakdown.sugars} />
+                    <ProgressBar item={mockScanResult.breakdown.protein} />
+                    <ProgressBar item={mockScanResult.breakdown.fat} />
+                    <ProgressBar item={mockScanResult.breakdown.calories} />
+                  </div>
+                </Card>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Personalized Insight */}
+                <Card
+                  className="p-6 flex flex-col items-center justify-center text-center"
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    minHeight: '200px',
+                  }}
+                  data-testid="card-personalized-insight"
+                >
+                  <h3
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      color: '#00453A',
+                      marginBottom: '24px',
+                    }}
+                  >
+                    Personalized Insight
+                  </h3>
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                    style={{ background: '#E8F5F3' }}
+                  >
+                    <Lock size={32} color="#00856F" />
+                  </div>
+                  <p
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#546E7A',
+                      maxWidth: '250px',
+                    }}
+                  >
+                    Subscribe to Premium
+                    <br />
+                    to access personalized insights
+                  </p>
+                </Card>
+
+                {/* Nutritional Highlight */}
+                <Card
+                  className="p-6"
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                  }}
+                  data-testid="card-nutritional-highlight"
+                >
+                  <h3
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      color: '#00453A',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    Nutritional Highlight
+                  </h3>
+                  
+                  <img
+                    src={previewUrl || ''}
+                    alt="Food highlight"
+                    className="w-full h-48 rounded-2xl object-cover mb-4"
+                    data-testid="img-nutritional-highlight"
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Carbohydrate Count */}
+                    <div>
+                      <p
                         style={{
                           fontSize: '14px',
                           fontWeight: 500,
                           color: '#546E7A',
+                          marginBottom: '8px',
                         }}
                       >
-                        {macro.name}
-                      </span>
-                      <div className="flex gap-4 items-center">
-                        <span
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: '#00453A',
-                          }}
-                        >
-                          {macro.amount}
-                        </span>
-                        {macro.percentage && (
-                          <span
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: '#00856F',
-                              minWidth: '40px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            {macro.percentage}
-                          </span>
-                        )}
-                      </div>
+                        Carbohydrate Count
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '32px',
+                          fontWeight: 700,
+                          color: '#00453A',
+                        }}
+                        data-testid="text-carb-count"
+                      >
+                        {mockScanResult.nutritionalHighlight.carbohydrateCount}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </Card>
 
-              {/* Vitamins Card */}
-              <Card
-                className="p-6"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: '#00453A',
-                    marginBottom: '16px',
-                  }}
-                  data-testid="text-vitamins-title"
-                >
-                  Vitamins
-                </h3>
-                <div className="space-y-3">
-                  {mockScanResult.vitamins.map((vitamin, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center pb-3 border-b border-gray-100 last:border-0"
-                      data-testid={`row-vitamin-${index}`}
-                    >
-                      <span
+                    {/* Glycemic Index - Locked */}
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <p
                         style={{
                           fontSize: '14px',
                           fontWeight: 500,
                           color: '#546E7A',
+                          marginBottom: '8px',
                         }}
                       >
-                        {vitamin.name}
-                      </span>
-                      <div className="flex gap-4 items-center">
-                        <span
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: '#00453A',
-                          }}
-                        >
-                          {vitamin.amount}
-                        </span>
-                        {vitamin.percentage && (
-                          <span
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: '#00856F',
-                              minWidth: '40px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            {vitamin.percentage}
-                          </span>
-                        )}
+                        Glycemic Index
+                      </p>
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
+                        style={{ background: '#E8F5F3' }}
+                      >
+                        <Lock size={24} color="#00856F" />
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* Minerals Card */}
-              <Card
-                className="p-6"
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: '#00453A',
-                    marginBottom: '16px',
-                  }}
-                  data-testid="text-minerals-title"
-                >
-                  Minerals
-                </h3>
-                <div className="space-y-3">
-                  {mockScanResult.minerals.map((mineral, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center pb-3 border-b border-gray-100 last:border-0"
-                      data-testid={`row-mineral-${index}`}
-                    >
-                      <span
+                      <p
                         style={{
-                          fontSize: '14px',
+                          fontSize: '10px',
                           fontWeight: 500,
                           color: '#546E7A',
+                          maxWidth: '140px',
                         }}
                       >
-                        {mineral.name}
-                      </span>
-                      <div className="flex gap-4 items-center">
-                        <span
-                          style={{
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: '#00453A',
-                          }}
-                        >
-                          {mineral.amount}
-                        </span>
-                        {mineral.percentage && (
-                          <span
-                            style={{
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: '#00856F',
-                              minWidth: '40px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            {mineral.percentage}
-                          </span>
-                        )}
-                      </div>
+                        Subscribe to Premium to access personalized insights
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* Scan Another Button */}
-              <Button
-                onClick={handleBackClick}
-                className="w-full"
-                style={{
-                  background: '#00856F',
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                  fontSize: '16px',
-                  padding: '16px 32px',
-                  borderRadius: '8px',
-                  height: 'auto',
-                }}
-                data-testid="button-scan-another"
-              >
-                Scan Another Food
-              </Button>
+                  </div>
+                </Card>
+              </div>
             </div>
           ) : (
             /* Upload and Scanning Screen */
-            <div className="flex flex-col items-center" style={{ marginTop: showHeader ? '0' : '120px' }}>
+            <div className="flex flex-col items-center max-w-[800px] mx-auto" style={{ marginTop: showHeader ? '0' : '120px' }}>
               {/* Upload/Scanning Area */}
               <Card
                 className={`w-full mb-8 relative overflow-hidden ${!previewUrl ? 'cursor-pointer hover:border-[#00856F]' : ''} transition-colors`}
