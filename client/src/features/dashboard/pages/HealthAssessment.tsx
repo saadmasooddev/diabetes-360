@@ -114,8 +114,8 @@ export function HealthAssessment() {
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
-      <main className="flex-1 w-full">
-        <div className="w-full px-4 py-8 sm:px-6 lg:pl-[320px] lg:pr-8 xl:pl-[340px] xl:pr-12">
+      <main className="flex-1 flex justify-center items-start pt-8">
+        <div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
           <h1
             className="mb-8"
             style={{
@@ -131,7 +131,7 @@ export function HealthAssessment() {
 
           {/* Glucose Analysis Section */}
           <Card
-            className="mb-6 p-8"
+            className="mb-6 p-6 lg:p-8"
             style={{
               background: '#FFFFFF',
               border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -139,7 +139,7 @@ export function HealthAssessment() {
             }}
             data-testid="section-glucose-analysis"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               <CircularGauge
                 value={glucoseDaily}
                 maxValue={200}
@@ -168,7 +168,7 @@ export function HealthAssessment() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Hydration Analysis */}
             <Card
-              className="p-8"
+              className="p-6"
               style={{
                 background: '#FFFFFF',
                 border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -179,14 +179,14 @@ export function HealthAssessment() {
               <h2
                 className="mb-6"
                 style={{
-                  fontSize: '24px',
+                  fontSize: '20px',
                   fontWeight: 600,
                   color: '#00453A',
                 }}
               >
                 Hydration Analysis
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <CircularGauge
                   value={parseFloat(waterDaily)}
                   maxValue={5}
@@ -216,7 +216,7 @@ export function HealthAssessment() {
 
             {/* Activity Analysis */}
             <Card
-              className="p-8"
+              className="p-6"
               style={{
                 background: '#FFFFFF',
                 border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -227,14 +227,14 @@ export function HealthAssessment() {
               <h2
                 className="mb-6"
                 style={{
-                  fontSize: '24px',
+                  fontSize: '20px',
                   fontWeight: 600,
                   color: '#00453A',
                 }}
               >
                 Activity Analysis
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <CircularGauge
                   value={stepsDaily}
                   maxValue={15000}
