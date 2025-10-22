@@ -8,7 +8,7 @@ import { healthPlans } from '@/mocks/healthPlans';
 type BillingCycle = 'monthly' | 'yearly';
 
 export function HealthPlans() {
-  const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('en-PK');
@@ -59,7 +59,7 @@ export function HealthPlans() {
             {healthPlans.map((plan) => (
               <Card
                 key={plan.id}
-                className="overflow-hidden"
+                className="overflow-hidden flex flex-col"
                 style={{
                   background: '#FFFFFF',
                   borderRadius: '16px',
@@ -112,8 +112,8 @@ export function HealthPlans() {
                 </div>
 
                 {/* Plan Features */}
-                <div className="px-8 py-8">
-                  <div className="space-y-4 mb-8">
+                <div className="px-8 py-8 flex flex-col flex-1">
+                  <div className="space-y-4 mb-8 flex-1">
                     {plan.features.map((feature) => (
                       <div
                         key={feature.id}
