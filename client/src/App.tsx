@@ -15,6 +15,7 @@ import { FindDoctor } from "@/features/dashboard/pages/FindDoctor";
 import { FoodScanner } from "@/features/dashboard/pages/FoodScanner";
 import { TipsExercises } from "@/features/dashboard/pages/TipsExercises";
 import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
+import { HealthPlans } from "@/features/dashboard/pages/HealthPlans";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
 import { Blogs } from "@/pages/Blogs";
@@ -45,6 +46,7 @@ function Router() {
         {() => <MedicalRecords isPremium={false} />}
       </Route>
       <Route path={ROUTES.DIABOT} component={DiaBot} />
+      <Route path={ROUTES.HEALTH_PLANS} component={HealthPlans} />
       <Route path={ROUTES.BLOGS} component={Blogs} />
       <Route path={ROUTES.SETTINGS} component={Settings} />
       {/* Fallback to 404 */}

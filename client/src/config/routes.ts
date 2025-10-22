@@ -12,6 +12,7 @@ export const ROUTES = {
   TIPS_EXERCISES: "/tips",
   MEDICAL_RECORDS: "/records",
   DIABOT: "/diabot",
+  HEALTH_PLANS: "/plans",
   SETTINGS: "/settings",
   BLOGS: "/blogs",
 } as const;
