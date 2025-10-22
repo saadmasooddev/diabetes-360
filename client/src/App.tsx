@@ -38,8 +38,12 @@ function Router() {
       <Route path={ROUTES.INSTANT_CONSULTATION} component={InstantConsultation} />
       <Route path={ROUTES.FIND_DOCTOR} component={FindDoctor} />
       <Route path={ROUTES.FOOD_SCANNER} component={FoodScanner} />
-      <Route path={ROUTES.TIPS_EXERCISES} component={TipsExercises} />
-      <Route path={ROUTES.MEDICAL_RECORDS} component={MedicalRecords} />
+      <Route path={ROUTES.TIPS_EXERCISES}>
+        {() => <TipsExercises isPremium={false} />}
+      </Route>
+      <Route path={ROUTES.MEDICAL_RECORDS}>
+        {() => <MedicalRecords isPremium={false} />}
+      </Route>
       <Route path={ROUTES.DIABOT} component={DiaBot} />
       <Route path={ROUTES.BLOGS} component={Blogs} />
       <Route path={ROUTES.SETTINGS} component={Settings} />

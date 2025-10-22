@@ -24,6 +24,7 @@ Key features include:
 -   **Metrics History**: Historical health data visualization with time range filtering.
 -   **Tips & Exercises**: Personalized health tips carousel, exercise plans grid, and weekly challenges grid, with premium content differentiation.
 -   **Food Scanner**: Three-step flow for uploading food images, scanning, and displaying nutritional analysis results with premium features.
+-   **Medical Records**: Four sections for tracking health data: Glucose Logs, Consultations table, Medications (premium-locked), and Lab Reports with empty states and action buttons.
 
 ## Backend Architecture
 
