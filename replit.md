@@ -92,7 +92,7 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 - Created three-step Food Scanner flow at `/food-scanner`:
   1. **Step 1 - Upload**: Large upload area with dashed border, upload icon, "Upload Picture" button
   2. **Step 2 - Scanning**: Image grayed out (grayscale filter + brightness reduction), animated teal scanning line moving up and down, "Scanning.." button disabled
-  3. **Step 3 - Results**: Displays nutrition information with food name, serving size, calories, macronutrients, vitamins, and minerals with percentages
+  3. **Step 3 - Results**: Comprehensive food analysis with 2-column grid layout showing Food Overview, Breakdown Section, Personalized Insight, and Nutritional Highlight
 - Implemented React state management (`useState`) to track:
   - `currentStep`: Controls which step is shown (upload/scanning/results)
   - `selectedFile`: Tracks uploaded image file
@@ -104,12 +104,15 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
   - Animation runs for 3 seconds before transitioning to results
   - Uses interval to update position every 20ms
 - Mock nutrition data centralized in `/mocks/scanResults.ts` with TypeScript interfaces
-- Results screen shows:
-  - Food name card with serving size and calories
-  - Macronutrients card (carbs, protein, fat, fiber) with amounts and daily value percentages
-  - Vitamins card (A, C, K) with amounts and percentages
-  - Minerals card (calcium, iron, potassium) with amounts and percentages
-  - "Scan Another Food" button to restart flow
+- **Results screen layout (2-column grid)**:
+  - **Left Column**:
+    - **Food Overview**: Food image (rounded), food name, and food category
+    - **Breakdown Section**: Progress bars for Carbs, Fiber, Sugars, Protein, Fat, and Calories with Good/Average/Danger zones. Protein locked with premium message, other items show grayed/active states
+  - **Right Column**:
+    - **Personalized Insight**: Lock icon with "Subscribe to Premium" message
+    - **Nutritional Highlight**: Food image, Carbohydrate Count display (28g), and locked Glycemic Index requiring premium access
+- Custom `ProgressBar` component with three-zone color system (green/yellow/red) and position indicator
+- Premium/locked features indicated with Lock icons and subscription messages
 - Header with back navigation button appears after upload
 - Button text dynamically changes: "Upload Picture" → "Scan" → "Scanning.."
 - All interactive elements have data-testid attributes for comprehensive testing

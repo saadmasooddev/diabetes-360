@@ -72,7 +72,7 @@ export const mockScanResult: ScanResult = {
     calories: {
       name: "Calories",
       value: 0,
-      unit: "",
+      unit: "kcal",
       position: 0,
       status: 'average',
       isGrayed: true,
