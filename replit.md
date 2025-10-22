@@ -89,7 +89,7 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 - Fixed gauge overflow issues by adjusting SVG radius and stroke width
 
 ### Food Scanner Page
-- Created Food Scanner page at `/dashboard/food-scanner` with file upload functionality
+- Created Food Scanner page at `/food-scanner` with file upload functionality
 - Clean, centered design with large upload area featuring upload icon
 - Click-to-upload interaction with file input handler
 - Image preview functionality showing uploaded image with filename
