@@ -235,6 +235,16 @@ The application appears to be designed for traditional email/password authentica
 **Recent Changes**:
 
 **October 22, 2025**:
+- ✅ **Redesigned My Dashboard page** to match design specifications:
+  - Three metric cards: Current Glucose (mg/dL), Steps Walked (steps), Water Intake (L)
+  - Each card shows real-time data from latestMetrics or "—" placeholder
+  - "Add New Log" and "Upload Picture" buttons with upgrade CTAs
+  - Centered "Health Assessment" button using brand color #00856F
+  - Three interactive area charts using recharts: Glucose Trend, Steps Walked Trend, Water Intake Trend
+  - Charts use #00856F brand gradient with responsive containers
+  - Proper React Query integration with default fetcher
+  - All interactive elements have data-testid attributes
+  - Fully responsive layout with Sidebar integration
 - ✅ **Redesigned Home page** to match brand design specifications with new color scheme:
   - Primary green: #00856F
   - Dark text: #00453A  
