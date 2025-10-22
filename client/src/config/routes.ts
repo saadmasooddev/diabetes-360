@@ -5,7 +5,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: "/forgot-password",
 
   // Main Routes
-  HOME: "/home",
+  HOME: "/dashboard/home",
   DASHBOARD: "/dashboard",
 
   // Dashboard Sub-routes
