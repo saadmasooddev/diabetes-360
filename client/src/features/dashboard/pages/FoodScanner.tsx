@@ -2,10 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, ArrowLeft, Lock } from 'lucide-react';
+import { Upload, ArrowLeft, Lock, AlertTriangle } from 'lucide-react';
 import { mockScanResult, type BreakdownItem } from '@/mocks/scanResults';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
+
+interface FoodScannerProps {
+  isPremium?: boolean;
+}
 
 // Progress bar component for breakdown items
 function ProgressBar({ item }: { item: BreakdownItem }) {
@@ -74,7 +78,7 @@ function ProgressBar({ item }: { item: BreakdownItem }) {
   );
 }
 
-export function FoodScanner() {
+export function FoodScanner({ isPremium = false }: FoodScannerProps) {
   const [currentStep, setCurrentStep] = useState<ScanStep>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -292,12 +296,11 @@ export function FoodScanner() {
               <div className="space-y-6">
                 {/* Personalized Insight */}
                 <Card
-                  className="p-6 flex flex-col items-center justify-center text-center"
+                  className="p-6"
                   style={{
                     background: '#FFFFFF',
                     borderRadius: '16px',
                     border: '1px solid rgba(0, 0, 0, 0.1)',
-                    minHeight: '200px',
                   }}
                   data-testid="card-personalized-insight"
                 >
@@ -306,29 +309,173 @@ export function FoodScanner() {
                       fontSize: '20px',
                       fontWeight: 700,
                       color: '#00453A',
-                      marginBottom: '24px',
+                      marginBottom: '20px',
                     }}
                   >
                     Personalized Insight
                   </h3>
-                  <div
-                    className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                    style={{ background: '#E8F5F3' }}
-                  >
-                    <Lock size={32} color="#00856F" />
-                  </div>
-                  <p
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#546E7A',
-                      maxWidth: '250px',
-                    }}
-                  >
-                    Subscribe to Premium
-                    <br />
-                    to access personalized insights
-                  </p>
+                  
+                  {isPremium ? (
+                    /* Premium Content */
+                    <div className="space-y-6">
+                      {/* Calories and Recommendation Row */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Calories Section */}
+                        <div
+                          className="p-4 rounded-lg"
+                          style={{ background: '#F7F9F9' }}
+                          data-testid="container-calories"
+                        >
+                          <p
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              color: '#546E7A',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            Calories
+                          </p>
+                          <p
+                            style={{
+                              fontSize: '32px',
+                              fontWeight: 700,
+                              color: '#00453A',
+                              marginBottom: '12px',
+                            }}
+                            data-testid="text-calories-value"
+                          >
+                            {mockScanResult.personalizedInsight.calories}
+                            <span
+                              style={{
+                                fontSize: '20px',
+                                fontWeight: 400,
+                              }}
+                            >
+                              g
+                            </span>
+                          </p>
+                          {/* Wave visualization */}
+                          <div 
+                            className="h-16 rounded-lg relative overflow-hidden"
+                            style={{ background: '#C8E6C9' }}
+                            data-testid="chart-calories-wave"
+                          >
+                            <svg
+                              viewBox="0 0 200 64"
+                              preserveAspectRatio="none"
+                              className="absolute inset-0 w-full h-full"
+                            >
+                              <path
+                                d="M0,32 Q50,16 100,32 T200,32 L200,64 L0,64 Z"
+                                fill="#A5D6A7"
+                                opacity="0.7"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+
+                        {/* Eat in Moderation Section */}
+                        <div
+                          className="p-4 rounded-lg flex flex-col justify-center"
+                          style={{ background: '#FFF9E6' }}
+                          data-testid="container-recommendation"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <p
+                              style={{
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#00453A',
+                              }}
+                            >
+                              {mockScanResult.personalizedInsight.recommendation}
+                            </p>
+                            <AlertTriangle size={20} color="#FFA726" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Suggestion Text */}
+                      <p
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 400,
+                          color: '#546E7A',
+                          lineHeight: '1.5',
+                        }}
+                        data-testid="text-suggestion"
+                      >
+                        {mockScanResult.personalizedInsight.suggestionText}
+                      </p>
+
+                      {/* Suggested Protein Foods */}
+                      <div>
+                        <p
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#546E7A',
+                            marginBottom: '12px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}
+                        >
+                          Suggested Protein Foods
+                        </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          {mockScanResult.personalizedInsight.suggestedFoods.map((food, index) => (
+                            <div
+                              key={index}
+                              className="rounded-lg overflow-hidden"
+                              data-testid={`card-suggested-food-${index}`}
+                            >
+                              <img
+                                src={food.image}
+                                alt={food.name}
+                                className="w-full h-24 object-cover"
+                                data-testid={`img-suggested-food-${index}`}
+                              />
+                              <p
+                                className="text-center py-2"
+                                style={{
+                                  fontSize: '12px',
+                                  fontWeight: 500,
+                                  color: '#00453A',
+                                  background: '#F7F9F9',
+                                }}
+                                data-testid={`text-suggested-food-name-${index}`}
+                              >
+                                {food.name}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Locked State */
+                    <div className="flex flex-col items-center justify-center text-center py-8">
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                        style={{ background: '#E8F5F3' }}
+                      >
+                        <Lock size={32} color="#00856F" />
+                      </div>
+                      <p
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: '#546E7A',
+                          maxWidth: '250px',
+                        }}
+                      >
+                        Subscribe to Premium
+                        <br />
+                        to access personalized insights
+                      </p>
+                    </div>
+                  )}
                 </Card>
 
                 {/* Nutritional Highlight */}

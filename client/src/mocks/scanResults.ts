@@ -8,6 +8,18 @@ export interface BreakdownItem {
   isGrayed?: boolean;
 }
 
+export interface SuggestedFood {
+  name: string;
+  image: string;
+}
+
+export interface PersonalizedInsight {
+  calories: string;
+  recommendation: string;
+  suggestionText: string;
+  suggestedFoods: SuggestedFood[];
+}
+
 export interface ScanResult {
   foodName: string;
   foodCategory: string;
@@ -24,6 +36,7 @@ export interface ScanResult {
     carbohydrateCount: string;
     glycemicIndex: string | null; // null means locked
   };
+  personalizedInsight: PersonalizedInsight;
 }
 
 export const mockScanResult: ScanResult = {
@@ -81,5 +94,20 @@ export const mockScanResult: ScanResult = {
   nutritionalHighlight: {
     carbohydrateCount: "28g",
     glycemicIndex: null, // Locked - requires premium
+  },
+  personalizedInsight: {
+    calories: "28",
+    recommendation: "Eat in Moderation",
+    suggestionText: "Try pairing it with protein to reduce spikes.",
+    suggestedFoods: [
+      {
+        name: "Nuts & Seeds",
+        image: "https://images.unsplash.com/photo-1608797178974-15b35a64ede9?w=200&h=200&fit=crop",
+      },
+      {
+        name: "Eggs",
+        image: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=200&h=200&fit=crop",
+      },
+    ],
   },
 };

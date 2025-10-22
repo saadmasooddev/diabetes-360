@@ -38,9 +38,14 @@ function Router() {
       <Route path={ROUTES.DASHBOARD} component={Dashboard} />
       <Route path={ROUTES.METRICS_HISTORY} component={MetricsHistory} />
       {/* Feature Pages */}
-      <Route path={ROUTES.INSTANT_CONSULTATION} component={InstantConsultation} />
+      <Route
+        path={ROUTES.INSTANT_CONSULTATION}
+        component={InstantConsultation}
+      />
       <Route path={ROUTES.FIND_DOCTOR} component={FindDoctor} />
-      <Route path={ROUTES.FOOD_SCANNER} component={FoodScanner} />
+      <Route path={ROUTES.FOOD_SCANNER}>
+        {() => <FoodScanner isPremium={false} />}
+      </Route>
       <Route path={ROUTES.TIPS_EXERCISES}>
         {() => <TipsExercises isPremium={false} />}
       </Route>
