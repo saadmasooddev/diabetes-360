@@ -28,6 +28,7 @@ export const healthMetrics = pgTable("health_metrics", {
   heartRate: integer("heart_rate"),
   weight: numeric("weight"),
   steps: integer("steps"),
+  waterIntake: numeric("water_intake"),
   recordedAt: timestamp("recorded_at").notNull().defaultNow(),
 });
 

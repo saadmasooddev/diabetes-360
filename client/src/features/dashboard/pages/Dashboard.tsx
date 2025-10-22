@@ -116,12 +116,15 @@ export function Dashboard() {
       heartRate: null,
       weight: null,
       steps: null,
+      waterIntake: null,
     };
 
     if (selectedMetricType === 'glucose') {
       metricData.bloodSugar = numericValue.toString();
     } else if (selectedMetricType === 'steps') {
       metricData.steps = Math.round(numericValue);
+    } else if (selectedMetricType === 'water') {
+      metricData.waterIntake = numericValue.toString();
     }
 
     addMetricMutation.mutate(metricData);
@@ -162,6 +165,10 @@ export function Dashboard() {
       currentValue = latestMetrics.steps || null;
       const previous = previousMetrics.find((m, i) => i > 0 && m.steps);
       previousValue = previous?.steps || null;
+    } else if (metricType === 'water') {
+      currentValue = latestMetrics.waterIntake ? parseFloat(latestMetrics.waterIntake) : null;
+      const previous = previousMetrics.find((m, i) => i > 0 && m.waterIntake);
+      previousValue = previous?.waterIntake ? parseFloat(previous.waterIntake) : null;
     }
 
     if (currentValue === null || previousValue === null) return null;
@@ -185,8 +192,8 @@ export function Dashboard() {
   };
 
   const formatWaterValue = () => {
-    if (!latestMetrics) return '—';
-    return '—';
+    if (!latestMetrics?.waterIntake) return '—';
+    return parseFloat(latestMetrics.waterIntake).toFixed(1);
   };
 
   const getDialogTitle = () => {
@@ -373,6 +380,7 @@ export function Dashboard() {
               <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
                 <span style={{ fontSize: '24px' }}>{formatWaterValue()}</span>
                 <span style={{ fontSize: '16px', marginLeft: '4px' }}>L</span>
+                {getTrendArrow('water')}
               </div>
               <div className="flex gap-2">
                 <Button
