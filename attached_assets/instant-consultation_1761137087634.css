@@ -1,0 +1,3710 @@
+/* Instant Consultation(Desktop) */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+overflow-y: scroll;
+
+background: #F7F9F9;
+
+
+/* Sidebar - Open */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 24px;
+gap: 20px;
+
+position: absolute;
+width: 295px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border-right: 1px solid rgba(0, 0, 0, 0.1);
+border-radius: 12px;
+
+
+/* Profil */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 247px;
+height: 44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Avatar */
+
+width: 44px;
+height: 44px;
+
+background: url(.png);
+border-radius: 36.2214px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Content */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+width: 191px;
+height: 36px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* OVERLINE */
+
+width: 191px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Title */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+width: 247px;
+height: 420px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle 266 */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: -1px;
+top: 121px;
+
+background: #F7F9F9;
+border-radius: 5px;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+position: absolute;
+width: 247px;
+height: 12px;
+left: 0px;
+top: 0px;
+
+
+
+/* OVERLINE */
+
+width: 28px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 23px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 5%;
+right: 15%;
+top: 10%;
+bottom: 10%;
+
+border: 1.5px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 30%;
+right: 40%;
+top: 75%;
+bottom: 25%;
+
+border: 1.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 74px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 0%;
+right: 20%;
+top: calc(50% - 16px/2 - 1px);
+
+background: #000000;
+border: 2.4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 18px 10px 12px;
+gap: 15px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 125px;
+
+border-radius: 8px;
+
+
+/* Icon / User 1 */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36734 */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* chat-square-check_svgrepo.com */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 17px;
+left: 5%;
+right: 10%;
+top: calc(50% - 17px/2 + 0.5px);
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 4px;
+left: 35%;
+right: 35%;
+top: calc(50% - 4px/2);
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 136px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 176px;
+
+border-radius: 8px;
+
+
+/* Icon / Page */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 18px;
+left: 20%;
+right: 0%;
+top: calc(50% - 18px/2);
+
+background: #000000;
+border: 4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 227px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36733 */
+
+position: absolute;
+height: 16px;
+left: 10%;
+right: 10%;
+top: 2px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 1.6px;
+left: 26%;
+right: 26%;
+top: calc(50% - 1.6px/2 + 0px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 278px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36732 */
+
+position: absolute;
+height: 19.87px;
+left: 20%;
+right: 0.01%;
+top: 1px;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 329px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 5%;
+right: 20%;
+top: calc(50% - 16px/2);
+
+background: #1C274C;
+border: 2.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 380px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+position: absolute;
+left: 50%;
+right: 50%;
+top: 27.78%;
+bottom: 54.44%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 63.33%;
+right: 27.78%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 41.11%;
+right: 41.11%;
+top: 10%;
+bottom: 72.22%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 27.77%;
+right: 63.34%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 10%;
+right: 10%;
+top: 45.56%;
+bottom: 10%;
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 320px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 1;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+width: 247px;
+height: 12px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* OVERLINE */
+
+width: 53px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Settings */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 163px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 20.84%;
+right: 20.83%;
+top: 33.33%;
+bottom: 33.34%;
+
+background: #00856F;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 88px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 5;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Help-circle */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Log-out */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 16.67%;
+right: 16.66%;
+top: 8.33%;
+bottom: 8.33%;
+
+background: #D55F5A;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #D55F5A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Rectangle 62 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 324px;
+top: 59px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Rectangle 64 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 324px;
+top: 285px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Rectangle 66 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 324px;
+top: 511px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Rectangle 63 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 875px;
+top: 59px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Rectangle 65 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 875px;
+top: 285px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Rectangle 67 */
+
+box-sizing: border-box;
+
+position: absolute;
+width: 533px;
+height: 206px;
+left: 875px;
+top: 511px;
+
+background: #FFFFFF;
+border: 1px solid #E5E5E5;
+border-radius: 11px;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 340px;
+top: 82px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Online */
+
+width: 43px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 340px;
+top: 308px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #FE1216;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Offline */
+
+width: 44px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 340px;
+top: 534px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Online */
+
+width: 43px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 891px;
+top: 82px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Online */
+
+width: 43px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 891px;
+top: 308px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Online */
+
+width: 43px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px 0px 16px;
+gap: 4px;
+
+position: absolute;
+width: 52px;
+height: 13px;
+left: 891px;
+top: 534px;
+
+
+
+/* Ellipse 214 */
+
+width: 8px;
+height: 8px;
+
+background: #00856F;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Online */
+
+width: 43px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #5B5B5B;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 444px;
+top: 99px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 444px;
+top: 325px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 444px;
+top: 551px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 995px;
+top: 99px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 995px;
+top: 325px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 32px;
+left: 995px;
+top: 551px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 101px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 101px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 327.69px;
+top: 87.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 327px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 327px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 327.69px;
+top: 313.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 553px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 340px;
+top: 553px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 327.69px;
+top: 539.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 101px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 101px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 878.69px;
+top: 87.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 327px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 327px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 878.69px;
+top: 313.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Mask group */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 553px;
+
+
+
+/* Ellipse 209 */
+
+position: absolute;
+width: 149.2px;
+height: 149.2px;
+left: 891px;
+top: 553px;
+
+background: #D9D9D9;
+
+
+/* Doctor-Portraits-by-Jinnifer-Douglass-006 */
+
+position: absolute;
+width: 164.55px;
+height: 246.59px;
+left: 878.69px;
+top: 539.16px;
+
+background: url(Doctor-Portraits-by-Jinnifer-Douglass-006.jpg);
+border-radius: 0px;
+
+
+/* Frame 63 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 39.17%;
+right: 43.68%;
+top: calc(50% - 101.49px/2 - 376.26px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36739 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 39.17%;
+right: 43.68%;
+top: calc(50% - 101.49px/2 - 150.26px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36743 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 39.17%;
+right: 43.68%;
+top: calc(50% - 101.49px/2 + 75.74px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36737 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 77.43%;
+right: 5.42%;
+top: calc(50% - 101.49px/2 - 376.26px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36740 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 77.43%;
+right: 5.42%;
+top: calc(50% - 101.49px/2 - 150.26px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36744 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px;
+gap: 10px;
+
+position: absolute;
+height: 101.49px;
+left: 77.43%;
+right: 5.42%;
+top: calc(50% - 101.49px/2 + 75.74px);
+
+
+
+/* Group 60 */
+
+width: 228px;
+height: 101.49px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36695 */
+
+position: absolute;
+width: 228px;
+height: 101.49px;
+left: 0px;
+top: 0px;
+
+
+
+/* Dr. Samreen Akhtar */
+
+position: absolute;
+width: 228px;
+height: 31px;
+left: 0px;
+top: 0px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 24px;
+line-height: 31px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Diabetologist & Nutritionist */
+
+position: absolute;
+width: 211px;
+left: 0px;
+top: 27.5%;
+bottom: 51.81%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 16px;
+line-height: 21px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Experience */
+
+position: absolute;
+width: 65px;
+left: 0px;
+top: 58.65%;
+bottom: 25.59%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Ratings */
+
+position: absolute;
+width: 43px;
+left: 0px;
+top: 84.23%;
+bottom: 0%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 600;
+font-size: 12px;
+line-height: 16px;
+/* identical to box height */
+
+color: #00856F;
+
+
+
+/* 6+ years */
+
+position: absolute;
+left: 33.2%;
+right: 40.49%;
+top: 61.85%;
+bottom: 17.33%;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 400;
+font-size: 12px;
+line-height: 16px;
+text-align: center;
+
+color: #00856F;
+
+
+
+/* Line 7 */
+
+position: absolute;
+left: 28.74%;
+right: 65.18%;
+top: 60.83%;
+bottom: 39.17%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Line 8 */
+
+position: absolute;
+left: 28.74%;
+right: 64.37%;
+top: 82.04%;
+bottom: 17.96%;
+
+border: 1px solid #00856F;
+transform: rotate(90deg);
+
+
+/* Star 1 */
+
+position: absolute;
+left: 36.84%;
+right: 57.24%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 2 */
+
+position: absolute;
+left: 43.98%;
+right: 50.1%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 3 */
+
+position: absolute;
+left: 58.25%;
+right: 35.83%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 4 */
+
+position: absolute;
+left: 65.38%;
+right: 28.69%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Star 5 */
+
+position: absolute;
+left: 51.11%;
+right: 42.97%;
+top: 84.11%;
+bottom: 1.48%;
+
+background: #00856F;
+
+
+/* Frame 36736 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 38px;
+left: 564px;
+top: 203px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36741 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 39px;
+left: 564px;
+top: 430px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36745 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 38px;
+left: 564px;
+top: 658px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36738 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 38px;
+left: 1115px;
+top: 203px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36742 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 39px;
+left: 1115px;
+top: 430px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 36746 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 8px 49px;
+gap: 10px;
+
+position: absolute;
+width: 228px;
+height: 38px;
+left: 1115px;
+top: 658px;
+
+background: #00856F;
+border-radius: 5px;
+
+
+/* Consult Now */
+
+width: 87px;
+height: 18px;
+
+font-family: 'DM Sans';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 18px;
+text-align: center;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
