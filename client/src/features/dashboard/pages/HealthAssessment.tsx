@@ -107,8 +107,8 @@ export function HealthAssessment() {
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
-      <main className="flex-1 flex justify-center lg:ml-[295px]">
-        <div className="w-full max-w-[1100px] p-8">
+      <main className="flex-1 w-full lg:pl-[295px]">
+        <div className="mx-auto w-full max-w-[1100px] px-4 py-8 sm:px-6 lg:px-8">
           <h1
             className="mb-8"
             style={{
@@ -132,7 +132,7 @@ export function HealthAssessment() {
             }}
             data-testid="section-glucose-analysis"
           >
-            <div className="grid grid-cols-3 gap-8 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
               <CircularGauge
                 value={glucoseDaily}
                 maxValue={200}
@@ -158,7 +158,7 @@ export function HealthAssessment() {
           </Card>
 
           {/* Hydration and Activity Analysis */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             {/* Hydration Analysis */}
             <Card
               className="p-8"
@@ -179,7 +179,7 @@ export function HealthAssessment() {
               >
                 Hydration Analysis
               </h2>
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <CircularGauge
                   value={parseFloat(waterDaily)}
                   maxValue={5}
@@ -227,7 +227,7 @@ export function HealthAssessment() {
               >
                 Activity Analysis
               </h2>
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <CircularGauge
                   value={stepsDaily}
                   maxValue={15000}
@@ -257,7 +257,7 @@ export function HealthAssessment() {
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {/* Hydration Summary */}
             <Card
               className="p-6"
