@@ -2,80 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Upload, ArrowLeft, Lock, AlertTriangle } from 'lucide-react';
-import { mockScanResult, type BreakdownItem } from '@/mocks/scanResults';
+import { Upload, ArrowLeft, AlertTriangle, Lock } from 'lucide-react';
+import { mockScanResult } from '@/mocks/scanResults';
+import { NutritionProgressBar } from '../components/NutritionProgressBar';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
 
 interface FoodScannerProps {
   isPremium?: boolean;
-}
-
-// Progress bar component for breakdown items
-function ProgressBar({ item }: { item: BreakdownItem }) {
-  return (
-    <div
-      className={`flex items-center justify-between py-4 border-b border-gray-100 last:border-0 ${
-        item.isGrayed ? 'opacity-40' : ''
-      }`}
-      data-testid={`row-breakdown-${item.name.toLowerCase()}`}
-    >
-      <span
-        style={{
-          fontSize: '14px',
-          fontWeight: 500,
-          color: '#00453A',
-          width: '80px',
-        }}
-      >
-        {item.name}
-      </span>
-
-      {item.isLocked ? (
-        <div className="flex-1 flex items-center justify-center gap-2">
-          <Lock size={16} color="#00856F" />
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#00856F',
-            }}
-          >
-            Subscribe to Premium to access more sections
-          </span>
-        </div>
-      ) : (
-        <>
-          <div className="flex-1 relative h-6 mx-4">
-            {/* Background track with three zones */}
-            <div className="absolute inset-0 flex rounded-full overflow-hidden">
-              <div className="flex-1 bg-green-200" />
-              <div className="flex-1 bg-yellow-200" />
-              <div className="flex-1 bg-red-200" />
-            </div>
-            {/* Position indicator */}
-            <div
-              className="absolute top-0 bottom-0 w-1 bg-black rounded-full"
-              style={{ left: `${item.position}%` }}
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <span
-              style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#00453A',
-                minWidth: '50px',
-                textAlign: 'right',
-              }}
-            >
-              {item.value}{item.unit}
-            </span>
-          </div>
-        </>
-      )}
-    </div>
-  );
 }
 
 export function FoodScanner({ isPremium = false }: FoodScannerProps) {
@@ -282,12 +216,12 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                     Breakdown Section
                   </h3>
                   <div>
-                    <ProgressBar item={mockScanResult.breakdown.carbs} />
-                    <ProgressBar item={mockScanResult.breakdown.fiber} />
-                    <ProgressBar item={mockScanResult.breakdown.sugars} />
-                    <ProgressBar item={mockScanResult.breakdown.protein} />
-                    <ProgressBar item={mockScanResult.breakdown.fat} />
-                    <ProgressBar item={mockScanResult.breakdown.calories} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.carbs} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.fiber} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.sugars} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.protein} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.fat} />
+                    <NutritionProgressBar item={mockScanResult.breakdown.calories} />
                   </div>
                 </Card>
               </div>
