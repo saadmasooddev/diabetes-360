@@ -88,6 +88,32 @@ PostgreSQL is used as the database, configured for Neon serverless, with Drizzle
 - Updated Sidebar to show Health Assessment as an expandable sub-item under My Dashboard
 - Fixed gauge overflow issues by adjusting SVG radius and stroke width
 
+### Tips & Exercises Page
+- Created Tips & Exercises page at `/tips` with four main sections following Figma design:
+  1. **Header Banner**: Teal gradient banner with "Upgrade to get personalized Tips & Exercises" and "See Plans" button
+  2. **Health Tips Carousel**: Horizontal sliding carousel with prev/next buttons and dot indicators, displaying diabetes health tips
+  3. **Exercise Plans Grid**: 4-column responsive grid showing Morning Walk, Strength Training, Yoga or Stretching, and locked Custom Exercise with images, duration, descriptions, and "Start Now" buttons
+  4. **Weekly Challenges Grid**: 3-column grid showing weekly challenges with progress tracking and premium lock states
+- Implemented React state management (`useState`) for carousel functionality:
+  - `currentTipIndex`: Tracks current visible tip in carousel
+  - Full-width slides (100%) with translateX animation for smooth transitions
+- Carousel features:
+  - Chevron navigation buttons with hover states
+  - Dot pagination with active state indicator (elongated dot)
+  - Smooth 300ms CSS transitions
+  - Accessible with aria-label attributes on all controls
+- Mock data centralized in `/mocks/tipsExercises.ts`:
+  - `healthTips`: 4 diabetes health tips with advice
+  - `exercisePlans`: 4 exercise plans with images, duration, descriptions, and locked states
+  - `weeklyChallenges`: 3 weekly challenges with goals, progress tracking, and locked states
+- Premium/locked features indicated with:
+  - Lock icons in circular teal backgrounds
+  - "Subscribe to Premium" overlay messages
+  - Grayed out cards with semi-transparent overlays
+- Responsive design: Grid adapts from 4 columns (lg) to 2 columns (md) to 1 column (mobile)
+- All interactive elements have data-testid attributes and aria-label for accessibility
+- Feature-based organization: page located in `features/dashboard/pages/TipsExercises.tsx`
+
 ### Food Scanner Page
 - Created three-step Food Scanner flow at `/food-scanner`:
   1. **Step 1 - Upload**: Large upload area with dashed border, upload icon, "Upload Picture" button
