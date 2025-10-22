@@ -1,11 +1,17 @@
+import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { API_ENDPOINTS } from '@/config/endpoints';
 import { useAuthStore } from '@/stores/authStore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import type { HealthMetric } from '@shared/schema';
 
 const glucoseData = [
@@ -38,20 +44,87 @@ const waterData = [
   { time: '6 PM', value: 3.8 },
 ];
 
+type MetricType = 'glucose' | 'steps' | 'water';
+
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
   const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedMetricType, setSelectedMetricType] = useState<MetricType>('glucose');
+  const [metricValue, setMetricValue] = useState('');
 
   const { data: latestMetrics } = useQuery<HealthMetric | null>({
     queryKey: [`${API_ENDPOINTS.HEALTH.LATEST}?userId=${user?.id}`],
     enabled: !!user?.id,
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
-  const handleAddLog = (metricType: string) => {
-    toast({
-      title: "Add New Log",
-      description: `Add a new ${metricType} entry`,
-    });
+  const { data: previousMetrics } = useQuery<HealthMetric[]>({
+    queryKey: [`${API_ENDPOINTS.HEALTH.METRICS}?userId=${user?.id}&limit=5`],
+    enabled: !!user?.id,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+
+  const addMetricMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest('POST', API_ENDPOINTS.HEALTH.ADD, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+      toast({
+        title: "Success",
+        description: "Metric logged successfully",
+      });
+      setDialogOpen(false);
+      setMetricValue('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log metric",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddLog = (metricType: MetricType) => {
+    setSelectedMetricType(metricType);
+    setDialogOpen(true);
+  };
+
+  const handleSubmitLog = () => {
+    if (!metricValue || !user?.id) return;
+
+    const numericValue = parseFloat(metricValue);
+    if (isNaN(numericValue)) {
+      toast({
+        title: "Invalid Value",
+        description: "Please enter a valid number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const metricData: any = {
+      userId: user.id,
+      bloodSugar: null,
+      bloodPressureSystolic: null,
+      bloodPressureDiastolic: null,
+      heartRate: null,
+      weight: null,
+      steps: null,
+    };
+
+    if (selectedMetricType === 'glucose') {
+      metricData.bloodSugar = numericValue.toString();
+    } else if (selectedMetricType === 'steps') {
+      metricData.steps = Math.round(numericValue);
+    }
+
+    addMetricMutation.mutate(metricData);
   };
 
   const handleUploadPicture = () => {
@@ -75,6 +148,32 @@ export function Dashboard() {
     });
   };
 
+  const getTrendArrow = (metricType: MetricType) => {
+    if (!latestMetrics || !previousMetrics || previousMetrics.length < 2) return null;
+
+    let currentValue: number | null = null;
+    let previousValue: number | null = null;
+
+    if (metricType === 'glucose') {
+      currentValue = latestMetrics.bloodSugar ? parseFloat(latestMetrics.bloodSugar) : null;
+      const previous = previousMetrics.find((m, i) => i > 0 && m.bloodSugar);
+      previousValue = previous?.bloodSugar ? parseFloat(previous.bloodSugar) : null;
+    } else if (metricType === 'steps') {
+      currentValue = latestMetrics.steps || null;
+      const previous = previousMetrics.find((m, i) => i > 0 && m.steps);
+      previousValue = previous?.steps || null;
+    }
+
+    if (currentValue === null || previousValue === null) return null;
+
+    const isIncreasing = currentValue > previousValue;
+    return isIncreasing ? (
+      <ArrowUp className="ml-2 inline-block" style={{ color: '#4CAF50', width: '24px', height: '24px' }} />
+    ) : (
+      <ArrowDown className="ml-2 inline-block" style={{ color: '#F44336', width: '24px', height: '24px' }} />
+    );
+  };
+
   const formatGlucoseValue = () => {
     if (!latestMetrics?.bloodSugar) return '—';
     return latestMetrics.bloodSugar;
@@ -90,12 +189,24 @@ export function Dashboard() {
     return '—';
   };
 
+  const getDialogTitle = () => {
+    if (selectedMetricType === 'glucose') return 'Log Glucose';
+    if (selectedMetricType === 'steps') return 'Log Steps';
+    return 'Log Water Intake';
+  };
+
+  const getDialogPlaceholder = () => {
+    if (selectedMetricType === 'glucose') return 'Enter glucose level (mg/dL)';
+    if (selectedMetricType === 'steps') return 'Enter steps count';
+    return 'Enter water intake (L)';
+  };
+
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
       
-      <main className="flex-1" style={{ marginLeft: '295px', padding: '32px' }}>
-        <div className="mx-auto" style={{ maxWidth: '1145px' }}>
+      <main className="flex-1 flex justify-center" style={{ padding: '32px' }}>
+        <div className="w-full" style={{ maxWidth: '1145px' }}>
           {/* Metric Cards Row */}
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Current Glucose Card */}
@@ -120,8 +231,10 @@ export function Dashboard() {
               >
                 Current Glucose
               </h3>
-              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatGlucoseValue()}</span> mg/dL
+              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>{formatGlucoseValue()}</span>
+                <span style={{ fontSize: '16px', marginLeft: '4px' }}>mg/dL</span>
+                {getTrendArrow('glucose')}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -196,8 +309,10 @@ export function Dashboard() {
               >
                 Steps Walked
               </h3>
-              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatStepsValue()}</span> steps
+              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>{formatStepsValue()}</span>
+                <span style={{ fontSize: '16px', marginLeft: '4px' }}>steps</span>
+                {getTrendArrow('steps')}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -255,8 +370,9 @@ export function Dashboard() {
               >
                 Water Intake
               </h3>
-              <div className="mb-6" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatWaterValue()}</span> L
+              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
+                <span style={{ fontSize: '24px' }}>{formatWaterValue()}</span>
+                <span style={{ fontSize: '16px', marginLeft: '4px' }}>L</span>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -504,6 +620,62 @@ export function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Add Metric Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent 
+          className="sm:max-w-md"
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '12px',
+            padding: '24px',
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle style={{ color: '#00453A', fontSize: '20px', fontWeight: 600 }}>
+              {getDialogTitle()}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="metric-value" style={{ color: '#00453A', fontSize: '14px', fontWeight: 500 }}>
+                Value
+              </Label>
+              <Input
+                id="metric-value"
+                type="number"
+                placeholder={getDialogPlaceholder()}
+                value={metricValue}
+                onChange={(e) => setMetricValue(e.target.value)}
+                style={{
+                  border: '1px solid #E0E0E0',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                }}
+                data-testid="input-metric-value"
+              />
+            </div>
+            <Button
+              onClick={handleSubmitLog}
+              disabled={addMetricMutation.isPending}
+              style={{
+                width: '100%',
+                background: '#00856F',
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 600,
+                padding: '12px',
+                border: 'none',
+              }}
+              data-testid="button-log-now"
+            >
+              {addMetricMutation.isPending ? 'Logging...' : 'Log Now'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
