@@ -4,6 +4,7 @@ export const ROUTES = {
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
   DASHBOARD: '/dashboard',
+  HEALTH_ASSESSMENT: '/dashboard/health-assessment',
   METRICS_HISTORY: '/metrics',
   INSTANT_CONSULTATION: '/consultation',
   FIND_DOCTOR: '/doctors',

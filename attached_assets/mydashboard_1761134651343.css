@@ -1,0 +1,4080 @@
+/* Dashboard (Desktop) */
+
+position: relative;
+width: 1440px;
+height: 1024px;
+
+background: #FFFFFF;
+
+
+/* Rectangle 263 */
+
+position: absolute;
+width: 1440px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #F7F9F9;
+
+
+/* Sidebar - Open */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 24px;
+gap: 20px;
+
+position: absolute;
+width: 295px;
+height: 1024px;
+left: 0px;
+top: 0px;
+
+background: #FFFFFF;
+border-right: 1px solid rgba(0, 0, 0, 0.1);
+border-radius: 12px;
+
+
+/* Profil */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 12px;
+
+width: 247px;
+height: 44px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Avatar */
+
+width: 44px;
+height: 44px;
+
+background: url(.png);
+border-radius: 36.2214px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Content */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 4px;
+
+width: 191px;
+height: 36px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* OVERLINE */
+
+width: 191px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Title */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+
+color: #00453A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+width: 247px;
+height: 420px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Rectangle 266 */
+
+position: absolute;
+width: 248px;
+height: 49px;
+left: -1px;
+top: 69px;
+
+background: #F7F9F9;
+border-radius: 5px;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+position: absolute;
+width: 247px;
+height: 12px;
+left: 0px;
+top: 0px;
+
+
+
+/* OVERLINE */
+
+width: 28px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 23px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+left: 5%;
+right: 15%;
+top: 10%;
+bottom: 10%;
+
+border: 1.5px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 30%;
+right: 40%;
+top: 75%;
+bottom: 25%;
+
+border: 1.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 74px;
+
+border-radius: 8px;
+
+
+/* Icon / Home-simple-door */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 0%;
+right: 20%;
+top: calc(50% - 16px/2 - 1px);
+
+background: #000000;
+border: 2.4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 18px 10px 12px;
+gap: 15px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 125px;
+
+border-radius: 8px;
+
+
+/* Icon / User 1 */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Group 36734 */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* chat-square-check_svgrepo.com */
+
+position: absolute;
+height: 16px;
+left: -15%;
+right: 35%;
+top: 1px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 17px;
+left: 5%;
+right: 10%;
+top: calc(50% - 17px/2 + 0.5px);
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 4px;
+left: 35%;
+right: 35%;
+top: calc(50% - 4px/2);
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 136px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 176px;
+
+border-radius: 8px;
+
+
+/* Icon / Page */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 18px;
+left: 20%;
+right: 0%;
+top: calc(50% - 18px/2);
+
+background: #000000;
+border: 4px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 227px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36733 */
+
+position: absolute;
+height: 16px;
+left: 10%;
+right: 10%;
+top: 2px;
+
+
+
+/* Vector */
+
+position: absolute;
+height: 1.6px;
+left: 26%;
+right: 26%;
+top: calc(50% - 1.6px/2 + 0px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 + 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 10%;
+right: 58%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Vector */
+
+position: absolute;
+height: 6.4px;
+left: 58%;
+right: 10%;
+top: calc(50% - 6.4px/2 - 4.8px);
+
+border: 1px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 278px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Group 36732 */
+
+position: absolute;
+height: 19.87px;
+left: 20%;
+right: 0%;
+top: 1px;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 88.48%;
+right: 0.01%;
+top: 28.64%;
+bottom: 61.29%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 20%;
+right: 2.8%;
+top: 18.44%;
+bottom: -4.37%;
+
+background: #00856F;
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Group */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+
+
+/* Vector */
+
+position: absolute;
+left: 59.5%;
+right: 22.59%;
+top: 5%;
+bottom: 77.09%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 329px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+box-sizing: border-box;
+
+position: absolute;
+height: 16px;
+left: 5%;
+right: 20%;
+top: calc(50% - 16px/2);
+
+background: #1C274C;
+border: 2.5px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+position: absolute;
+width: 247px;
+height: 40px;
+left: 0px;
+top: 380px;
+
+border-radius: 8px;
+
+
+/* Icon / Calendar */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 13.33%;
+right: 3.34%;
+top: 234.17%;
+bottom: -221.67%;
+
+background: #757575;
+
+
+/* Vector */
+
+position: absolute;
+left: 50%;
+right: 50%;
+top: 27.78%;
+bottom: 54.44%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 63.33%;
+right: 27.78%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 41.11%;
+right: 41.11%;
+top: 10%;
+bottom: 72.22%;
+
+border: 2px solid #00856F;
+
+
+/* Ellipse */
+
+position: absolute;
+left: 27.77%;
+right: 63.34%;
+top: 63.33%;
+bottom: 27.78%;
+
+background: #00856F;
+
+
+/* Vector */
+
+position: absolute;
+left: 10%;
+right: 10%;
+top: 45.56%;
+bottom: 10%;
+
+border: 2px solid #00856F;
+
+
+/* Label */
+
+width: 173.67px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Union */
+
+width: 9.33px;
+height: 5.33px;
+
+background: #00856F;
+transform: rotate(-90deg);
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Divider */
+
+width: 247px;
+height: 2px;
+
+background: #F6F6F6;
+border-radius: 2px;
+
+/* Inside auto layout */
+flex: none;
+order: 3;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 320px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 4;
+align-self: stretch;
+flex-grow: 1;
+
+
+/* Title */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 12px;
+gap: 8px;
+
+width: 247px;
+height: 12px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* OVERLINE */
+
+width: 53px;
+height: 12px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+/* identical to box height, or 120% */
+display: flex;
+align-items: center;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Settings */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 163px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Icon / Chevron */
+
+width: 16px;
+height: 16px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 2;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 20.84%;
+right: 20.83%;
+top: 33.33%;
+bottom: 33.34%;
+
+background: #00856F;
+
+
+/* Navigation */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+gap: 8px;
+
+width: 247px;
+height: 88px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 5;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Help-circle */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 4.17%;
+right: 4.16%;
+top: 4.17%;
+bottom: 4.17%;
+
+background: #00856F;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Link */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 10px 12px;
+gap: 12px;
+
+width: 247px;
+height: 40px;
+
+border-radius: 8px;
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+align-self: stretch;
+flex-grow: 0;
+
+
+/* Icon / Log-out */
+
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Union */
+
+position: absolute;
+left: 16.67%;
+right: 16.66%;
+top: 8.33%;
+bottom: 8.33%;
+
+background: #D55F5A;
+
+
+/* Label */
+
+width: 191px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 14px;
+line-height: 20px;
+/* identical to box height, or 143% */
+letter-spacing: -0.02em;
+
+color: #D55F5A;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 1;
+
+
+/* Rectangle 74 */
+
+position: absolute;
+width: 1022px;
+height: 374px;
+left: calc(50% - 1022px/2 + 148px);
+top: 44px;
+
+background: #FFFFFF;
+border-radius: 11px;
+
+
+/* -mg/dL */
+
+position: absolute;
+width: 83px;
+height: 97px;
+left: 396px;
+top: 112px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 64px;
+line-height: 77px;
+letter-spacing: -2px;
+
+color: #00453A;
+
+
+
+/* -mg/dL */
+
+position: absolute;
+width: 83px;
+height: 97px;
+left: 743px;
+top: 112px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 64px;
+line-height: 77px;
+letter-spacing: -2px;
+
+color: #00453A;
+
+
+
+/* -mg/dL */
+
+position: absolute;
+width: 83px;
+height: 97px;
+left: 1089px;
+top: 112px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 64px;
+line-height: 77px;
+letter-spacing: -2px;
+
+color: #00453A;
+
+
+
+/* Current Glucose */
+
+position: absolute;
+width: 246px;
+height: 29px;
+left: 385px;
+top: 68px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #00453A;
+
+
+
+/* Steps Walked */
+
+position: absolute;
+width: 232px;
+height: 29px;
+left: 732px;
+top: 68px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #00453A;
+
+
+
+/* Water Intake */
+
+position: absolute;
+width: 231px;
+height: 29px;
+left: 1079px;
+top: 68px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #00453A;
+
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+position: absolute;
+width: 131px;
+height: 43px;
+left: calc(50% - 131px/2 - 270.5px);
+top: 243px;
+
+border: 1px solid #00856F;
+border-radius: 10px;
+
+
+/* Add New Log */
+
+width: 91px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+position: absolute;
+width: 131px;
+height: 43px;
+left: calc(50% - 131px/2 - 121.5px);
+top: 243px;
+
+border: 1px solid #00856F;
+border-radius: 10px;
+
+
+/* Upload Picture */
+
+width: 101px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+position: absolute;
+width: 279px;
+height: 43px;
+left: calc(50% - 279px/2 + 149.5px);
+top: 243px;
+
+border: 1px solid #00856F;
+border-radius: 10px;
+
+
+/* Add New Log */
+
+width: 91px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+position: absolute;
+width: 279px;
+height: 43px;
+left: calc(50% - 279px/2 + 496.5px);
+top: 243px;
+
+border: 1px solid #00856F;
+border-radius: 10px;
+
+
+/* Add New Log */
+
+width: 91px;
+height: 18px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 14px;
+line-height: 125%;
+/* identical to box height, or 18px */
+display: flex;
+align-items: flex-end;
+
+color: #00856F;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* *limited to 2 logs per day. Upgrade to Paid Plan */
+
+position: absolute;
+width: 269px;
+height: 15px;
+left: 389px;
+top: 304px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 300;
+font-size: 12px;
+line-height: 15px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* *limited to 2 logs per day. Upgrade to Paid Plan */
+
+position: absolute;
+width: 269px;
+height: 15px;
+left: 735px;
+top: 304px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 300;
+font-size: 12px;
+line-height: 15px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* *limited to 2 logs per day. Upgrade to Paid Plan */
+
+position: absolute;
+width: 269px;
+height: 15px;
+left: 1081px;
+top: 304px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 300;
+font-size: 12px;
+line-height: 15px;
+/* identical to box height */
+
+color: #00453A;
+
+
+
+/* Line 22 */
+
+position: absolute;
+width: 291px;
+height: 0px;
+left: 694px;
+top: 46px;
+
+border: 1px solid #DADADA;
+transform: rotate(-90deg);
+
+
+/* Line 23 */
+
+position: absolute;
+width: 291px;
+height: 0px;
+left: 1040px;
+top: 46px;
+
+border: 1px solid #DADADA;
+transform: rotate(-90deg);
+
+
+/* Line 24 */
+
+position: absolute;
+width: 1022px;
+height: 0px;
+left: 357px;
+top: 337px;
+
+border: 1px solid #DADADA;
+
+
+/* Input field */
+
+box-sizing: border-box;
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: center;
+padding: 18px 16px;
+gap: 10px;
+
+position: absolute;
+width: 529px;
+height: 47px;
+left: calc(50% - 529px/2 + 148.5px);
+top: 355px;
+
+background: #DDDDDD;
+border: 1px solid #D8DADC;
+border-radius: 10px;
+
+
+/* Health Assessment */
+
+width: 153px;
+height: 20px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 700;
+font-size: 16px;
+line-height: 125%;
+/* identical to box height, or 20px */
+display: flex;
+align-items: flex-end;
+
+color: #FFFFFF;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon */
+
+display: none;
+width: 20px;
+height: 20px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+
+
+/* Group 36745 */
+
+position: absolute;
+width: 1022px;
+height: 535px;
+left: 357px;
+top: 445px;
+
+
+
+/* Widget */
+
+position: absolute;
+width: 1022px;
+height: 256px;
+left: 357px;
+top: 445px;
+
+background: #FFFFFF;
+border-radius: 10px;
+
+
+/* Group 36736 */
+
+position: absolute;
+width: 144px;
+height: 189.48px;
+left: 16px;
+top: 17px;
+
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 16px;
+gap: 8px;
+
+position: absolute;
+width: 141px;
+height: 27.02px;
+left: 16px;
+top: 17px;
+
+
+
+/* Glucose Trend */
+
+width: 166px;
+height: 29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #131313;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 36.02px;
+left: 128px;
+top: 48.52px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19.14px;
+left: 24px;
+top: 187.34px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 932px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 6 PM */
+
+position: absolute;
+width: 95px;
+height: 17px;
+left: 885px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 30 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 802px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 4 PM */
+
+position: absolute;
+width: 88px;
+height: 17px;
+left: 758px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 29 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 671px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 2 PM */
+
+position: absolute;
+width: 95px;
+height: 17px;
+left: 623px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 28 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 524px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 12 PM */
+
+position: absolute;
+width: 121px;
+height: 17px;
+left: 463px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 27 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 380px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 11 AM */
+
+position: absolute;
+width: 89px;
+height: 17px;
+left: 335px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 26 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 252px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 9 AM */
+
+position: absolute;
+width: 88px;
+height: 17px;
+left: 208px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 25 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 124px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 7 AM */
+
+position: absolute;
+width: 88px;
+height: 17px;
+left: 80px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 101px;
+
+
+
+/* 90mg/dL */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 6 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 16px;
+left: 16px;
+top: 136px;
+
+
+
+/* 80mg/dL */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 7 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 170px;
+
+
+
+/* 70mg/dL */
+
+width: 48px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 1 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+isolation: isolate;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 204px;
+
+
+
+/* 0 */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+z-index: 0;
+
+
+/* Group 105 */
+
+position: absolute;
+width: 920px;
+height: 92px;
+left: 43px;
+top: -113.61px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 920px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 122.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 920px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 91.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 920px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 60.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 920px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 30.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* 100mg/dL */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 16px;
+top: 67px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19px;
+left: 24px;
+top: 182px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* Vector 1 */
+
+position: absolute;
+width: 921px;
+height: 141px;
+left: 58px;
+top: 74px;
+
+background: linear-gradient(180deg, rgba(37, 205, 37, 0.4) 0%, rgba(37, 205, 37, 0) 99.59%);
+border: 1px dashed #25CD25;
+
+
+/* Widget */
+
+position: absolute;
+width: 503px;
+height: 256px;
+left: 357px;
+top: 724px;
+
+background: #FFFFFF;
+border-radius: 10px;
+
+
+/* Group 36736 */
+
+position: absolute;
+width: 144px;
+height: 189.48px;
+left: 16px;
+top: 17px;
+
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 16px;
+gap: 8px;
+
+position: absolute;
+width: 141px;
+height: 27.02px;
+left: 16px;
+top: 17px;
+
+
+
+/* Steps Walked Trend */
+
+width: 229px;
+height: 29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #131313;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 36.02px;
+left: 128px;
+top: 48.52px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19.14px;
+left: 24px;
+top: 187.34px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* 6 PM */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 476px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* 4 PM */
+
+position: absolute;
+width: 44px;
+height: 17px;
+left: 412px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* 2 PM */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 344px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 28 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 524px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 12 PM */
+
+position: absolute;
+width: 61px;
+height: 17px;
+left: 263px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 27 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 368px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 33 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 434px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 34 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 500px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 32 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 294px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 11 AM */
+
+position: absolute;
+width: 45px;
+height: 17px;
+left: 198px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 26 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 156px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 31 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 221px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 9 AM */
+
+position: absolute;
+width: 44px;
+height: 17px;
+left: 134px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 25 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 92px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 7 AM */
+
+position: absolute;
+width: 45px;
+height: 17px;
+left: 69px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 101px;
+
+
+
+/* 9000 */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 6 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 16px;
+left: 16px;
+top: 136px;
+
+
+
+/* 6000 */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 7 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 170px;
+
+
+
+/* 3000 */
+
+width: 48px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 1 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+isolation: isolate;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 204px;
+
+
+
+/* 0 */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+z-index: 0;
+
+
+/* Group 105 */
+
+position: absolute;
+width: 465px;
+height: 92px;
+left: 43px;
+top: -113.61px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 122.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 91.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 60.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 30.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* 11000 */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 16px;
+top: 67px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19px;
+left: 24px;
+top: 182px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* Vector 1 */
+
+position: absolute;
+width: 465px;
+height: 141px;
+left: 58px;
+top: 74px;
+
+background: linear-gradient(180deg, rgba(37, 205, 37, 0.4) 0%, rgba(37, 205, 37, 0) 99.59%);
+border: 1px dashed #25CD25;
+
+
+/* Widget */
+
+position: absolute;
+width: 503px;
+height: 256px;
+left: 876px;
+top: 724px;
+
+background: #FFFFFF;
+border-radius: 10px;
+
+
+/* Group 36736 */
+
+position: absolute;
+width: 144px;
+height: 189.48px;
+left: 16px;
+top: 17px;
+
+
+
+/* Heading */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-start;
+padding: 0px 0px 16px;
+gap: 8px;
+
+position: absolute;
+width: 141px;
+height: 27.02px;
+left: 16px;
+top: 17px;
+
+
+
+/* Water Intake Trend */
+
+width: 217px;
+height: 29px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 600;
+font-size: 24px;
+line-height: 29px;
+/* identical to box height */
+letter-spacing: -0.2px;
+
+color: #131313;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+position: absolute;
+width: 32px;
+height: 36.02px;
+left: 128px;
+top: 48.52px;
+
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 29.17%;
+right: 29.16%;
+top: 29.17%;
+bottom: 29.17%;
+
+border: 2px solid #25CD25;
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19.14px;
+left: 24px;
+top: 187.34px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* 6 PM */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 476px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* 4 PM */
+
+position: absolute;
+width: 44px;
+height: 17px;
+left: 412px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* 2 PM */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 344px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 28 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 524px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 12 PM */
+
+position: absolute;
+width: 61px;
+height: 17px;
+left: 263px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 27 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 368px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 33 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 434px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 34 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 500px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 32 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 294px;
+top: 76px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 11 AM */
+
+position: absolute;
+width: 45px;
+height: 17px;
+left: 198px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 26 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 156px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* Line 31 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 221px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 9 AM */
+
+position: absolute;
+width: 44px;
+height: 17px;
+left: 134px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Line 25 */
+
+position: absolute;
+width: 138px;
+height: 0px;
+left: 92px;
+top: 74px;
+
+border: 1px solid #F1F1F1;
+transform: rotate(-90deg);
+
+
+/* 7 AM */
+
+position: absolute;
+width: 45px;
+height: 17px;
+left: 69px;
+top: 230px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+display: flex;
+align-items: center;
+text-align: center;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 101px;
+
+
+
+/* 3 Litre */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 6 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 16px;
+left: 16px;
+top: 136px;
+
+
+
+/* 2 Litre */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+
+
+/* Frame 7 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 8px;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 170px;
+
+
+
+/* 1 Litre */
+
+width: 48px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Frame 1 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+padding: 0px;
+gap: 8px;
+isolation: isolate;
+
+position: absolute;
+width: 96px;
+height: 17px;
+left: 16px;
+top: 204px;
+
+
+
+/* 0 */
+
+margin: 0 auto;
+width: 96px;
+height: 15px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 1;
+z-index: 0;
+
+
+/* Group 105 */
+
+position: absolute;
+width: 465px;
+height: 92px;
+left: 43px;
+top: -113.61px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 1;
+flex-grow: 0;
+z-index: 1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 122.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 91.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 60.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* Line 3 */
+
+position: absolute;
+width: 465px;
+height: 0px;
+left: 43px;
+top: calc(50% - 0px/2 - 30.11px);
+
+border: 1px solid #F1F1F1;
+
+
+/* 4 Litre */
+
+position: absolute;
+width: 48px;
+height: 17px;
+left: 16px;
+top: 67px;
+
+font-family: 'Inter';
+font-style: normal;
+font-weight: 500;
+font-size: 10px;
+line-height: 12px;
+letter-spacing: -0.3px;
+
+color: #7D7D7D;
+
+
+
+/* Frame 4 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: flex-end;
+padding: 16px 0px 0px;
+gap: 8px;
+
+position: absolute;
+width: 123px;
+height: 19px;
+left: 24px;
+top: 182px;
+
+
+
+/* Frame 5 */
+
+/* Auto layout */
+display: flex;
+flex-direction: row;
+align-items: center;
+padding: 0px;
+gap: 4px;
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Icon (from Tabler.io) */
+
+width: 14px;
+height: 14px;
+
+
+/* Inside auto layout */
+flex: none;
+order: 0;
+flex-grow: 0;
+
+
+/* Vector */
+
+position: absolute;
+visibility: hidden;
+left: 20.83%;
+right: 20.84%;
+top: 33.34%;
+bottom: 33.33%;
+
+border: 1px solid #734A00;
+
+
+/* Vector 1 */
+
+position: absolute;
+width: 465px;
+height: 141px;
+left: 58px;
+top: 74px;
+
+background: linear-gradient(180deg, rgba(37, 205, 37, 0.4) 0%, rgba(37, 205, 37, 0) 99.59%);
+border: 1px dashed #25CD25;
+

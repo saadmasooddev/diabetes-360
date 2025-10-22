@@ -9,6 +9,7 @@ import { LogIn } from "@/features/auth/pages/LogIn";
 import { ForgotPassword } from "@/features/auth/pages/ForgotPassword";
 import { SignUp } from "@/features/auth/pages/SignUp";
 import { Dashboard } from "@/features/dashboard/pages/Dashboard";
+import { HealthAssessment } from "@/features/dashboard/pages/HealthAssessment";
 import { MetricsHistory } from "@/features/metrics/pages/MetricsHistory";
 import { Home } from "@/features/home/pages/Home";
 import { Blogs } from "@/pages/Blogs";
@@ -30,6 +31,7 @@ function Router() {
       <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
       {/* Main App */}
       <Route path={ROUTES.HOME} component={Home} />
+      <Route path={ROUTES.HEALTH_ASSESSMENT} component={HealthAssessment} />
       <Route path={ROUTES.DASHBOARD} component={Dashboard} />
       <Route path={ROUTES.METRICS_HISTORY} component={MetricsHistory} />
       {/* Feature Pages */}

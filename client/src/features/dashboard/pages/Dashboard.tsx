@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { API_ENDPOINTS } from '@/config/endpoints';
+import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -49,6 +51,7 @@ type MetricType = 'glucose' | 'steps' | 'water';
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMetricType, setSelectedMetricType] = useState<MetricType>('glucose');
   const [metricValue, setMetricValue] = useState('');
@@ -138,10 +141,7 @@ export function Dashboard() {
   };
 
   const handleHealthAssessment = () => {
-    toast({
-      title: "Health Assessment",
-      description: "Start your health assessment",
-    });
+    setLocation(ROUTES.HEALTH_ASSESSMENT);
   };
 
   const handleUpgrade = () => {
