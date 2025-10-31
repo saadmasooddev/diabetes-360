@@ -104,7 +104,7 @@ export const SignUp = (): JSX.Element => {
       <section className="w-full lg:w-1/2 lg:flex-shrink-0 lg:h-full bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12 lg:overflow-y-auto">
         <div className="w-full max-w-[447px] flex flex-col lg:my-auto">
           {/* Back Button - Only show on mobile */}
-          <button 
+          <button
             className="lg:hidden flex items-center mb-6 text-black"
             onClick={() => navigate(ROUTES.LOGIN)}
             type="button"
@@ -128,11 +128,10 @@ export const SignUp = (): JSX.Element => {
                   type="text"
                   placeholder="John Doe"
                   maxLength={100}
-                  className={`w-full h-auto pl-4 ${isFullNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.fullName
+                  className={`w-full h-auto pl-4 ${isFullNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.fullName
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("fullName")}
                   data-testid="input-fullname"
                 />
@@ -157,11 +156,10 @@ export const SignUp = (): JSX.Element => {
                   type="email"
                   placeholder="helloworld@gmail.com"
                   maxLength={50}
-                  className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.email
+                  className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("email")}
                   data-testid="input-email"
                 />
@@ -186,11 +184,10 @@ export const SignUp = (): JSX.Element => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   maxLength={128}
-                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.password
+                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.password
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("password")}
                   data-testid="input-password"
                 />
@@ -224,11 +221,10 @@ export const SignUp = (): JSX.Element => {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
                   maxLength={128}
-                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.confirmPassword
+                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.confirmPassword
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("confirmPassword")}
                   data-testid="input-confirm-password"
                 />

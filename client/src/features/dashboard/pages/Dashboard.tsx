@@ -1,50 +1,22 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { API_ENDPOINTS } from '@/config/endpoints';
 import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
 import { ArrowUp, ArrowDown } from 'lucide-react';
-import type { HealthMetric } from '@shared/schema';
-
-const glucoseData = [
-  { time: '7 AM', value: 85 },
-  { time: '9 AM', value: 95 },
-  { time: '11 AM', value: 110 },
-  { time: '12 PM', value: 105 },
-  { time: '2 PM', value: 90 },
-  { time: '4 PM', value: 115 },
-  { time: '6 PM', value: 108 },
-];
-
-const stepsData = [
-  { time: '7 AM', value: 500 },
-  { time: '9 AM', value: 2500 },
-  { time: '11 AM', value: 5000 },
-  { time: '12 PM', value: 6200 },
-  { time: '2 PM', value: 4800 },
-  { time: '4 PM', value: 8000 },
-  { time: '6 PM', value: 10200 },
-];
-
-const waterData = [
-  { time: '7 AM', value: 0.5 },
-  { time: '9 AM', value: 1.2 },
-  { time: '11 AM', value: 2.0 },
-  { time: '12 PM', value: 2.5 },
-  { time: '2 PM', value: 2.8 },
-  { time: '4 PM', value: 3.5 },
-  { time: '6 PM', value: 3.8 },
-];
+import { HealthMetricCard } from '../components/HealthMetricCard';
+import { HealthTrendChart } from '../components/HealthTrendChart';
+import { AddMetricDialog } from '../components/AddMetricDialog';
+import { LimitReachedDialog } from '../components/LimitReachedDialog';
+import {
+  useHealthMetrics,
+  useChartMetrics,
+  useTodaysMetricCounts,
+  useAddHealthMetric,
+} from '@/hooks/mutations/useHealth';
+import { useFreeTierLimits } from '@/hooks/mutations/useSettings';
 
 type MetricType = 'glucose' | 'steps' | 'water';
 
@@ -53,47 +25,63 @@ export function Dashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [selectedMetricType, setSelectedMetricType] = useState<MetricType>('glucose');
   const [metricValue, setMetricValue] = useState('');
 
-  const { data: latestMetrics } = useQuery<HealthMetric | null>({
-    queryKey: [`${API_ENDPOINTS.HEALTH.LATEST}?userId=${user?.id}`],
-    enabled: !!user?.id,
-    refetchOnMount: 'always',
-    staleTime: 0,
-  });
+  // Fetch all metrics to get latest value for each type
+  const { data: allMetrics = [] } = useHealthMetrics(user?.id, 30);
+  const { data: chartMetrics = [] } = useChartMetrics(user?.id, 7);
+  const { data: todaysCounts = { glucose: 0, steps: 0, water: 0 } } = useTodaysMetricCounts();
+  const { data: freeTierLimits } = useFreeTierLimits();
+  const addMetricMutation = useAddHealthMetric();
 
-  const { data: previousMetrics } = useQuery<HealthMetric[]>({
-    queryKey: [`${API_ENDPOINTS.HEALTH.METRICS}?userId=${user?.id}&limit=5`],
-    enabled: !!user?.id,
-    refetchOnMount: 'always',
-    staleTime: 0,
-  });
+  // Check if user has reached daily limit per metric type
+  const isFreeUser = user?.tier === 'free' || !user?.tier;
 
-  const addMetricMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest('POST', API_ENDPOINTS.HEALTH.ADD, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      toast({
-        title: "Success",
-        description: "Metric logged successfully",
-      });
-      setDialogOpen(false);
-      setMetricValue('');
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to log metric",
-        variant: "destructive",
-      });
-    },
-  });
+  const getHasReachedLimit = (metricType: MetricType): boolean => {
+    if (!isFreeUser || !freeTierLimits) return false;
+
+    const limit = metricType === 'glucose'
+      ? freeTierLimits.glucoseLimit
+      : metricType === 'steps'
+        ? freeTierLimits.stepsLimit
+        : freeTierLimits.waterLimit;
+
+    const count = metricType === 'glucose'
+      ? todaysCounts.glucose
+      : metricType === 'steps'
+        ? todaysCounts.steps
+        : todaysCounts.water;
+
+    return count >= limit;
+  };
+
+  // Get latest values for each metric type (sorted by most recent first)
+  const latestValues = useMemo(() => {
+    // Sort metrics by recordedAt descending (most recent first)
+    const sortedMetrics = [...allMetrics].sort((a, b) =>
+      new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+    );
+
+    const glucose = sortedMetrics.find((m) => m.bloodSugar)?.bloodSugar || null;
+    const steps = sortedMetrics.find((m) => m.steps !== null && m.steps !== undefined)?.steps || null;
+    const water = sortedMetrics.find((m) => m.waterIntake)?.waterIntake || null;
+    return { glucose, steps, water };
+  }, [allMetrics]);
+
+  // Get previous values for trend arrows (sorted by most recent first)
+  const previousMetrics = useMemo(() => {
+    return [...allMetrics]
+      .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+      .slice(0, 10); // Get first 10 most recent for comparison
+  }, [allMetrics]);
 
   const handleAddLog = (metricType: MetricType) => {
+    if (getHasReachedLimit(metricType)) {
+      setLimitDialogOpen(true);
+      return;
+    }
     setSelectedMetricType(metricType);
     setDialogOpen(true);
   };
@@ -130,7 +118,12 @@ export function Dashboard() {
       metricData.waterIntake = numericValue.toString();
     }
 
-    addMetricMutation.mutate(metricData);
+    addMetricMutation.mutate(metricData, {
+      onSuccess: () => {
+        setDialogOpen(false);
+        setMetricValue('');
+      },
+    });
   };
 
   const handleUploadPicture = () => {
@@ -152,22 +145,25 @@ export function Dashboard() {
   };
 
   const getTrendArrow = (metricType: MetricType) => {
-    if (!latestMetrics || !previousMetrics || previousMetrics.length < 2) return null;
+    if (!previousMetrics || previousMetrics.length < 2) return null;
 
     let currentValue: number | null = null;
     let previousValue: number | null = null;
 
     if (metricType === 'glucose') {
-      currentValue = latestMetrics.bloodSugar ? parseFloat(latestMetrics.bloodSugar) : null;
-      const previous = previousMetrics.find((m, i) => i > 0 && m.bloodSugar);
+      currentValue = latestValues.glucose ? parseFloat(latestValues.glucose) : null;
+      // Find the second most recent glucose value (skip the first/latest one)
+      const previous = previousMetrics.slice(1).find((m) => m.bloodSugar);
       previousValue = previous?.bloodSugar ? parseFloat(previous.bloodSugar) : null;
     } else if (metricType === 'steps') {
-      currentValue = latestMetrics.steps || null;
-      const previous = previousMetrics.find((m, i) => i > 0 && m.steps);
+      currentValue = latestValues.steps;
+      // Find the second most recent steps value (skip the first/latest one)
+      const previous = previousMetrics.slice(1).find((m) => m.steps !== null && m.steps !== undefined);
       previousValue = previous?.steps || null;
     } else if (metricType === 'water') {
-      currentValue = latestMetrics.waterIntake ? parseFloat(latestMetrics.waterIntake) : null;
-      const previous = previousMetrics.find((m, i) => i > 0 && m.waterIntake);
+      currentValue = latestValues.water ? parseFloat(latestValues.water) : null;
+      // Find the second most recent water value (skip the first/latest one)
+      const previous = previousMetrics.slice(1).find((m) => m.waterIntake);
       previousValue = previous?.waterIntake ? parseFloat(previous.waterIntake) : null;
     }
 
@@ -181,240 +177,105 @@ export function Dashboard() {
     );
   };
 
-  const formatGlucoseValue = () => {
-    if (!latestMetrics?.bloodSugar) return '—';
-    return latestMetrics.bloodSugar;
-  };
+  // Transform metrics data for charts
+  const glucoseData = useMemo(() => {
+    if (!chartMetrics.length) return [];
 
-  const formatStepsValue = () => {
-    if (!latestMetrics?.steps) return '—';
-    return latestMetrics.steps.toLocaleString();
-  };
+    return chartMetrics
+      .filter(m => m.bloodSugar)
+      .map(m => {
+        const date = new Date(m.recordedAt);
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
 
-  const formatWaterValue = () => {
-    if (!latestMetrics?.waterIntake) return '—';
-    return parseFloat(latestMetrics.waterIntake).toFixed(1);
-  };
+        return {
+          time: timeLabel,
+          value: parseFloat(m.bloodSugar || '0'),
+        };
+      });
+  }, [chartMetrics]);
 
-  const getDialogTitle = () => {
-    if (selectedMetricType === 'glucose') return 'Log Glucose';
-    if (selectedMetricType === 'steps') return 'Log Steps';
-    return 'Log Water Intake';
-  };
+  const stepsData = useMemo(() => {
+    if (!chartMetrics.length) return [];
 
-  const getDialogPlaceholder = () => {
-    if (selectedMetricType === 'glucose') return 'Enter glucose level (mg/dL)';
-    if (selectedMetricType === 'steps') return 'Enter steps count';
-    return 'Enter water intake (L)';
-  };
+    return chartMetrics
+      .filter(m => m.steps)
+      .map(m => {
+        const date = new Date(m.recordedAt);
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
+
+        return {
+          time: timeLabel,
+          value: m.steps || 0,
+        };
+      });
+  }, [chartMetrics]);
+
+  const waterData = useMemo(() => {
+    if (!chartMetrics.length) return [];
+
+    return chartMetrics
+      .filter(m => m.waterIntake)
+      .map(m => {
+        const date = new Date(m.recordedAt);
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
+
+        return {
+          time: timeLabel,
+          value: parseFloat(m.waterIntake || '0'),
+        };
+      });
+  }, [chartMetrics]);
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
-      
+
       <main className="flex-1 flex justify-center" style={{ padding: '32px' }}>
         <div className="w-full" style={{ maxWidth: '1145px' }}>
           {/* Metric Cards Row */}
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* Current Glucose Card */}
-            <Card
-              className="overflow-hidden"
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '12px',
-                padding: '24px',
-              }}
-              data-testid="card-current-glucose"
-            >
-              <h3
-                className="mb-4 font-semibold"
-                style={{
-                  color: '#00453A',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 600,
-                }}
-              >
-                Current Glucose
-              </h3>
-              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatGlucoseValue()}</span>
-                <span style={{ fontSize: '16px', marginLeft: '4px' }}>mg/dL</span>
-                {getTrendArrow('glucose')}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleAddLog('glucose')}
-                  style={{
-                    flex: 1,
-                    background: '#FFFFFF',
-                    border: '1px solid #00856F',
-                    borderRadius: '8px',
-                    color: '#00856F',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    padding: '10px 16px',
-                  }}
-                  data-testid="button-add-glucose-log"
-                >
-                  Add New Log
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleUploadPicture}
-                  style={{
-                    flex: 1,
-                    background: '#FFFFFF',
-                    border: '1px solid #00856F',
-                    borderRadius: '8px',
-                    color: '#00856F',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    padding: '10px 16px',
-                  }}
-                  data-testid="button-upload-picture"
-                >
-                  Upload Picture
-                </Button>
-              </div>
-              <p
-                className="mt-3 text-xs"
-                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
-              >
-                *limited to 2 logs per day.{' '}
-                <button
-                  onClick={handleUpgrade}
-                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                  data-testid="link-upgrade-glucose"
-                >
-                  Upgrade to Paid Plan
-                </button>
-              </p>
-            </Card>
+            <HealthMetricCard
+              type="glucose"
+              latestValue={latestValues.glucose}
+              trendArrow={getTrendArrow('glucose')}
+              onAddLog={() => handleAddLog('glucose')}
+              onUploadPicture={handleUploadPicture}
+              onUpgrade={handleUpgrade}
+              disabled={getHasReachedLimit('glucose')}
+              dailyLimit={freeTierLimits?.glucoseLimit ?? 2}
+            />
 
-            {/* Steps Walked Card */}
-            <Card
-              className="overflow-hidden"
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '12px',
-                padding: '24px',
-              }}
-              data-testid="card-steps-walked"
-            >
-              <h3
-                className="mb-4 font-semibold"
-                style={{
-                  color: '#00453A',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 600,
-                }}
-              >
-                Steps Walked
-              </h3>
-              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatStepsValue()}</span>
-                <span style={{ fontSize: '16px', marginLeft: '4px' }}>steps</span>
-                {getTrendArrow('steps')}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleAddLog('steps')}
-                  style={{
-                    width: '100%',
-                    background: '#FFFFFF',
-                    border: '1px solid #00856F',
-                    borderRadius: '8px',
-                    color: '#00856F',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    padding: '10px 16px',
-                  }}
-                  data-testid="button-add-steps-log"
-                >
-                  Add New Log
-                </Button>
-              </div>
-              <p
-                className="mt-3 text-xs"
-                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
-              >
-                *limited to 2 logs per day.{' '}
-                <button
-                  onClick={handleUpgrade}
-                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                  data-testid="link-upgrade-steps"
-                >
-                  Upgrade to Paid Plan
-                </button>
-              </p>
-            </Card>
+            <HealthMetricCard
+              type="steps"
+              latestValue={latestValues.steps}
+              trendArrow={getTrendArrow('steps')}
+              onAddLog={() => handleAddLog('steps')}
+              onUpgrade={handleUpgrade}
+              disabled={getHasReachedLimit('steps')}
+              dailyLimit={freeTierLimits?.stepsLimit ?? 2}
+            />
 
-            {/* Water Intake Card */}
-            <Card
-              className="overflow-hidden"
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '12px',
-                padding: '24px',
-              }}
-              data-testid="card-water-intake"
-            >
-              <h3
-                className="mb-4 font-semibold"
-                style={{
-                  color: '#00453A',
-                  fontSize: '18px',
-                  lineHeight: '24px',
-                  fontWeight: 600,
-                }}
-              >
-                Water Intake
-              </h3>
-              <div className="mb-6 flex items-center" style={{ fontSize: '32px', fontWeight: 700, color: '#00453A' }}>
-                <span style={{ fontSize: '24px' }}>{formatWaterValue()}</span>
-                <span style={{ fontSize: '16px', marginLeft: '4px' }}>L</span>
-                {getTrendArrow('water')}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleAddLog('water')}
-                  style={{
-                    width: '100%',
-                    background: '#FFFFFF',
-                    border: '1px solid #00856F',
-                    borderRadius: '8px',
-                    color: '#00856F',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    padding: '10px 16px',
-                  }}
-                  data-testid="button-add-water-log"
-                >
-                  Add New Log
-                </Button>
-              </div>
-              <p
-                className="mt-3 text-xs"
-                style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
-              >
-                *limited to 2 logs per day.{' '}
-                <button
-                  onClick={handleUpgrade}
-                  style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                  data-testid="link-upgrade-water"
-                >
-                  Upgrade to Paid Plan
-                </button>
-              </p>
-            </Card>
+            <HealthMetricCard
+              type="water"
+              latestValue={latestValues.water}
+              trendArrow={getTrendArrow('water')}
+              onAddLog={() => handleAddLog('water')}
+              onUpgrade={handleUpgrade}
+              disabled={getHasReachedLimit('water')}
+              dailyLimit={freeTierLimits?.waterLimit ?? 2}
+            />
           </div>
 
           {/* Health Assessment Button */}
@@ -438,252 +299,64 @@ export function Dashboard() {
 
           {/* Charts Section */}
           <div className="space-y-8">
-            {/* Glucose Trend Chart */}
-            <Card
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '12px',
-                padding: '24px',
+            <HealthTrendChart
+              title="Glucose Trend"
+              data={glucoseData}
+              gradientId="glucoseGradient"
+              testId="card-glucose-trend"
+              height={250}
+              yAxisConfig={{
+                domain: [0, 120],
+                ticks: [0, 70, 80, 90, 100],
+                label: '100mg/dL',
               }}
-              data-testid="card-glucose-trend"
-            >
-              <h3
-                className="mb-6 font-semibold"
-                style={{
-                  color: '#00453A',
-                  fontSize: '20px',
-                  lineHeight: '28px',
-                  fontWeight: 600,
-                }}
-              >
-                Glucose Trend
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={glucoseData}>
-                  <defs>
-                    <linearGradient id="glucoseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fill: '#546E7A', fontSize: 12 }}
-                    axisLine={{ stroke: '#E0E0E0' }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: '#546E7A', fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                    domain={[0, 120]}
-                    ticks={[0, 70, 80, 90, 100]}
-                    label={{ value: '100mg/dL', position: 'insideLeft', fill: '#546E7A', fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#FFFFFF',
-                      border: '1px solid #E0E0E0',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#00856F"
-                    strokeWidth={2}
-                    fill="url(#glucoseGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
+            />
 
-            {/* Steps and Water Charts Side by Side */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Steps Walked Trend */}
-              <Card
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                  borderRadius: '12px',
-                  padding: '24px',
+              <HealthTrendChart
+                title="Steps Walked Trend"
+                data={stepsData}
+                gradientId="stepsGradient"
+                testId="card-steps-trend"
+                height={200}
+                yAxisConfig={{
+                  domain: [0, 11000],
+                  ticks: [0, 3000, 6000, 9000, 11000],
                 }}
-                data-testid="card-steps-trend"
-              >
-                <h3
-                  className="mb-6 font-semibold"
-                  style={{
-                    color: '#00453A',
-                    fontSize: '20px',
-                    lineHeight: '28px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Steps Walked Trend
-                </h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={stepsData}>
-                    <defs>
-                      <linearGradient id="stepsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-                    <XAxis
-                      dataKey="time"
-                      tick={{ fill: '#546E7A', fontSize: 12 }}
-                      axisLine={{ stroke: '#E0E0E0' }}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fill: '#546E7A', fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                      domain={[0, 11000]}
-                      ticks={[0, 3000, 6000, 9000, 11000]}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: '#FFFFFF',
-                        border: '1px solid #E0E0E0',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#00856F"
-                      strokeWidth={2}
-                      fill="url(#stepsGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
+              />
 
-              {/* Water Intake Trend */}
-              <Card
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                  borderRadius: '12px',
-                  padding: '24px',
+              <HealthTrendChart
+                title="Water Intake Trend"
+                data={waterData}
+                gradientId="waterGradient"
+                testId="card-water-trend"
+                height={200}
+                yAxisConfig={{
+                  domain: [0, 4],
+                  ticks: [0, 1, 2, 3, 4],
+                  label: '4 Litre',
                 }}
-                data-testid="card-water-trend"
-              >
-                <h3
-                  className="mb-6 font-semibold"
-                  style={{
-                    color: '#00453A',
-                    fontSize: '20px',
-                    lineHeight: '28px',
-                    fontWeight: 600,
-                  }}
-                >
-                  Water Intake Trend
-                </h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={waterData}>
-                    <defs>
-                      <linearGradient id="waterGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-                    <XAxis
-                      dataKey="time"
-                      tick={{ fill: '#546E7A', fontSize: 12 }}
-                      axisLine={{ stroke: '#E0E0E0' }}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      tick={{ fill: '#546E7A', fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                      domain={[0, 4]}
-                      ticks={[0, 1, 2, 3, 4]}
-                      label={{ value: '4 Litre', position: 'insideTopLeft', fill: '#546E7A', fontSize: 11 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: '#FFFFFF',
-                        border: '1px solid #E0E0E0',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#00856F"
-                      strokeWidth={2}
-                      fill="url(#waterGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
+              />
             </div>
           </div>
         </div>
       </main>
 
-      {/* Add Metric Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent 
-          className="sm:max-w-md"
-          style={{
-            background: '#FFFFFF',
-            borderRadius: '12px',
-            padding: '24px',
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle style={{ color: '#00453A', fontSize: '20px', fontWeight: 600 }}>
-              {getDialogTitle()}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="metric-value" style={{ color: '#00453A', fontSize: '14px', fontWeight: 500 }}>
-                Value
-              </Label>
-              <Input
-                id="metric-value"
-                type="number"
-                placeholder={getDialogPlaceholder()}
-                value={metricValue}
-                onChange={(e) => setMetricValue(e.target.value)}
-                style={{
-                  border: '1px solid #E0E0E0',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  fontSize: '14px',
-                }}
-                data-testid="input-metric-value"
-              />
-            </div>
-            <Button
-              onClick={handleSubmitLog}
-              disabled={addMetricMutation.isPending}
-              style={{
-                width: '100%',
-                background: '#00856F',
-                color: '#FFFFFF',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: 600,
-                padding: '12px',
-                border: 'none',
-              }}
-              data-testid="button-log-now"
-            >
-              {addMetricMutation.isPending ? 'Logging...' : 'Log Now'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddMetricDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        metricType={selectedMetricType}
+        value={metricValue}
+        onValueChange={setMetricValue}
+        onSubmit={handleSubmitLog}
+        isSubmitting={addMetricMutation.isPending}
+      />
+
+      <LimitReachedDialog
+        open={limitDialogOpen}
+        onOpenChange={setLimitDialogOpen}
+        onUpgrade={handleUpgrade}
+      />
     </div>
   );
 }

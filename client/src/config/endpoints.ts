@@ -1,4 +1,5 @@
 export const API_ENDPOINTS = {
+  BASE: '',
   AUTH: {
     LOGIN: '/api/auth/login',
     SIGNUP: '/api/auth/signup',
@@ -15,5 +16,13 @@ export const API_ENDPOINTS = {
     METRICS: '/api/health/metrics',
     LATEST: '/api/health/metrics/latest',
     ADD: '/api/health/metrics/add',
+    CHART: '/api/health/metrics/chart',
+    TODAY_COUNT: '/api/health/metrics/today-count',
+  },
+  ADMIN: {
+    USERS: '/api/admin/users',
+  },
+  SETTINGS: {
+    FREE_TIER_LIMITS: '/api/settings/free-tier-limits',
   },
 } as const;

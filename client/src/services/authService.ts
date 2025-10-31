@@ -1,66 +1,67 @@
 import { API_ENDPOINTS } from '@/config/endpoints';
-import type { SignupRequest, LoginRequest, AuthResponse } from '@/types/auth.types';
+import { httpClient } from '@/utils/httpClient';
+import type { 
+  SignupRequest, 
+  LoginRequest, 
+  AuthResponse, 
+  RefreshTokenRequest, 
+  LogoutRequest,
+  RefreshTokenResponse,
+  LogoutResponse,
+  ForgotPasswordResponse,
+  AuthData,
+  RefreshTokenData,
+  ForgotPasswordData
+} from '@/types/auth.types';
 
-export const authService = {
-  signup: async (data: SignupRequest): Promise<AuthResponse> => {
-    const response = await fetch(API_ENDPOINTS.AUTH.SIGNUP, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Signup failed');
+class AuthService {
+  async signup(data: SignupRequest): Promise<AuthData> {
+    const response = await httpClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, data);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Signup failed');
     }
+    return response.data;
+  }
 
-    return response.json();
-  },
-
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+  async login(data: LoginRequest): Promise<AuthData> {
+    const response = await httpClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, data);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Login failed');
     }
+    return response.data;
+  }
 
-    return response.json();
-  },
-
-  logout: async (): Promise<void> => {
-    const response = await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
-      method: 'POST',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Logout failed');
+  async refreshTokens(data: RefreshTokenRequest): Promise<RefreshTokenData> {
+    const response = await httpClient.post<RefreshTokenResponse>(API_ENDPOINTS.AUTH.REFRESH, data);
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Token refresh failed');
     }
-  },
+    return response.data;
+  }
 
-  forgotPassword: async (email: string): Promise<{ message: string }> => {
-    const response = await fetch(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new Error(error.message || 'Request failed');
+  async logout(data: LogoutRequest): Promise<string> {
+    const response = await httpClient.post<LogoutResponse>(API_ENDPOINTS.AUTH.LOGOUT, data);
+    if (!response.success) {
+      throw new Error(response.error || 'Logout failed');
     }
+    return response.message || 'Logged out successfully';
+  }
 
-    return response.json();
-  },
-};
+  async forgotPassword(email: string) : Promise<string> {
+    const response = await httpClient.post<ForgotPasswordResponse>(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Request failed');
+    }
+    return response.data.message;
+  }
+
+  async resetPassword(token: string, password: string): Promise<string> {
+    const response = await httpClient.post<ForgotPasswordResponse>(API_ENDPOINTS.AUTH.RESET_PASSWORD, { token, password });
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Password reset failed');
+    }
+    return response.data.message;
+  }
+}
+
+export const authService = new AuthService();

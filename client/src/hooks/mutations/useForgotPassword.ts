@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export const useForgotPassword = () => {
   const { toast } = useToast();
 
-  return useMutation<{ message: string }, Error, string>({
+  return useMutation({
     mutationFn: authService.forgotPassword,
     onSuccess: () => {
       toast({

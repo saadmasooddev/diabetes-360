@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import type { LoginRequest, AuthResponse } from '@/types/auth.types';
+import type { LoginRequest, AuthData } from '@/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';
@@ -8,19 +8,19 @@ import { ROUTES } from '@/config/routes';
 
 export const useLogin = () => {
   const { toast } = useToast();
-  const setUser = useAuthStore((state: ReturnType<typeof useAuthStore.getState>) => state.setUser);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [, navigate] = useLocation();
 
-  return useMutation<AuthResponse, Error, LoginRequest>({
+  return useMutation<AuthData, Error, LoginRequest>({
     mutationFn: authService.login,
     onSuccess: (data) => {
-      setUser(data.user);
+      setAuth(data.user, data.tokens);
       toast({
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
         variant: 'default',
       });
-      navigate(ROUTES.DASHBOARD);
+      navigate(ROUTES.HOME);
     },
     onError: (error) => {
       toast({

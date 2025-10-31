@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import type { SignupRequest, AuthResponse } from '@/types/auth.types';
+import type { SignupRequest, AuthData } from '@/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';
@@ -8,19 +8,19 @@ import { ROUTES } from '@/config/routes';
 
 export const useSignup = () => {
   const { toast } = useToast();
-  const setUser = useAuthStore((state: ReturnType<typeof useAuthStore.getState>) => state.setUser);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [, navigate] = useLocation();
 
-  return useMutation<AuthResponse, Error, SignupRequest>({
+  return useMutation<AuthData, Error, SignupRequest>({
     mutationFn: authService.signup,
     onSuccess: (data) => {
-      setUser(data.user);
+      setAuth(data.user, data.tokens);
       toast({
         title: 'Success!',
         description: 'Your account has been created successfully.',
         variant: 'default',
       });
-      navigate(ROUTES.LOGIN);
+      navigate(ROUTES.HOME);
     },
     onError: (error) => {
       toast({

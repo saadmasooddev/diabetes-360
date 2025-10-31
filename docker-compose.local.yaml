@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres
+    volumes:
+      - my_postgres:/var/lib/postgresql/18/data
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=diabetes-360
+      - POSTGRES_PASSWORD=password
+    ports:
+      - 5432:5432
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: diabetes
+    env_file:
+      - ./.env
+    ports:
+      - 5000:5000
+    volumes:
+      - diabetes:/app/src
+
+volumes:
+  my_postgres:
+  diabetes:

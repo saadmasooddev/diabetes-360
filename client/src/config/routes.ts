@@ -3,18 +3,15 @@ export const ROUTES = {
   LOGIN: "/",
   SIGNUP: "/signup",
   FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
 
-  // Main Routes
+  // Dashboard
   HOME: "/dashboard/home",
-  DASHBOARD: "/dashboard",
-
-  // Dashboard Sub-routes
+  DASHBOARD: "/dashboard/my-dashboard",
   HEALTH_ASSESSMENT: "/dashboard/health-assessment",
   INSTANT_CONSULTATION: "/dashboard/consultation",
   FIND_DOCTOR: "/dashboard/doctors",
-
-  // Feature Routes
-  METRICS_HISTORY: "/metrics",
+  SETTINGS: "/dashboard/settings",
   FOOD_SCANNER: "/dashboard/food-scanner",
   TIPS_EXERCISES: "/dashboard/tips",
   MEDICAL_RECORDS: "/dashboard/records",
@@ -22,10 +19,12 @@ export const ROUTES = {
   HEALTH_PLANS: "/dashboard/plans",
   PAYMENTS: "/dashboard/payments",
 
+  // Feature Routes
+  METRICS_HISTORY: "/metrics",
+
   // Other Routes
   PROFILE_DATA: "/profile-data",
   BLOGS: "/blogs",
-  SETTINGS: "/settings",
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

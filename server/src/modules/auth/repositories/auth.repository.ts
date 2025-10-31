@@ -1,0 +1,113 @@
+import { db } from "../../../app/config/db";
+import { 
+  type User, 
+  type InsertUser, 
+  type RefreshToken, 
+  type InsertRefreshToken, 
+  type PasswordResetToken,
+  type InsertPasswordResetToken,
+  users, 
+  refreshTokens,
+  passwordResetTokens
+} from "../models/user.schema";
+import { eq, and, getTableColumns } from "drizzle-orm";
+
+export class AuthRepository {
+  async getUser(id: string): Promise<User | undefined> {
+    const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return user[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const user = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return user[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return user[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser = await db.insert(users).values(user).returning();
+    return newUser[0];
+  }
+
+  async createRefreshToken(tokenData: InsertRefreshToken): Promise<RefreshToken> {
+    const newRefreshToken = await db.insert(refreshTokens).values(tokenData).returning();
+    return newRefreshToken[0];
+  }
+
+  async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
+    const refreshToken = await db.select().from(refreshTokens).where(eq(refreshTokens.token, token)).limit(1);
+    return refreshToken[0];
+  }
+
+  async revokeRefreshToken(token: string): Promise<void> {
+    await db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.token, token));
+  }
+
+  async revokeAllUserTokens(userId: string): Promise<void> {
+    await db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.userId, userId));
+  }
+
+  // Password reset token methods
+  async createPasswordResetToken(tokenData: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    const newToken = await db.insert(passwordResetTokens).values(tokenData).returning();
+    return newToken[0];
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const resetToken = await db.select()
+      .from(passwordResetTokens)
+      .where(
+        and(
+          eq(passwordResetTokens.token, token),
+          eq(passwordResetTokens.used, false)
+        )
+      )
+      .limit(1);
+    return resetToken[0];
+  }
+
+  async markPasswordResetTokenAsUsed(token: string): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ used: true })
+      .where(eq(passwordResetTokens.token, token));
+  }
+
+  async revokeAllPasswordResetTokens(userId: string): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ used: true })
+      .where(eq(passwordResetTokens.userId, userId));
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
+    await db.update(users)
+      .set({ password: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<Omit<User, 'password'>[]> {
+    const { password, ...userColumns} = getTableColumns(users)
+    return await db.select(userColumns).from(users);
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return user[0];
+  }
+
+  async updateUser(id: string, updateData: Partial<InsertUser>): Promise<User> {
+    const updatedUser = await db.update(users)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser[0];
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+}
