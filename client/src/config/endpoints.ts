@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     ADD: '/api/health/metrics/add',
     CHART: '/api/health/metrics/chart',
     TODAY_COUNT: '/api/health/metrics/today-count',
+    STATISTICS: '/api/health/metrics/statistics',
   },
   ADMIN: {
     USERS: '/api/admin/users',

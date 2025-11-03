@@ -9,7 +9,7 @@ class HealthService {
       `${API_ENDPOINTS.HEALTH.LATEST}?userId=${userId}`
     );
     if (!response.success) {
-      throw new Error(response.error || 'Failed to fetch latest metric');
+      throw new Error(response.message || 'Failed to fetch latest metric');
     }
     return response.data ?? null;
   }
@@ -19,7 +19,7 @@ class HealthService {
       `${API_ENDPOINTS.HEALTH.CHART}?userId=${userId}&days=${days}`
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch chart metrics');
+      throw new Error(response.message || 'Failed to fetch chart metrics');
     }
     return response.data;
   }
@@ -29,7 +29,7 @@ class HealthService {
       `${API_ENDPOINTS.HEALTH.METRICS}?userId=${userId}&limit=${limit}&offset=${offset}`
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch metrics');
+      throw new Error(response.message || 'Failed to fetch metrics');
     }
     return response.data;
   }
@@ -40,7 +40,7 @@ class HealthService {
       data
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to add metric');
+      throw new Error(response.message || 'Failed to add metric');
     }
     return response.data;
   }
@@ -52,7 +52,7 @@ class HealthService {
     
     const response = await httpClient.get<ApiResponse<{ count: number }>>(url);
     if (!response.success || response.data === undefined) {
-      throw new Error(response.error || 'Failed to fetch today count');
+      throw new Error(response.message || 'Failed to fetch today count');
     }
     return response.data.count;
   }
@@ -62,7 +62,25 @@ class HealthService {
       API_ENDPOINTS.HEALTH.TODAY_COUNT
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch today counts');
+      throw new Error(response.message || 'Failed to fetch today counts');
+    }
+    return response.data;
+  }
+
+  async getAggregatedStatistics(): Promise<{
+    glucose: { daily: number; weekly: number; monthly: number };
+    water: { daily: number; weekly: number; monthly: number };
+    steps: { daily: number; weekly: number; monthly: number };
+  }> {
+    const response = await httpClient.get<
+      ApiResponse<{
+        glucose: { daily: number; weekly: number; monthly: number };
+        water: { daily: number; weekly: number; monthly: number };
+        steps: { daily: number; weekly: number; monthly: number };
+      }>
+    >(API_ENDPOINTS.HEALTH.STATISTICS);
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch aggregated statistics');
     }
     return response.data;
   }

@@ -52,6 +52,19 @@ export const useTodaysMetricCounts = () => {
   });
 };
 
+export const useAggregatedStatistics = () => {
+  return useQuery<{
+    glucose: { daily: number; weekly: number; monthly: number };
+    water: { daily: number; weekly: number; monthly: number };
+    steps: { daily: number; weekly: number; monthly: number };
+  }>({
+    queryKey: [API_ENDPOINTS.HEALTH.STATISTICS],
+    queryFn: () => healthService.getAggregatedStatistics(),
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+};
+
 export const useAddHealthMetric = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -73,6 +86,9 @@ export const useAddHealthMetric = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.HEALTH.TODAY_COUNT],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_ENDPOINTS.HEALTH.STATISTICS],
       });
 
       toast({

@@ -37,7 +37,7 @@ class AdminService {
   async getAllUsers(): Promise<User[]> {
     const response = await httpClient.get<ApiResponse<{ users: User[] }>>(API_ENDPOINTS.ADMIN.USERS);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch users');
+      throw new Error(response.message || 'Failed to fetch users');
     }
     return response.data.users;
   }
@@ -45,7 +45,7 @@ class AdminService {
   async getUserById(id: string): Promise<User> {
     const response = await httpClient.get<ApiResponse<{ user: User }>>(`${API_ENDPOINTS.ADMIN.USERS}/${id}`);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch user');
+      throw new Error(response.message || 'Failed to fetch user');
     }
     return response.data.user;
   }
@@ -53,7 +53,7 @@ class AdminService {
   async createUser(data: CreateUserRequest): Promise<User> {
     const response = await httpClient.post<ApiResponse<{ user: User }>>(API_ENDPOINTS.ADMIN.USERS, data);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to create user');
+      throw new Error(response.message || 'Failed to create user');
     }
     return response.data.user;
   }
@@ -61,7 +61,7 @@ class AdminService {
   async updateUser(id: string, data: UpdateUserRequest): Promise<User> {
     const response = await httpClient.put<ApiResponse<{ user: User }>>(`${API_ENDPOINTS.ADMIN.USERS}/${id}`, data);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to update user');
+      throw new Error(response.message || 'Failed to update user');
     }
     return response.data.user;
   }
@@ -73,7 +73,7 @@ class AdminService {
   async toggleUserStatus(id: string, isActive: boolean): Promise<User> {
     const response = await httpClient.patch<ApiResponse<{ user: User }>>(`${API_ENDPOINTS.ADMIN.USERS}/${id}/status`, { isActive });
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to toggle user status');
+      throw new Error(response.message || 'Failed to toggle user status');
     }
     return response.data.user;
   }

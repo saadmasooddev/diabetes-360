@@ -27,31 +27,54 @@ const options: swaggerJsdoc.Options = {
         Error: {
           type: 'object',
           properties: {
+            status: {
+              type: 'number',
+              example: 400,
+              description: 'HTTP status code',
+            },
             success: {
               type: 'boolean',
               example: false,
             },
-            error: {
+            message: {
               type: 'string',
               example: 'Error message',
+              description: 'Error message description',
+            },
+            data: {
+              description: 'Error response data - null for most errors, empty array [] for array endpoints',
+              oneOf: [
+                { type: 'null' },
+                { type: 'array', items: {} },
+                { type: 'object' },
+              ],
+              example: null,
             },
           },
+          required: ['status', 'success', 'message'],
         },
         SuccessResponse: {
           type: 'object',
           properties: {
+            status: {
+              type: 'number',
+              example: 200,
+              description: 'HTTP status code',
+            },
             success: {
               type: 'boolean',
               example: true,
             },
             data: {
-              type: 'object',
+              description: 'Response data payload',
             },
             message: {
               type: 'string',
               example: 'Operation successful',
+              description: 'Success message',
             },
           },
+          required: ['status', 'success', 'message'],
         },
         User: {
           type: 'object',
@@ -230,9 +253,17 @@ const options: swaggerJsdoc.Options = {
 export const swaggerSpec = swaggerJsdoc(options);
 
 export function setupSwagger(app: Express): void {
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'Diabetes 360 API Documentation',
+    explorer: true
   }));
+
+
 }
 

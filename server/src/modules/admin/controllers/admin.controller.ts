@@ -6,6 +6,7 @@ import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { USER_ROLES } from "../../../shared/constants/roles";
+import { handleError } from "../../../shared/middleware/errorHandler";
 
 export class AdminController {
   private authService: AuthService;
@@ -14,7 +15,7 @@ export class AdminController {
     this.authService = new AuthService();
   }
 
-  async getAllUsers(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getAllUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       // This would need to be implemented in the repository
       // For now, we'll return a placeholder
@@ -22,11 +23,11 @@ export class AdminController {
       
       sendSuccess(res, { users }, "Users retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error,  { users: []});
     }
   }
 
-  async getUserById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getUserById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       
@@ -42,7 +43,7 @@ export class AdminController {
 
       sendSuccess(res, { user }, "User retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
@@ -66,11 +67,11 @@ export class AdminController {
         tokens: authResponse.tokens,
       }, SUCCESS_MESSAGES.ACCOUNT_CREATED, HTTP_STATUS.CREATED);
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
-  async updateUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async updateUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -83,11 +84,11 @@ export class AdminController {
 
       sendSuccess(res, { user }, "User updated successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
-  async deleteUser(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async deleteUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
 
@@ -104,11 +105,11 @@ export class AdminController {
 
       sendSuccess(res, null, "User deleted successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
-  async toggleUserStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async toggleUserStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -126,7 +127,7 @@ export class AdminController {
 
       sendSuccess(res, { user }, `User ${isActive ? 'activated' : 'deactivated'} successfully`);
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 }

@@ -83,5 +83,161 @@ export class HealthRepository {
       )
       .orderBy(healthMetrics.recordedAt);
   }
+
+  async getAggregatedStatistics(userId: string): Promise<{
+    glucose: { daily: number; weekly: number; monthly: number };
+    water: { daily: number; weekly: number; monthly: number };
+    steps: { daily: number; weekly: number; monthly: number };
+  }> {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 7);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now);
+    startOfMonth.setDate(now.getDate() - 30);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Daily averages
+    const dailyGlucose = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfDay),
+          isNotNull(healthMetrics.bloodSugar)
+        )
+      );
+
+    const dailyWater = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfDay),
+          isNotNull(healthMetrics.waterIntake)
+        )
+      );
+
+    const dailySteps = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfDay),
+          isNotNull(healthMetrics.steps)
+        )
+      );
+
+    // Weekly averages
+    const weeklyGlucose = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfWeek),
+          isNotNull(healthMetrics.bloodSugar)
+        )
+      );
+
+    const weeklyWater = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfWeek),
+          isNotNull(healthMetrics.waterIntake)
+        )
+      );
+
+    const weeklySteps = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfWeek),
+          isNotNull(healthMetrics.steps)
+        )
+      );
+
+    // Monthly averages
+    const monthlyGlucose = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfMonth),
+          isNotNull(healthMetrics.bloodSugar)
+        )
+      );
+
+    const monthlyWater = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfMonth),
+          isNotNull(healthMetrics.waterIntake)
+        )
+      );
+
+    const monthlySteps = await db
+      .select({
+        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+      })
+      .from(healthMetrics)
+      .where(
+        and(
+          eq(healthMetrics.userId, userId),
+          gte(healthMetrics.recordedAt, startOfMonth),
+          isNotNull(healthMetrics.steps)
+        )
+      );
+
+    return {
+      glucose: {
+        daily: Math.round(Number(dailyGlucose[0]?.avg || 0)),
+        weekly: Math.round(Number(weeklyGlucose[0]?.avg || 0)),
+        monthly: Math.round(Number(monthlyGlucose[0]?.avg || 0)),
+      },
+      water: {
+        daily: Number(dailyWater[0]?.avg || 0),
+        weekly: Number(weeklyWater[0]?.avg || 0),
+        monthly: Number(monthlyWater[0]?.avg || 0),
+      },
+      steps: {
+        daily: Math.round(Number(dailySteps[0]?.avg || 0)),
+        weekly: Math.round(Number(weeklySteps[0]?.avg || 0)),
+        monthly: Math.round(Number(monthlySteps[0]?.avg || 0)),
+      },
+    };
+  }
 }
 

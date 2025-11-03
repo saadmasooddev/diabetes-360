@@ -76,5 +76,13 @@ export class HealthService {
 
     return { glucose, steps, water };
   }
+
+  async getAggregatedStatistics(userId: string): Promise<{
+    glucose: { daily: number; weekly: number; monthly: number };
+    water: { daily: number; weekly: number; monthly: number };
+    steps: { daily: number; weekly: number; monthly: number };
+  }> {
+    return await this.healthRepository.getAggregatedStatistics(userId);
+  }
 }
 

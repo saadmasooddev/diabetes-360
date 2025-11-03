@@ -18,7 +18,7 @@ class AuthService {
   async signup(data: SignupRequest): Promise<AuthData> {
     const response = await httpClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, data);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Signup failed');
+      throw new Error(response.message || 'Signup failed');
     }
     return response.data;
   }
@@ -26,7 +26,7 @@ class AuthService {
   async login(data: LoginRequest): Promise<AuthData> {
     const response = await httpClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, data);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Login failed');
+      throw new Error(response.message || 'Login failed');
     }
     return response.data;
   }
@@ -34,7 +34,7 @@ class AuthService {
   async refreshTokens(data: RefreshTokenRequest): Promise<RefreshTokenData> {
     const response = await httpClient.post<RefreshTokenResponse>(API_ENDPOINTS.AUTH.REFRESH, data);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Token refresh failed');
+      throw new Error(response.message || 'Token refresh failed');
     }
     return response.data;
   }
@@ -42,7 +42,7 @@ class AuthService {
   async logout(data: LogoutRequest): Promise<string> {
     const response = await httpClient.post<LogoutResponse>(API_ENDPOINTS.AUTH.LOGOUT, data);
     if (!response.success) {
-      throw new Error(response.error || 'Logout failed');
+      throw new Error(response.message || 'Logout failed');
     }
     return response.message || 'Logged out successfully';
   }
@@ -50,7 +50,7 @@ class AuthService {
   async forgotPassword(email: string) : Promise<string> {
     const response = await httpClient.post<ForgotPasswordResponse>(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Request failed');
+      throw new Error(response.message || 'Request failed');
     }
     return response.data.message;
   }
@@ -58,7 +58,7 @@ class AuthService {
   async resetPassword(token: string, password: string): Promise<string> {
     const response = await httpClient.post<ForgotPasswordResponse>(API_ENDPOINTS.AUTH.RESET_PASSWORD, { token, password });
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Password reset failed');
+      throw new Error(response.message || 'Password reset failed');
     }
     return response.data.message;
   }

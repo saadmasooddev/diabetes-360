@@ -5,6 +5,7 @@ import { HealthService } from "../service/health.service";
 import { BadRequestError } from "../../../shared/errors";
 import { insertHealthMetricSchema } from "../models/health.schema";
 import { UserService } from "../../user/service/user.service";
+import { handleError } from "../../../shared/middleware/errorHandler";
 
 export class HealthController {
   private healthService: HealthService;
@@ -15,7 +16,7 @@ export class HealthController {
     this.userService = new UserService();
   }
 
-  async addMetric(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async addMetric(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
     
       const userId = req.user?.userId || "";
@@ -35,7 +36,7 @@ export class HealthController {
       const metric = await this.healthService.createMetric(validationResult.data, userTier);
       sendSuccess(res, metric, "Metric logged successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
@@ -44,11 +45,11 @@ export class HealthController {
       const metric = await this.healthService.getLatestMetric(req.user?.userId || "");
       sendSuccess(res, metric, "Latest metric retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
-  async getMetrics(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getMetrics(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
       const limit = parseInt(req.query.limit as string) || 30;
@@ -57,11 +58,11 @@ export class HealthController {
       const metrics = await this.healthService.getMetricsByUser(userId, limit, offset);
       sendSuccess(res, metrics, "Metrics retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error, { metrics: [] });
     }
   }
 
-  async getChartData(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getChartData(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
       const days = parseInt(req.query.days as string) || 7;
@@ -69,11 +70,11 @@ export class HealthController {
       const metrics = await this.healthService.getMetricsForChart(userId, days);
       sendSuccess(res, metrics, "Chart data retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
-  async getTodaysCount(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  async getTodaysCount(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
       const metricType = req.query.metricType as 'glucose' | 'steps' | 'water' | undefined;
@@ -86,7 +87,17 @@ export class HealthController {
         sendSuccess(res, counts, "Today's metric counts retrieved successfully");
       }
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
+    }
+  }
+
+  async getAggregatedStatistics(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId || "";
+      const statistics = await this.healthService.getAggregatedStatistics(userId);
+      sendSuccess(res, statistics, "Aggregated statistics retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
     }
   }
 }

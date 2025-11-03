@@ -4,6 +4,7 @@ import { sendSuccess } from "../../../app/utils/response";
 import { SettingsService } from "../service/settings.service";
 import { BadRequestError } from "../../../shared/errors";
 import { insertFreeTierLimitsSchema, updateFreeTierLimitsSchema } from "../models/settings.schema";
+import { handleError } from "../../../shared/middleware/errorHandler";
 
 export class SettingsController {
   private settingsService: SettingsService;
@@ -17,7 +18,7 @@ export class SettingsController {
       const limits = await this.settingsService.getFreeTierLimits();
       sendSuccess(res, limits, "Free tier limits retrieved successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
@@ -34,7 +35,7 @@ export class SettingsController {
       const limits = await this.settingsService.createFreeTierLimits(validationResult.data);
       sendSuccess(res, limits, "Free tier limits created successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
@@ -51,7 +52,7 @@ export class SettingsController {
       const limits = await this.settingsService.updateFreeTierLimits(validationResult.data);
       sendSuccess(res, limits, "Free tier limits updated successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 
@@ -69,7 +70,7 @@ export class SettingsController {
       const limits = await this.settingsService.upsertFreeTierLimits(validationResult.data);
       sendSuccess(res, limits, "Free tier limits updated successfully");
     } catch (error: any) {
-      next(error);
+      handleError(res, error);
     }
   }
 }

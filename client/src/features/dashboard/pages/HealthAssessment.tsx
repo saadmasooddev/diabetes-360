@@ -1,56 +1,28 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Droplet, Activity } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
-import { API_ENDPOINTS } from "@/config/endpoints";
-import type { HealthMetric } from "@shared/schema";
+import { useAggregatedStatistics } from "@/hooks/mutations/useHealth";
 import { CircularGauge } from "../components/CircularGauge";
 
 export function HealthAssessment() {
   const user = useAuthStore((state) => state.user);
 
-  const { data: metrics = [] } = useQuery<HealthMetric[]>({
-    queryKey: [`${API_ENDPOINTS.HEALTH.METRICS}?userId=${user?.id}&limit=30`],
-    enabled: !!user?.id,
-    refetchOnMount: "always",
-    staleTime: 0,
-  });
+  const { data: statistics } = useAggregatedStatistics();
 
-  const calculateAverage = (field: keyof HealthMetric, days: number) => {
-    if (!metrics.length) return 0;
-    const recentMetrics = metrics.slice(0, days);
-    const values = recentMetrics
-      .map((m) => {
-        const val = m[field];
-        if (typeof val === "string") return parseFloat(val);
-        if (typeof val === "number") return val;
-        return 0;
-      })
-      .filter((v) => v > 0);
+  // Use statistics from API or default to 0 if no data
+  const glucoseDaily = statistics?.glucose.daily ?? 0;
+  const glucoseWeekly = statistics?.glucose.weekly ?? 0;
+  const glucoseMonthly = statistics?.glucose.monthly ?? 0;
 
-    if (values.length === 0) return 0;
-    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-  };
+  // Water is in liters already from the API, convert to string with 1 decimal
+  const waterDaily = (statistics?.water.daily ?? 0).toFixed(1);
+  const waterWeekly = (statistics?.water.weekly ?? 0).toFixed(1);
+  const waterMonthly = (statistics?.water.monthly ?? 0).toFixed(1);
 
-  // Calculate averages or use sample data if no metrics exist
-  const glucoseDaily = calculateAverage("bloodSugar", 1) || 135;
-  const glucoseWeekly = calculateAverage("bloodSugar", 7) || 98;
-  const glucoseMonthly = calculateAverage("bloodSugar", 30) || 106;
-
-  const waterDaily = metrics.length
-    ? (calculateAverage("waterIntake", 1) / 10).toFixed(1)
-    : "1.2";
-  const waterWeekly = metrics.length
-    ? (calculateAverage("waterIntake", 7) / 10).toFixed(1)
-    : "0.8";
-  const waterMonthly = metrics.length
-    ? (calculateAverage("waterIntake", 30) / 10).toFixed(1)
-    : "2.0";
-
-  const stepsDaily = calculateAverage("steps", 1) || 3000;
-  const stepsWeekly = calculateAverage("steps", 7) || 6600;
-  const stepsMonthly = calculateAverage("steps", 30) || 8700;
+  const stepsDaily = statistics?.steps.daily ?? 0;
+  const stepsWeekly = statistics?.steps.weekly ?? 0;
+  const stepsMonthly = statistics?.steps.monthly ?? 0;
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>

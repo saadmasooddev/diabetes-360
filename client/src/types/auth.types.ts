@@ -23,10 +23,10 @@ export interface TokenPair {
 
 // Backend response structure
 export interface ApiResponse<T = any> {
+  status: number;
   success: boolean;
   data?: T;
-  message?: string;
-  error?: string;
+  message: string;
 }
 
 // Auth-specific response data

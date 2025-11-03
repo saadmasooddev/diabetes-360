@@ -7,7 +7,7 @@ class SettingsService {
   async getFreeTierLimits(): Promise<FreeTierLimits> {
     const response = await httpClient.get<ApiResponse<FreeTierLimits>>(API_ENDPOINTS.SETTINGS.FREE_TIER_LIMITS);
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to fetch free tier limits');
+      throw new Error(response.message || 'Failed to fetch free tier limits');
     }
     return response.data;
   }
@@ -18,7 +18,7 @@ class SettingsService {
       data
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to create free tier limits');
+      throw new Error(response.message || 'Failed to create free tier limits');
     }
     return response.data;
   }
@@ -29,7 +29,7 @@ class SettingsService {
       data
     );
     if (!response.success || !response.data) {
-      throw new Error(response.error || 'Failed to update free tier limits');
+      throw new Error(response.message || 'Failed to update free tier limits');
     }
     return response.data;
   }

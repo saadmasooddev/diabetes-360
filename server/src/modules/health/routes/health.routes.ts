@@ -277,5 +277,88 @@ router.get("/metrics/today-count", authenticateToken, readOwnHealthMetrics, (req
   healthController.getTodaysCount(req, res, next)
 );
 
+/**
+ * @swagger
+ * /api/health/metrics/statistics:
+ *   get:
+ *     summary: Get aggregated health statistics (daily, weekly, monthly averages)
+ *     tags: [Health Metrics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Aggregated statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         glucose:
+ *                           type: object
+ *                           properties:
+ *                             daily:
+ *                               type: number
+ *                               example: 135
+ *                               description: Daily average blood sugar in mg/dL
+ *                             weekly:
+ *                               type: number
+ *                               example: 98
+ *                               description: Weekly average blood sugar in mg/dL
+ *                             monthly:
+ *                               type: number
+ *                               example: 106
+ *                               description: Monthly average blood sugar in mg/dL
+ *                         water:
+ *                           type: object
+ *                           properties:
+ *                             daily:
+ *                               type: number
+ *                               example: 1.2
+ *                               description: Daily average water intake in liters
+ *                             weekly:
+ *                               type: number
+ *                               example: 0.8
+ *                               description: Weekly average water intake in liters
+ *                             monthly:
+ *                               type: number
+ *                               example: 2.0
+ *                               description: Monthly average water intake in liters
+ *                         steps:
+ *                           type: object
+ *                           properties:
+ *                             daily:
+ *                               type: number
+ *                               example: 3000
+ *                               description: Daily average steps
+ *                             weekly:
+ *                               type: number
+ *                               example: 6600
+ *                               description: Weekly average steps
+ *                             monthly:
+ *                               type: number
+ *                               example: 8700
+ *                               description: Monthly average steps
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get("/metrics/statistics", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
+  healthController.getAggregatedStatistics(req, res, next)
+);
+
 export { router as healthRoutes };
 
