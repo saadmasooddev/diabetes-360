@@ -21,31 +21,69 @@
       "Error": {
         "type": "object",
         "properties": {
+          "status": {
+            "type": "number",
+            "example": 400,
+            "description": "HTTP status code"
+          },
           "success": {
             "type": "boolean",
             "example": false
           },
-          "error": {
+          "message": {
             "type": "string",
-            "example": "Error message"
+            "example": "Error message",
+            "description": "Error message description"
+          },
+          "data": {
+            "description": "Error response data - null for most errors, empty array [] for array endpoints",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "example": null
           }
-        }
+        },
+        "required": [
+          "status",
+          "success",
+          "message"
+        ]
       },
       "SuccessResponse": {
         "type": "object",
         "properties": {
+          "status": {
+            "type": "number",
+            "example": 200,
+            "description": "HTTP status code"
+          },
           "success": {
             "type": "boolean",
             "example": true
           },
           "data": {
-            "type": "object"
+            "description": "Response data payload"
           },
           "message": {
             "type": "string",
-            "example": "Operation successful"
+            "example": "Operation successful",
+            "description": "Success message"
           }
-        }
+        },
+        "required": [
+          "status",
+          "success",
+          "message"
+        ]
       },
       "User": {
         "type": "object",
@@ -1595,6 +1633,125 @@
                               "description": "When metricType query param is omitted"
                             }
                           ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/metrics/statistics": {
+      "get": {
+        "summary": "Get aggregated health statistics (daily, weekly, monthly averages)",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "glucose": {
+                              "type": "object",
+                              "properties": {
+                                "daily": {
+                                  "type": "number",
+                                  "example": 135,
+                                  "description": "Daily average blood sugar in mg/dL"
+                                },
+                                "weekly": {
+                                  "type": "number",
+                                  "example": 98,
+                                  "description": "Weekly average blood sugar in mg/dL"
+                                },
+                                "monthly": {
+                                  "type": "number",
+                                  "example": 106,
+                                  "description": "Monthly average blood sugar in mg/dL"
+                                }
+                              }
+                            },
+                            "water": {
+                              "type": "object",
+                              "properties": {
+                                "daily": {
+                                  "type": "number",
+                                  "example": 1.2,
+                                  "description": "Daily average water intake in liters"
+                                },
+                                "weekly": {
+                                  "type": "number",
+                                  "example": 0.8,
+                                  "description": "Weekly average water intake in liters"
+                                },
+                                "monthly": {
+                                  "type": "number",
+                                  "example": 2,
+                                  "description": "Monthly average water intake in liters"
+                                }
+                              }
+                            },
+                            "steps": {
+                              "type": "object",
+                              "properties": {
+                                "daily": {
+                                  "type": "number",
+                                  "example": 3000,
+                                  "description": "Daily average steps"
+                                },
+                                "weekly": {
+                                  "type": "number",
+                                  "example": 6600,
+                                  "description": "Weekly average steps"
+                                },
+                                "monthly": {
+                                  "type": "number",
+                                  "example": 8700,
+                                  "description": "Monthly average steps"
+                                }
+                              }
+                            }
+                          }
                         }
                       }
                     }

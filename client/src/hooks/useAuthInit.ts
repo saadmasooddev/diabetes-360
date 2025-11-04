@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { TokenManager } from '@/utils/tokenManager';
-import { httpClient } from '@/utils/httpClient';
 import { useLocation } from 'wouter';
 import { usePathname } from 'wouter/use-browser-location';
 import { ROUTES } from '@/config/routes';

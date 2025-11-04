@@ -3,14 +3,17 @@ import { TokenManager } from './tokenManager';
 import { refreshService } from '@/services/refreshService';
 import type { TokenPair } from '@/types/auth.types';
 
+export const BASE_URL = import.meta.env.VITE_REACT_API_BASE_URL || '';
+
 class HttpClient {
+  private readonly baseURL = BASE_URL;
   private axiosInstance: AxiosInstance;
   private isRefreshing = false;
   private refreshPromise: Promise<TokenPair> | null = null;
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: '',
+      baseURL: this.baseURL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -27,6 +30,10 @@ class HttpClient {
         const authHeader = TokenManager.getAuthHeader();
         if (authHeader) {
           config.headers.Authorization = authHeader;
+        }
+        // Don't set Content-Type for FormData - let axios handle it with boundary
+        if (config.data instanceof FormData) {
+          delete config.headers['Content-Type'];
         }
         return config;
       },

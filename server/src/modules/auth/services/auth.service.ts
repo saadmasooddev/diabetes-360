@@ -21,7 +21,6 @@ export class AuthService {
   }
 
   async signup(userData: InsertUser): Promise<AuthResponse> {
-    // Check if user already exists by email
     const existingUserByEmail = await this.authRepository.getUserByEmail(userData.email);
     if (existingUserByEmail) {
       throw new ConflictError("An account with this email already exists");
@@ -36,7 +35,7 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password!, config.bcryptRounds);
 
-    // Create user with hashed password
+    // Create user with hashed password (profileComplete defaults to false in schema)
     const user = await this.authRepository.createUser({
       ...userData,
       password: hashedPassword,
@@ -50,7 +49,6 @@ export class AuthService {
       role: user.role as UserRole,
     });
 
-    // Store refresh token
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 

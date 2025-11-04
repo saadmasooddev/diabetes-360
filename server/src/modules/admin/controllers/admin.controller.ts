@@ -1,6 +1,7 @@
 import { type Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser } from "../../auth/models/user.schema";
+import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
+import { PhysicianService } from "../../physician/service/physician.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
@@ -10,9 +11,11 @@ import { handleError } from "../../../shared/middleware/errorHandler";
 
 export class AdminController {
   private authService: AuthService;
+  private physicianService: PhysicianService;
 
   constructor() {
     this.authService = new AuthService();
+    this.physicianService = new PhysicianService();
   }
 
   async getAllUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -62,10 +65,30 @@ export class AdminController {
 
       const authResponse = await this.authService.signup(validatedData);
 
+      // If user is a physician, create physician data
+      if (authResponse.user.role === USER_ROLES.PHYSICIAN && req.body.physicianData) {
+        try {
+          const physicianDataValidation = insertPhysicianDataSchema.safeParse({
+            userId: authResponse.user.id,
+            specialtyId: req.body.physicianData.specialtyId,
+            practiceStartDate: new Date(req.body.physicianData.practiceStartDate),
+            consultationFee: req.body.physicianData.consultationFee,
+            imageUrl: req.body.physicianData.imageUrl || null,
+          });
+
+          if (physicianDataValidation.success) {
+            await this.physicianService.createPhysicianData(physicianDataValidation.data);
+          }
+        } catch (physicianError) {
+          // Log error but don't fail user creation
+          console.error("Error creating physician data:", physicianError);
+        }
+      }
+
       sendSuccess(res, {
         user: authResponse.user,
         tokens: authResponse.tokens,
-      }, SUCCESS_MESSAGES.ACCOUNT_CREATED, HTTP_STATUS.CREATED);
+      }, SUCCESS_MESSAGES.ACCOUNT_CREATED);
     } catch (error: any) {
       handleError(res, error);
     }
@@ -81,6 +104,25 @@ export class AdminController {
       }
 
       const user = await this.authService.updateUser(id, updateData);
+
+      // If user is a physician and physicianData is provided, update it
+      if (user.role === USER_ROLES.PHYSICIAN && req.body.physicianData) {
+        try {
+          const physicianDataValidation = updatePhysicianDataSchema.safeParse({
+            specialtyId: req.body.physicianData.specialtyId,
+            practiceStartDate: new Date(req.body.physicianData.practiceStartDate),
+            consultationFee: req.body.physicianData.consultationFee,
+            imageUrl: req.body.physicianData.imageUrl,
+          });
+
+          if (physicianDataValidation.success) {
+            // Check if physician data exists
+            await this.physicianService.updatePhysicianData(id, physicianDataValidation.data);
+          } 
+        } catch (physicianError: any) {
+          console.error("Error updating physician data:", physicianError);
+        }
+      }
 
       sendSuccess(res, { user }, "User updated successfully");
     } catch (error: any) {

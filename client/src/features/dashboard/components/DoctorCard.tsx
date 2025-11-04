@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Image } from '@/components/ui/image';
 import { Star } from 'lucide-react';
 import type { Doctor } from '@/mocks/doctors';
 
@@ -11,7 +12,18 @@ interface DoctorCardProps {
 
 export function DoctorCard({ doctor, onConsultClick, variant = 'default' }: DoctorCardProps) {
   const isCompact = variant === 'compact';
-  
+
+  function renderStars(rating: number) {
+    return [...Array(5)].map((_, i) => {
+      const starValue = i + 1;
+      const filled = starValue <= Math.round(rating);
+      const halfFilled = !filled && starValue - 0.5 <= rating;
+      return (
+        <Star key={i} size={14} fill={filled ? '#00856F' : halfFilled ? '#00856F' : 'none'} stroke={filled || halfFilled ? '#00856F' : '#B0BEC5'} data-testid={`star-${starValue}-${doctor.id}`} style={{ opacity: halfFilled ? 0.5 : 1 }} />
+      );
+    });
+  }
+
   return (
     <Card
       className={`${isCompact ? 'p-4 sm:p-6' : 'p-6'} flex flex-col sm:flex-row ${isCompact ? 'gap-4 sm:gap-6' : 'gap-6'}`}
@@ -24,10 +36,11 @@ export function DoctorCard({ doctor, onConsultClick, variant = 'default' }: Doct
     >
       <div className="relative flex-shrink-0">
         <div className={`relative ${isCompact ? 'w-24 h-24 mx-auto sm:mx-0' : 'w-32 h-32 sm:w-36 sm:h-36 mx-auto sm:mx-0'}`}>
-          <img
+          <Image
             src={doctor.image}
             alt={doctor.name}
             className="w-full h-full rounded-full object-cover"
+            pointToServer={true}
             style={{
               border: '4px solid #E0F2F1',
             }}
@@ -85,8 +98,8 @@ export function DoctorCard({ doctor, onConsultClick, variant = 'default' }: Doct
             {doctor.specialty}
           </p>
 
-          <div className={isCompact 
-            ? 'flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4 mb-2' 
+          <div className={isCompact
+            ? 'flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2 sm:gap-4 mb-2'
             : 'flex flex-wrap gap-4 mb-4'}>
             <div className="flex items-center gap-2">
               <span
@@ -125,15 +138,7 @@ export function DoctorCard({ doctor, onConsultClick, variant = 'default' }: Doct
                   Ratings
                 </span>
                 <div className="flex items-center gap-1" data-testid={`rating-${doctor.id}`}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      fill={i < Math.floor(doctor.rating) ? '#00856F' : 'none'}
-                      stroke={i < Math.floor(doctor.rating) ? '#00856F' : '#B0BEC5'}
-                      data-testid={`star-${i + 1}-${doctor.id}`}
-                    />
-                  ))}
+                  {renderStars(doctor.rating)}
                 </div>
               </div>
             )}
@@ -151,15 +156,7 @@ export function DoctorCard({ doctor, onConsultClick, variant = 'default' }: Doct
                 Ratings
               </span>
               <div className="flex items-center gap-1" data-testid={`rating-${doctor.id}`}>
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={14}
-                    fill={i < Math.floor(doctor.rating) ? '#00856F' : 'none'}
-                    stroke={i < Math.floor(doctor.rating) ? '#00856F' : '#B0BEC5'}
-                    data-testid={`star-${i + 1}-${doctor.id}`}
-                  />
-                ))}
+                {renderStars(doctor.rating)}
               </div>
             </div>
           )}

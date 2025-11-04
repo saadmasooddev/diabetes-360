@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { FreeTierLimitsManagement } from '@/components/admin/FreeTierLimitsManagement';
+import { PhysicianSettings } from '@/components/admin/PhysicianSettings';
 import { useAuthStore } from '@/stores/authStore';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { User, Mail, Shield, Bell, Key, Smartphone, SettingsIcon } from 'lucide-react';
@@ -47,7 +48,7 @@ export function Settings() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-6' : 'grid-cols-4'}`}>
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Profile
@@ -65,6 +66,10 @@ export function Settings() {
                   <TabsTrigger value="admin" className="flex items-center gap-2">
                     <Shield className="h-4 w-4" />
                     Users
+                  </TabsTrigger>
+                  <TabsTrigger value="physicians" className="flex items-center gap-2">
+                    <SettingsIcon className="h-4 w-4" />
+                    Physicians
                   </TabsTrigger>
                   <TabsTrigger value="limits" className="flex items-center gap-2">
                     <SettingsIcon className="h-4 w-4" />
@@ -265,6 +270,9 @@ export function Settings() {
               <>
                 <TabsContent value="admin" className="space-y-6">
                   <UserManagement />
+                </TabsContent>
+                <TabsContent value="physicians" className="space-y-6">
+                  <PhysicianSettings />
                 </TabsContent>
                 <TabsContent value="limits" className="space-y-6">
                   <FreeTierLimitsManagement />

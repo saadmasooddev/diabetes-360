@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Image } from '@/components/ui/image';
 import { Upload, ArrowLeft, AlertTriangle, Lock } from 'lucide-react';
 import { mockScanResult } from '@/mocks/scanResults';
 import { NutritionProgressBar } from '../components/NutritionProgressBar';
@@ -48,10 +49,10 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
     if (currentStep === 'scanning') {
       let position = 0;
       let direction = 1;
-      
+
       const interval = setInterval(() => {
         position += direction * 0.8; // Smaller increment for smoother movement
-        
+
         if (position >= 100) {
           direction = -1;
           position = 100;
@@ -59,7 +60,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
           direction = 1;
           position = 0;
         }
-        
+
         setScanLinePosition(position);
       }, 10); // More frequent updates (10ms instead of 20ms)
 
@@ -140,7 +141,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                     Food Overview
                   </h3>
                   <div className="flex gap-4">
-                    <img
+                    <Image
                       src={previewUrl || ''}
                       alt="Food"
                       className="w-32 h-32 rounded-2xl object-cover"
@@ -248,7 +249,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                   >
                     Personalized Insight
                   </h3>
-                  
+
                   {isPremium ? (
                     /* Premium Content */
                     <div className="space-y-6">
@@ -290,7 +291,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                             </span>
                           </p>
                           {/* Wave visualization */}
-                          <div 
+                          <div
                             className="h-16 rounded-lg relative overflow-hidden"
                             style={{ background: '#C8E6C9' }}
                             data-testid="chart-calories-wave"
@@ -364,7 +365,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                               className="rounded-lg overflow-hidden"
                               data-testid={`card-suggested-food-${index}`}
                             >
-                              <img
+                              <Image
                                 src={food.image}
                                 alt={food.name}
                                 className="w-full h-24 object-cover"
@@ -432,8 +433,8 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                   >
                     Nutritional Highlight
                   </h3>
-                  
-                  <img
+
+                  <Image
                     src={previewUrl || ''}
                     alt="Food highlight"
                     className="w-full h-48 rounded-2xl object-cover mb-4"
@@ -516,7 +517,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
               >
                 {previewUrl ? (
                   <div className="relative w-full h-full min-h-[400px]">
-                    <img
+                    <Image
                       src={previewUrl}
                       alt="Preview"
                       className="w-full h-full object-cover rounded-[24px]"
@@ -525,7 +526,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                       }}
                       data-testid="img-preview"
                     />
-                    
+
                     {/* Scanning Line Animation */}
                     {currentStep === 'scanning' && (
                       <div

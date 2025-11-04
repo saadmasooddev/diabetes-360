@@ -72,7 +72,7 @@ router.use(requireAdmin);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/users", (req, res, next) => adminController.getAllUsers(req, res, next));
+router.get("/users", (req, res) => adminController.getAllUsers(req, res));
 
 /**
  * @swagger
@@ -120,7 +120,7 @@ router.get("/users", (req, res, next) => adminController.getAllUsers(req, res, n
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/users/:id", (req, res, next) => adminController.getUserById(req, res, next));
+router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
 
 /**
  * @swagger
@@ -282,7 +282,7 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put("/users/:id", (req, res, next) => adminController.updateUser(req, res, next));
+router.put("/users/:id", (req, res, next) => adminController.updateUser(req, res ));
 
 /**
  * @swagger
@@ -325,7 +325,7 @@ router.put("/users/:id", (req, res, next) => adminController.updateUser(req, res
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete("/users/:id", (req, res, next) => adminController.deleteUser(req, res, next));
+router.delete("/users/:id", (req, res, next) => adminController.deleteUser(req, res ));
 
 /**
  * @swagger
@@ -383,6 +383,6 @@ router.delete("/users/:id", (req, res, next) => adminController.deleteUser(req, 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch("/users/:id/status", (req, res, next) => adminController.toggleUserStatus(req, res, next));
+router.patch("/users/:id/status", (req, res, next) => adminController.toggleUserStatus(req, res ));
 
 export { router as adminRoutes };

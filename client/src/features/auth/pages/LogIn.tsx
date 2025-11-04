@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { loginSchema, type LoginFormData } from "@/schemas/auth.schema";
@@ -65,7 +66,7 @@ export const LogIn = (): JSX.Element => {
     <div className="bg-white w-full min-h-screen lg:h-screen flex flex-col lg:flex-row">
       {/* Left Section - Hero Image (Hidden on mobile, shown on desktop) */}
       <section className="hidden lg:flex lg:w-1/2 lg:flex-shrink-0 lg:h-full relative bg-[#f7f9f9]">
-        <img
+        <Image
           className="absolute inset-0 w-full h-full object-cover"
           alt="Isens usa"
           src="/figmaAssets/isens-usa-8gg2pdqpkty-unsplash-2.png"
@@ -89,7 +90,7 @@ export const LogIn = (): JSX.Element => {
       <section className="w-full lg:w-1/2 lg:flex-shrink-0 lg:h-full bg-white lg:bg-[#f7f9f9] flex items-center justify-center px-4 py-8 lg:py-12 lg:overflow-y-auto">
         <div className="w-full max-w-[447px] flex flex-col lg:my-auto">
           {/* Back Button - Only show on mobile */}
-          <button 
+          <button
             className="lg:hidden flex items-center mb-6 text-black"
             onClick={() => navigate(ROUTES.HOME)}
             type="button"
@@ -112,11 +113,10 @@ export const LogIn = (): JSX.Element => {
                   type="email"
                   placeholder="helloworld@gmail.com"
                   maxLength={50}
-                  className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.email
+                  className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("email")}
                   data-testid="input-email"
                 />
@@ -140,11 +140,10 @@ export const LogIn = (): JSX.Element => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   maxLength={128}
-                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${
-                    errors.password
+                  className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.password
                       ? "border-red-500"
                       : "border-[#d8dadc]"
-                  } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("password")}
                   data-testid="input-password"
                 />
@@ -209,7 +208,7 @@ export const LogIn = (): JSX.Element => {
                 className="w-[108px] h-auto px-[45px] py-[18px] bg-white rounded-[10px] border border-solid border-[#00856f] hover:bg-[#00856f]/5"
                 data-testid={`button-social-${social.name.toLowerCase()}`}
               >
-                <img className="w-5 h-5" alt={social.alt} src={social.icon} />
+                <Image className="w-5 h-5" alt={social.alt} src={social.icon} />
               </Button>
             ))}
           </div>

@@ -29,11 +29,16 @@ import {
   heightOptions,
 } from '@/mocks/profileData';
 import { ROUTES } from '@/config/routes';
-import { useToast } from '@/hooks/use-toast';
+import { useCreateCustomerData, useGetCustomerData, useUpdateCustomerData } from '@/hooks/mutations/useCustomer';
+import { useState, useEffect } from 'react';
 
 export function ProfileData() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { data: existingData } = useGetCustomerData();
+  const createCustomerData = useCreateCustomerData();
+  const updateCustomerData = useUpdateCustomerData();
 
   const form = useForm<ProfileDataFormValues>({
     resolver: zodResolver(profileDataSchema),
@@ -53,13 +58,42 @@ export function ProfileData() {
     },
   });
 
-  const onSubmit = (data: ProfileDataFormValues) => {
-    console.log('Profile data submitted:', data);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your profile information has been saved successfully.',
-    });
-    setLocation(ROUTES.DASHBOARD);
+  // Populate form with existing data if available
+  useEffect(() => {
+    if (existingData?.customerData) {
+      const data = existingData.customerData;
+      form.reset({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        gender: data.gender as 'male' | 'female',
+        birthDay: data.birthDay,
+        birthMonth: data.birthMonth,
+        birthYear: data.birthYear,
+        diagnosisDay: data.diagnosisDay,
+        diagnosisMonth: data.diagnosisMonth,
+        diagnosisYear: data.diagnosisYear,
+        weight: data.weight,
+        height: data.height,
+        diabetesType: data.diabetesType as 'type1' | 'type2' | 'gestational' | 'prediabetes',
+      });
+    }
+  }, [existingData, form]);
+
+  const onSubmit = async (data: ProfileDataFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (existingData?.customerData) {
+        // Update existing profile
+        await updateCustomerData.mutateAsync(data);
+      } else {
+        // Create new profile
+        await createCustomerData.mutateAsync(data);
+      }
+    } catch (error) {
+      // Error handling is done in the mutation hooks
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -561,6 +595,7 @@ export function ProfileData() {
               {/* Submit Button */}
               <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full h-[56px] rounded-[10px] text-white text-[18px] font-semibold"
                 style={{
                   background: '#00856F',
@@ -568,7 +603,7 @@ export function ProfileData() {
                 }}
                 data-testid="button-submit-details"
               >
-                Submit Details
+                {isSubmitting ? 'Submitting...' : 'Submit Details'}
               </Button>
             </form>
           </Form>

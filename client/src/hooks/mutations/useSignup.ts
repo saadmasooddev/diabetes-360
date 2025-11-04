@@ -20,7 +20,13 @@ export const useSignup = () => {
         description: 'Your account has been created successfully.',
         variant: 'default',
       });
-      navigate(ROUTES.HOME);
+      
+      // Redirect to profile completion if user is a customer with incomplete profile
+      if (!data.user.profileComplete && data.user.role === 'customer') {
+        navigate(ROUTES.PROFILE_DATA);
+      } else {
+        navigate(ROUTES.HOME);
+      }
     },
     onError: (error) => {
       toast({

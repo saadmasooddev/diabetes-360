@@ -29,7 +29,7 @@ export class AuthController {
       sendSuccess(res, {
         user: authResponse.user,
         tokens: authResponse.tokens,
-      }, SUCCESS_MESSAGES.ACCOUNT_CREATED, HTTP_STATUS.CREATED);
+      }, SUCCESS_MESSAGES.ACCOUNT_CREATED) 
     } catch (error: any) {
       handleError(res, error);
     }

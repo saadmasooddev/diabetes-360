@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Image } from '@/components/ui/image';
 import { Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { healthTips, exercisePlans, weeklyChallenges } from '@/mocks/tipsExercises';
 
@@ -20,8 +21,8 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
     setCurrentTipIndex((prev) => (prev - 1 + healthTips.length) % healthTips.length);
   };
 
-  const visibleExercisePlans = isPremium 
-    ? exercisePlans 
+  const visibleExercisePlans = isPremium
+    ? exercisePlans
     : exercisePlans.filter(plan => !plan.isLocked);
 
   const visibleWeeklyChallenges = isPremium
@@ -210,7 +211,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                   }}
                   data-testid={`card-exercise-${plan.id}`}
                 >
-                  <img
+                  <Image
                     src={plan.image}
                     alt={plan.title}
                     className="w-full h-[180px] object-cover"

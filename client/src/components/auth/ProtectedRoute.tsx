@@ -23,6 +23,17 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       return;
     }
 
+    // Check if customer profile is complete
+    // Only enforce for customer role and if not already on profile data page
+    if (
+      user.role === 'customer' &&
+      !user.profileComplete &&
+      location !== ROUTES.PROFILE_DATA
+    ) {
+      navigate(ROUTES.PROFILE_DATA);
+      return;
+    }
+
     // If user is authenticated and trying to access an invalid route, redirect to dashboard
     const validRoutes = Object.values(ROUTES);
     if (!validRoutes.includes(location as any)) {

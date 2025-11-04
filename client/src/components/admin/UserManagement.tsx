@@ -18,7 +18,7 @@ export function UserManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const { data: users = [], isLoading } = useUsers();
+  const { data: users = [], isLoading, refetch: refetchUsers } = useUsers();
   const toggleStatusMutation = useToggleUserStatus();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
@@ -191,7 +191,10 @@ export function UserManagement() {
       {editingUser && (
         <EditUserDialog
           user={editingUser}
-          onClose={() => setEditingUser(null)}
+          onClose={() => {
+            setEditingUser(null);
+            refetchUsers();
+          }}
         />
       )}
       {

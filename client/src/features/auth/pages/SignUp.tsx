@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -80,7 +81,7 @@ export const SignUp = (): JSX.Element => {
     <div className="bg-white w-full min-h-screen lg:h-screen flex flex-col lg:flex-row">
       {/* Left Section - Hero Image (Hidden on mobile, shown on desktop) */}
       <section className="hidden lg:flex lg:w-1/2 lg:flex-shrink-0 lg:h-full relative bg-[#f7f9f9]">
-        <img
+        <Image
           className="absolute inset-0 w-full h-full object-cover"
           alt="Isens usa"
           src="/figmaAssets/isens-usa-8gg2pdqpkty-unsplash-2.png"
@@ -129,8 +130,8 @@ export const SignUp = (): JSX.Element => {
                   placeholder="John Doe"
                   maxLength={100}
                   className={`w-full h-auto pl-4 ${isFullNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.fullName
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("fullName")}
                   data-testid="input-fullname"
@@ -157,8 +158,8 @@ export const SignUp = (): JSX.Element => {
                   placeholder="helloworld@gmail.com"
                   maxLength={50}
                   className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("email")}
                   data-testid="input-email"
@@ -185,8 +186,8 @@ export const SignUp = (): JSX.Element => {
                   placeholder="Enter your password"
                   maxLength={128}
                   className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.password
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("password")}
                   data-testid="input-password"
@@ -222,8 +223,8 @@ export const SignUp = (): JSX.Element => {
                   placeholder="Confirm your password"
                   maxLength={128}
                   className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.confirmPassword
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("confirmPassword")}
                   data-testid="input-confirm-password"
@@ -316,7 +317,7 @@ export const SignUp = (): JSX.Element => {
                 className="w-[108px] h-auto px-[45px] py-[18px] bg-white rounded-[10px] border border-solid border-[#00856f] hover:bg-[#00856f]/5"
                 data-testid={`button-social-${social.name.toLowerCase()}`}
               >
-                <img className="w-5 h-5" alt={social.alt} src={social.icon} />
+                <Image className="w-5 h-5" alt={social.alt} src={social.icon} />
               </Button>
             ))}
           </div>

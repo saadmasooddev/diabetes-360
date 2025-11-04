@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Image } from "@/components/ui/image";
 import { ROUTES } from "@/config/routes";
 import { Sidebar } from "@/components/layout/Sidebar";
 import diabetesTestingImg from "@assets/5aaf99d1f9b3c79c814d4956017fda1dfea783e6_1761129643123.jpg";
@@ -31,7 +32,7 @@ export function Home() {
                 className="relative h-64 md:h-60"
                 style={{ background: "#00453A" }}
               >
-                <img
+                <Image
                   src={diabetesTestingImg}
                   alt="Diabetes care"
                   className="h-full w-full object-cover"
@@ -251,7 +252,7 @@ export function Home() {
                 className="h-28 overflow-hidden"
                 style={{ borderRadius: "0 0 10px 10px" }}
               >
-                <img
+                <Image
                   src={doctorImg}
                   alt="Doctors"
                   className="h-full w-full object-cover"
@@ -301,7 +302,7 @@ export function Home() {
                 className="h-28 overflow-hidden"
                 style={{ borderRadius: "0 0 10px 10px" }}
               >
-                <img
+                <Image
                   src={exerciseImg}
                   alt="Tips & Exercises"
                   className="h-full w-full object-cover object-center"
@@ -351,7 +352,7 @@ export function Home() {
                 className="h-28 overflow-hidden"
                 style={{ borderRadius: "0 0 10px 10px" }}
               >
-                <img
+                <Image
                   src={healthyFoodImg}
                   alt="Health Blogs"
                   className="h-full w-full object-cover object-center"
@@ -423,7 +424,7 @@ export function Home() {
                   className="flex h-full items-center justify-center px-6"
                   style={{ background: "#DCE9E2" }}
                 >
-                  <img
+                  <Image
                     src={diaBotImg}
                     alt="DiaBot AI"
                     className="h-32 w-auto object-contain"
@@ -477,7 +478,7 @@ export function Home() {
                   className="flex h-full items-center justify-center px-4"
                   style={{ background: "#DCE9E2" }}
                 >
-                  <img
+                  <Image
                     src={foodScannerImg}
                     alt="Food Scanner App"
                     className="h-40 w-auto object-contain"

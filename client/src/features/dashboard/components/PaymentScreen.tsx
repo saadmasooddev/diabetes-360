@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Image } from '@/components/ui/image';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
@@ -14,15 +15,15 @@ interface PaymentScreenProps {
 export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
   const [paymentMethod, setPaymentMethod] = useState('bank-transfer');
 
-  const consultationFee = 999;
+  const consultationFee = doctor.consultationFee || 999;
   const tax = 0;
   const total = consultationFee + tax;
 
   const getCurrentDateTime = () => {
     const now = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -105,10 +106,11 @@ export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
             Consulting Doctor
           </p>
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src={doctor.image}
               alt={doctor.name}
               className="w-12 h-12 rounded-full object-cover"
+              pointToServer={true}
               style={{
                 border: '2px solid #E0F2F1',
               }}
@@ -150,7 +152,7 @@ export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
           >
             Order Details
           </h3>
-          
+
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span
@@ -173,7 +175,7 @@ export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
                 PKR {consultationFee}
               </span>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <span
                 style={{
@@ -195,7 +197,7 @@ export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
                 PKR {tax}
               </span>
             </div>
-            
+
             <div
               className="flex justify-between items-center pt-3"
               style={{
@@ -238,9 +240,9 @@ export function PaymentScreen({ doctor, onBack }: PaymentScreenProps) {
           >
             Payment Method
           </h3>
-          
-          <RadioGroup 
-            value={paymentMethod} 
+
+          <RadioGroup
+            value={paymentMethod}
             onValueChange={setPaymentMethod}
             data-testid="radiogroup-payment-method"
           >

@@ -20,7 +20,13 @@ export const useLogin = () => {
         description: 'You have successfully logged in.',
         variant: 'default',
       });
-      navigate(ROUTES.HOME);
+      
+      // Redirect based on profile completion
+      if (!data.user.profileComplete && data.user.role === 'customer') {
+        navigate(ROUTES.PROFILE_DATA);
+      } else {
+        navigate(ROUTES.HOME);
+      }
     },
     onError: (error) => {
       toast({

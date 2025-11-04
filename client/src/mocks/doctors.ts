@@ -8,6 +8,7 @@ export interface Doctor {
   rating: number;
   isOnline: boolean;
   image: string;
+  consultationFee?: number;
 }
 
 export const mockDoctors: Doctor[] = [

@@ -29,10 +29,10 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   provider: text("provider").notNull().default("manual"), // manual, google, apple, facebook
   providerId: text("provider_id"), // External provider ID
-  avatar: text("avatar"),
   role: userRole().default(USER_ROLES.CUSTOMER).notNull(), // customer, admin, physician
   tier: userTier().default(USER_TIERS.FREE).notNull(), // free, paid
   isActive: boolean("is_active").default(true),
+  profileComplete: boolean("profile_complete").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -77,6 +77,128 @@ export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTo
   createdAt: true,
 });
 
+// Physician Specialties Table
+export const physicianSpecialties = pgTable("physician_specialties", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  icon: text("icon"), // For frontend icon display
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Physician Data Table (separate from users for extensibility)
+export const physicianData = pgTable("physician_data", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  specialtyId: varchar("specialty_id").notNull().references(() => physicianSpecialties.id, { onDelete: "restrict" }),
+  practiceStartDate: timestamp("practice_start_date").notNull(),
+  consultationFee: numeric("consultation_fee", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Physician Ratings Table
+export const physicianRatings = pgTable("physician_ratings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  physicianId: varchar("physician_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5 rating
+  comment: text("comment"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Schemas for validation
+export const insertPhysicianSpecialtySchema = createInsertSchema(physicianSpecialties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updatePhysicianSpecialtySchema = createInsertSchema(physicianSpecialties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
+export const insertPhysicianDataSchema = createInsertSchema(physicianData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).refine(
+  (data) => validatePracticeStartDate(data.practiceStartDate?.toString()),
+  {
+    message: "Practice start date cannot be in the future",
+    path: ["practiceStartDate"],
+  }
+);
+
+export const validatePracticeStartDate = (practiceStartDate?: string | undefined) => {
+  if (!practiceStartDate) return true;
+  const practiceDate = new Date(practiceStartDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return practiceDate <= today;
+};
+export const updatePhysicianDataSchema = createInsertSchema(physicianData).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial().refine(
+  (data) => {
+    return validatePracticeStartDate(data.practiceStartDate?.toString() || '');
+  },
+  {
+    message: "Practice start date cannot be in the future",
+    path: ["practiceStartDate"],
+  }
+);
+
+export const insertPhysicianRatingSchema = createInsertSchema(physicianRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  rating: z.number().min(1).max(5),
+});
+
+// Customer Data Table
+export const customerData = pgTable("customer_data", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  gender: text("gender").notNull(), // 'male' or 'female'
+  birthDay: text("birth_day").notNull(),
+  birthMonth: text("birth_month").notNull(),
+  birthYear: text("birth_year").notNull(),
+  diagnosisDay: text("diagnosis_day").notNull(),
+  diagnosisMonth: text("diagnosis_month").notNull(),
+  diagnosisYear: text("diagnosis_year").notNull(),
+  weight: text("weight").notNull(), // Stored as string, e.g., "70"
+  height: text("height").notNull(), // Stored as string, e.g., "175"
+  diabetesType: text("diabetes_type").notNull(), // 'type1', 'type2', 'gestational', 'prediabetes'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertCustomerDataSchema = createInsertSchema(customerData).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateCustomerDataSchema = createInsertSchema(customerData).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -84,3 +206,18 @@ export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+export type PhysicianSpecialty = typeof physicianSpecialties.$inferSelect;
+export type InsertPhysicianSpecialty = z.infer<typeof insertPhysicianSpecialtySchema>;
+export type UpdatePhysicianSpecialty = z.infer<typeof updatePhysicianSpecialtySchema>;
+
+export type PhysicianData = typeof physicianData.$inferSelect;
+export type InsertPhysicianData = z.infer<typeof insertPhysicianDataSchema>;
+export type UpdatePhysicianData = z.infer<typeof updatePhysicianDataSchema>;
+
+export type PhysicianRating = typeof physicianRatings.$inferSelect;
+export type InsertPhysicianRating = z.infer<typeof insertPhysicianRatingSchema>;
+
+export type CustomerData = typeof customerData.$inferSelect;
+export type InsertCustomerData = z.infer<typeof insertCustomerDataSchema>;
+export type UpdateCustomerData = z.infer<typeof updateCustomerDataSchema>;

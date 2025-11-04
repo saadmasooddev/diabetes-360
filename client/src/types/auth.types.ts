@@ -12,6 +12,7 @@ export interface User {
   role: 'customer' | 'admin' | 'physician';
   tier?: UserTier;
   isActive: boolean;
+  profileComplete: boolean;
   createdAt: string;
   updatedAt: string;
 }
