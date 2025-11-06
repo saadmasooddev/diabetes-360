@@ -123,6 +123,65 @@ export class PhysicianRepository {
       .where(eq(physicianData.userId, userId));
   }
 
+  // Get all physicians for consultation
+  async getAllPhysicians() {
+    const physicians = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        email: users.email,
+        isActive: users.isActive,
+        specialtyId: physicianData.specialtyId,
+        practiceStartDate: physicianData.practiceStartDate,
+        consultationFee: physicianData.consultationFee,
+        imageUrl: physicianData.imageUrl,
+        specialty: physicianSpecialties.name,
+      })
+      .from(users)
+      .innerJoin(physicianData, eq(users.id, physicianData.userId))
+      .innerJoin(physicianSpecialties, eq(physicianData.specialtyId, physicianSpecialties.id))
+      .where(
+        and(
+          eq(users.role, USER_ROLES.PHYSICIAN),
+          eq(users.isActive, true)
+        )
+      );
+
+    // Get average ratings for each physician
+    const physiciansWithRatings = await Promise.all(
+      physicians.map(async (physician) => {
+        const [avgRating] = await db
+          .select({
+            averageRating: avg(physicianRatings.rating),
+            totalRatings: sql<number>`count(${physicianRatings.id})`,
+          })
+          .from(physicianRatings)
+          .where(eq(physicianRatings.physicianId, physician.id));
+
+        const rating = avgRating?.averageRating 
+          ? parseFloat(avgRating.averageRating.toString()) 
+          : 0;
+        const totalRatings = avgRating?.totalRatings ? parseInt(avgRating.totalRatings.toString()) : 0;
+
+        // Calculate years of experience
+        const startDate = new Date(physician.practiceStartDate);
+        const now = new Date();
+        const yearsExperience = Math.floor(
+          (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365)
+        );
+
+        return {
+          ...physician,
+          rating: rating,
+          totalRatings: totalRatings,
+          experience: `${yearsExperience}+ years`,
+        };
+      })
+    );
+
+    return physiciansWithRatings;
+  }
+
   // Get physicians by specialty for consultation
   async getPhysiciansBySpecialty(specialtyId: string) {
     const physicians = await db

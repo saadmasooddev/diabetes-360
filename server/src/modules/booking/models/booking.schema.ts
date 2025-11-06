@@ -1,0 +1,136 @@
+import { sql } from "drizzle-orm";
+import { pgTable, text, varchar, timestamp, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+import { users } from "../../auth/models/user.schema";
+
+// Booking System Tables
+export const slotSize = pgTable("slot_size", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  size: integer("size").notNull().unique(), // 10, 15, 20, 30, 35, 60
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const availabilityDate = pgTable("availability_date", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  physicianId: varchar("physician_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const slots = pgTable("slots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  availabilityId: varchar("availability_id").notNull().references(() => availabilityDate.id, { onDelete: "cascade" }),
+  startTime: text("start_time").notNull(), // Stored as time string (HH:MM:SS)
+  endTime: text("end_time").notNull(), // Stored as time string (HH:MM:SS)
+  slotSizeId: varchar("slot_size_id").notNull().references(() => slotSize.id, { onDelete: "restrict" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const slotType = pgTable("slot_type", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull().unique(), // 'online', 'onsite', etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const slotTypeJunction = pgTable("slot_type_junction", {
+  slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "cascade" }),
+  slotTypeId: varchar("slot_type_id").notNull().references(() => slotType.id, { onDelete: "restrict" }),
+});
+
+export const slotPrice = pgTable("slot_price", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "cascade" }),
+  slotTypeId: varchar("slot_type_id").notNull().references(() => slotType.id, { onDelete: "restrict" }),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const bookedSlots = pgTable("booked_slots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "restrict" }),
+  status: text("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Schemas for booking system
+export const insertSlotSizeSchema = createInsertSchema(slotSize).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAvailabilityDateSchema = createInsertSchema(availabilityDate).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSlotSchema = createInsertSchema(slots).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSlotTypeSchema = createInsertSchema(slotType).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSlotTypeJunctionSchema = createInsertSchema(slotTypeJunction);
+
+export const insertSlotPriceSchema = createInsertSchema(slotPrice).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBookedSlotSchema = createInsertSchema(bookedSlots).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  status: z.enum(["pending", "confirmed", "cancelled", "completed"]).default("pending"),
+});
+
+export const updateSlotPriceSchema = createInsertSchema(slotPrice).omit({
+  id: true,
+  slotId: true,
+  slotTypeId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
+export const updateBookedSlotSchema = createInsertSchema(bookedSlots).omit({
+  id: true,
+  customerId: true,
+  slotId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
+// Types
+export type SlotSize = typeof slotSize.$inferSelect;
+export type InsertSlotSize = z.infer<typeof insertSlotSizeSchema>;
+export type AvailabilityDate = typeof availabilityDate.$inferSelect;
+export type InsertAvailabilityDate = z.infer<typeof insertAvailabilityDateSchema>;
+export type Slot = typeof slots.$inferSelect;
+export type InsertSlot = z.infer<typeof insertSlotSchema>;
+export type SlotType = typeof slotType.$inferSelect;
+export type InsertSlotType = z.infer<typeof insertSlotTypeSchema>;
+export type SlotTypeJunction = typeof slotTypeJunction.$inferSelect;
+export type InsertSlotTypeJunction = z.infer<typeof insertSlotTypeJunctionSchema>;
+export type SlotPrice = typeof slotPrice.$inferSelect;
+export type InsertSlotPrice = z.infer<typeof insertSlotPriceSchema>;
+export type UpdateSlotPrice = z.infer<typeof updateSlotPriceSchema>;
+export type BookedSlot = typeof bookedSlots.$inferSelect;
+export type InsertBookedSlot = z.infer<typeof insertBookedSlotSchema>;
+export type UpdateBookedSlot = z.infer<typeof updateBookedSlotSchema>;

@@ -1,11 +1,14 @@
 import { Router } from "express";
 import { HealthController } from "../controllers/health.controller";
-import { authenticateToken, requirePermission } from "../../../shared/middleware/auth";
+import {
+  authenticateToken,
+  requirePermission,
+} from "../../../shared/middleware/auth";
 
 const router = Router();
 const healthController = new HealthController();
 
-const readOwnHealthMetrics = requirePermission('read:own_health_metrics');
+const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
 
 /**
  * @swagger
@@ -21,8 +24,7 @@ const readOwnHealthMetrics = requirePermission('read:own_health_metrics');
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - userId
+ *             description: userId is automatically extracted from the authenticated user's token
  *             properties:
  *               bloodSugar:
  *                 type: string
@@ -39,6 +41,11 @@ const readOwnHealthMetrics = requirePermission('read:own_health_metrics');
  *                 nullable: true
  *                 example: "2.5"
  *                 description: Water intake in liters
+ *               heartRate:
+ *                 type: integer
+ *                 nullable: true
+ *                 example: 72
+ *                 description: Heart rate in beats per minute (BPM). Only available for paid users.
  *     responses:
  *       200:
  *         description: Metric added successfully
@@ -52,7 +59,7 @@ const readOwnHealthMetrics = requirePermission('read:own_health_metrics');
  *                     data:
  *                       $ref: '#/components/schemas/HealthMetric'
  *       400:
- *         description: Bad request - validation error or limit exceeded
+ *         description: Bad request - validation error, limit exceeded, or heart rate feature requires paid tier
  *         content:
  *           application/json:
  *             schema:
@@ -70,8 +77,11 @@ const readOwnHealthMetrics = requirePermission('read:own_health_metrics');
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/metrics/add", authenticateToken, requirePermission('create:own_health_metrics'), (req, res, next) => 
-  healthController.addMetric(req, res, next)
+router.post(
+  "/metrics/add",
+  authenticateToken,
+  requirePermission("create:own_health_metrics"),
+  (req, res) => healthController.addMetric(req, res)
 );
 
 /**
@@ -108,8 +118,11 @@ router.post("/metrics/add", authenticateToken, requirePermission('create:own_hea
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/metrics/latest", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
-  healthController.getLatestMetric(req, res, next)
+router.get(
+  "/metrics/latest",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res, next) => healthController.getLatestMetric(req, res, next)
 );
 
 /**
@@ -150,6 +163,7 @@ router.get("/metrics/latest", authenticateToken, readOwnHealthMetrics, (req, res
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/HealthMetric'
+ *                       description: Array of health metrics, empty array returned on error
  *       401:
  *         description: Unauthorized
  *         content:
@@ -163,8 +177,8 @@ router.get("/metrics/latest", authenticateToken, readOwnHealthMetrics, (req, res
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/metrics", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
-  healthController.getMetrics(req, res, next)
+router.get("/metrics", authenticateToken, readOwnHealthMetrics, (req, res) =>
+  healthController.getMetrics(req, res)
 );
 
 /**
@@ -211,8 +225,11 @@ router.get("/metrics", authenticateToken, readOwnHealthMetrics, (req, res, next)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/metrics/chart", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
-  healthController.getChartData(req, res, next)
+router.get(
+  "/metrics/chart",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res) => healthController.getChartData(req, res)
 );
 
 /**
@@ -273,8 +290,11 @@ router.get("/metrics/chart", authenticateToken, readOwnHealthMetrics, (req, res,
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/metrics/today-count", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
-  healthController.getTodaysCount(req, res, next)
+router.get(
+  "/metrics/today-count",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res) => healthController.getTodaysCount(req, res)
 );
 
 /**
@@ -356,9 +376,150 @@ router.get("/metrics/today-count", authenticateToken, readOwnHealthMetrics, (req
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/metrics/statistics", authenticateToken, readOwnHealthMetrics, (req, res, next) => 
-  healthController.getAggregatedStatistics(req, res, next)
+router.get(
+  "/metrics/statistics",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res, next) => healthController.getAggregatedStatistics(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/health/metrics/filtered:
+ *   get:
+ *     summary: Get filtered health metrics by date range and metric types
+ *     tags: [Health Metrics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-01"
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-31"
+ *       - in: query
+ *         name: type
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: JSON array string of metric types to filter. Can be passed as JSON string or single value. Valid values are blood_sugar, water_intake, steps, and heart_beat. If not provided, all types are returned.
+ *         example: '["steps", "water_intake"]'
+ *     responses:
+ *       200:
+ *         description: Filtered metrics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         bloodSugarRecords:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               userId:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               value:
+ *                                 oneOf:
+ *                                   - type: number
+ *                                   - type: string
+ *                                 example: "120"
+ *                               recordedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                           description: Blood sugar records (MertricRecord format)
+ *                         waterIntakeRecords:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               userId:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               value:
+ *                                 oneOf:
+ *                                   - type: number
+ *                                   - type: string
+ *                                 example: "2.5"
+ *                               recordedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                           description: Water intake records (MertricRecord format)
+ *                         stepsRecords:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               userId:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               value:
+ *                                 oneOf:
+ *                                   - type: number
+ *                                   - type: string
+ *                                 example: 5000
+ *                               recordedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                           description: Steps records (MertricRecord format)
+ *                         heartBeatRecords:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               userId:
+ *                                 type: string
+ *                                 example: "uuid-string"
+ *                               value:
+ *                                 oneOf:
+ *                                   - type: number
+ *                                   - type: string
+ *                                 example: 72
+ *                               recordedAt:
+ *                                 type: string
+ *                                 format: date-time
+ *                           description: Heart rate records (MertricRecord format)
+ *       400:
+ *         description: Bad request - invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ */
+router.get(
+  "/metrics/filtered",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res, next) => healthController.getFilteredMetrics(req, res, next)
 );
 
 export { router as healthRoutes };
-

@@ -1,7 +1,7 @@
 import { db } from "../../../app/config/db";
 import { healthMetrics } from "../models/health.schema";
-import { eq, desc, and, gte, sql, isNotNull } from "drizzle-orm";
-import type { InsertHealthMetric, HealthMetric } from "../models/health.schema";
+import { eq, desc, and, gte, lte, sql, isNotNull } from "drizzle-orm";
+import type { InsertHealthMetric, HealthMetric, MertricRecord } from "../models/health.schema";
 
 export class HealthRepository {
   async getTodaysMetricCount(userId: string, metricType?: 'glucose' | 'steps' | 'water'): Promise<number> {
@@ -36,6 +36,7 @@ export class HealthRepository {
       bloodSugar: data.bloodSugar || null,
       steps: data.steps || null,
       waterIntake: data.waterIntake || null,
+      heartRate: data.heartRate || null,
     }).returning();
     return metric;
   }
@@ -238,6 +239,117 @@ export class HealthRepository {
         monthly: Math.round(Number(monthlySteps[0]?.avg || 0)),
       },
     };
+  }
+
+  async getFilteredMetrics(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    types: string[]
+  ): Promise<{
+    bloodSugarRecords: MertricRecord[];
+    waterIntakeRecords: MertricRecord[];
+    stepsRecords: MertricRecord[];
+    heartBeatRecords: MertricRecord[];
+  }> {
+    // Set end date to end of day
+    const endDateTime = new Date(endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+
+    // Build base conditions
+    const baseConditions = [
+      eq(healthMetrics.userId, userId),
+      gte(healthMetrics.recordedAt, startDate),
+      lte(healthMetrics.recordedAt, endDateTime),
+    ];
+
+    const result = {
+      bloodSugarRecords: [] as MertricRecord[],
+      waterIntakeRecords: [] as MertricRecord[],
+      stepsRecords: [] as MertricRecord[],
+      heartBeatRecords: [] as MertricRecord[] 
+    };
+
+    // If no types specified, return all types
+    const requestedTypes = types.length > 0 ? types : ['blood_sugar', 'water_intake', 'steps', 'heart_beat'];
+
+    // Fetch blood sugar records
+    if (requestedTypes.includes('blood_sugar')) {
+      result.bloodSugarRecords = await db
+        .select({
+          id: healthMetrics.id,
+          userId: healthMetrics.userId,
+          value: healthMetrics.bloodSugar,
+          recordedAt: healthMetrics.recordedAt,
+        })
+        .from(healthMetrics)
+        .where(
+          and(
+            ...baseConditions,
+            isNotNull(healthMetrics.bloodSugar)
+          )
+        )
+        .orderBy(desc(healthMetrics.recordedAt)) as MertricRecord[]
+    }
+
+    // Fetch water intake records
+    if (requestedTypes.includes('water_intake')) {
+      result.waterIntakeRecords = await db
+        .select({
+          id: healthMetrics.id,
+          userId: healthMetrics.userId,
+          value: healthMetrics.waterIntake,
+          recordedAt: healthMetrics.recordedAt,
+        })
+        .from(healthMetrics)
+        .where(
+          and(
+            ...baseConditions,
+            isNotNull(healthMetrics.waterIntake)
+          )
+        )
+        .orderBy(desc(healthMetrics.recordedAt)) as MertricRecord[]
+    }
+
+    // Fetch steps records
+    if (requestedTypes.includes('steps')) {
+      result.stepsRecords = await db
+        .select({
+          id: healthMetrics.id,
+          userId: healthMetrics.userId,
+          value: healthMetrics.steps,
+          recordedAt: healthMetrics.recordedAt,
+        })
+        .from(healthMetrics)
+        .where(
+          and(
+            ...baseConditions,
+            isNotNull(healthMetrics.steps)
+          )
+        )
+        .orderBy(desc(healthMetrics.recordedAt)) as MertricRecord[]
+    }
+
+    // Fetch heart rate records
+    if (requestedTypes.includes('heart_beat')) {
+      result.heartBeatRecords = await db
+        .select({
+          id: healthMetrics.id,
+          userId: healthMetrics.userId,
+          value: healthMetrics.heartRate,
+          recordedAt: healthMetrics.recordedAt,
+        })
+        .from(healthMetrics)
+        .where(
+          and(
+            ...baseConditions,
+            isNotNull(healthMetrics.heartRate)
+          )
+        )
+        .orderBy(desc(healthMetrics.recordedAt)) as MertricRecord[]
+    }
+
+    return result 
   }
 }
 

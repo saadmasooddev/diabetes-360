@@ -6,6 +6,7 @@ const router = Router();
 const customerController = new CustomerController();
 
 // All routes require authentication
+
 router.use(authenticateToken);
 
 /**

@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from '@/config/endpoints';
 import { httpClient } from '@/utils/httpClient';
-import type { HealthMetric } from '@shared/schema';
+import type { HealthMetric, MertricRecord } from '@shared/schema';
 import type { ApiResponse } from '@/types/auth.types';
 
 class HealthService {
@@ -81,6 +81,41 @@ class HealthService {
     >(API_ENDPOINTS.HEALTH.STATISTICS);
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch aggregated statistics');
+    }
+    return response.data;
+  }
+
+  async getFilteredMetrics(
+    startDate: string,
+    endDate: string,
+    types: string[] = []
+  ): Promise<{
+    bloodSugarRecords: MertricRecord[];
+    waterIntakeRecords: MertricRecord[];
+    stepsRecords: MertricRecord[];
+    heartBeatRecords: MertricRecord[];
+  }> {
+    const params = new URLSearchParams({
+      startDate,
+      endDate,
+    });
+
+    // Add types as multiple query parameters
+    types.forEach(type => {
+      params.append('type', type);
+    });
+
+    const response = await httpClient.get<
+      ApiResponse<{
+        bloodSugarRecords: MertricRecord[];
+        waterIntakeRecords: MertricRecord[];
+        stepsRecords: MertricRecord[];
+        heartBeatRecords: MertricRecord[];
+      }>
+    >(`${API_ENDPOINTS.HEALTH.FILTERED}?${params.toString()}`);
+    
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch filtered metrics');
     }
     return response.data;
   }

@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import { useLogout } from '@/hooks/mutations/useLogout';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -35,7 +37,8 @@ import { useState, useEffect } from 'react';
 export function ProfileData() {
   const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const logoutMutation = useLogout();
+
   const { data: existingData } = useGetCustomerData();
   const createCustomerData = useCreateCustomerData();
   const updateCustomerData = useUpdateCustomerData();
@@ -98,6 +101,18 @@ export function ProfileData() {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
+      {/* Logout Button - Top Right */}
+      <Button
+        variant="ghost"
+        onClick={() => logoutMutation.mutate()}
+        disabled={logoutMutation.isPending}
+        className="fixed top-4 right-4 z-50 text-red-600 hover:text-red-700 hover:bg-red-50"
+        data-testid="button-logout-profile"
+      >
+        <LogOut className="mr-2 h-4 w-4" />
+        {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+      </Button>
+
       {/* Left Sidebar - Hidden on mobile, visible on large screens */}
       <div
         className="hidden lg:flex w-[309px] items-center justify-center px-8"

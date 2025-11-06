@@ -72,6 +72,18 @@ export function requireAdmin(req: AuthenticatedRequest, _res: Response, next: Ne
 }
 
 
+export function requirePhysician(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
+  if (!req.user) {
+    return next(new UnauthorizedError("Authentication required"));
+  }
+
+  if (req.user.role !== USER_ROLES.PHYSICIAN) {
+    return next(new ForbiddenError("Physician access required"));
+  }
+
+  next();
+}
+
 export function requirePhysicianOrAdmin(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
   if (!req.user) {
     return next(new UnauthorizedError("Authentication required"));

@@ -2,8 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import type { HealthMetric } from '@shared/schema';
-
-type MetricType = 'glucose' | 'steps' | 'water';
+import type { MetricType } from '../pages/Dashboard';
 
 interface HealthMetricCardProps {
   type: MetricType;
@@ -42,6 +41,11 @@ export function HealthMetricCard({
       unit: 'L',
       showUploadButton: false,
     },
+    heartbeat: {
+      title: 'Heart Rate',
+      unit: 'bpm',
+      showUploadButton: false,
+    },
   };
 
   const metricConfig = config[type];
@@ -53,6 +57,9 @@ export function HealthMetricCard({
     }
     if (type === 'water' && typeof latestValue === 'string') {
       return parseFloat(latestValue).toFixed(1);
+    }
+    if (type === 'heartbeat' && typeof latestValue === 'number') {
+      return latestValue.toString();
     }
     return latestValue;
   };
@@ -128,19 +135,21 @@ export function HealthMetricCard({
           </Button>
         )}
       </div>
-      <p
-        className="mt-3 text-xs"
-        style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
-      >
-        *limited to {dailyLimit} log{dailyLimit !== 1 ? 's' : ''} per day.{' '}
-        <button
-          onClick={onUpgrade}
-          style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-          data-testid={`link-upgrade-${type}`}
+      {type !== 'heartbeat' && dailyLimit > 0 && (
+        <p
+          className="mt-3 text-xs"
+          style={{ color: '#546E7A', fontSize: '12px', lineHeight: '16px' }}
         >
-          Upgrade to Paid Plan
-        </button>
-      </p>
+          *limited to {dailyLimit} log{dailyLimit !== 1 ? 's' : ''} per day.{' '}
+          <button
+            onClick={onUpgrade}
+            style={{ color: '#00856F', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+            data-testid={`link-upgrade-${type}`}
+          >
+            Upgrade to Paid Plan
+          </button>
+        </p>
+      )}
     </Card>
   );
 }

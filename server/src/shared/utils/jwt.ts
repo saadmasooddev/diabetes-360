@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../../app/config';
 import { type UserRole } from '../constants/roles';
+import { UnauthorizedError } from '../errors';
 
 export interface JWTPayload {
   userId: string;
@@ -17,18 +18,18 @@ export interface TokenPair {
 }
 
 export class JWTService {
-  private static readonly ACCESS_TOKEN_EXPIRES_IN = '15m';
-  private static readonly REFRESH_TOKEN_EXPIRES_IN = '7d';
 
   static generateAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
+    const expiresInSeconds = config.accessTokenExpiresIn;
     return jwt.sign(payload, config.jwtSecret, {
-      expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
+      expiresIn: expiresInSeconds,
     });
   }
 
   static generateRefreshToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
+    const expiresInSeconds = config.refreshTokenExpiresIn;
     return jwt.sign(payload, config.jwtSecret, {
-      expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
+      expiresIn: expiresInSeconds,
     });
   }
 
@@ -44,7 +45,7 @@ export class JWTService {
     try {
       return jwt.verify(token, config.jwtSecret) as JWTPayload;
     } catch (error) {
-      throw new Error('Invalid or expired refresh token');
+      throw new UnauthorizedError('Invalid or expired refresh token');
     }
   }
 

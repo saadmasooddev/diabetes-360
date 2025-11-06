@@ -50,23 +50,23 @@ export function FreeTierLimitsManagement() {
         borderRadius: '12px',
       }}
     >
-      <CardHeader style={{ padding: '24px' }}>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5 text-teal-600" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
           Free Tier Limits Management
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm">
           Configure daily logging limits for free tier users. Each metric type has its own limit.
         </CardDescription>
       </CardHeader>
-      <CardContent style={{ padding: '0 24px 24px' }}>
+      <CardContent className="p-4 sm:p-6 pt-0">
         {isLoading ? (
           <div className="text-center py-8">
             <p className="text-gray-600">Loading limits...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="glucose-limit" className="text-sm font-medium text-gray-700">
                   Glucose Limit (per day)
@@ -137,7 +137,7 @@ export function FreeTierLimitsManagement() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -149,13 +149,14 @@ export function FreeTierLimitsManagement() {
                   }
                 }}
                 disabled={isSubmitting}
+                className="w-full sm:w-auto"
               >
                 Reset
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-teal-600 hover:bg-teal-700"
+                className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
                 style={{
                   minWidth: '120px',
                 }}

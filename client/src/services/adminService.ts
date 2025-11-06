@@ -15,6 +15,66 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  customerData?: any; // Customer data if user is a customer
+}
+
+export interface CustomerData {
+  firstName?: string;
+  lastName?: string;
+  gender?: 'male' | 'female';
+  birthDay?: string;
+  birthMonth?: string;
+  birthYear?: string;
+  diagnosisDay?: string;
+  diagnosisMonth?: string;
+  diagnosisYear?: string;
+  weight?: string;
+  height?: string;
+  diabetesType: 'type1' | 'type2' | 'gestational' | 'prediabetes';
+}
+
+export interface PhysicianData {
+  specialtyId: string;
+  practiceStartDate: string;
+  consultationFee: string;
+  imageUrl?: string | null;
+}
+
+export interface CreateUserRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  role: 'customer' | 'admin' | 'physician';
+  isActive?: boolean;
+  physicianData?: PhysicianData;
+  customerData?: CustomerData;
+}
+
+export interface UpdateUserRequest {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  role?: 'customer' | 'admin' | 'physician';
+  isActive?: boolean;
+  physicianData?: Partial<PhysicianData>;
+  customerData?: Partial<CustomerData>;
+}
+
+
+export interface User {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  emailVerified: boolean;
+  provider: string;
+  providerId?: string;
+  avatar?: string;
+  role: 'customer' | 'admin' | 'physician';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  customerData?: any; // Customer data if user is a customer
 }
 
 export interface CreateUserRequest {
@@ -42,12 +102,16 @@ class AdminService {
     return response.data.users;
   }
 
-  async getUserById(id: string): Promise<User> {
-    const response = await httpClient.get<ApiResponse<{ user: User }>>(`${API_ENDPOINTS.ADMIN.USERS}/${id}`);
+  async getUserById(id: string): Promise<{ user: User; customerData?: any }> {
+    const response = await httpClient.get<ApiResponse<{ user: User; customerData?: any }>>(`${API_ENDPOINTS.ADMIN.USERS}/${id}`);
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch user');
     }
-    return response.data.user;
+    // Merge customerData into user object for convenience
+    if (response.data.customerData) {
+      response.data.user.customerData = response.data.customerData;
+    }
+    return response.data;
   }
 
   async createUser(data: CreateUserRequest): Promise<User> {
@@ -78,5 +142,6 @@ class AdminService {
     return response.data.user;
   }
 }
+
 
 export const adminService = new AdminService();

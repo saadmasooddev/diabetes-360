@@ -11,6 +11,8 @@ export const useGetCustomerData = () => {
     queryKey: ['customerData'],
     queryFn: () => customerService.getCustomerData(),
     retry: false,
+    // Don't throw error if customer data doesn't exist (for users without complete profiles)
+    throwOnError: false,
   });
 };
 

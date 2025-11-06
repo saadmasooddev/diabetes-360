@@ -39,8 +39,21 @@ export class AuthRepository {
   }
 
   async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
-    const refreshToken = await db.select().from(refreshTokens).where(eq(refreshTokens.token, token)).limit(1);
-    return refreshToken[0];
+    const refreshToken = await db.select().from(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.token, token),
+          eq(refreshTokens.revoked, false)
+        )
+      )
+      .limit(1);
+    const tokenData = refreshToken[0];
+    // Check if token is expired
+    if (tokenData && tokenData.expiresAt < new Date()) {
+      return undefined;
+    }
+    
+    return tokenData;
   }
 
   async revokeRefreshToken(token: string): Promise<void> {

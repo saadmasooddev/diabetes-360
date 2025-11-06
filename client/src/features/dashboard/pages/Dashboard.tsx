@@ -15,10 +15,13 @@ import {
   useChartMetrics,
   useTodaysMetricCounts,
   useAddHealthMetric,
+  useFilteredMetrics,
 } from '@/hooks/mutations/useHealth';
 import { useFreeTierLimits } from '@/hooks/mutations/useSettings';
+import { MertricRecord } from '@shared/schema';
 
-type MetricType = 'glucose' | 'steps' | 'water';
+export type MetricType = 'glucose' | 'steps' | 'water' | 'heartbeat';
+type IntervalType = 'daily' | 'weekly' | 'monthly';
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
@@ -28,15 +31,65 @@ export function Dashboard() {
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [selectedMetricType, setSelectedMetricType] = useState<MetricType>('glucose');
   const [metricValue, setMetricValue] = useState('');
+  const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>('daily');
+  const [stepsInterval, setStepsInterval] = useState<IntervalType>('daily');
+  const [waterInterval, setWaterInterval] = useState<IntervalType>('daily');
+  const [heartbeatInterval, setHeartbeatInterval] = useState<IntervalType>('daily');
 
-  // Fetch all metrics to get latest value for each type
-  const { data: allMetrics = [] } = useHealthMetrics(user?.id, 30);
-  const { data: chartMetrics = [] } = useChartMetrics(user?.id, 7);
   const { data: todaysCounts = { glucose: 0, steps: 0, water: 0 } } = useTodaysMetricCounts();
   const { data: freeTierLimits } = useFreeTierLimits();
   const addMetricMutation = useAddHealthMetric();
 
-  // Check if user has reached daily limit per metric type
+  // Helper function to calculate date range based on interval
+  const getDateRange = (interval: IntervalType): { startDate: string; endDate: string } => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const endDate = today.toISOString().split('T')[0];
+
+    const startDate = new Date();
+    if (interval === 'daily') {
+      startDate.setHours(0, 0, 0, 0);
+    } else if (interval === 'weekly') {
+      startDate.setDate(today.getDate() - 7);
+      startDate.setHours(0, 0, 0, 0);
+    } else if (interval === 'monthly') {
+      startDate.setDate(today.getDate() - 30);
+      startDate.setHours(0, 0, 0, 0);
+    }
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate,
+    };
+  };
+
+  const glucoseDateRange = getDateRange(glucoseInterval);
+  const { data: glucoseMetrics } = useFilteredMetrics(
+    glucoseDateRange.startDate,
+    glucoseDateRange.endDate,
+    ['blood_sugar']
+  );
+
+  const stepsDateRange = getDateRange(stepsInterval);
+  const { data: stepsMetrics } = useFilteredMetrics(
+    stepsDateRange.startDate,
+    stepsDateRange.endDate,
+    ['steps']
+  );
+
+  const waterDateRange = getDateRange(waterInterval);
+  const { data: waterMetrics } = useFilteredMetrics(
+    waterDateRange.startDate,
+    waterDateRange.endDate,
+    ['water_intake']
+  );
+
+  const heartbeatDateRange = getDateRange(heartbeatInterval);
+  const { data: heartbeatMetrics } = useFilteredMetrics(
+    heartbeatDateRange.startDate,
+    heartbeatDateRange.endDate,
+    ['heart_beat']
+  );
+
   const isFreeUser = user?.tier === 'free' || !user?.tier;
 
   const getHasReachedLimit = (metricType: MetricType): boolean => {
@@ -57,25 +110,6 @@ export function Dashboard() {
     return count >= limit;
   };
 
-  // Get latest values for each metric type (sorted by most recent first)
-  const latestValues = useMemo(() => {
-    // Sort metrics by recordedAt descending (most recent first)
-    const sortedMetrics = [...allMetrics].sort((a, b) =>
-      new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
-    );
-
-    const glucose = sortedMetrics.find((m) => m.bloodSugar)?.bloodSugar || null;
-    const steps = sortedMetrics.find((m) => m.steps !== null && m.steps !== undefined)?.steps || null;
-    const water = sortedMetrics.find((m) => m.waterIntake)?.waterIntake || null;
-    return { glucose, steps, water };
-  }, [allMetrics]);
-
-  // Get previous values for trend arrows (sorted by most recent first)
-  const previousMetrics = useMemo(() => {
-    return [...allMetrics]
-      .sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
-      .slice(0, 10); // Get first 10 most recent for comparison
-  }, [allMetrics]);
 
   const handleAddLog = (metricType: MetricType) => {
     if (getHasReachedLimit(metricType)) {
@@ -116,6 +150,8 @@ export function Dashboard() {
       metricData.steps = Math.round(numericValue);
     } else if (selectedMetricType === 'water') {
       metricData.waterIntake = numericValue.toString();
+    } else if (selectedMetricType === 'heartbeat') {
+      metricData.heartRate = Math.round(numericValue);
     }
 
     addMetricMutation.mutate(metricData, {
@@ -144,99 +180,80 @@ export function Dashboard() {
     });
   };
 
-  const getTrendArrow = (metricType: MetricType) => {
-    if (!previousMetrics || previousMetrics.length < 2) return null;
 
-    let currentValue: number | null = null;
-    let previousValue: number | null = null;
-
-    if (metricType === 'glucose') {
-      currentValue = latestValues.glucose ? parseFloat(latestValues.glucose) : null;
-      // Find the second most recent glucose value (skip the first/latest one)
-      const previous = previousMetrics.slice(1).find((m) => m.bloodSugar);
-      previousValue = previous?.bloodSugar ? parseFloat(previous.bloodSugar) : null;
-    } else if (metricType === 'steps') {
-      currentValue = latestValues.steps;
-      // Find the second most recent steps value (skip the first/latest one)
-      const previous = previousMetrics.slice(1).find((m) => m.steps !== null && m.steps !== undefined);
-      previousValue = previous?.steps || null;
-    } else if (metricType === 'water') {
-      currentValue = latestValues.water ? parseFloat(latestValues.water) : null;
-      // Find the second most recent water value (skip the first/latest one)
-      const previous = previousMetrics.slice(1).find((m) => m.waterIntake);
-      previousValue = previous?.waterIntake ? parseFloat(previous.waterIntake) : null;
+  const formatTimeLabel = (date: Date, interval: IntervalType): string => {
+    if (interval === 'daily') {
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+      return `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
+    } else if (interval === 'weekly') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return `${days[date.getDay()]} ${date.getDate()}`;
+    } else {
+      // Monthly - show date
+      return `${date.getMonth() + 1}/${date.getDate()}`;
     }
-
-    if (currentValue === null || previousValue === null) return null;
-
-    const isIncreasing = currentValue > previousValue;
-    return isIncreasing ? (
-      <ArrowUp className="ml-2 inline-block" style={{ color: '#4CAF50', width: '24px', height: '24px' }} />
-    ) : (
-      <ArrowDown className="ml-2 inline-block" style={{ color: '#F44336', width: '24px', height: '24px' }} />
-    );
   };
 
   // Transform metrics data for charts
   const glucoseData = useMemo(() => {
-    if (!chartMetrics.length) return [];
+    if (!glucoseMetrics?.bloodSugarRecords?.length) return [];
 
-    return chartMetrics
-      .filter(m => m.bloodSugar)
-      .map(m => {
-        const date = new Date(m.recordedAt);
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const period = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
-
-        return {
-          time: timeLabel,
-          value: parseFloat(m.bloodSugar || '0'),
-        };
-      });
-  }, [chartMetrics]);
+    return glucoseMetrics.bloodSugarRecords.map(m => {
+      const date = new Date(m.recordedAt);
+      return {
+        time: formatTimeLabel(date, glucoseInterval),
+        value: parseFloat(m.value as string || '0'),
+      };
+    });
+  }, [glucoseMetrics, glucoseInterval]);
 
   const stepsData = useMemo(() => {
-    if (!chartMetrics.length) return [];
+    if (!stepsMetrics?.stepsRecords?.length) return [];
 
-    return chartMetrics
-      .filter(m => m.steps)
-      .map(m => {
-        const date = new Date(m.recordedAt);
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const period = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
-
-        return {
-          time: timeLabel,
-          value: m.steps || 0,
-        };
-      });
-  }, [chartMetrics]);
+    return stepsMetrics.stepsRecords.map(m => {
+      const date = new Date(m.recordedAt);
+      return {
+        time: formatTimeLabel(date, stepsInterval),
+        value: m.value as number || 0,
+      };
+    });
+  }, [stepsMetrics, stepsInterval]);
 
   const waterData = useMemo(() => {
-    if (!chartMetrics.length) return [];
+    if (!waterMetrics?.waterIntakeRecords?.length) return [];
 
-    return chartMetrics
-      .filter(m => m.waterIntake)
-      .map(m => {
-        const date = new Date(m.recordedAt);
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const period = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-        const timeLabel = `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''} ${period}`;
+    return waterMetrics.waterIntakeRecords.map(m => {
+      const date = new Date(m.recordedAt);
+      return {
+        time: formatTimeLabel(date, waterInterval),
+        value: parseFloat(m.value as string || '0'),
+      };
+    });
+  }, [waterMetrics, waterInterval]);
 
-        return {
-          time: timeLabel,
-          value: parseFloat(m.waterIntake || '0'),
-        };
-      });
-  }, [chartMetrics]);
+  const heartbeatData = useMemo(() => {
+    if (!heartbeatMetrics?.heartBeatRecords?.length) return [];
+
+    return heartbeatMetrics.heartBeatRecords.map(m => {
+      const date = new Date(m.recordedAt);
+      return {
+        time: formatTimeLabel(date, heartbeatInterval),
+        value: m.value as number || 0,
+      };
+    });
+  }, [heartbeatMetrics, heartbeatInterval]);
+
+  const getTrendArrow = (metrics: MertricRecord[]) => {
+    if (!metrics?.length) return null;
+    const currentValue = metrics[0]?.value as number || 0;
+    const previousValue = metrics[1]?.value as number || 0;
+    return currentValue > previousValue ?
+      <ArrowUp className="ml-2 inline-block" style={{ color: '#4CAF50', width: '24px', height: '24px' }} />
+      : <ArrowDown className="ml-2 inline-block" style={{ color: '#F44336', width: '24px', height: '24px' }} />;
+  };
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
@@ -245,11 +262,11 @@ export function Dashboard() {
       <main className="flex-1 flex justify-center" style={{ padding: '32px' }}>
         <div className="w-full" style={{ maxWidth: '1145px' }}>
           {/* Metric Cards Row */}
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
             <HealthMetricCard
               type="glucose"
-              latestValue={latestValues.glucose}
-              trendArrow={getTrendArrow('glucose')}
+              latestValue={glucoseMetrics?.bloodSugarRecords[0]?.value as string || '0'}
+              trendArrow={getTrendArrow(glucoseMetrics?.bloodSugarRecords || [])}
               onAddLog={() => handleAddLog('glucose')}
               onUploadPicture={handleUploadPicture}
               onUpgrade={handleUpgrade}
@@ -259,8 +276,8 @@ export function Dashboard() {
 
             <HealthMetricCard
               type="steps"
-              latestValue={latestValues.steps}
-              trendArrow={getTrendArrow('steps')}
+              latestValue={stepsMetrics?.stepsRecords[0]?.value as number || 0}
+              trendArrow={getTrendArrow(stepsMetrics?.stepsRecords || [])}
               onAddLog={() => handleAddLog('steps')}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('steps')}
@@ -269,13 +286,26 @@ export function Dashboard() {
 
             <HealthMetricCard
               type="water"
-              latestValue={latestValues.water}
-              trendArrow={getTrendArrow('water')}
+              latestValue={waterMetrics?.waterIntakeRecords[0]?.value as string || '0'}
+              trendArrow={getTrendArrow(waterMetrics?.waterIntakeRecords || [])}
               onAddLog={() => handleAddLog('water')}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('water')}
               dailyLimit={freeTierLimits?.waterLimit ?? 2}
             />
+
+            {/* Heart Beat Card - Only for paid users */}
+            {user?.tier === 'paid' && (
+              <HealthMetricCard
+                type="heartbeat"
+                latestValue={heartbeatMetrics?.heartBeatRecords[0]?.value as number || 0}
+                trendArrow={getTrendArrow(heartbeatMetrics?.heartBeatRecords || [])}
+                onAddLog={() => handleAddLog('heartbeat')}
+                onUpgrade={handleUpgrade}
+                disabled={false}
+                dailyLimit={0}
+              />
+            )}
           </div>
 
           {/* Health Assessment Button */}
@@ -310,6 +340,8 @@ export function Dashboard() {
                 ticks: [0, 70, 80, 90, 100],
                 label: '100mg/dL',
               }}
+              interval={glucoseInterval}
+              onIntervalChange={setGlucoseInterval}
             />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -323,6 +355,8 @@ export function Dashboard() {
                   domain: [0, 11000],
                   ticks: [0, 3000, 6000, 9000, 11000],
                 }}
+                interval={stepsInterval}
+                onIntervalChange={setStepsInterval}
               />
 
               <HealthTrendChart
@@ -336,8 +370,28 @@ export function Dashboard() {
                   ticks: [0, 1, 2, 3, 4],
                   label: '4 Litre',
                 }}
+                interval={waterInterval}
+                onIntervalChange={setWaterInterval}
               />
             </div>
+
+            {/* Heart Beat Chart - Only for paid users */}
+            {user?.tier === 'paid' && (
+              <HealthTrendChart
+                title="Heart Rate Trend"
+                data={heartbeatData}
+                gradientId="heartbeatGradient"
+                testId="card-heartbeat-trend"
+                height={200}
+                yAxisConfig={{
+                  domain: [0, 200],
+                  ticks: [0, 50, 100, 150, 200],
+                  label: '200 bpm',
+                }}
+                interval={heartbeatInterval}
+                onIntervalChange={setHeartbeatInterval}
+              />
+            )}
           </div>
         </div>
       </main>

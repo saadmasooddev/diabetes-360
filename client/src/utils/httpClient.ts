@@ -65,7 +65,6 @@ class HttpClient {
             
             return this.axiosInstance(originalRequest);
           } catch (refreshError) {
-            // Refresh failed, redirect to login
             TokenManager.clearTokens();
             window.location.href = '/login';
             return Promise.reject(refreshError);
@@ -108,7 +107,6 @@ class HttpClient {
     } catch (error) {
       // If refresh fails, clear tokens and redirect to login
       TokenManager.clearTokens();
-      window.location.href = '/login';
       throw error;
     }
   }

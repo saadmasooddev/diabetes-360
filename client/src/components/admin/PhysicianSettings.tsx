@@ -73,81 +73,130 @@ export function PhysicianSettings() {
         borderRadius: '12px',
       }}
     >
-      <CardHeader style={{ padding: '24px' }}>
-        <div className="flex items-center justify-between">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-teal-600" />
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Stethoscope className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
               Physician Specialties
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Manage physician specialties available for consultation
             </CardDescription>
           </div>
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="bg-teal-600 hover:bg-teal-700"
+            className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add Specialty
           </Button>
         </div>
       </CardHeader>
-      <CardContent style={{ padding: '0 24px 24px' }}>
+      <CardContent className="p-4 sm:p-6 pt-0">
         {isLoading ? (
           <div className="text-center py-8">
             <p className="text-gray-600">Loading specialties...</p>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Icon</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {specialties.map((specialty) => (
-                  <TableRow key={specialty.id}>
-                    <TableCell className="font-medium">{specialty.name}</TableCell>
-                    <TableCell>{specialty.description || '-'}</TableCell>
-                    <TableCell>{specialty.icon || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={specialty.isActive ? 'default' : 'secondary'}>
-                        {specialty.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(specialty)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(specialty.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Icon</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {specialties.map((specialty) => (
+                      <TableRow key={specialty.id}>
+                        <TableCell className="font-medium">{specialty.name}</TableCell>
+                        <TableCell>{specialty.description || '-'}</TableCell>
+                        <TableCell>{specialty.icon || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={specialty.isActive ? 'default' : 'secondary'}>
+                            {specialty.isActive ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEdit(specialty)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(specialty.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {specialties.map((specialty) => (
+                <div key={specialty.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{specialty.name}</h3>
+                      {specialty.description && (
+                        <p className="text-sm text-gray-600 mt-1">{specialty.description}</p>
+                      )}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(specialty)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(specialty.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={specialty.isActive ? 'default' : 'secondary'}>
+                      {specialty.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                    {specialty.icon && (
+                      <Badge variant="outline">Icon: {specialty.icon}</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {specialties.length === 0 && !isLoading && (
@@ -159,14 +208,14 @@ export function PhysicianSettings() {
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create Specialty</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[425px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+            <DialogTitle className="text-lg sm:text-xl">Create Specialty</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Add a new physician specialty
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name *</Label>
@@ -215,14 +264,14 @@ export function PhysicianSettings() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingSpecialty} onOpenChange={() => setEditingSpecialty(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Specialty</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[425px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+            <DialogTitle className="text-lg sm:text-xl">Edit Specialty</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Update specialty information
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name *</Label>

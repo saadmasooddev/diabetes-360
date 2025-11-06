@@ -11,7 +11,6 @@ import type {
   ForgotPasswordResponse,
   AuthData,
   RefreshTokenData,
-  ForgotPasswordData
 } from '@/types/auth.types';
 
 class AuthService {

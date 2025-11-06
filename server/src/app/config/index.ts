@@ -13,4 +13,6 @@ export const config = {
     fromName: process.env.EMAIL_FROM_NAME || 'Diabetes 360',
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  accessTokenExpiresIn: Math.floor(Number(process.env.ACCESS_TOKEN_EXPIRES_IN || "0") * 60 || 15 * 60),
+  refreshTokenExpiresIn: Math.floor(Number(process.env.REFRESH_TOKEN_EXPIRES_IN || "0") * 24 * 60 * 60 || 7 * 24 * 60 * 60),
 } as const;

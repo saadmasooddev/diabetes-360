@@ -86,6 +86,10 @@ export class PhysicianService {
     return await this.physicianRepository.getSpecialtiesForConsultation();
   }
 
+  async getAllPhysicians() {
+    return await this.physicianRepository.getAllPhysicians();
+  }
+
   async getPhysiciansBySpecialty(specialtyId: string) {
     const specialty = await this.physicianRepository.getSpecialtyById(specialtyId);
     if (!specialty) {

@@ -1,7 +1,8 @@
 import { type Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema } from "../../auth/models/user.schema";
+import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema, insertCustomerDataAdminSchema } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
 import { PhysicianService } from "../../physician/service/physician.service";
+import { CustomerService } from "../../customer/service/customer.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
@@ -12,10 +13,12 @@ import { handleError } from "../../../shared/middleware/errorHandler";
 export class AdminController {
   private authService: AuthService;
   private physicianService: PhysicianService;
+  private customerService: CustomerService;
 
   constructor() {
     this.authService = new AuthService();
     this.physicianService = new PhysicianService();
+    this.customerService = new CustomerService();
   }
 
   async getAllUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -44,7 +47,17 @@ export class AdminController {
         throw new NotFoundError("User not found");
       }
 
-      sendSuccess(res, { user }, "User retrieved successfully");
+      // If user is a customer, include customer data
+      let customerData = null;
+      if (user.role === USER_ROLES.CUSTOMER) {
+        try {
+          customerData = await this.customerService.getCustomerDataByUserId(id);
+        } catch {
+          // Customer data doesn't exist yet, that's fine
+        }
+      }
+
+      sendSuccess(res, { user, customerData }, "User retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
     }
@@ -85,11 +98,41 @@ export class AdminController {
         }
       }
 
+      // If user is a customer, create customer data (if provided)
+      if (authResponse.user.role === USER_ROLES.CUSTOMER && req.body.customerData) {
+        try {
+          const customerDataValidation = insertCustomerDataAdminSchema.safeParse(req.body.customerData);
+          console.log(customerDataValidation)
+          if (customerDataValidation.success) {
+            // Fill in missing date fields with defaults if not provided
+            const customerDataToCreate = {
+              ...customerDataValidation.data,
+              firstName: customerDataValidation.data.firstName,
+              lastName: customerDataValidation.data.lastName,
+              gender: customerDataValidation.data.gender,
+              birthDay: customerDataValidation.data.birthDay,
+              birthMonth: customerDataValidation.data.birthMonth,
+              birthYear: customerDataValidation.data.birthYear,
+              diagnosisDay: customerDataValidation.data.diagnosisDay,
+              diagnosisMonth: customerDataValidation.data.diagnosisMonth,
+              diagnosisYear: customerDataValidation.data.diagnosisYear,
+              weight: customerDataValidation.data.weight,
+              height: customerDataValidation.data.height,
+            };
+            await this.customerService.createCustomerData(authResponse.user.id, customerDataToCreate);
+          }
+        } catch (customerError) {
+          // Log error but don't fail user creation
+          console.error("Error creating customer data:", customerError);
+        }
+      }
+
       sendSuccess(res, {
         user: authResponse.user,
         tokens: authResponse.tokens,
       }, SUCCESS_MESSAGES.ACCOUNT_CREATED);
     } catch (error: any) {
+      console.log(error)
       handleError(res, error);
     }
   }
@@ -121,6 +164,24 @@ export class AdminController {
           } 
         } catch (physicianError: any) {
           console.error("Error updating physician data:", physicianError);
+        }
+      }
+
+      // If user is a customer and customerData is provided, update it
+      if (user.role === USER_ROLES.CUSTOMER && req.body.customerData) {
+        try {
+          const customerDataValidation = insertCustomerDataAdminSchema.partial().safeParse(req.body.customerData);
+          if (customerDataValidation.success && Object.keys(customerDataValidation.data).length > 0) {
+            // Check if customer data exists, if not create it
+            try {
+              await this.customerService.getCustomerDataByUserId(id);
+              await this.customerService.updateCustomerData(id, customerDataValidation.data);
+            } catch (error: any) {
+              console.error("Error updating customer data:", error);
+            }
+          }
+        } catch (customerError: any) {
+          console.error("Error updating customer data:", customerError);
         }
       }
 

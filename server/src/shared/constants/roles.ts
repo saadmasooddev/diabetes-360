@@ -44,11 +44,10 @@ export const ROLE_PERMISSIONS = {
     'create:all_health_metrics',
     'update:all_health_metrics',
     'delete:all_health_metrics',
-'create:settings',
-'read:settings',
-'update:settings',
-'delete:settings',
-
+    'create:settings',
+    'read:settings',
+    'update:settings',
+    'delete:settings',
   ],
 } as const;
 

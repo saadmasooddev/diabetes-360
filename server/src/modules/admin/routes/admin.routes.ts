@@ -100,7 +100,43 @@ router.get("/users", (req, res) => adminController.getAllUsers(req, res));
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/User'
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/User'
+ *                         customerData:
+ *                           type: object
+ *                           nullable: true
+ *                           description: Included if user role is customer and customer data exists
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             userId:
+ *                               type: string
+ *                             firstName:
+ *                               type: string
+ *                             lastName:
+ *                               type: string
+ *                             gender:
+ *                               type: string
+ *                             birthDay:
+ *                               type: string
+ *                             birthMonth:
+ *                               type: string
+ *                             birthYear:
+ *                               type: string
+ *                             diagnosisDay:
+ *                               type: string
+ *                             diagnosisMonth:
+ *                               type: string
+ *                             diagnosisYear:
+ *                               type: string
+ *                             weight:
+ *                               type: string
+ *                             height:
+ *                               type: string
+ *                             diabetesType:
+ *                               type: string
  *       401:
  *         description: Unauthorized
  *         content:
@@ -166,6 +202,59 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *               isActive:
  *                 type: boolean
  *                 default: true
+ *               physicianData:
+ *                 type: object
+ *                 description: Required if role is physician
+ *                 properties:
+ *                   specialtyId:
+ *                     type: string
+ *                   practiceStartDate:
+ *                     type: string
+ *                     format: date-time
+ *                   consultationFee:
+ *                     type: string
+ *                   imageUrl:
+ *                     type: string
+ *                     nullable: true
+ *               customerData:
+ *                 type: object
+ *                 description: Optional for customer role. At least diabetesType is required.
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   gender:
+ *                     type: string
+ *                     enum: [male, female]
+ *                   diabetesType:
+ *                     type: string
+ *                     enum: [type1, type2, gestational, prediabetes]
+ *                     description: Required for customer role
+ *                   birthDay:
+ *                     type: string
+ *                     description: Optional - defaults to '01' if not provided
+ *                   birthMonth:
+ *                     type: string
+ *                     description: Optional - defaults to '01' if not provided
+ *                   birthYear:
+ *                     type: string
+ *                     description: Optional - defaults to current year if not provided
+ *                   diagnosisDay:
+ *                     type: string
+ *                     description: Optional - defaults to '01' if not provided
+ *                   diagnosisMonth:
+ *                     type: string
+ *                     description: Optional - defaults to '01' if not provided
+ *                   diagnosisYear:
+ *                     type: string
+ *                     description: Optional - defaults to current year if not provided
+ *                   weight:
+ *                     type: string
+ *                     description: Optional - defaults to '70' if not provided
+ *                   height:
+ *                     type: string
+ *                     description: Optional - defaults to '170' if not provided
  *     responses:
  *       201:
  *         description: User created successfully
@@ -177,7 +266,12 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/User'
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/User'
+ *                         tokens:
+ *                           $ref: '#/components/schemas/TokenPair'
  *       400:
  *         description: Bad request - validation error
  *         content:
@@ -245,6 +339,50 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *                 enum: [free, paid]
  *               isActive:
  *                 type: boolean
+ *               physicianData:
+ *                 type: object
+ *                 description: Optional - for updating physician data
+ *                 properties:
+ *                   specialtyId:
+ *                     type: string
+ *                   practiceStartDate:
+ *                     type: string
+ *                     format: date-time
+ *                   consultationFee:
+ *                     type: string
+ *                   imageUrl:
+ *                     type: string
+ *                     nullable: true
+ *               customerData:
+ *                 type: object
+ *                 description: Optional - for updating customer data
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   gender:
+ *                     type: string
+ *                     enum: [male, female]
+ *                   diabetesType:
+ *                     type: string
+ *                     enum: [type1, type2, gestational, prediabetes]
+ *                   birthDay:
+ *                     type: string
+ *                   birthMonth:
+ *                     type: string
+ *                   birthYear:
+ *                     type: string
+ *                   diagnosisDay:
+ *                     type: string
+ *                   diagnosisMonth:
+ *                     type: string
+ *                   diagnosisYear:
+ *                     type: string
+ *                   weight:
+ *                     type: string
+ *                   height:
+ *                     type: string
  *     responses:
  *       200:
  *         description: User updated successfully
@@ -256,7 +394,10 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/User'
+ *                       type: object
+ *                       properties:
+ *                         user:
+ *                           $ref: '#/components/schemas/User'
  *       400:
  *         description: Bad request - validation error
  *         content:

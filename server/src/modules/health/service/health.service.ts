@@ -1,6 +1,6 @@
 import { HealthRepository } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
-import type { InsertHealthMetric, HealthMetric } from "../models/health.schema";
+import type { InsertHealthMetric, HealthMetric, MertricRecord } from "../models/health.schema";
 import { BadRequestError } from "../../../shared/errors";
 
 export class HealthService {
@@ -13,6 +13,11 @@ export class HealthService {
   }
 
   async createMetric(data: InsertHealthMetric, userTier: string = "free"): Promise<HealthMetric> {
+    // Heart rate is only available for paid users
+    if (data.heartRate && userTier !== "paid") {
+      throw new BadRequestError("Heart rate tracking is only available for paid users. Please upgrade to access this feature.");
+    }
+
     // Check daily limit for free tier users per metric type
     if (userTier === "free") {
       // Determine which metric type is being logged
@@ -83,6 +88,20 @@ export class HealthService {
     steps: { daily: number; weekly: number; monthly: number };
   }> {
     return await this.healthRepository.getAggregatedStatistics(userId);
+  }
+
+  async getFilteredMetrics(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    types: string[]
+  ): Promise<{
+    bloodSugarRecords: MertricRecord[];
+    waterIntakeRecords: MertricRecord[];
+    stepsRecords: MertricRecord[];
+    heartBeatRecords: MertricRecord[];
+  }> {
+    return await this.healthRepository.getFilteredMetrics(userId, startDate, endDate, types);
   }
 }
 

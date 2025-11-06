@@ -10,6 +10,7 @@ export const healthMetrics = pgTable("health_metrics", {
   bloodSugar: numeric("blood_sugar"),
   steps: integer("steps"),
   waterIntake: numeric("water_intake"),
+  heartRate: integer("heart_rate"),
   recordedAt: timestamp("recorded_at").notNull().defaultNow(),
 });
 
@@ -21,8 +22,10 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).omit({
   bloodSugar: z.string().nullable().optional(),
   waterIntake: z.string().nullable().optional(),
   steps: z.number().int().nullable().optional(),
+  heartRate: z.number().int().nullable().optional(),
 });
 
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
 export type HealthMetric = typeof healthMetrics.$inferSelect;
+export type MertricRecord = { id: string, userId: string, value: number | string, recordedAt: Date };
 

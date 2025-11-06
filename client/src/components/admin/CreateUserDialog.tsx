@@ -13,6 +13,7 @@ import { useCreateUser } from '@/hooks/mutations/useAdmin';
 import { useSpecialtiesAdmin } from '@/hooks/mutations/usePhysician';
 import { useUploadPhysicianImage } from '@/hooks/mutations/usePhysician';
 import { useToast } from '@/hooks/use-toast';
+import { genderOptions, diabetesTypeOptions, dayOptions, monthOptions, yearOptions, weightOptions, heightOptions } from '@/mocks/profileData';
 
 const createUserSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -37,6 +38,20 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
     consultationFee: '',
     imageFile: null as File | null,
     imagePreview: '',
+  });
+  const [customerFields, setCustomerFields] = useState({
+    firstName: '',
+    lastName: '',
+    gender: 'male' as 'male' | 'female',
+    birthDay: '',
+    birthMonth: '',
+    birthYear: '',
+    diagnosisDay: '',
+    diagnosisMonth: '',
+    diagnosisYear: '',
+    weight: '',
+    height: '',
+    diabetesType: '' as 'type1' | 'type2' | 'gestational' | 'prediabetes' | '',
   });
   const createUserMutation = useCreateUser();
   const { data: specialties = [] } = useSpecialtiesAdmin();
@@ -106,6 +121,24 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
         };
       }
 
+      // If customer role, include customer data (at least diabetes type)
+      if (data.role === 'customer' && customerFields.diabetesType) {
+        userData.customerData = {
+          firstName: customerFields.firstName || data.fullName.split(' ')[0] || '',
+          lastName: customerFields.lastName || data.fullName.split(' ').slice(1).join(' ') || '',
+          gender: customerFields.gender,
+          birthDay: customerFields.birthDay,
+          birthMonth: customerFields.birthMonth,
+          birthYear: customerFields.birthYear,
+          diagnosisDay: customerFields.diagnosisDay,
+          diagnosisMonth: customerFields.diagnosisMonth,
+          diagnosisYear: customerFields.diagnosisYear,
+          weight: customerFields.weight,
+          height: customerFields.height,
+          diabetesType: customerFields.diabetesType,
+        };
+      }
+
       await createUserMutation.mutateAsync(userData);
       onClose();
     } catch (error: any) {
@@ -120,14 +153,14 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
   };
 
   return (
-    <DialogContent className="sm:max-w-[425px]">
-      <DialogHeader>
-        <DialogTitle>Create New User</DialogTitle>
-        <DialogDescription>
+    <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[425px] max-h-[90vh] flex flex-col">
+      <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+        <DialogTitle className="text-lg sm:text-xl">Create New User</DialogTitle>
+        <DialogDescription className="text-xs sm:text-sm">
           Create a new user account with the specified role and permissions.
         </DialogDescription>
       </DialogHeader>
-      <div className="flex-1 overflow-y-auto px-6">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" id="create-user-form">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
@@ -275,6 +308,215 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
                     alt="Preview"
                     className="w-24 h-24 rounded-full object-cover border"
                   />
+                )}
+              </div>
+            </div>
+          )}
+
+          {watchedRole === 'customer' && (
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-gray-900">Customer Information</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customerFirstName">First Name</Label>
+                  <Input
+                    id="customerFirstName"
+                    value={customerFields.firstName}
+                    onChange={(e) => setCustomerFields({ ...customerFields, firstName: e.target.value })}
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customerLastName">Last Name</Label>
+                  <Input
+                    id="customerLastName"
+                    value={customerFields.lastName}
+                    onChange={(e) => setCustomerFields({ ...customerFields, lastName: e.target.value })}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerGender">Gender</Label>
+                <Select
+                  value={customerFields.gender}
+                  onValueChange={(value) => setCustomerFields({ ...customerFields, gender: value as 'male' | 'female' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {genderOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerBirthDate">Date of Birth</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Select
+                    value={customerFields.birthDay}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, birthDay: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="DD" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dayOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={customerFields.birthMonth}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, birthMonth: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={customerFields.birthYear}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, birthYear: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="YYYY" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {yearOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerDiagnosisDate">Diagnosis Date</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Select
+                    value={customerFields.diagnosisDay}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, diagnosisDay: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="DD" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dayOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={customerFields.diagnosisMonth}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, diagnosisMonth: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={customerFields.diagnosisYear}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, diagnosisYear: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="YYYY" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {yearOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customerWeight">Weight (kg)</Label>
+                  <Select
+                    value={customerFields.weight}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, weight: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select weight" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {weightOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="customerHeight">Height (cm)</Label>
+                  <Select
+                    value={customerFields.height}
+                    onValueChange={(value) => setCustomerFields({ ...customerFields, height: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select height" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {heightOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="customerDiabetesType">Diabetes Type *</Label>
+                <Select
+                  value={customerFields.diabetesType}
+                  onValueChange={(value) => setCustomerFields({ ...customerFields, diabetesType: value as any })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select diabetes type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {diabetesTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!customerFields.diabetesType && (
+                  <p className="text-sm text-red-600">Diabetes type is required for customer accounts</p>
                 )}
               </div>
             </div>

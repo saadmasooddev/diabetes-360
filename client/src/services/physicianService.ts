@@ -90,6 +90,16 @@ class PhysicianService {
     return response.data.specialties;
   }
 
+  async getAllPhysicians(): Promise<Physician[]> {
+    const response = await httpClient.get<ApiResponse<{ physicians: Physician[] }>>(
+      API_ENDPOINTS.PHYSICIAN.ALL_PHYSICIANS
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch physicians');
+    }
+    return response.data.physicians;
+  }
+
   async getPhysiciansBySpecialty(specialtyId: string): Promise<Physician[]> {
     const response = await httpClient.get<ApiResponse<{ physicians: Physician[] }>>(
       API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId)

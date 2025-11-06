@@ -56,8 +56,6 @@ export const SignUp = (): JSX.Element => {
 
   const fullNameValue = watch("fullName");
   const emailValue = watch("email");
-  const passwordValue = watch("password");
-  const confirmPasswordValue = watch("confirmPassword");
   const agreeToTermsValue = watch("agreeToTerms");
 
   const onSubmit = (data: SignupFormData) => {
@@ -74,8 +72,6 @@ export const SignUp = (): JSX.Element => {
 
   const isFullNameValid = fullNameValue && !errors.fullName;
   const isEmailValid = emailValue && !errors.email;
-  const isPasswordValid = passwordValue && !errors.password;
-  const isConfirmPasswordValid = confirmPasswordValue && !errors.confirmPassword;
 
   return (
     <div className="bg-white w-full min-h-screen lg:h-screen flex flex-col lg:flex-row">

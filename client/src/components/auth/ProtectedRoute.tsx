@@ -34,6 +34,16 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       return;
     }
 
+    // Block access to ProfileData page if profile is already complete
+    if (
+      user.role === 'customer' &&
+      user.profileComplete &&
+      location === ROUTES.PROFILE_DATA
+    ) {
+      navigate(ROUTES.SETTINGS);
+      return;
+    }
+
     // If user is authenticated and trying to access an invalid route, redirect to dashboard
     const validRoutes = Object.values(ROUTES);
     if (!validRoutes.includes(location as any)) {

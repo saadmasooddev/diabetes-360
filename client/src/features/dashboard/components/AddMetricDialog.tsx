@@ -2,8 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-
-type MetricType = 'glucose' | 'steps' | 'water';
+import type { MetricType } from '../pages/Dashboard';
 
 interface AddMetricDialogProps {
   open: boolean;
@@ -36,6 +35,10 @@ export function AddMetricDialog({
     water: {
       title: 'Log Water Intake',
       placeholder: 'Enter water intake (L)',
+    },
+    heartbeat: {
+      title: 'Log Heart Rate',
+      placeholder: 'Enter heart rate (bpm)',
     },
   };
 

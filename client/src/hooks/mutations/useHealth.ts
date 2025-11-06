@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { healthService } from '@/services/healthService';
 import { API_ENDPOINTS } from '@/config/endpoints';
-import type { HealthMetric } from '@shared/schema';
+import type { HealthMetric, MertricRecord } from '@shared/schema';
 
 export const useHealthMetrics = (userId: string | undefined, limit: number = 30) => {
   return useQuery<HealthMetric[]>({
@@ -65,6 +65,25 @@ export const useAggregatedStatistics = () => {
   });
 };
 
+export const useFilteredMetrics = (
+  startDate: string | null,
+  endDate: string | null,
+  types: string[] = []
+) => {
+  return useQuery<{
+    bloodSugarRecords: MertricRecord[];
+    waterIntakeRecords: MertricRecord[];
+    stepsRecords: MertricRecord[];
+    heartBeatRecords: MertricRecord[];
+  }>({
+    queryKey: [API_ENDPOINTS.HEALTH.FILTERED, startDate, endDate, types],
+    queryFn: () => healthService.getFilteredMetrics(startDate!, endDate!, types),
+    enabled: !!startDate && !!endDate,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+};
+
 export const useAddHealthMetric = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -89,6 +108,9 @@ export const useAddHealthMetric = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.HEALTH.STATISTICS],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_ENDPOINTS.HEALTH.FILTERED],
       });
 
       toast({

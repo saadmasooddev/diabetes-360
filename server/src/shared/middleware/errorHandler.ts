@@ -19,6 +19,6 @@ export function handleError(res: Response, error: any, data: any = null): void {
 }
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
-  console.log(err.message)
+  console.log(err)
   handleError(res, err);
 }

@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     CHART: '/api/health/metrics/chart',
     TODAY_COUNT: '/api/health/metrics/today-count',
     STATISTICS: '/api/health/metrics/statistics',
+    FILTERED: '/api/health/metrics/filtered',
   },
   ADMIN: {
     USERS: '/api/admin/users',
@@ -28,6 +29,7 @@ export const API_ENDPOINTS = {
   },
   PHYSICIAN: {
     SPECIALTIES: '/api/physician/specialties',
+    ALL_PHYSICIANS: '/api/physician/physicians',
     PHYSICIANS_BY_SPECIALTY: (specialtyId: string) => `/api/physician/specialties/${specialtyId}/physicians`,
     RATING: (physicianId: string) => `/api/physician/ratings/${physicianId}`,
     ADMIN: {
@@ -39,5 +41,17 @@ export const API_ENDPOINTS = {
   },
   CUSTOMER: {
     PROFILE: '/api/customer/profile',
+  },
+  BOOKING: {
+    SLOT_SIZES: '/api/booking/slot-sizes',
+    SLOT_TYPES: '/api/booking/slot-types',
+    AVAILABILITY_DATES: '/api/booking/availability-dates',
+    CREATE_SLOTS: '/api/booking/slots',
+    DATES_WITH_AVAILABILITY: (physicianId: string) => `/api/booking/physicians/${physicianId}/dates-with-availability`,
+    PHYSICIAN_SLOTS: (physicianId: string) => `/api/booking/physicians/${physicianId}/slots`,
+    AVAILABLE_SLOTS: (physicianId: string) => `/api/booking/physicians/${physicianId}/available-slots`,
+    DELETE_SLOT: (slotId: string) => `/api/booking/slots/${slotId}`,
+    UPDATE_SLOT_PRICE: (priceId: string) => `/api/booking/slot-prices/${priceId}`,
+    BOOK_SLOT: '/api/booking/book',
   },
 } as const;

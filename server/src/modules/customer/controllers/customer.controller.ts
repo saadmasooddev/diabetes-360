@@ -21,6 +21,7 @@ export class CustomerController {
       const userId = req.user?.userId || req.params.userId;
       
       if (!userId) {
+        
         throw new BadRequestError("User ID is required");
       }
 

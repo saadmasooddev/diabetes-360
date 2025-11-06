@@ -48,6 +48,34 @@ router.get("/specialties", (req, res, next) => physicianController.getSpecialtie
 
 /**
  * @swagger
+ * /api/physician/physicians:
+ *   get:
+ *     summary: Get all physicians for consultation
+ *     tags: [Consultation]
+ *     responses:
+ *       200:
+ *         description: Physicians retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         physicians:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ */
+router.get("/physicians", (req, res, next) => 
+  physicianController.getAllPhysicians(req, res, next)
+);
+
+/**
+ * @swagger
  * /api/physician/specialties/{specialtyId}/physicians:
  *   get:
  *     summary: Get physicians by specialty for consultation
@@ -117,7 +145,55 @@ router.get("/ratings/:physicianId", (req, res, next) =>
   physicianController.getPhysicianRating(req, res, next)
 );
 
-// Authenticated rating creation
+/**
+ * @swagger
+ * /api/physician/ratings:
+ *   post:
+ *     summary: Create a physician rating (Authenticated)
+ *     tags: [Consultation]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - physicianId
+ *               - rating
+ *             properties:
+ *               physicianId:
+ *                 type: string
+ *                 description: ID of the physician being rated
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Rating value from 1 to 5
+ *               comment:
+ *                 type: string
+ *                 description: Optional comment about the rating
+ *     responses:
+ *       200:
+ *         description: Rating created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/ratings", authenticateToken, (req, res, next) => 
   physicianController.createRating(req, res, next)
 );

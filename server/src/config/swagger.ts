@@ -125,6 +125,11 @@ const options: swaggerJsdoc.Options = {
               type: 'boolean',
               example: true,
             },
+            profileComplete: {
+              type: 'boolean',
+              example: false,
+              description: 'Indicates if the user profile is complete (for customer role)',
+            },
             createdAt: {
               type: 'string',
               format: 'date-time',
@@ -184,6 +189,12 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               nullable: true,
               example: '2.5',
+            },
+            heartRate: {
+              type: 'integer',
+              nullable: true,
+              example: 72,
+              description: 'Heart rate in beats per minute (BPM). Only available for paid users.',
             },
             recordedAt: {
               type: 'string',

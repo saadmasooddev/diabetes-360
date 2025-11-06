@@ -62,7 +62,6 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   provider: true,
   providerId: true,
-  avatar: true,
   role: true,
   isActive: true,
 })
@@ -191,6 +190,24 @@ export const insertCustomerDataSchema = createInsertSchema(customerData).omit({
   userId: true,
   createdAt: true,
   updatedAt: true,
+});
+
+// Schema for admin creating customer data (dates optional, diabetesType required)
+export const insertCustomerDataAdminSchema = createInsertSchema(customerData).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  birthDay: z.string().min(1, "Birth day is required"),
+  birthMonth: z.string().min(1, "Birth month is required"),
+  birthYear: z.string().min(1, "Birth year is required"),
+  diagnosisDay: z.string().min(1, "Diagnosis day is required"),
+  diagnosisMonth: z.string().min(1, "Diagnosis month is required"),
+  diagnosisYear: z.string().min(1, "Diagnosis year is required"),
+  weight: z.string().min(1, "Weight is required"),
+  height: z.string().min(1, "Height is required"),
+  diabetesType: z.string().min(1, "Diabetes type is required"),
 });
 
 export const updateCustomerDataSchema = createInsertSchema(customerData).omit({

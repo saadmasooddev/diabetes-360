@@ -10,6 +10,13 @@ export const useSpecialties = () => {
   });
 };
 
+export const useAllPhysicians = () => {
+  return useQuery({
+    queryKey: ['physician', 'all-physicians'],
+    queryFn: () => physicianService.getAllPhysicians(),
+  });
+};
+
 export const usePhysiciansBySpecialty = (specialtyId: string | null) => {
   return useQuery({
     queryKey: ['physician', 'specialties', specialtyId, 'physicians'],

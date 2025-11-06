@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { type User, type InsertUser } from "../models/user.schema";
+import { type User, type InsertUser, RefreshToken } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
 import { JWTService, type TokenPair } from "../../../shared/utils/jwt";
@@ -49,14 +49,8 @@ export class AuthService {
       role: user.role as UserRole,
     });
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+    await this.createRefreshToken(user.id, tokens.refreshToken);
 
-    await this.authRepository.createRefreshToken({
-      userId: user.id,
-      token: tokens.refreshToken,
-      expiresAt,
-    });
 
     // Send welcome email with credentials
     try {
@@ -104,17 +98,8 @@ export class AuthService {
       role: user.role as UserRole,
     });
 
-    // Store refresh token
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+    await this.createRefreshToken(user.id, tokens.refreshToken);
 
-    await this.authRepository.createRefreshToken({
-      userId: user.id,
-      token: tokens.refreshToken,
-      expiresAt,
-    });
-
-    // Return user without password
     const { password: _, ...userWithoutPassword } = user;
     return {
       user: userWithoutPassword,
@@ -149,15 +134,7 @@ export class AuthService {
     // Revoke old refresh token
     await this.authRepository.revokeRefreshToken(refreshToken);
 
-    // Store new refresh token
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
-
-    await this.authRepository.createRefreshToken({
-      userId: user.id,
-      token: newTokens.refreshToken,
-      expiresAt,
-    });
+    await this.createRefreshToken(user.id, newTokens.refreshToken);
 
     return newTokens;
   }
@@ -232,7 +209,7 @@ export class AuthService {
     await this.authRepository.revokeAllUserTokens(resetToken.userId);
   }
 
-  // Admin methods
+
   async getAllUsers(): Promise<Omit<User, 'password'>[]> {
     const users = await this.authRepository.getAllUsers();
     return users;
@@ -246,7 +223,6 @@ export class AuthService {
   }
 
   async updateUser(id: string, updateData: Partial<InsertUser>): Promise<Omit<User, 'password'>> {
-    // If password is being updated, hash it
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, config.bcryptRounds);
     }
@@ -258,5 +234,15 @@ export class AuthService {
 
   async deleteUser(id: string): Promise<void> {
     await this.authRepository.deleteUser(id);
+  }
+
+  private createRefreshToken(userId: string, token: string): Promise<RefreshToken> {
+    const expiresAt = new Date();
+    expiresAt.setTime(expiresAt.getTime() + config.refreshTokenExpiresIn * 1000);
+    return this.authRepository.createRefreshToken({
+      userId,
+      token,
+      expiresAt,
+    });
   }
 }
