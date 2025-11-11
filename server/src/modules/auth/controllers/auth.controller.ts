@@ -17,8 +17,8 @@ export class AuthController {
     try {
       // Validate request body
       const validatedData = insertUserSchema.parse({
-        username: req.body.email,
-        fullName: req.body.fullName,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
         password: req.body.password,
         email: req.body.email,
         provider: "manual",

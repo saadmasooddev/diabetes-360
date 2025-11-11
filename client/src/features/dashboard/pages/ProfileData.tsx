@@ -46,8 +46,6 @@ export function ProfileData() {
   const form = useForm<ProfileDataFormValues>({
     resolver: zodResolver(profileDataSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
       gender: undefined,
       birthDay: '',
       birthMonth: '',
@@ -63,18 +61,34 @@ export function ProfileData() {
 
   // Populate form with existing data if available
   useEffect(() => {
+
+    function parseDateToComponents(dateString: string): { day: string; month: string; year: string } {
+      if (!dateString) return { day: '', month: '', year: '' };
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return { day: '', month: '', year: '' };
+        return {
+          day: String(date.getDate()).padStart(2, '0'),
+          month: String(date.getMonth() + 1).padStart(2, '0'),
+          year: String(date.getFullYear()),
+        };
+      } catch {
+        return { day: '', month: '', year: '' };
+      }
+    }
+    const { day: birthDay, month: birthMonth, year: birthYear } = parseDateToComponents(existingData?.customerData?.birthday || '');
+    const { day: diagnosisDay, month: diagnosisMonth, year: diagnosisYear } = parseDateToComponents(existingData?.customerData?.diagnosisDate || '');
+
     if (existingData?.customerData) {
       const data = existingData.customerData;
       form.reset({
-        firstName: data.firstName,
-        lastName: data.lastName,
         gender: data.gender as 'male' | 'female',
-        birthDay: data.birthDay,
-        birthMonth: data.birthMonth,
-        birthYear: data.birthYear,
-        diagnosisDay: data.diagnosisDay,
-        diagnosisMonth: data.diagnosisMonth,
-        diagnosisYear: data.diagnosisYear,
+        birthDay: birthDay,
+        birthMonth: birthMonth,
+        birthYear: birthYear,
+        diagnosisDay: diagnosisDay,
+        diagnosisMonth: diagnosisMonth,
+        diagnosisYear: diagnosisYear,
         weight: data.weight,
         height: data.height,
         diabetesType: data.diabetesType as 'type1' | 'type2' | 'gestational' | 'prediabetes',
@@ -160,59 +174,6 @@ export function ProfileData() {
                 </h2>
 
                 <div className="space-y-6">
-                  {/* First Name and Last Name Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel
-                            className="text-[20px] font-normal"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
-                          >
-                            First Name
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="First Name"
-                              {...field}
-                              className="h-[56px] rounded-[10px] border-[#D8DADC] text-[16px]"
-                              style={{ fontFamily: "'Inter', sans-serif" }}
-                              data-testid="input-first-name"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel
-                            className="text-[20px] font-normal"
-                            style={{ fontFamily: "'Inter', sans-serif" }}
-                          >
-                            Last Name
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Last Name"
-                              {...field}
-                              className="h-[56px] rounded-[10px] border-[#D8DADC] text-[16px]"
-                              style={{ fontFamily: "'Inter', sans-serif" }}
-                              data-testid="input-last-name"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
                   {/* Gender and Date of Birth Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <FormField

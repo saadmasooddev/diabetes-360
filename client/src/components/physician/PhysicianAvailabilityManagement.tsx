@@ -6,13 +6,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useSlotSizes, useSlotTypes, useDatesWithAvailability, useSlotsForDate, useCreateSlots, useDeleteSlot, useUpdateSlotPrice } from '@/hooks/mutations/useBooking';
+import { useSlotSizes, useSlotTypes, useDatesWithAvailability, useSlotsForDate, useCreateSlots, useDeleteSlot, useUpdateSlotPrice, useUpdateSlotLocations } from '@/hooks/mutations/useBooking';
+import { usePhysicianLocations } from '@/hooks/mutations/usePhysician';
 import { useAuthStore } from '@/stores/authStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarIcon, Plus, Trash2, Edit2 } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, Edit2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slot } from '@/services/bookingService';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const formatDate = (date: Date, formatStr: string): string => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -44,6 +46,9 @@ export function PhysicianAvailabilityManagement() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPrice, setEditingPrice] = useState<string>('');
+  const [editingLocationSlotId, setEditingLocationSlotId] = useState<string | null>(null);
+  const [editingLocationIds, setEditingLocationIds] = useState<string[]>([]);
+  const [calendarKey, setCalendarKey] = useState(0);
 
   const { data: slotSizes = [] } = useSlotSizes();
   const { data: slotTypes = [] } = useSlotTypes();
@@ -56,6 +61,7 @@ export function PhysicianAvailabilityManagement() {
   const createSlotsMutation = useCreateSlots();
   const deleteSlotMutation = useDeleteSlot();
   const updatePriceMutation = useUpdateSlotPrice();
+  const updateLocationMutation = useUpdateSlotLocations();
 
   // Convert date strings to Date objects for calendar
   const availableDates = datesWithAvailability.map((d) => {
@@ -82,6 +88,7 @@ export function PhysicianAvailabilityManagement() {
       return;
     }
 
+    // Always set the date, even if it's the same, to allow reopening the modal
     setSelectedDate(date);
     setIsViewModalOpen(true);
   };
@@ -91,6 +98,8 @@ export function PhysicianAvailabilityManagement() {
     if (!open) {
       // Reset selected date when modal closes to allow reopening
       setSelectedDate(undefined);
+      // Force calendar re-render to allow same date selection
+      setCalendarKey(prev => prev + 1);
     }
   };
 
@@ -100,12 +109,13 @@ export function PhysicianAvailabilityManagement() {
     endTime: string;
     slotTypeIds: string[];
     prices: Array<{ slotTypeId: string; price: string }>;
+    locationIds?: string[];
   }) => {
     if (!selectedDate) return;
 
     try {
       await createSlotsMutation.mutateAsync({
-        date: selectedDate.toISOString(),
+        date: formatDate(selectedDate, 'yyyy-MM-dd'),
         ...data,
       });
       setIsCreateModalOpen(false);
@@ -113,6 +123,7 @@ export function PhysicianAvailabilityManagement() {
       await refetchSlots();
       // Invalidate dates query to refresh calendar
       queryClient.invalidateQueries({ queryKey: ['booking', 'dates-with-availability', user?.id] });
+      handleModalClose(false)
     } catch (error) {
       // Error handled by mutation
     }
@@ -135,9 +146,6 @@ export function PhysicianAvailabilityManagement() {
 
   const handleSavePrice = async () => {
     if (!editingPriceId || !editingPrice) return;
-    console.log("the difference is", editingPriceId, editingPrice, "ola ola");
-
-    console.log("The data is", { priceId: editingPriceId, data: { price: editingPrice } });
     updatePriceMutation.mutate({
       priceId: editingPriceId,
       data: { price: editingPrice },
@@ -145,6 +153,26 @@ export function PhysicianAvailabilityManagement() {
     setEditingPriceId(null);
     setEditingPrice('');
     refetchSlots();
+  };
+
+  const handleEditLocations = (slot: Slot) => {
+    setEditingLocationSlotId(slot.id);
+    setEditingLocationIds(slot.locations?.map(loc => loc.id) || []);
+  };
+
+  const handleSaveLocations = async () => {
+    if (!editingLocationSlotId) return;
+    try {
+      await updateLocationMutation.mutateAsync({
+        slotId: editingLocationSlotId,
+        data: { locationIds: editingLocationIds },
+      });
+      setEditingLocationSlotId(null);
+      setEditingLocationIds([]);
+      await refetchSlots();
+    } catch (error) {
+      // Error handled by mutation
+    }
   };
 
   return (
@@ -161,6 +189,7 @@ export function PhysicianAvailabilityManagement() {
       <CardContent className="p-4 sm:p-6 pt-0">
         <div className="space-y-4 sm:space-y-6">
           <Calendar
+            key={crypto.randomUUID()}
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
@@ -217,7 +246,7 @@ export function PhysicianAvailabilityManagement() {
 
         {/* Create Slots Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[500px] max-h-[90vh] flex flex-col">
+          <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[500px] max-h-[90vh] flex flex-col overflow-y-scroll ">
             <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
               <DialogTitle className="text-lg sm:text-xl">Create Time Slots</DialogTitle>
               <DialogDescription className="text-xs sm:text-sm">
@@ -272,6 +301,15 @@ export function PhysicianAvailabilityManagement() {
                           setEditingPriceId(null);
                           setEditingPrice('');
                         }}
+                        onEditLocations={handleEditLocations}
+                        editingLocationSlotId={editingLocationSlotId}
+                        editingLocationIds={editingLocationIds}
+                        onLocationIdsChange={setEditingLocationIds}
+                        onSaveLocations={handleSaveLocations}
+                        onCancelLocationEdit={() => {
+                          setEditingLocationSlotId(null);
+                          setEditingLocationIds([]);
+                        }}
                       />
                     ))
                   )}
@@ -294,6 +332,7 @@ interface CreateSlotsFormProps {
     endTime: string;
     slotTypeIds: string[];
     prices: Array<{ slotTypeId: string; price: string }>;
+    locationIds?: string[];
   }) => void;
   onCancel: () => void;
   isLoading: boolean;
@@ -305,6 +344,16 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
   const [endTime, setEndTime] = useState('');
   const [selectedTypeIds, setSelectedTypeIds] = useState<string[]>([]);
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+
+  const { data: locations = [] } = usePhysicianLocations();
+  const activeLocations = locations.filter(loc => loc.status === 'active');
+
+  // Check if any selected type is offline/onsite
+  const hasOfflineType = selectedTypeIds.some(typeId => {
+    const type = slotTypes.find(t => t.id === typeId);
+    return type && (type.type.toLowerCase() === 'onsite' || type.type.toLowerCase() === 'offline');
+  });
 
   const selectedSlotSize = slotSizes.find((s) => s.id === slotSizeId);
   const totalSlots = selectedSlotSize && startTime && endTime
@@ -329,6 +378,11 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
       return;
     }
 
+    // Validate location selection for offline types
+    if (hasOfflineType && selectedLocationIds.length === 0) {
+      return;
+    }
+
     const pricesArray = selectedTypeIds.map((typeId) => ({
       slotTypeId: typeId,
       price: prices[typeId] || '0',
@@ -340,6 +394,7 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
       endTime,
       slotTypeIds: selectedTypeIds,
       prices: pricesArray,
+      locationIds: hasOfflineType ? selectedLocationIds : undefined,
     });
   };
 
@@ -413,14 +468,12 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
         <div className="space-y-2">
           {slotTypes.map((type) => (
             <div key={type.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 id={type.id}
                 checked={selectedTypeIds.includes(type.id)}
-                onChange={() => handleTypeToggle(type.id)}
-                className="rounded"
+                onCheckedChange={() => handleTypeToggle(type.id)}
               />
-              <Label htmlFor={type.id} className="flex-1">
+              <Label htmlFor={type.id} className="flex-1 cursor-pointer">
                 {type.type}
               </Label>
               {selectedTypeIds.includes(type.id) && (
@@ -440,6 +493,49 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
         </div>
       </div>
 
+      {hasOfflineType && (
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Select Locations (Required for offline consultations)
+          </Label>
+          {activeLocations.length === 0 ? (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                No active locations found. Please add locations in the Manage Locations section first.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+              {activeLocations.map((location) => (
+                <div key={location.id} className="flex items-start space-x-2">
+                  <Checkbox
+                    id={`loc-${location.id}`}
+                    checked={selectedLocationIds.includes(location.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLocationIds([...selectedLocationIds, location.id]);
+                      } else {
+                        setSelectedLocationIds(selectedLocationIds.filter(id => id !== location.id));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={`loc-${location.id}`} className="flex-1 cursor-pointer text-sm">
+                    <div className="font-medium">{location.locationName}</div>
+                    {location.address && (
+                      <div className="text-xs text-gray-600">{location.address}</div>
+                    )}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          )}
+          {hasOfflineType && selectedLocationIds.length === 0 && activeLocations.length > 0 && (
+            <p className="text-sm text-red-600">Please select at least one location for offline consultations</p>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-2 pt-4">
         <Button
           type="button"
@@ -452,7 +548,14 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
         </Button>
         <Button
           type="submit"
-          disabled={isLoading || !slotSizeId || !startTime || !endTime || selectedTypeIds.length === 0}
+          disabled={
+            isLoading ||
+            !slotSizeId ||
+            !startTime ||
+            !endTime ||
+            selectedTypeIds.length === 0 ||
+            (hasOfflineType && selectedLocationIds.length === 0)
+          }
           className="flex-1 bg-teal-600 hover:bg-teal-700"
         >
           {isLoading ? 'Creating...' : 'Create Slots'}
@@ -470,6 +573,12 @@ interface SlotCardProps {
   editingPrice: string;
   onSavePrice: () => void;
   onCancelEdit: () => void;
+  onEditLocations: (slot: Slot) => void;
+  editingLocationSlotId: string | null;
+  editingLocationIds: string[];
+  onLocationIdsChange: (ids: string[]) => void;
+  onSaveLocations: () => void;
+  onCancelLocationEdit: () => void;
 }
 
 function SlotCard({
@@ -480,9 +589,23 @@ function SlotCard({
   editingPrice,
   onSavePrice,
   onCancelEdit,
+  onEditLocations,
+  editingLocationSlotId,
+  editingLocationIds,
+  onLocationIdsChange,
+  onSaveLocations,
+  onCancelLocationEdit,
 }: SlotCardProps) {
   const canDelete = !slot.isBooked;
   const isBooked = slot.isBooked;
+  const { data: locations = [] } = usePhysicianLocations();
+  const activeLocations = locations.filter(loc => loc.status === 'active');
+  const isEditingLocations = editingLocationSlotId === slot.id;
+
+  // Check if slot has offline/onsite type
+  const hasOfflineType = slot.types?.some(
+    type => type.type.toLowerCase() === 'onsite' || type.type.toLowerCase() === 'offline'
+  );
 
   const handleStartEdit = (priceId: string, currentPrice: string) => {
     onEditPrice(priceId, currentPrice);
@@ -564,6 +687,89 @@ function SlotCard({
           </div>
         ))}
       </div>
+
+      {/* Locations Section */}
+      {hasOfflineType && (
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <MapPin className="h-4 w-4" />
+              Locations
+            </Label>
+            {!slot.isBooked && !isEditingLocations && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEditLocations(slot)}
+                className="hover:bg-teal-50"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+
+          {isEditingLocations ? (
+            <div className="space-y-2">
+              {activeLocations.length === 0 ? (
+                <p className="text-sm text-yellow-600">No active locations available</p>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                  {activeLocations.map((location) => (
+                    <div key={location.id} className="flex items-start space-x-2">
+                      <Checkbox
+                        id={`edit-loc-${location.id}`}
+                        checked={editingLocationIds.includes(location.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            onLocationIdsChange([...editingLocationIds, location.id]);
+                          } else {
+                            onLocationIdsChange(editingLocationIds.filter(id => id !== location.id));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`edit-loc-${location.id}`} className="flex-1 cursor-pointer text-sm">
+                        <div className="font-medium">{location.locationName}</div>
+                        {location.address && (
+                          <div className="text-xs text-gray-600">{location.address}</div>
+                        )}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={onSaveLocations}
+                  disabled={editingLocationIds.length === 0}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={onCancelLocationEdit}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {slot.locations && slot.locations.length > 0 ? (
+                slot.locations.map((location) => (
+                  <div key={location.id} className="text-sm p-2 bg-gray-50 rounded">
+                    <div className="font-medium">{location.locationName}</div>
+                    {location.address && (
+                      <div className="text-xs text-gray-600">{location.address}</div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 italic">No locations assigned</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {slot.isBooked && (
         <p className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-1 rounded inline-block">
           Booked

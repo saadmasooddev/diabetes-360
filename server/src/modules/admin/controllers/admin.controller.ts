@@ -1,5 +1,5 @@
 import { type Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema, insertCustomerDataAdminSchema } from "../../auth/models/user.schema";
+import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema, insertCustomerDataAdminSchema, updateCustomerDataSchema } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
 import { PhysicianService } from "../../physician/service/physician.service";
 import { CustomerService } from "../../customer/service/customer.service";
@@ -67,8 +67,8 @@ export class AdminController {
     try {
       // Validate request body
       const validatedData = insertUserSchema.parse({
-        username: req.body.email,
-        fullName: req.body.fullName,
+        firstName: req.body.firstName || '',
+        lastName: req.body.lastName || '',
         password: req.body.password,
         email: req.body.email,
         provider: "manual",
@@ -101,25 +101,10 @@ export class AdminController {
       // If user is a customer, create customer data (if provided)
       if (authResponse.user.role === USER_ROLES.CUSTOMER && req.body.customerData) {
         try {
-          const customerDataValidation = insertCustomerDataAdminSchema.safeParse(req.body.customerData);
-          console.log(customerDataValidation)
+          const customerDataInput = { ...req.body.customerData };
+          const customerDataValidation = insertCustomerDataAdminSchema.safeParse(customerDataInput);
           if (customerDataValidation.success) {
-            // Fill in missing date fields with defaults if not provided
-            const customerDataToCreate = {
-              ...customerDataValidation.data,
-              firstName: customerDataValidation.data.firstName,
-              lastName: customerDataValidation.data.lastName,
-              gender: customerDataValidation.data.gender,
-              birthDay: customerDataValidation.data.birthDay,
-              birthMonth: customerDataValidation.data.birthMonth,
-              birthYear: customerDataValidation.data.birthYear,
-              diagnosisDay: customerDataValidation.data.diagnosisDay,
-              diagnosisMonth: customerDataValidation.data.diagnosisMonth,
-              diagnosisYear: customerDataValidation.data.diagnosisYear,
-              weight: customerDataValidation.data.weight,
-              height: customerDataValidation.data.height,
-            };
-            await this.customerService.createCustomerData(authResponse.user.id, customerDataToCreate);
+            await this.customerService.createCustomerData(authResponse.user.id, customerDataValidation.data);
           }
         } catch (customerError) {
           // Log error but don't fail user creation
@@ -170,7 +155,8 @@ export class AdminController {
       // If user is a customer and customerData is provided, update it
       if (user.role === USER_ROLES.CUSTOMER && req.body.customerData) {
         try {
-          const customerDataValidation = insertCustomerDataAdminSchema.partial().safeParse(req.body.customerData);
+          const customerDataInput = { ...req.body.customerData };
+          const customerDataValidation = updateCustomerDataSchema.safeParse(customerDataInput);
           if (customerDataValidation.success && Object.keys(customerDataValidation.data).length > 0) {
             // Check if customer data exists, if not create it
             try {

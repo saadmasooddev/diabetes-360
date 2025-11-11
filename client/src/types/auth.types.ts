@@ -1,9 +1,34 @@
 export type UserTier = 'free' | 'paid';
 
+export interface CustomerData {
+  id: string;
+  userId: string;
+  gender: 'male' | 'female';
+  birthday: string;
+  diagnosisDate: string;
+  weight: string;
+  height: string;
+  diabetesType: 'type1' | 'type2' | 'gestational' | 'prediabetes';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PhysicianData {
+  id: string;
+  userId: string;
+  specialtyId: string;
+  specialty?: string | null;
+  practiceStartDate: string;
+  consultationFee: string;
+  imageUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
-  username: string;
-  fullName?: string;
+  firstName: string;
+  lastName: string;
   email: string;
   emailVerified: boolean;
   provider: string;
@@ -13,6 +38,7 @@ export interface User {
   tier?: UserTier;
   isActive: boolean;
   profileComplete: boolean;
+  profileData?: CustomerData | PhysicianData | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,7 +81,8 @@ export interface LogoutResponse extends ApiResponse<LogoutData> {}
 export interface ForgotPasswordResponse extends ApiResponse<ForgotPasswordData> {}
 
 export interface SignupRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }

@@ -83,13 +83,13 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               example: 'uuid-string',
             },
-            username: {
+            firstName: {
               type: 'string',
-              example: 'johndoe',
+              example: 'John',
             },
-            fullName: {
+            lastName: {
               type: 'string',
-              example: 'John Doe',
+              example: 'Doe',
             },
             email: {
               type: 'string',
@@ -129,6 +129,111 @@ const options: swaggerJsdoc.Options = {
               type: 'boolean',
               example: false,
               description: 'Indicates if the user profile is complete (for customer role)',
+            },
+            profileData: {
+              oneOf: [
+                { $ref: '#/components/schemas/CustomerData' },
+                { $ref: '#/components/schemas/PhysicianData' },
+              ],
+              nullable: true,
+              description: 'User profile data - CustomerData for customers, PhysicianData for physicians, null if profile not complete',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+          },
+        },
+        CustomerData: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            userId: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            gender: {
+              type: 'string',
+              enum: ['male', 'female'],
+              example: 'male',
+            },
+            birthday: {
+              type: 'string',
+              format: 'date-time',
+              example: '1990-01-15T00:00:00Z',
+            },
+            diagnosisDate: {
+              type: 'string',
+              format: 'date-time',
+              example: '2020-05-10T00:00:00Z',
+            },
+            weight: {
+              type: 'string',
+              example: '70',
+              description: 'Weight in kg as string',
+            },
+            height: {
+              type: 'string',
+              example: '175',
+              description: 'Height in cm as string',
+            },
+            diabetesType: {
+              type: 'string',
+              enum: ['type1', 'type2', 'gestational', 'prediabetes'],
+              example: 'type2',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+          },
+        },
+        PhysicianData: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            userId: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            specialtyId: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            specialty: {
+              type: 'string',
+              example: 'Endocrinology',
+              description: 'Specialty name (from physician_specialties table)',
+              nullable: true,
+            },
+            practiceStartDate: {
+              type: 'string',
+              format: 'date-time',
+              example: '2010-06-01T00:00:00Z',
+            },
+            consultationFee: {
+              type: 'string',
+              example: '1500.00',
+              description: 'Consultation fee as string',
+            },
+            imageUrl: {
+              type: 'string',
+              nullable: true,
+              example: 'https://example.com/image.jpg',
             },
             createdAt: {
               type: 'string',
@@ -231,6 +336,70 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        PhysicianLocation: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            physicianId: {
+              type: 'string',
+              example: 'uuid-string',
+            },
+            locationName: {
+              type: 'string',
+              example: 'Main Clinic',
+            },
+            address: {
+              type: 'string',
+              nullable: true,
+              example: '123 Main Street',
+            },
+            city: {
+              type: 'string',
+              nullable: true,
+              example: 'Karachi',
+            },
+            state: {
+              type: 'string',
+              nullable: true,
+              example: 'Sindh',
+            },
+            country: {
+              type: 'string',
+              nullable: true,
+              example: 'Pakistan',
+            },
+            postalCode: {
+              type: 'string',
+              nullable: true,
+              example: '75500',
+            },
+            latitude: {
+              type: 'string',
+              example: '24.8607',
+            },
+            longitude: {
+              type: 'string',
+              example: '67.0011',
+            },
+            status: {
+              type: 'string',
+              enum: ['active', 'inactive'],
+              example: 'active',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+            },
+          },
+          required: ['id', 'physicianId', 'locationName', 'latitude', 'longitude', 'status'],
+        },
       },
     },
     tags: [
@@ -253,6 +422,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Settings',
         description: 'System settings and configuration endpoints',
+      },
+      {
+        name: 'Physician Locations',
+        description: 'Physician location management endpoints',
       },
     ],
   },

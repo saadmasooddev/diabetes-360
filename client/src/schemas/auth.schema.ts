@@ -21,12 +21,18 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
-  fullName: z
+  firstName: z
     .string()
-    .min(1, 'Full name is required')
-    .min(2, 'Full name must be at least 2 characters')
-    .max(100, 'Full name is too long')
-    .regex(/^[a-zA-Z\s]+$/, 'Full name can only contain letters and spaces'),
+    .min(1, 'First name is required')
+    .min(2, 'First name must be at least 2 characters')
+    .max(100, 'First name is too long')
+    .regex(/^[a-zA-Z\s]+$/, 'First name can only contain letters and spaces'),
+  lastName: z
+    .string()
+    .min(1, 'Last name is required')
+    .min(2, 'Last name must be at least 2 characters')
+    .max(100, 'Last name is too long')
+    .regex(/^[a-zA-Z\s]+$/, 'Last name can only contain letters and spaces'),
   email: z
     .string()
     .min(1, 'Email is required')

@@ -16,7 +16,7 @@ type ConsultationStep = 'concern' | 'doctors' | 'payment';
 function mapPhysicianToDoctor(physician: Physician): Doctor {
   return {
     id: physician.id,
-    name: physician.fullName || 'Dr. Unknown',
+    name: physician.firstName + ' ' + physician.lastName || 'Dr. Unknown',
     specialty: physician.specialty,
     experience: physician.experience,
     rating: physician.rating || 0,

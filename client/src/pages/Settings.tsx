@@ -12,10 +12,11 @@ import { FreeTierLimitsManagement } from '@/components/admin/FreeTierLimitsManag
 import { PhysicianSettings } from '@/components/admin/PhysicianSettings';
 import { useAuthStore } from '@/stores/authStore';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { User, Mail, Shield, Bell, Key, Smartphone, SettingsIcon, CalendarIcon } from 'lucide-react';
+import { User, Mail, Shield, Bell, Key, Smartphone, SettingsIcon, CalendarIcon, MapPin } from 'lucide-react';
 import { useGetCustomerData } from '@/hooks/mutations/useCustomer';
 import { CustomerProfileEdit } from '@/components/customer/CustomerProfileEdit';
 import { PhysicianAvailabilityManagement } from '@/components/physician/PhysicianAvailabilityManagement';
+import { ManageLocation } from '@/components/physician/ManageLocation';
 
 export function Settings() {
   const { user } = useAuthStore();
@@ -78,11 +79,18 @@ export function Settings() {
                   <span className="sm:hidden">Notify</span>
                 </TabsTrigger>
                 {user?.role === 'physician' && (
-                  <TabsTrigger value="availability" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 py-1.5 sm:py-2">
-                    <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Availability</span>
-                    <span className="sm:hidden">Available</span>
-                  </TabsTrigger>
+                  <>
+                    <TabsTrigger value="availability" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 py-1.5 sm:py-2">
+                      <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Availability</span>
+                      <span className="sm:hidden">Available</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="locations" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 py-1.5 sm:py-2">
+                      <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Locations</span>
+                      <span className="sm:hidden">Locations</span>
+                    </TabsTrigger>
+                  </>
                 )}
                 {isAdmin && (
                   <>
@@ -127,16 +135,11 @@ export function Settings() {
                 <CardContent className="p-4 sm:p-6 lg:p-6 pt-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-4">
+
                       <div>
-                        <Label className="text-sm font-medium text-gray-700">Full Name</Label>
+                        <Label className="text-sm font-medium text-gray-700">Name</Label>
                         <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-900">{user?.fullName || 'Not set'}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Username</Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-900">{user?.username}</p>
+                          <p className="text-sm text-gray-900">{user?.firstName} {user?.lastName}</p>
                         </div>
                       </div>
                     </div>
@@ -387,9 +390,14 @@ export function Settings() {
             </TabsContent>
 
             {user?.role === 'physician' && (
-              <TabsContent value="availability" className="space-y-6 overflow-x-hidden">
-                <PhysicianAvailabilityManagement />
-              </TabsContent>
+              <>
+                <TabsContent value="availability" className="space-y-6 overflow-x-hidden">
+                  <PhysicianAvailabilityManagement />
+                </TabsContent>
+                <TabsContent value="locations" className="space-y-6 overflow-x-hidden">
+                  <ManageLocation />
+                </TabsContent>
+              </>
             )}
 
             {isAdmin && (

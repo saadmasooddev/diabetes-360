@@ -9,6 +9,8 @@ import {
   insertPhysicianDataSchema,
   updatePhysicianDataSchema,
   insertPhysicianRatingSchema,
+  insertPhysicianLocationSchema,
+  updatePhysicianLocationSchema,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 
@@ -203,6 +205,76 @@ export class PhysicianController {
       const imageUrl = await this.physicianService.getImageUrlFromFile(file);
 
       sendSuccess(res, { imageUrl }, "Image uploaded successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  // Location endpoints
+  async getAllLocations(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const physicianId = req.user?.userId;
+      if (!physicianId) {
+        throw new BadRequestError("User ID not found");
+      }
+      console.log("The physician ID is", physicianId);
+      const locations = await this.physicianService.getAllLocationsByPhysicianId(physicianId);
+      sendSuccess(res, { locations }, "Locations retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async createLocation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const physicianId = req.user?.userId;
+      if (!physicianId) {
+        throw new BadRequestError("User ID not found");
+      }
+      const validationResult = insertPhysicianLocationSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        throw new BadRequestError(validationResult.error.message || "Invalid location data");
+      }
+      const location = await this.physicianService.createLocation(physicianId, validationResult.data);
+      sendSuccess(res, { location }, "Location created successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async updateLocation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const physicianId = req.user?.userId;
+      if (!id) {
+        throw new BadRequestError("Location ID is required");
+      }
+      if (!physicianId) {
+        throw new BadRequestError("User ID not found");
+      }
+      const validationResult = updatePhysicianLocationSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        throw new BadRequestError(validationResult.error.message || "Invalid location data");
+      }
+      const location = await this.physicianService.updateLocation(id, physicianId, validationResult.data);
+      sendSuccess(res, { location }, "Location updated successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async deleteLocation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const physicianId = req.user?.userId;
+      if (!id) {
+        throw new BadRequestError("Location ID is required");
+      }
+      if (!physicianId) {
+        throw new BadRequestError("User ID not found");
+      }
+      await this.physicianService.deleteLocation(id, physicianId);
+      sendSuccess(res, null, "Location deleted successfully");
     } catch (error: any) {
       handleError(res, error);
     }

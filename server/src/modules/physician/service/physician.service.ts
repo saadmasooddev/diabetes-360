@@ -5,6 +5,8 @@ import type {
   InsertPhysicianData,
   UpdatePhysicianData,
   InsertPhysicianRating,
+  InsertPhysicianLocation,
+  UpdatePhysicianLocation,
 } from "../../auth/models/user.schema";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import path from "path";
@@ -136,6 +138,47 @@ export class PhysicianService {
       throw new BadRequestError("Practice start date cannot be in the future");
     }
   }
- 
+
+  // Location operations
+  async getAllLocationsByPhysicianId(physicianId: string) {
+    return await this.physicianRepository.getAllLocationsByPhysicianId(physicianId);
+  }
+
+  async getLocationById(id: string) {
+    const location = await this.physicianRepository.getLocationById(id);
+    if (!location) {
+      throw new NotFoundError("Location not found");
+    }
+    return location;
+  }
+
+  async createLocation(physicianId: string, data: InsertPhysicianLocation) {
+    return await this.physicianRepository.createLocation({
+      ...data,
+      physicianId,
+    });
+  }
+
+  async updateLocation(id: string, physicianId: string, data: UpdatePhysicianLocation) {
+    const location = await this.physicianRepository.getLocationById(id);
+    if (!location) {
+      throw new NotFoundError("Location not found");
+    }
+    if (location.physicianId !== physicianId) {
+      throw new BadRequestError("You can only update your own locations");
+    }
+    return await this.physicianRepository.updateLocation(id, data);
+  }
+
+  async deleteLocation(id: string, physicianId: string) {
+    const location = await this.physicianRepository.getLocationById(id);
+    if (!location) {
+      throw new NotFoundError("Location not found");
+    }
+    if (location.physicianId !== physicianId) {
+      throw new BadRequestError("You can only delete your own locations");
+    }
+    await this.physicianRepository.deleteLocation(id);
+  }
 }
 

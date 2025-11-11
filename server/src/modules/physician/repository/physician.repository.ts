@@ -4,6 +4,7 @@ import {
   physicianSpecialties, 
   physicianData, 
   physicianRatings, 
+  physicianLocations,
   users 
 } from "../../auth/models/user.schema";
 import type { 
@@ -14,6 +15,9 @@ import type {
   UpdatePhysicianData,
   PhysicianData,
   InsertPhysicianRating,
+  InsertPhysicianLocation,
+  UpdatePhysicianLocation,
+  PhysicianLocation,
 } from "../../auth/models/user.schema";
 import { USER_ROLES } from "../../../shared/constants/roles";
 
@@ -128,7 +132,8 @@ export class PhysicianRepository {
     const physicians = await db
       .select({
         id: users.id,
-        fullName: users.fullName,
+        firstName: users.firstName,
+        lastName: users.lastName,
         email: users.email,
         isActive: users.isActive,
         specialtyId: physicianData.specialtyId,
@@ -187,7 +192,8 @@ export class PhysicianRepository {
     const physicians = await db
       .select({
         id: users.id,
-        fullName: users.fullName,
+        firstName: users.firstName,
+        lastName: users.lastName,
         email: users.email,
         isActive: users.isActive,
         specialtyId: physicianData.specialtyId,
@@ -286,6 +292,51 @@ export class PhysicianRepository {
 
     return physicianDataRecord;
 
+  }
+
+  // Location operations
+  async getAllLocationsByPhysicianId(physicianId: string): Promise<PhysicianLocation[]> {
+    return await db
+      .select()
+      .from(physicianLocations)
+      .where(eq(physicianLocations.physicianId, physicianId))
+      .orderBy(physicianLocations.createdAt);
+  }
+
+  async getLocationById(id: string): Promise<PhysicianLocation | null> {
+    const [location] = await db
+      .select()
+      .from(physicianLocations)
+      .where(eq(physicianLocations.id, id))
+      .limit(1);
+    return location || null;
+  }
+
+  async createLocation(data: InsertPhysicianLocation): Promise<PhysicianLocation> {
+    const [location] = await db
+      .insert(physicianLocations)
+      .values({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .returning();
+    return location;
+  }
+
+  async updateLocation(id: string, data: UpdatePhysicianLocation): Promise<PhysicianLocation> {
+    const [location] = await db
+      .update(physicianLocations)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(physicianLocations.id, id))
+      .returning();
+    return location;
+  }
+
+  async deleteLocation(id: string): Promise<void> {
+    await db.delete(physicianLocations).where(eq(physicianLocations.id, id));
   }
 }
 

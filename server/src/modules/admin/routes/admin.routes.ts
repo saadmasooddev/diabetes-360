@@ -113,24 +113,14 @@ router.get("/users", (req, res) => adminController.getAllUsers(req, res));
  *                               type: string
  *                             userId:
  *                               type: string
- *                             firstName:
- *                               type: string
- *                             lastName:
- *                               type: string
  *                             gender:
  *                               type: string
- *                             birthDay:
+ *                             birthday:
  *                               type: string
- *                             birthMonth:
+ *                               format: date
+ *                             diagnosisDate:
  *                               type: string
- *                             birthYear:
- *                               type: string
- *                             diagnosisDay:
- *                               type: string
- *                             diagnosisMonth:
- *                               type: string
- *                             diagnosisYear:
- *                               type: string
+ *                               format: date
  *                             weight:
  *                               type: string
  *                             height:
@@ -173,13 +163,17 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - firstName
+ *               - lastName
  *               - email
  *               - password
  *             properties:
- *               username:
+ *               firstName:
  *                 type: string
- *                 example: johndoe
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
  *               email:
  *                 type: string
  *                 format: email
@@ -188,9 +182,6 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *                 type: string
  *                 format: password
  *                 example: SecurePass123!
- *               fullName:
- *                 type: string
- *                 example: John Doe
  *               role:
  *                 type: string
  *                 enum: [customer, admin, physician]
@@ -220,10 +211,6 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *                 type: object
  *                 description: Optional for customer role. At least diabetesType is required.
  *                 properties:
- *                   firstName:
- *                     type: string
- *                   lastName:
- *                     type: string
  *                   gender:
  *                     type: string
  *                     enum: [male, female]
@@ -231,24 +218,14 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *                     type: string
  *                     enum: [type1, type2, gestational, prediabetes]
  *                     description: Required for customer role
- *                   birthDay:
+ *                   birthday:
  *                     type: string
- *                     description: Optional - defaults to '01' if not provided
- *                   birthMonth:
+ *                     format: date
+ *                     description: Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields
+ *                   diagnosisDate:
  *                     type: string
- *                     description: Optional - defaults to '01' if not provided
- *                   birthYear:
- *                     type: string
- *                     description: Optional - defaults to current year if not provided
- *                   diagnosisDay:
- *                     type: string
- *                     description: Optional - defaults to '01' if not provided
- *                   diagnosisMonth:
- *                     type: string
- *                     description: Optional - defaults to '01' if not provided
- *                   diagnosisYear:
- *                     type: string
- *                     description: Optional - defaults to current year if not provided
+ *                     format: date
+ *                     description: Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields
  *                   weight:
  *                     type: string
  *                     description: Optional - defaults to '70' if not provided
@@ -321,16 +298,16 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *           schema:
  *             type: object
  *             properties:
- *               username:
+ *               firstName:
  *                 type: string
- *                 example: johndoe
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
  *               email:
  *                 type: string
  *                 format: email
  *                 example: john@example.com
- *               fullName:
- *                 type: string
- *                 example: John Doe
  *               role:
  *                 type: string
  *                 enum: [customer, admin, physician]
@@ -357,28 +334,20 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *                 type: object
  *                 description: Optional - for updating customer data
  *                 properties:
- *                   firstName:
- *                     type: string
- *                   lastName:
- *                     type: string
  *                   gender:
  *                     type: string
  *                     enum: [male, female]
  *                   diabetesType:
  *                     type: string
  *                     enum: [type1, type2, gestational, prediabetes]
- *                   birthDay:
+ *                   birthday:
  *                     type: string
- *                   birthMonth:
+ *                     format: date
+ *                     description: Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields
+ *                   diagnosisDate:
  *                     type: string
- *                   birthYear:
- *                     type: string
- *                   diagnosisDay:
- *                     type: string
- *                   diagnosisMonth:
- *                     type: string
- *                   diagnosisYear:
- *                     type: string
+ *                     format: date
+ *                     description: Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields
  *                   weight:
  *                     type: string
  *                   height:

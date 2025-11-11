@@ -8,7 +8,10 @@ import {
   type InsertPasswordResetToken,
   users, 
   refreshTokens,
-  passwordResetTokens
+  passwordResetTokens,
+  physicianData,
+  customerData,
+  physicianSpecialties
 } from "../models/user.schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 
@@ -18,13 +21,19 @@ export class AuthRepository {
     return user[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const user = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    return user[0];
-  }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  async getUserByEmail(email: string) {
+    const user = await db.select({ 
+      ...getTableColumns(users),
+      profileData:{
+        ...customerData,
+        ...physicianData,
+        specialty: physicianSpecialties.name,
+      },
+    }).from(users).where(eq(users.email, email)).limit(1)
+      .leftJoin(customerData, eq(users.id, customerData.userId))
+      .leftJoin(physicianData, eq(users.id, physicianData.userId))
+      .leftJoin(physicianSpecialties, eq(physicianData.specialtyId, physicianSpecialties.id))
     return user[0];
   }
 

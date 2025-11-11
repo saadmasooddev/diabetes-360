@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { type User, type InsertUser, RefreshToken } from "../models/user.schema";
+import { type User, type InsertUser, RefreshToken, PhysicianData, CustomerData } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
 import { JWTService, type TokenPair } from "../../../shared/utils/jwt";
@@ -9,7 +9,7 @@ import { emailService } from "../../../shared/services/email.service";
 import { UserRole } from "server/src/shared/constants/roles";
 
 export interface AuthResponse {
-  user: Omit<User, 'password'>;
+  user: Omit<User &{ profileData?: CustomerData | PhysicianData | null }, 'password'>;
   tokens: TokenPair;
 }
 
@@ -26,12 +26,6 @@ export class AuthService {
       throw new ConflictError("An account with this email already exists");
     }
 
-    // Check if user already exists by username
-    const existingUserByUsername = await this.authRepository.getUserByUsername(userData.username);
-    if (existingUserByUsername) {
-      throw new ConflictError("An account with this username already exists");
-    }
-
     // Hash password
     const hashedPassword = await bcrypt.hash(userData.password!, config.bcryptRounds);
 
@@ -41,11 +35,14 @@ export class AuthService {
       password: hashedPassword,
     });
 
+    const userWithProfile = await this.authRepository.getUserByEmail(user.email);
+
     // Generate tokens
     const tokens = JWTService.generateTokenPair({
       userId: user.id,
       email: user.email,
-      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role as UserRole,
     });
 
@@ -56,7 +53,7 @@ export class AuthService {
     try {
       await emailService.sendWelcomeEmail(
         user.email,
-        user.fullName || user.username,
+        `${user.firstName} ${user.lastName}`.trim(),
         userData.password!
       );
     } catch (error) {
@@ -64,10 +61,17 @@ export class AuthService {
       // Don't fail the signup if email fails
     }
 
-    // Return user without password
-    const { password, ...userWithoutPassword } = user;
+    // Return user without password, with profileData
+    if (!userWithProfile) {
+      throw new Error("Failed to retrieve user after creation");
+    }
+    
+    const { password: _, profileData, ...userWithoutPassword } = userWithProfile;
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        profileData: (profileData as CustomerData | PhysicianData | null | undefined) || null,
+      },
       tokens,
     };
   }
@@ -94,15 +98,19 @@ export class AuthService {
     const tokens = JWTService.generateTokenPair({
       userId: user.id,
       email: user.email,
-      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role as UserRole,
     });
 
     await this.createRefreshToken(user.id, tokens.refreshToken);
 
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _, profileData , ...userWithoutPassword } = user;
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        profileData: user.profileData as CustomerData | PhysicianData,
+      },
       tokens,
     };
   }
@@ -127,7 +135,8 @@ export class AuthService {
     const newTokens = JWTService.generateTokenPair({
       userId: user.id,
       email: user.email,
-      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       role: user.role as UserRole,
     });
 
@@ -175,7 +184,7 @@ export class AuthService {
       await emailService.sendPasswordResetEmail(
         user.email,
         resetToken,
-        user.fullName || user.username
+        `${user.firstName} ${user.lastName}`.trim()
       );
     } catch (error) {
       console.error('Failed to send password reset email:', error);

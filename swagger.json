@@ -92,13 +92,13 @@
             "type": "string",
             "example": "uuid-string"
           },
-          "username": {
+          "firstName": {
             "type": "string",
-            "example": "johndoe"
+            "example": "John"
           },
-          "fullName": {
+          "lastName": {
             "type": "string",
-            "example": "John Doe"
+            "example": "Doe"
           },
           "email": {
             "type": "string",
@@ -145,6 +145,123 @@
             "type": "boolean",
             "example": false,
             "description": "Indicates if the user profile is complete (for customer role)"
+          },
+          "profileData": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CustomerData"
+              },
+              {
+                "$ref": "#/components/schemas/PhysicianData"
+              }
+            ],
+            "nullable": true,
+            "description": "User profile data - CustomerData for customers, PhysicianData for physicians, null if profile not complete"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "userId": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female"
+            ],
+            "example": "male"
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date-time",
+            "example": "1990-01-15T00:00:00Z"
+          },
+          "diagnosisDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-05-10T00:00:00Z"
+          },
+          "weight": {
+            "type": "string",
+            "example": "70",
+            "description": "Weight in kg as string"
+          },
+          "height": {
+            "type": "string",
+            "example": "175",
+            "description": "Height in cm as string"
+          },
+          "diabetesType": {
+            "type": "string",
+            "enum": [
+              "type1",
+              "type2",
+              "gestational",
+              "prediabetes"
+            ],
+            "example": "type2"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PhysicianData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "userId": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "specialtyId": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "specialty": {
+            "type": "string",
+            "example": "Endocrinology",
+            "description": "Specialty name (from physician_specialties table)",
+            "nullable": true
+          },
+          "practiceStartDate": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2010-06-01T00:00:00Z"
+          },
+          "consultationFee": {
+            "type": "string",
+            "example": "1500.00",
+            "description": "Consultation fee as string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://example.com/image.jpg"
           },
           "createdAt": {
             "type": "string",
@@ -246,6 +363,80 @@
             "format": "date-time"
           }
         }
+      },
+      "PhysicianLocation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "physicianId": {
+            "type": "string",
+            "example": "uuid-string"
+          },
+          "locationName": {
+            "type": "string",
+            "example": "Main Clinic"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "123 Main Street"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Karachi"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "Sindh"
+          },
+          "country": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pakistan"
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true,
+            "example": "75500"
+          },
+          "latitude": {
+            "type": "string",
+            "example": "24.8607"
+          },
+          "longitude": {
+            "type": "string",
+            "example": "67.0011"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "physicianId",
+          "locationName",
+          "latitude",
+          "longitude",
+          "status"
+        ]
       }
     }
   },
@@ -269,6 +460,10 @@
     {
       "name": "Settings",
       "description": "System settings and configuration endpoints"
+    },
+    {
+      "name": "Physician Locations",
+      "description": "Physician location management endpoints"
     }
   ],
   "paths": {
@@ -396,14 +591,19 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "username",
+                  "firstName",
+                  "lastName",
                   "email",
                   "password"
                 ],
                 "properties": {
-                  "username": {
+                  "firstName": {
                     "type": "string",
-                    "example": "johndoe"
+                    "example": "John"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Doe"
                   },
                   "email": {
                     "type": "string",
@@ -414,10 +614,6 @@
                     "type": "string",
                     "format": "password",
                     "example": "SecurePass123!"
-                  },
-                  "fullName": {
-                    "type": "string",
-                    "example": "John Doe"
                   },
                   "role": {
                     "type": "string",
@@ -464,12 +660,6 @@
                     "type": "object",
                     "description": "Optional for customer role. At least diabetesType is required.",
                     "properties": {
-                      "firstName": {
-                        "type": "string"
-                      },
-                      "lastName": {
-                        "type": "string"
-                      },
                       "gender": {
                         "type": "string",
                         "enum": [
@@ -487,29 +677,15 @@
                         ],
                         "description": "Required for customer role"
                       },
-                      "birthDay": {
+                      "birthday": {
                         "type": "string",
-                        "description": "Optional - defaults to '01' if not provided"
+                        "format": "date",
+                        "description": "Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields"
                       },
-                      "birthMonth": {
+                      "diagnosisDate": {
                         "type": "string",
-                        "description": "Optional - defaults to '01' if not provided"
-                      },
-                      "birthYear": {
-                        "type": "string",
-                        "description": "Optional - defaults to current year if not provided"
-                      },
-                      "diagnosisDay": {
-                        "type": "string",
-                        "description": "Optional - defaults to '01' if not provided"
-                      },
-                      "diagnosisMonth": {
-                        "type": "string",
-                        "description": "Optional - defaults to '01' if not provided"
-                      },
-                      "diagnosisYear": {
-                        "type": "string",
-                        "description": "Optional - defaults to current year if not provided"
+                        "format": "date",
+                        "description": "Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields"
                       },
                       "weight": {
                         "type": "string",
@@ -652,32 +828,16 @@
                                 "userId": {
                                   "type": "string"
                                 },
-                                "firstName": {
-                                  "type": "string"
-                                },
-                                "lastName": {
-                                  "type": "string"
-                                },
                                 "gender": {
                                   "type": "string"
                                 },
-                                "birthDay": {
-                                  "type": "string"
+                                "birthday": {
+                                  "type": "string",
+                                  "format": "date"
                                 },
-                                "birthMonth": {
-                                  "type": "string"
-                                },
-                                "birthYear": {
-                                  "type": "string"
-                                },
-                                "diagnosisDay": {
-                                  "type": "string"
-                                },
-                                "diagnosisMonth": {
-                                  "type": "string"
-                                },
-                                "diagnosisYear": {
-                                  "type": "string"
+                                "diagnosisDate": {
+                                  "type": "string",
+                                  "format": "date"
                                 },
                                 "weight": {
                                   "type": "string"
@@ -759,18 +919,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "username": {
+                  "firstName": {
                     "type": "string",
-                    "example": "johndoe"
+                    "example": "John"
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Doe"
                   },
                   "email": {
                     "type": "string",
                     "format": "email",
                     "example": "john@example.com"
-                  },
-                  "fullName": {
-                    "type": "string",
-                    "example": "John Doe"
                   },
                   "role": {
                     "type": "string",
@@ -814,12 +974,6 @@
                     "type": "object",
                     "description": "Optional - for updating customer data",
                     "properties": {
-                      "firstName": {
-                        "type": "string"
-                      },
-                      "lastName": {
-                        "type": "string"
-                      },
                       "gender": {
                         "type": "string",
                         "enum": [
@@ -836,23 +990,15 @@
                           "prediabetes"
                         ]
                       },
-                      "birthDay": {
-                        "type": "string"
+                      "birthday": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields"
                       },
-                      "birthMonth": {
-                        "type": "string"
-                      },
-                      "birthYear": {
-                        "type": "string"
-                      },
-                      "diagnosisDay": {
-                        "type": "string"
-                      },
-                      "diagnosisMonth": {
-                        "type": "string"
-                      },
-                      "diagnosisYear": {
-                        "type": "string"
+                      "diagnosisDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields"
                       },
                       "weight": {
                         "type": "string"
@@ -1109,16 +1255,23 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "username",
+                  "firstName",
+                  "lastName",
                   "email",
                   "password"
                 ],
                 "properties": {
-                  "username": {
+                  "firstName": {
                     "type": "string",
-                    "example": "johndoe",
-                    "minLength": 3,
-                    "maxLength": 50
+                    "example": "John",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "lastName": {
+                    "type": "string",
+                    "example": "Doe",
+                    "minLength": 1,
+                    "maxLength": 100
                   },
                   "email": {
                     "type": "string",
@@ -1130,10 +1283,6 @@
                     "format": "password",
                     "minLength": 8,
                     "example": "SecurePass123!"
-                  },
-                  "fullName": {
-                    "type": "string",
-                    "example": "John Doe"
                   }
                 }
               }
@@ -1155,6 +1304,29 @@
                       "properties": {
                         "data": {
                           "$ref": "#/components/schemas/AuthResponse"
+                        }
+                      },
+                      "example": {
+                        "status": 200,
+                        "success": true,
+                        "message": "Account created successfully",
+                        "data": {
+                          "user": {
+                            "id": "uuid-string",
+                            "firstName": "John",
+                            "lastName": "Doe",
+                            "email": "john@example.com",
+                            "role": "customer",
+                            "tier": "free",
+                            "profileComplete": false,
+                            "profileData": null,
+                            "createdAt": "2024-01-01T00:00:00Z",
+                            "updatedAt": "2024-01-01T00:00:00Z"
+                          },
+                          "tokens": {
+                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          }
                         }
                       }
                     }
@@ -1234,9 +1406,156 @@
                         "data": {
                           "$ref": "#/components/schemas/AuthResponse"
                         }
+                      },
+                      "example": {
+                        "status": 200,
+                        "success": true,
+                        "message": "Login successful",
+                        "data": {
+                          "id": "uuid-string",
+                          "firstName": "John",
+                          "lastName": "Doe",
+                          "email": "john@example.com",
+                          "emailVerified": false,
+                          "provider": "manual",
+                          "providerId": null,
+                          "avatar": null,
+                          "role": "customer",
+                          "tier": "free",
+                          "isActive": true,
+                          "profileComplete": true,
+                          "profileData": {
+                            "id": "uuid-string",
+                            "userId": "uuid-string",
+                            "gender": "male",
+                            "birthday": "1990-01-15T00:00:00Z",
+                            "diagnosisDate": "2020-05-10T00:00:00Z",
+                            "weight": "70",
+                            "height": "175",
+                            "diabetesType": "type2",
+                            "createdAt": "2024-01-01T00:00:00Z",
+                            "updatedAt": "2024-01-01T00:00:00Z"
+                          },
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z",
+                          "tokens": {
+                            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                          }
+                        }
                       }
                     }
                   ]
+                },
+                "examples": {
+                  "customer": {
+                    "summary": "Customer user",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "John",
+                        "lastName": "Doe",
+                        "email": "john@example.com",
+                        "emailVerified": false,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "customer",
+                        "tier": "free",
+                        "isActive": true,
+                        "profileComplete": true,
+                        "profileData": {
+                          "id": "uuid-string",
+                          "userId": "uuid-string",
+                          "gender": "male",
+                          "birthday": "1990-01-15T00:00:00Z",
+                          "diagnosisDate": "2020-05-10T00:00:00Z",
+                          "weight": "70",
+                          "height": "175",
+                          "diabetesType": "type2",
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z"
+                        },
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z",
+                        "tokens": {
+                          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        }
+                      }
+                    }
+                  },
+                  "physician": {
+                    "summary": "Physician user",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "Alice",
+                        "lastName": "Smith",
+                        "email": "alice@example.com",
+                        "emailVerified": true,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "physician",
+                        "tier": "paid",
+                        "isActive": true,
+                        "profileComplete": true,
+                        "profileData": {
+                          "id": "uuid-string",
+                          "userId": "uuid-string",
+                          "specialtyId": "uuid-string",
+                          "specialty": "Endocrinology",
+                          "practiceStartDate": "2010-05-01T00:00:00Z",
+                          "consultationFee": "100",
+                          "imageUrl": "https://example.com/physician.jpg",
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z"
+                        },
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z",
+                        "tokens": {
+                          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        }
+                      }
+                    }
+                  },
+                  "incomplete": {
+                    "summary": "Profile incomplete (profileData is null)",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "Joe",
+                        "lastName": "Bloggs",
+                        "email": "joe@example.com",
+                        "emailVerified": false,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "customer",
+                        "tier": "free",
+                        "isActive": true,
+                        "profileComplete": false,
+                        "profileData": null,
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z",
+                        "tokens": {
+                          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                          "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -1758,6 +2077,17 @@
                         }
                       }
                     }
+                  },
+                  "locationIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of location IDs for offline/onsite consultations (optional)",
+                    "example": [
+                      "loc-123",
+                      "loc-456"
+                    ]
                   }
                 }
               }
@@ -1919,6 +2249,97 @@
         }
       }
     },
+    "/api/booking/slots/{slotId}/locations": {
+      "patch": {
+        "summary": "Update slot locations (physician or admin, cannot update booked slots)",
+        "tags": [
+          "Booking"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slotId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Slot ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "locationIds"
+                ],
+                "properties": {
+                  "locationIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of location IDs for offline/onsite consultations",
+                    "example": [
+                      "loc-123",
+                      "loc-456"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Slot locations updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "locations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (slot is booked or invalid data)"
+          },
+          "403": {
+            "description": "Forbidden (not the slot owner or admin)"
+          },
+          "404": {
+            "description": "Slot not found"
+          }
+        }
+      }
+    },
     "/api/booking/book": {
       "post": {
         "summary": "Book a slot (customer only)",
@@ -1991,32 +2412,18 @@
                                 "userId": {
                                   "type": "string"
                                 },
-                                "firstName": {
-                                  "type": "string"
-                                },
-                                "lastName": {
-                                  "type": "string"
-                                },
                                 "gender": {
                                   "type": "string"
                                 },
-                                "birthDay": {
-                                  "type": "string"
+                                "birthday": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "description": "Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields"
                                 },
-                                "birthMonth": {
-                                  "type": "string"
-                                },
-                                "birthYear": {
-                                  "type": "string"
-                                },
-                                "diagnosisDay": {
-                                  "type": "string"
-                                },
-                                "diagnosisMonth": {
-                                  "type": "string"
-                                },
-                                "diagnosisYear": {
-                                  "type": "string"
+                                "diagnosisDate": {
+                                  "type": "string",
+                                  "format": "date",
+                                  "description": "Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields"
                                 },
                                 "weight": {
                                   "type": "string"
@@ -2057,8 +2464,6 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "firstName",
-                  "lastName",
                   "gender",
                   "birthDay",
                   "birthMonth",
@@ -2071,14 +2476,6 @@
                   "diabetesType"
                 ],
                 "properties": {
-                  "firstName": {
-                    "type": "string",
-                    "example": "John"
-                  },
-                  "lastName": {
-                    "type": "string",
-                    "example": "Doe"
-                  },
                   "gender": {
                     "type": "string",
                     "enum": [
@@ -2086,29 +2483,17 @@
                       "female"
                     ]
                   },
-                  "birthDay": {
+                  "birthday": {
                     "type": "string",
-                    "example": "15"
+                    "format": "date",
+                    "example": "1990-06-15",
+                    "description": "Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields"
                   },
-                  "birthMonth": {
+                  "diagnosisDate": {
                     "type": "string",
-                    "example": "06"
-                  },
-                  "birthYear": {
-                    "type": "string",
-                    "example": "1990"
-                  },
-                  "diagnosisDay": {
-                    "type": "string",
-                    "example": "01"
-                  },
-                  "diagnosisMonth": {
-                    "type": "string",
-                    "example": "03"
-                  },
-                  "diagnosisYear": {
-                    "type": "string",
-                    "example": "2020"
+                    "format": "date",
+                    "example": "2020-03-01",
+                    "description": "Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields"
                   },
                   "weight": {
                     "type": "string",
@@ -2182,12 +2567,6 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
-                    "type": "string"
-                  },
                   "gender": {
                     "type": "string",
                     "enum": [
@@ -2195,23 +2574,15 @@
                       "female"
                     ]
                   },
-                  "birthDay": {
-                    "type": "string"
+                  "birthday": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields"
                   },
-                  "birthMonth": {
-                    "type": "string"
-                  },
-                  "birthYear": {
-                    "type": "string"
-                  },
-                  "diagnosisDay": {
-                    "type": "string"
-                  },
-                  "diagnosisMonth": {
-                    "type": "string"
-                  },
-                  "diagnosisYear": {
-                    "type": "string"
+                  "diagnosisDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields"
                   },
                   "weight": {
                     "type": "string"
@@ -3124,7 +3495,7 @@
                                   "id": {
                                     "type": "string"
                                   },
-                                  "fullName": {
+                                  "username": {
                                     "type": "string"
                                   },
                                   "specialty": {
@@ -3624,6 +3995,305 @@
         }
       }
     },
+    "/api/physician/locations": {
+      "get": {
+        "summary": "Get all locations for the authenticated physician",
+        "tags": [
+          "Physician Locations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Locations retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "locations": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PhysicianLocation"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new location for the authenticated physician",
+        "tags": [
+          "Physician Locations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "locationName",
+                  "latitude",
+                  "longitude"
+                ],
+                "properties": {
+                  "locationName": {
+                    "type": "string",
+                    "example": "Main Clinic"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "123 Main Street"
+                  },
+                  "city": {
+                    "type": "string",
+                    "example": "Karachi"
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "Sindh"
+                  },
+                  "country": {
+                    "type": "string",
+                    "example": "Pakistan"
+                  },
+                  "postalCode": {
+                    "type": "string",
+                    "example": "75500"
+                  },
+                  "latitude": {
+                    "type": "string",
+                    "example": "24.8607"
+                  },
+                  "longitude": {
+                    "type": "string",
+                    "example": "67.0011"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "inactive"
+                    ],
+                    "default": "active"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Location created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "location": {
+                              "$ref": "#/components/schemas/PhysicianLocation"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid location data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/physician/locations/{id}": {
+      "patch": {
+        "summary": "Update a location for the authenticated physician",
+        "tags": [
+          "Physician Locations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Location ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "locationName": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "postalCode": {
+                    "type": "string"
+                  },
+                  "latitude": {
+                    "type": "string"
+                  },
+                  "longitude": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "inactive"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Location updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "location": {
+                              "$ref": "#/components/schemas/PhysicianLocation"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid location data or unauthorized"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Location not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a location for the authenticated physician",
+        "tags": [
+          "Physician Locations"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Location ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Location deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unauthorized"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Location not found"
+          }
+        }
+      }
+    },
     "/api/settings/free-tier-limits": {
       "get": {
         "summary": "Get free tier limits configuration",
@@ -3982,7 +4652,7 @@
     },
     "/api/user/profile": {
       "get": {
-        "summary": "Get current user's profile",
+        "summary": "Get current user's profile with profile data",
         "tags": [
           "User"
         ],
@@ -4007,9 +4677,140 @@
                         "data": {
                           "$ref": "#/components/schemas/User"
                         }
+                      },
+                      "example": {
+                        "status": 200,
+                        "success": true,
+                        "message": "Profile retrieved successfully",
+                        "data": {
+                          "id": "uuid-string",
+                          "firstName": "John",
+                          "lastName": "Doe",
+                          "email": "john@example.com",
+                          "emailVerified": false,
+                          "provider": "manual",
+                          "providerId": null,
+                          "avatar": null,
+                          "role": "customer",
+                          "tier": "free",
+                          "isActive": true,
+                          "profileComplete": true,
+                          "profileData": {
+                            "id": "uuid-string",
+                            "userId": "uuid-string",
+                            "gender": "male",
+                            "birthday": "1990-01-15T00:00:00Z",
+                            "diagnosisDate": "2020-05-10T00:00:00Z",
+                            "weight": "70",
+                            "height": "175",
+                            "diabetesType": "type2",
+                            "createdAt": "2024-01-01T00:00:00Z",
+                            "updatedAt": "2024-01-01T00:00:00Z"
+                          },
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z"
+                        }
                       }
                     }
                   ]
+                },
+                "examples": {
+                  "customer": {
+                    "summary": "Customer user",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "John",
+                        "lastName": "Doe",
+                        "email": "john@example.com",
+                        "emailVerified": false,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "customer",
+                        "tier": "free",
+                        "isActive": true,
+                        "profileComplete": true,
+                        "profileData": {
+                          "id": "uuid-string",
+                          "userId": "uuid-string",
+                          "gender": "male",
+                          "birthday": "1990-01-15T00:00:00Z",
+                          "diagnosisDate": "2020-05-10T00:00:00Z",
+                          "weight": "70",
+                          "height": "175",
+                          "diabetesType": "type2",
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z"
+                        },
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z"
+                      }
+                    }
+                  },
+                  "physician": {
+                    "summary": "Physician user",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "Alice",
+                        "lastName": "Smith",
+                        "email": "alice@example.com",
+                        "emailVerified": true,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "physician",
+                        "tier": "paid",
+                        "isActive": true,
+                        "profileComplete": true,
+                        "profileData": {
+                          "id": "uuid-string",
+                          "userId": "uuid-string",
+                          "specialtyId": "uuid-string",
+                          "specialty": "Endocrinology",
+                          "practiceStartDate": "2010-05-01T00:00:00Z",
+                          "consultationFee": "100",
+                          "imageUrl": "https://example.com/physician.jpg",
+                          "createdAt": "2024-01-01T00:00:00Z",
+                          "updatedAt": "2024-01-01T00:00:00Z"
+                        },
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z"
+                      }
+                    }
+                  },
+                  "incomplete": {
+                    "summary": "Profile incomplete (profileData is null)",
+                    "value": {
+                      "status": 200,
+                      "success": true,
+                      "message": "Profile retrieved successfully",
+                      "data": {
+                        "id": "uuid-string",
+                        "firstName": "Joe",
+                        "lastName": "Bloggs",
+                        "email": "joe@example.com",
+                        "emailVerified": false,
+                        "provider": "manual",
+                        "providerId": null,
+                        "avatar": null,
+                        "role": "customer",
+                        "tier": "free",
+                        "isActive": true,
+                        "profileComplete": false,
+                        "profileData": null,
+                        "createdAt": "2024-01-01T00:00:00Z",
+                        "updatedAt": "2024-01-01T00:00:00Z"
+                      }
+                    }
+                  }
                 }
               }
             }

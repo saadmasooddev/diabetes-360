@@ -37,24 +37,16 @@ router.use(authenticateToken);
  *                               type: string
  *                             userId:
  *                               type: string
- *                             firstName:
- *                               type: string
- *                             lastName:
- *                               type: string
  *                             gender:
  *                               type: string
- *                             birthDay:
+ *                             birthday:
  *                               type: string
- *                             birthMonth:
+ *                               format: date
+ *                               description: Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields
+ *                             diagnosisDate:
  *                               type: string
- *                             birthYear:
- *                               type: string
- *                             diagnosisDay:
- *                               type: string
- *                             diagnosisMonth:
- *                               type: string
- *                             diagnosisYear:
- *                               type: string
+ *                               format: date
+ *                               description: Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields
  *                             weight:
  *                               type: string
  *                             height:
@@ -81,8 +73,6 @@ router.get("/profile", (req, res, next) =>
  *           schema:
  *             type: object
  *             required:
- *               - firstName
- *               - lastName
  *               - gender
  *               - birthDay
  *               - birthMonth
@@ -94,33 +84,19 @@ router.get("/profile", (req, res, next) =>
  *               - height
  *               - diabetesType
  *             properties:
- *               firstName:
- *                 type: string
- *                 example: John
- *               lastName:
- *                 type: string
- *                 example: Doe
  *               gender:
  *                 type: string
  *                 enum: [male, female]
- *               birthDay:
+ *               birthday:
  *                 type: string
- *                 example: "15"
- *               birthMonth:
+ *                 format: date
+ *                 example: "1990-06-15"
+ *                 description: Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields
+ *               diagnosisDate:
  *                 type: string
- *                 example: "06"
- *               birthYear:
- *                 type: string
- *                 example: "1990"
- *               diagnosisDay:
- *                 type: string
- *                 example: "01"
- *               diagnosisMonth:
- *                 type: string
- *                 example: "03"
- *               diagnosisYear:
- *                 type: string
- *                 example: "2020"
+ *                 format: date
+ *                 example: "2020-03-01"
+ *                 description: Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields
  *               weight:
  *                 type: string
  *                 example: "70"
@@ -167,25 +143,17 @@ router.post("/profile", (req, res, next) =>
  *           schema:
  *             type: object
  *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
  *               gender:
  *                 type: string
  *                 enum: [male, female]
- *               birthDay:
+ *               birthday:
  *                 type: string
- *               birthMonth:
+ *                 format: date
+ *                 description: Birthday in YYYY-MM-DD format, or send separate birthDay/birthMonth/birthYear fields
+ *               diagnosisDate:
  *                 type: string
- *               birthYear:
- *                 type: string
- *               diagnosisDay:
- *                 type: string
- *               diagnosisMonth:
- *                 type: string
- *               diagnosisYear:
- *                 type: string
+ *                 format: date
+ *                 description: Diagnosis date in YYYY-MM-DD format, or send separate diagnosisDay/diagnosisMonth/diagnosisYear fields
  *               weight:
  *                 type: string
  *               height:

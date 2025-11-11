@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, timestamp, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { users } from "../../auth/models/user.schema";
+import { users, physicianLocations } from "../../auth/models/user.schema";
 
 // Booking System Tables
 export const slotSize = pgTable("slot_size", {
@@ -56,6 +56,15 @@ export const bookedSlots = pgTable("booked_slots", {
   customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "restrict" }),
   status: text("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Junction table linking slots to physician locations for offline consultations
+export const slotLocations = pgTable("slot_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "cascade" }),
+  locationId: varchar("location_id").notNull().references(() => physicianLocations.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -117,6 +126,12 @@ export const updateBookedSlotSchema = createInsertSchema(bookedSlots).omit({
   updatedAt: true,
 }).partial();
 
+export const insertSlotLocationSchema = createInsertSchema(slotLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type SlotSize = typeof slotSize.$inferSelect;
 export type InsertSlotSize = z.infer<typeof insertSlotSizeSchema>;
@@ -134,3 +149,5 @@ export type UpdateSlotPrice = z.infer<typeof updateSlotPriceSchema>;
 export type BookedSlot = typeof bookedSlots.$inferSelect;
 export type InsertBookedSlot = z.infer<typeof insertBookedSlotSchema>;
 export type UpdateBookedSlot = z.infer<typeof updateBookedSlotSchema>;
+export type SlotLocation = typeof slotLocations.$inferSelect;
+export type InsertSlotLocation = z.infer<typeof insertSlotLocationSchema>;

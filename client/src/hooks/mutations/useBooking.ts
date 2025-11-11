@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { bookingService, type CreateSlotsRequest, type BookSlotRequest, type UpdateSlotPriceRequest } from '@/services/bookingService';
+import { bookingService, type CreateSlotsRequest, type BookSlotRequest, type UpdateSlotPriceRequest, type UpdateSlotLocationsRequest } from '@/services/bookingService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useSlotSizes = () => {
@@ -144,6 +144,32 @@ export const useUpdateSlotPrice = () => {
       toast({
         title: 'Update Failed',
         description: error.message || 'Failed to update slot price.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useUpdateSlotLocations = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ slotId, data }: { slotId: string; data: { locationIds: string[] } }) =>
+      bookingService.updateSlotLocations(slotId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['booking', 'slots'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'available-slots'] });
+      toast({
+        title: 'Locations Updated',
+        description: 'Slot locations have been updated successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message || 'Failed to update slot locations.',
         variant: 'destructive',
       });
     },

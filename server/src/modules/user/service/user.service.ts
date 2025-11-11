@@ -6,7 +6,7 @@ export class UserService {
   constructor(){
     this.userRepository = new UserRepository();
   }
-  async getProfile(userId: string): Promise<{ id: string, username: string, fullName: string | null, email: string, tier: string | null }> {
+  async getProfile(userId: string) {
     const user = await this.userRepository.getUser(userId);
     if (!user) {
       throw new NotFoundError("User not found");

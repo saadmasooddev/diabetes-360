@@ -45,7 +45,9 @@ export class CustomerController {
         throw new BadRequestError("User ID is required");
       }
 
-      const validationResult = insertCustomerDataSchema.safeParse(req.body);
+      const customerDataInput = { ...req.body };
+
+      const validationResult = insertCustomerDataSchema.safeParse(customerDataInput);
       if (!validationResult.success) {
         throw new BadRequestError(validationResult.error.message || "Invalid customer data");
       }
@@ -70,7 +72,10 @@ export class CustomerController {
         throw new BadRequestError("Unauthorized to update this data");
       }
 
-      const validationResult = updateCustomerDataSchema.safeParse(req.body);
+      // Transform separate date fields to combined date fields if needed
+      const customerDataInput = { ...req.body };
+      
+      const validationResult = updateCustomerDataSchema.safeParse(customerDataInput);
       if (!validationResult.success) {
         throw new BadRequestError(validationResult.error.message || "Invalid customer data");
       }

@@ -256,6 +256,7 @@ export class HealthRepository {
     const endDateTime = new Date(endDate);
     endDateTime.setHours(23, 59, 59, 999);
 
+    // console.log(startDate, "startDate", endDateTime, "endDateTime")
     // Build base conditions
     const baseConditions = [
       eq(healthMetrics.userId, userId),

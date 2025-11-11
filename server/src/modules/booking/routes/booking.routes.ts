@@ -205,6 +205,12 @@ router.get("/physicians/:physicianId/dates-with-availability", authenticateToken
  *                       type: string
  *                     price:
  *                       type: string
+ *               locationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs for offline/onsite consultations (optional)
+ *                 example: ["loc-123", "loc-456"]
  *     responses:
  *       200:
  *         description: Slots created successfully
@@ -322,6 +328,64 @@ router.delete("/slots/:slotId", authenticateToken, requirePhysician, (req, res) 
  */
 router.patch("/slot-prices/:priceId", authenticateToken, (req, res) =>
   bookingController.updateSlotPrice(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/slots/{slotId}/locations:
+ *   patch:
+ *     summary: Update slot locations (physician or admin, cannot update booked slots)
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slotId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slot ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - locationIds
+ *             properties:
+ *               locationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs for offline/onsite consultations
+ *                 example: ["loc-123", "loc-456"]
+ *     responses:
+ *       200:
+ *         description: Slot locations updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         locations:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *       400:
+ *         description: Invalid request (slot is booked or invalid data)
+ *       403:
+ *         description: Forbidden (not the slot owner or admin)
+ *       404:
+ *         description: Slot not found
+ */
+router.patch("/slots/:slotId/locations", authenticateToken, (req, res) =>
+  bookingController.updateSlotLocations(req, res)
 );
 
 /**

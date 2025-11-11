@@ -18,7 +18,8 @@ import { AdminPhysicianSlotManagement } from './AdminPhysicianSlotManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const updateUserSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required'),
+  firstName: z.string().min(1, 'First name is required').optional(),
+  lastName: z.string().min(1, 'Last name is required').optional(),
   email: z.email('Invalid email address'),
   password: z.string().optional(),
   role: z.enum(['customer', 'admin', 'physician']),
@@ -45,8 +46,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
     imageUrl: '',
   });
   const [customerFields, setCustomerFields] = useState({
-    firstName: '',
-    lastName: '',
     gender: 'male' as 'male' | 'female',
     birthDay: '',
     birthMonth: '',
@@ -77,7 +76,8 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
   } = useForm<UpdateUserForm>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      fullName: user.fullName || '',
+      firstName: (user as any).firstName || '',
+      lastName: (user as any).lastName || '',
       email: user.email,
       role: user.role,
       isActive: user.isActive,
@@ -103,24 +103,42 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
     }
   }, [physicianData, user.role]);
 
+  // Helper function to parse date string to separate components
+  const parseDateToComponents = (dateString: string): { day: string; month: string; year: string } => {
+    if (!dateString) return { day: '', month: '', year: '' };
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return { day: '', month: '', year: '' };
+      return {
+        day: String(date.getDate()).padStart(2, '0'),
+        month: String(date.getMonth() + 1).padStart(2, '0'),
+        year: String(date.getFullYear()),
+      };
+    } catch {
+      return { day: '', month: '', year: '' };
+    }
+  };
+
   // Load customer data from fetched user data
   useEffect(() => {
     if (user.role === 'customer') {
       const customerData = fullUserData?.user?.customerData || (user as any).customerData || fullUserData?.customerData;
       if (customerData) {
+        // Transform combined date fields to separate components
+        const birthdayComponents = parseDateToComponents(customerData.birthday || '');
+        const diagnosisComponents = parseDateToComponents(customerData.diagnosisDate || '');
+
         setCustomerFields({
-          firstName: customerData.firstName,
-          lastName: customerData.lastName,
-          gender: customerData.gender,
-          birthDay: customerData.birthDay,
-          birthMonth: customerData.birthMonth,
-          birthYear: customerData.birthYear,
-          diagnosisDay: customerData.diagnosisDay,
-          diagnosisMonth: customerData.diagnosisMonth,
-          diagnosisYear: customerData.diagnosisYear,
-          weight: customerData.weight,
-          height: customerData.height,
-          diabetesType: customerData.diabetesType as 'type1' | 'type2' | 'gestational' | 'prediabetes',
+          gender: customerData.gender || 'male',
+          birthDay: birthdayComponents.day,
+          birthMonth: birthdayComponents.month,
+          birthYear: birthdayComponents.year,
+          diagnosisDay: diagnosisComponents.day,
+          diagnosisMonth: diagnosisComponents.month,
+          diagnosisYear: diagnosisComponents.year,
+          weight: customerData.weight || '',
+          height: customerData.height || '',
+          diabetesType: customerData.diabetesType as 'type1' | 'type2' | 'gestational' | 'prediabetes' || '',
         });
       }
     }
@@ -150,6 +168,13 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
       const updateData: any = { ...data };
       if (!updateData.password) {
         delete updateData.password;
+      }
+      // Ensure firstName and lastName are included
+      if (!updateData.firstName) {
+        updateData.firstName = (user as any).firstName || '';
+      }
+      if (!updateData.lastName) {
+        updateData.lastName = (user as any).lastName || '';
       }
 
       if (data.role === 'physician' || user.role === 'physician') {
@@ -186,20 +211,27 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
       // If customer role, include customer data
       if (data.role === 'customer' || user.role === 'customer') {
         if (customerFields.diabetesType) {
-          updateData.customerData = {
-            firstName: customerFields.firstName || user.fullName?.split(' ')[0] || '',
-            lastName: customerFields.lastName || user.fullName?.split(' ').slice(1).join(' ') || '',
+          const customerData: any = {
             gender: customerFields.gender,
-            birthDay: customerFields.birthDay,
-            birthMonth: customerFields.birthMonth,
-            birthYear: customerFields.birthYear,
-            diagnosisDay: customerFields.diagnosisDay,
-            diagnosisMonth: customerFields.diagnosisMonth,
-            diagnosisYear: customerFields.diagnosisYear,
             weight: customerFields.weight,
             height: customerFields.height,
             diabetesType: customerFields.diabetesType,
           };
+
+          // Transform separate date fields to combined format
+          if (customerFields.birthDay && customerFields.birthMonth && customerFields.birthYear) {
+            const paddedMonth = String(customerFields.birthMonth).padStart(2, '0');
+            const paddedDay = String(customerFields.birthDay).padStart(2, '0');
+            customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
+          }
+
+          if (customerFields.diagnosisDay && customerFields.diagnosisMonth && customerFields.diagnosisYear) {
+            const paddedMonth = String(customerFields.diagnosisMonth).padStart(2, '0');
+            const paddedDay = String(customerFields.diagnosisDay).padStart(2, '0');
+            customerData.diagnosisDate = `${customerFields.diagnosisYear}-${paddedMonth}-${paddedDay}`;
+          }
+
+          updateData.customerData = customerData;
         }
       }
 
@@ -239,15 +271,30 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
             <TabsContent value="profile">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" id="edit-user-form">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="fullName"
-                    {...register('fullName')}
-                    placeholder="Enter full name"
+                    id="firstName"
+                    type="text"
+                    {...register('firstName')}
+                    placeholder="Enter first name"
                     disabled={isLoading}
                   />
-                  {errors.fullName && (
-                    <p className="text-sm text-red-600">{errors.fullName.message}</p>
+                  {errors.firstName && (
+                    <p className="text-sm text-red-600">{errors.firstName.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    {...register('lastName')}
+                    placeholder="Enter last name"
+                    disabled={isLoading}
+                  />
+                  {errors.lastName && (
+                    <p className="text-sm text-red-600">{errors.lastName.message}</p>
                   )}
                 </div>
 
@@ -402,29 +449,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
                 {(watchedRole === 'customer' || user.role === 'customer') && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="font-semibold text-gray-900">Customer Information</h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="customerFirstName">First Name</Label>
-                        <Input
-                          id="customerFirstName"
-                          value={customerFields.firstName}
-                          onChange={(e) => setCustomerFields({ ...customerFields, firstName: e.target.value })}
-                          disabled={isLoading}
-                          placeholder="Enter first name"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="customerLastName">Last Name</Label>
-                        <Input
-                          id="customerLastName"
-                          value={customerFields.lastName}
-                          onChange={(e) => setCustomerFields({ ...customerFields, lastName: e.target.value })}
-                          placeholder="Enter last name"
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="customerGender">Gender</Label>

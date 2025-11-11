@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useDatesWithAvailability, useSlotsForDate, useUpdateSlotPrice } from '@/hooks/mutations/useBooking';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useDatesWithAvailability, useSlotsForDate, useUpdateSlotPrice, useUpdateSlotLocations } from '@/hooks/mutations/useBooking';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarIcon, Edit2 } from 'lucide-react';
+import { CalendarIcon, Edit2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slot } from '@/services/bookingService';
 import { cn } from '@/lib/utils';
@@ -40,6 +42,9 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [editingPrice, setEditingPrice] = useState<string>('');
+  const [editingLocationSlotId, setEditingLocationSlotId] = useState<string | null>(null);
+  const [editingLocationIds, setEditingLocationIds] = useState<string[]>([]);
+  const [calendarKey, setCalendarKey] = useState(0);
 
   const { data: datesWithAvailability = [] } = useDatesWithAvailability(physicianId);
   const { data: slots = [], refetch: refetchSlots } = useSlotsForDate(
@@ -48,6 +53,7 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
   );
 
   const updatePriceMutation = useUpdateSlotPrice();
+  const updateLocationMutation = useUpdateSlotLocations();
 
   const availableDates = datesWithAvailability.map((d) => {
     if (typeof d === 'string') {
@@ -73,6 +79,7 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
       return;
     }
 
+    // Always set the date, even if it's the same, to allow reopening the modal
     setSelectedDate(date);
     setIsViewModalOpen(true);
   };
@@ -81,6 +88,8 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
     setIsViewModalOpen(open);
     if (!open) {
       setSelectedDate(undefined);
+      // Force calendar re-render to allow same date selection
+      setCalendarKey(prev => prev + 1);
     }
   };
 
@@ -100,6 +109,26 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
     refetchSlots();
   };
 
+  const handleEditLocations = (slot: Slot) => {
+    setEditingLocationSlotId(slot.id);
+    setEditingLocationIds(slot.locations?.map(loc => loc.id) || []);
+  };
+
+  const handleSaveLocations = async () => {
+    if (!editingLocationSlotId) return;
+    try {
+      await updateLocationMutation.mutateAsync({
+        slotId: editingLocationSlotId,
+        data: { locationIds: editingLocationIds },
+      });
+      setEditingLocationSlotId(null);
+      setEditingLocationIds([]);
+      await refetchSlots();
+    } catch (error) {
+      // Error handled by mutation
+    }
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardHeader>
@@ -114,6 +143,7 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
       <CardContent>
         <div className="space-y-6">
           <Calendar
+            key={crypto.randomUUID()}
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
@@ -184,6 +214,15 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
                       setEditingPriceId(null);
                       setEditingPrice('');
                     }}
+                    onEditLocations={handleEditLocations}
+                    editingLocationSlotId={editingLocationSlotId}
+                    editingLocationIds={editingLocationIds}
+                    onLocationIdsChange={setEditingLocationIds}
+                    onSaveLocations={handleSaveLocations}
+                    onCancelLocationEdit={() => {
+                      setEditingLocationSlotId(null);
+                      setEditingLocationIds([]);
+                    }}
                   />
                 ))
               )}
@@ -202,6 +241,12 @@ interface AdminSlotCardProps {
   editingPrice: string;
   onSavePrice: () => void;
   onCancelEdit: () => void;
+  onEditLocations: (slot: Slot) => void;
+  editingLocationSlotId: string | null;
+  editingLocationIds: string[];
+  onLocationIdsChange: (ids: string[]) => void;
+  onSaveLocations: () => void;
+  onCancelLocationEdit: () => void;
 }
 
 function AdminSlotCard({
@@ -211,8 +256,24 @@ function AdminSlotCard({
   editingPrice,
   onSavePrice,
   onCancelEdit,
+  onEditLocations,
+  editingLocationSlotId,
+  editingLocationIds,
+  onLocationIdsChange,
+  onSaveLocations,
+  onCancelLocationEdit,
 }: AdminSlotCardProps) {
   const isBooked = slot.isBooked;
+  const isEditingLocations = editingLocationSlotId === slot.id;
+
+  // Check if slot has offline/onsite type
+  const hasOfflineType = slot.types?.some(
+    type => type.type.toLowerCase() === 'onsite' || type.type.toLowerCase() === 'offline'
+  );
+
+  // For admin, we'll use locations from slot data
+  // In a real scenario, you might want to fetch all locations for this physician
+  const availableLocations = slot.locations || [];
 
   const handleStartEdit = (priceId: string, currentPrice: string) => {
     onEditPrice(priceId, currentPrice);
@@ -284,6 +345,89 @@ function AdminSlotCard({
           </div>
         ))}
       </div>
+
+      {/* Locations Section */}
+      {hasOfflineType && (
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <MapPin className="h-4 w-4" />
+              Locations
+            </Label>
+            {!slot.isBooked && !isEditingLocations && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEditLocations(slot)}
+                className="hover:bg-teal-50"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+
+          {isEditingLocations ? (
+            <div className="space-y-2">
+              {availableLocations.length === 0 ? (
+                <p className="text-sm text-yellow-600">No locations available for editing</p>
+              ) : (
+                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                  {availableLocations.map((location) => (
+                    <div key={location.id} className="flex items-start space-x-2">
+                      <Checkbox
+                        id={`admin-edit-loc-${location.id}`}
+                        checked={editingLocationIds.includes(location.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            onLocationIdsChange([...editingLocationIds, location.id]);
+                          } else {
+                            onLocationIdsChange(editingLocationIds.filter(id => id !== location.id));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`admin-edit-loc-${location.id}`} className="flex-1 cursor-pointer text-sm">
+                        <div className="font-medium">{location.locationName}</div>
+                        {location.address && (
+                          <div className="text-xs text-gray-600">{location.address}</div>
+                        )}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={onSaveLocations}
+                  disabled={editingLocationIds.length === 0}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  Save
+                </Button>
+                <Button size="sm" variant="outline" onClick={onCancelLocationEdit}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {slot.locations && slot.locations.length > 0 ? (
+                slot.locations.map((location) => (
+                  <div key={location.id} className="text-sm p-2 bg-gray-50 rounded">
+                    <div className="font-medium">{location.locationName}</div>
+                    {location.address && (
+                      <div className="text-xs text-gray-600">{location.address}</div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 italic">No locations assigned</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {slot.isBooked && (
         <p className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-1 rounded inline-block">
           Booked

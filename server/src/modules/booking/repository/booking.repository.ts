@@ -8,7 +8,9 @@ import {
   slotTypeJunction,
   slotPrice,
   bookedSlots,
+  slotLocations,
 } from "../models/booking.schema";
+import { physicianLocations } from "../../auth/models/user.schema";
 import type {
   SlotSize,
   InsertAvailabilityDate,
@@ -23,6 +25,8 @@ import type {
   UpdateSlotPrice,
   InsertBookedSlot,
   BookedSlot,
+  InsertSlotLocation,
+  SlotLocation,
 } from "../models/booking.schema";
 
 export class BookingRepository {
@@ -154,6 +158,7 @@ export class BookingRepository {
         availability: AvailabilityDate;
         prices: SlotPrice[];
         types: SlotType[];
+        locations: Array<typeof physicianLocations.$inferSelect>;
         isBooked: boolean;
       })
     | null
@@ -208,12 +213,17 @@ export class BookingRepository {
       )
       .limit(1);
 
+    // Get slot locations
+    const slotLocationRecords = await this.getSlotLocationsBySlotId(slot.id);
+    const locations = slotLocationRecords.map((sl) => sl.location);
+
     return {
       ...slot,
       slotSize: slotSizeRecord!,
       availability: availability!,
       prices: prices.map((p) => ({ ...p, slotType: types.find((t) => t.id === p.slotTypeId)! })),
       types,
+      locations,
       isBooked: !!booked,
     };
   }
@@ -329,6 +339,7 @@ export class BookingRepository {
         slotSize: SlotSize;
         prices: Array<SlotPrice & { slotType: SlotType }>;
         types: SlotType[];
+        locations: Array<typeof physicianLocations.$inferSelect>;
         isBooked: boolean;
       }
     >
@@ -397,11 +408,33 @@ export class BookingRepository {
       priceMap.get(p.slotId)!.push({ ...p, slotType: typeMap.get(p.slotTypeId)! });
     });
 
+    // Get locations for all slots
+    const slotLocationRecords = await db
+      .select({
+        slotId: slotLocations.slotId,
+        location: physicianLocations,
+      })
+      .from(slotLocations)
+      .innerJoin(
+        physicianLocations,
+        eq(slotLocations.locationId, physicianLocations.id)
+      )
+      .where(inArray(slotLocations.slotId, slotIds));
+
+    const locationMap = new Map<string, Array<typeof physicianLocations.$inferSelect>>();
+    slotLocationRecords.forEach((sl) => {
+      if (!locationMap.has(sl.slotId)) {
+        locationMap.set(sl.slotId, []);
+      }
+      locationMap.get(sl.slotId)!.push(sl.location);
+    });
+
     return slotsList.map((slot) => ({
       ...slot,
       slotSize: sizeMap.get(slot.slotSizeId)!,
       prices: priceMap.get(slot.id) || [],
       types: (junctionMap.get(slot.id) || []).map((tid) => typeMap.get(tid)!),
+      locations: locationMap.get(slot.id) || [],
       isBooked: bookedIds.has(slot.id),
     }));
   }
@@ -481,6 +514,64 @@ export class BookingRepository {
   private timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
+  }
+
+  // Slot Location operations
+  async createSlotLocation(data: InsertSlotLocation): Promise<SlotLocation> {
+    const [slotLocation] = await db
+      .insert(slotLocations)
+      .values({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .returning();
+    return slotLocation;
+  }
+
+  async createMultipleSlotLocations(
+    locations: InsertSlotLocation[]
+  ): Promise<SlotLocation[]> {
+    if (locations.length === 0) return [];
+    return await db
+      .insert(slotLocations)
+      .values(locations.map((l) => ({ ...l, updatedAt: new Date() })))
+      .returning();
+  }
+
+  async getSlotLocationsBySlotId(slotId: string) {
+    return await db
+      .select({
+        id: slotLocations.id,
+        slotId: slotLocations.slotId,
+        locationId: slotLocations.locationId,
+        location: physicianLocations,
+      })
+      .from(slotLocations)
+      .innerJoin(
+        physicianLocations,
+        eq(slotLocations.locationId, physicianLocations.id)
+      )
+      .where(eq(slotLocations.slotId, slotId));
+  }
+
+  async deleteSlotLocationsBySlotId(slotId: string): Promise<void> {
+    await db.delete(slotLocations).where(eq(slotLocations.slotId, slotId));
+  }
+
+  async updateSlotLocations(
+    slotId: string,
+    locationIds: string[]
+  ): Promise<SlotLocation[]> {
+    // Delete existing locations
+    await this.deleteSlotLocationsBySlotId(slotId);
+
+    // Create new locations
+    if (locationIds.length === 0) return [];
+    const insertData: InsertSlotLocation[] = locationIds.map((locationId) => ({
+      slotId,
+      locationId,
+    }));
+    return await this.createMultipleSlotLocations(insertData);
   }
 }
 

@@ -6,7 +6,8 @@ import { UnauthorizedError } from '../errors';
 export interface JWTPayload {
   userId: string;
   email: string;
-  username: string;
+  firstName: string;
+  lastName: string;
   role: UserRole;
   iat?: number;
   exp?: number;

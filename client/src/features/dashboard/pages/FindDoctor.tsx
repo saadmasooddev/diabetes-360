@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DoctorCard } from '../components/DoctorCard';
 import { ConfirmationScreen } from '../components/ConfirmationScreen';
@@ -11,9 +11,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
 import type { Physician } from '@/services/physicianService';
-import type { Slot } from '@/services/bookingService';
+import type { Slot, PhysicianLocation } from '@/services/bookingService';
+import { calculateDistance, getCurrentLocation } from '@/utils/distance';
+import { useToast } from '@/hooks/use-toast';
 
 const formatDate = (date: Date, formatStr: string): string => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -31,7 +35,7 @@ function mapPhysicianToDoctor(physician: any) {
   const yearsOfExperience = Math.max(1, new Date().getFullYear() - new Date(practiceStartDate).getFullYear());
   return {
     id: physician.id,
-    name: physician.fullName || 'Dr. Unknown',
+    name: physician.firstName + ' ' + physician.lastName || 'Dr. Unknown',
     specialty: physician.specialty || '',
     experience: `${yearsOfExperience}+ years`,
     rating: physician.rating || 0,
@@ -50,6 +54,9 @@ export function FindDoctor() {
   const [isConsultationTypeDialogOpen, setIsConsultationTypeDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationDistances, setLocationDistances] = useState<Record<string, number>>({});
 
   const { data: specialties = [] } = useSpecialties();
   const { data: allPhysicians = [] } = useAllPhysicians();
@@ -66,6 +73,43 @@ export function FindDoctor() {
 
   const bookSlotMutation = useBookSlot();
 
+  // Get user's current location
+  useEffect(() => {
+    getCurrentLocation()
+      .then((location) => {
+        setUserLocation(location);
+      })
+      .catch((error) => {
+        console.warn('Could not get user location:', error);
+      });
+  }, []);
+
+  // Calculate distances when slots or user location changes
+  useEffect(() => {
+    if (!userLocation || !availableSlots.length) {
+      return;
+    }
+
+    const distances: Record<string, number> = {};
+    availableSlots.forEach((slot) => {
+      if (slot.locations && slot.locations.length > 0) {
+        slot.locations.forEach((location) => {
+          const lat = parseFloat(location.latitude);
+          const lng = parseFloat(location.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            distances[location.id] = calculateDistance(
+              userLocation.lat,
+              userLocation.lng,
+              lat,
+              lng
+            );
+          }
+        });
+      }
+    });
+    setLocationDistances(distances);
+  }, [availableSlots, userLocation?.lat, userLocation?.lng]);
+
   const availableDates = datesWithAvailability.map((d) => {
     if (typeof d === 'string') {
       return new Date(d);
@@ -76,7 +120,7 @@ export function FindDoctor() {
   const filteredPhysicians = physicians.filter((physician) => {
     const matchesSearch =
       searchQuery === '' ||
-      (physician.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (physician.firstName + ' ' + physician.lastName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (physician.specialty || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
@@ -106,6 +150,7 @@ export function FindDoctor() {
 
     setSelectedDate(date);
     setSelectedSlot(null);
+    setSelectedLocationId(null); // Reset location filter when date changes
   };
 
   const handleSlotSelect = (slot: Slot) => {
@@ -279,7 +324,7 @@ export function FindDoctor() {
                       color: '#00453A',
                     }}
                   >
-                    {selectedPhysician.fullName}
+                    {selectedPhysician.firstName + ' ' + selectedPhysician.lastName}
                   </h2>
                   <p
                     style={{
@@ -329,42 +374,219 @@ export function FindDoctor() {
                     <h3 className="text-lg font-semibold mb-4" style={{ color: '#00453A' }}>
                       Available Slots for {formatDate(selectedDate, 'MMM dd, yyyy')}
                     </h3>
-                    {availableSlots.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8">
-                        No available slots for this date
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {availableSlots
-                          .filter((slot) => !slot.isBooked)
-                          .map((slot) => (
-                            <button
-                              key={slot.id}
-                              onClick={() => handleSlotSelect(slot)}
-                              className={cn(
-                                'p-4 rounded-lg border transition-all text-left',
-                                selectedSlot?.id === slot.id
-                                  ? 'border-[#00856F] bg-[#E0F2F1]'
-                                  : 'border-gray-200 bg-white hover:bg-[#F7F9F9]'
-                              )}
-                            >
-                              <div className="font-medium text-sm mb-2" style={{ color: '#00453A' }}>
-                                {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
-                              </div>
-                              <div className="space-y-1">
-                                {slot.prices?.map((price) => (
-                                  <div key={price.id} className="flex items-center justify-between text-xs">
-                                    <span className="text-gray-600 capitalize">{price.slotType?.type}:</span>
-                                    <span className="font-semibold" style={{ color: '#00856F' }}>
-                                      PKR {parseFloat(price.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+                    {/* Location Filter */}
+                    {(() => {
+                      // Get all unique locations from available slots
+                      const allLocations: PhysicianLocation[] = [];
+                      const locationMap = new Map<string, PhysicianLocation>();
+                      availableSlots
+                        .filter((slot) => !slot.isBooked)
+                        .forEach((slot) => {
+                          if (slot.locations) {
+                            slot.locations.forEach((loc) => {
+                              if (!locationMap.has(loc.id)) {
+                                locationMap.set(loc.id, loc);
+                                allLocations.push(loc);
+                              }
+                            });
+                          }
+                        });
+
+                      return allLocations.length > 0 ? (
+                        <div className="mb-4">
+                          <Label className="text-sm font-medium mb-2 block">Filter by Location</Label>
+                          <Select value={selectedLocationId || 'all'} onValueChange={(value) => setSelectedLocationId(value === 'all' ? null : value)}>
+                            <SelectTrigger className="w-full sm:w-64">
+                              <SelectValue placeholder="All Locations" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Locations</SelectItem>
+                              {allLocations.map((location) => (
+                                <SelectItem key={location.id} value={location.id}>
+                                  {location.locationName}
+                                  {locationDistances[location.id] !== undefined && (
+                                    <span className="text-xs text-gray-500 ml-2">
+                                      ({locationDistances[location.id]} km away)
                                     </span>
-                                  </div>
+                                  )}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {(() => {
+                      // Separate slots by type
+                      const unbookedSlots = availableSlots.filter((slot) => !slot.isBooked);
+
+                      // Filter by location if selected
+                      const filteredSlots = selectedLocationId
+                        ? unbookedSlots.filter((slot) =>
+                          slot.locations?.some((loc) => loc.id === selectedLocationId)
+                        )
+                        : unbookedSlots;
+
+                      // Separate online-only vs slots with offline/onsite
+                      const onlineOnlySlots = filteredSlots.filter((slot) => {
+                        const hasOnline = slot.types?.some((t) => t.type.toLowerCase() === 'online');
+                        const hasOffline = slot.types?.some(
+                          (t) => t.type.toLowerCase() === 'onsite' || t.type.toLowerCase() === 'offline'
+                        );
+                        return hasOnline && !hasOffline;
+                      });
+
+                      const offlineSlots = filteredSlots.filter((slot) => {
+                        const hasOffline = slot.types?.some(
+                          (t) => t.type.toLowerCase() === 'onsite' || t.type.toLowerCase() === 'offline'
+                        );
+                        return hasOffline;
+                      });
+
+                      if (filteredSlots.length === 0) {
+                        return (
+                          <p className="text-gray-500 text-center py-8">
+                            {selectedLocationId
+                              ? 'No available slots for the selected location'
+                              : 'No available slots for this date'}
+                          </p>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-6">
+                          {/* Online Only Slots */}
+                          {onlineOnlySlots.length > 0 && (
+                            <div>
+                              <h4 className="text-md font-semibold mb-3" style={{ color: '#00453A' }}>
+                                Online Consultations
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {onlineOnlySlots.map((slot) => (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => handleSlotSelect(slot)}
+                                    className={cn(
+                                      'p-4 rounded-lg border transition-all text-left',
+                                      selectedSlot?.id === slot.id
+                                        ? 'border-[#00856F] bg-[#E0F2F1]'
+                                        : 'border-gray-200 bg-white hover:bg-[#F7F9F9]'
+                                    )}
+                                  >
+                                    <div className="font-medium text-sm mb-2" style={{ color: '#00453A' }}>
+                                      {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
+                                    </div>
+                                    <div className="space-y-1">
+                                      {slot.prices
+                                        ?.filter((price) => price.slotType?.type.toLowerCase() === 'online')
+                                        .map((price) => (
+                                          <div key={price.id} className="flex items-center justify-between text-xs">
+                                            <span className="text-gray-600 capitalize">{price.slotType?.type}:</span>
+                                            <span className="font-semibold" style={{ color: '#00856F' }}>
+                                              PKR {parseFloat(price.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  </button>
                                 ))}
                               </div>
-                            </button>
-                          ))}
-                      </div>
-                    )}
+                            </div>
+                          )}
+
+                          {/* Offline/Onsite Slots grouped by location */}
+                          {offlineSlots.length > 0 && (
+                            <div>
+                              <h4 className="text-md font-semibold mb-3" style={{ color: '#00453A' }}>
+                                In-Person Consultations
+                              </h4>
+                              {(() => {
+                                // Group slots by location
+                                const slotsByLocation = new Map<string, { location: PhysicianLocation; slots: Slot[] }>();
+                                offlineSlots.forEach((slot) => {
+                                  if (slot.locations) {
+                                    slot.locations.forEach((location) => {
+                                      if (!slotsByLocation.has(location.id)) {
+                                        slotsByLocation.set(location.id, { location, slots: [] });
+                                      }
+                                      slotsByLocation.get(location.id)!.slots.push(slot);
+                                    });
+                                  }
+                                });
+
+                                return Array.from(slotsByLocation.values()).map(({ location, slots: locationSlots }) => (
+                                  <div key={location.id} className="mb-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <MapPin className="h-4 w-4" style={{ color: '#00856F' }} />
+                                      <div>
+                                        <div className="font-semibold text-sm" style={{ color: '#00453A' }}>
+                                          {location.locationName}
+                                        </div>
+                                        {location.address && (
+                                          <div className="text-xs text-gray-600">{location.address}</div>
+                                        )}
+                                        {locationDistances[location.id] !== undefined && (
+                                          <div className="text-xs font-medium" style={{ color: '#00856F' }}>
+                                            {locationDistances[location.id]} km away
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                      {locationSlots.map((slot) => (
+                                        <button
+                                          key={slot.id}
+                                          onClick={() => handleSlotSelect(slot)}
+                                          className={cn(
+                                            'p-4 rounded-lg border transition-all text-left',
+                                            selectedSlot?.id === slot.id
+                                              ? 'border-[#00856F] bg-[#E0F2F1]'
+                                              : 'border-gray-200 bg-white hover:bg-[#F7F9F9]'
+                                          )}
+                                        >
+                                          <div className="font-medium text-sm mb-2" style={{ color: '#00453A' }}>
+                                            {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
+                                          </div>
+                                          <div className="space-y-1">
+                                            {slot.prices
+                                              ?.filter(
+                                                (price) =>
+                                                  price.slotType?.type.toLowerCase() === 'onsite' ||
+                                                  price.slotType?.type.toLowerCase() === 'offline'
+                                              )
+                                              .map((price) => (
+                                                <div key={price.id} className="flex items-center justify-between text-xs">
+                                                  <span className="text-gray-600 capitalize">{price.slotType?.type}:</span>
+                                                  <span className="font-semibold" style={{ color: '#00856F' }}>
+                                                    PKR {parseFloat(price.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            {/* Also show online price if available */}
+                                            {slot.prices
+                                              ?.filter((price) => price.slotType?.type.toLowerCase() === 'online')
+                                              .map((price) => (
+                                                <div key={price.id} className="flex items-center justify-between text-xs">
+                                                  <span className="text-gray-600 capitalize">{price.slotType?.type}:</span>
+                                                  <span className="font-semibold" style={{ color: '#00856F' }}>
+                                                    PKR {parseFloat(price.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                  </span>
+                                                </div>
+                                              ))}
+                                          </div>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

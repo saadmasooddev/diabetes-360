@@ -71,7 +71,8 @@ export class BookingService {
     startTime: string,
     endTime: string,
     slotTypeIds: string[],
-    prices: { slotTypeId: string; price: string }[]
+    prices: { slotTypeId: string; price: string }[],
+    locationIds?: string[]
   ) {
     // Validate date is in the future
     const today = new Date();
@@ -88,7 +89,7 @@ export class BookingService {
       physicianId,
       date
     );
-
+ 
     if (!availability) {
       availability = await this.bookingRepository.createAvailabilityDate({
         physicianId,
@@ -168,6 +169,31 @@ export class BookingService {
     });
 
     await this.bookingRepository.createMultipleSlotPrices(priceData);
+
+    // Create slot locations if provided (for offline consultations)
+    if (locationIds && locationIds.length > 0) {
+      // Check if slot types include offline/onsite
+      const slotTypes = await Promise.all(
+        slotTypeIds.map((id) => this.bookingRepository.getSlotTypeById(id))
+      );
+
+      const hasOfflineType = slotTypes.some(
+        (type) => type && (type.type.toLowerCase() === "onsite" || type.type.toLowerCase() === "offline")
+      );
+
+      if (hasOfflineType) {
+        const locationData: Array<{ slotId: string; locationId: string }> = [];
+        createdSlots.forEach((slot) => {
+          locationIds.forEach((locationId) => {
+            locationData.push({
+              slotId: slot.id,
+              locationId,
+            });
+          });
+        });
+        await this.bookingRepository.createMultipleSlotLocations(locationData);
+      }
+    }
 
     return createdSlots;
   }
@@ -251,6 +277,38 @@ export class BookingService {
     );
 
     return details.filter((d) => d !== null) as Array<NonNullable<typeof details[0]>>;
+  }
+
+  async updateSlotLocations(
+    slotId: string,
+    locationIds: string[],
+    physicianId?: string,
+    isAdmin: boolean = false
+  ) {
+    const slot = await this.bookingRepository.getSlotById(slotId);
+    if (!slot) {
+      throw new NotFoundError("Slot not found");
+    }
+
+    const availability = await this.bookingRepository.getAvailabilityDateById(
+      slot.availabilityId
+    );
+    if (!availability) {
+      throw new NotFoundError("Availability not found");
+    }
+
+    // Check permissions
+    if (!isAdmin && availability.physicianId !== physicianId) {
+      throw new ForbiddenError("You can only update locations for your own slots");
+    }
+
+    // Check if slot is booked
+    const isBooked = await this.bookingRepository.isSlotBooked(slot.id);
+    if (isBooked) {
+      throw new BadRequestError("Cannot update locations for a booked slot");
+    }
+
+    return await this.bookingRepository.updateSlotLocations(slotId, locationIds);
   }
 
   async bookSlot(customerId: string, slotId: string) {

@@ -7,7 +7,8 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;
     email: string;
-    username: string;
+    firstName: string;
+    lastName: string;
     role: UserRole;
   };
 }
@@ -21,7 +22,8 @@ export function authenticateToken(req: AuthenticatedRequest, _res: Response, nex
     req.user = {
       userId: payload.userId,
       email: payload.email,
-      username: payload.username,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
       role: payload.role || USER_ROLES.CUSTOMER, // Default to customer if role not in token
     };
     

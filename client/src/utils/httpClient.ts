@@ -4,6 +4,7 @@ import { refreshService } from '@/services/refreshService';
 import type { TokenPair } from '@/types/auth.types';
 
 export const BASE_URL = import.meta.env.VITE_REACT_API_BASE_URL || '';
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 class HttpClient {
   private readonly baseURL = BASE_URL;

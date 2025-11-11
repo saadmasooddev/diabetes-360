@@ -101,7 +101,7 @@ export class BookingController {
         throw new BadRequestError("User ID not found");
       }
 
-      const { date, slotSizeId, startTime, endTime, slotTypeIds, prices } = req.body;
+      const { date, slotSizeId, startTime, endTime, slotTypeIds, prices, locationIds } = req.body;
 
       if (!date || !slotSizeId || !startTime || !endTime || !slotTypeIds || !prices) {
         throw new BadRequestError("All fields are required");
@@ -127,7 +127,8 @@ export class BookingController {
         startTime,
         endTime,
         slotTypeIds,
-        prices
+        prices,
+        locationIds
       );
 
       sendSuccess(res, { slots }, "Slots created successfully");
@@ -234,6 +235,39 @@ export class BookingController {
       );
 
       sendSuccess(res, { price: updatedPrice }, "Slot price updated successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async updateSlotLocations(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const isAdmin = req.user?.role === USER_ROLES.ADMIN;
+
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const { slotId } = req.params;
+      const { locationIds } = req.body;
+
+      if (!slotId) {
+        throw new BadRequestError("Slot ID is required");
+      }
+
+      if (!Array.isArray(locationIds)) {
+        throw new BadRequestError("locationIds must be an array");
+      }
+
+      const updatedLocations = await this.bookingService.updateSlotLocations(
+        slotId,
+        locationIds,
+        isAdmin ? undefined : userId,
+        isAdmin
+      );
+
+      sendSuccess(res, { locations: updatedLocations }, "Slot locations updated successfully");
     } catch (error: any) {
       handleError(res, error);
     }

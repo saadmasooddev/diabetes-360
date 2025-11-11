@@ -24,9 +24,8 @@ export function UserManagement() {
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
 
   const filteredUsers = users.filter(user =>
-    user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDeleteUser = (user: User) => {
@@ -125,7 +124,7 @@ export function UserManagement() {
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
-                        {user.fullName || user.username}
+                        {user.firstName} {user.lastName}
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>

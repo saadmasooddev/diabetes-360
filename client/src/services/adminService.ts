@@ -4,8 +4,9 @@ import { httpClient } from '@/utils/httpClient';
 
 export interface User {
   id: string;
-  username: string;
-  fullName: string;
+  firstName: string;
+  
+  lastName: string;
   email: string;
   emailVerified: boolean;
   provider: string;
@@ -19,15 +20,9 @@ export interface User {
 }
 
 export interface CustomerData {
-  firstName?: string;
-  lastName?: string;
   gender?: 'male' | 'female';
-  birthDay?: string;
-  birthMonth?: string;
-  birthYear?: string;
-  diagnosisDay?: string;
-  diagnosisMonth?: string;
-  diagnosisYear?: string;
+  birthday?: string; // ISO date string
+  diagnosisDate?: string; // ISO date string
   weight?: string;
   height?: string;
   diabetesType: 'type1' | 'type2' | 'gestational' | 'prediabetes';
@@ -41,7 +36,8 @@ export interface PhysicianData {
 }
 
 export interface CreateUserRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   role: 'customer' | 'admin' | 'physician';
@@ -51,46 +47,14 @@ export interface CreateUserRequest {
 }
 
 export interface UpdateUserRequest {
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   password?: string;
   role?: 'customer' | 'admin' | 'physician';
   isActive?: boolean;
   physicianData?: Partial<PhysicianData>;
   customerData?: Partial<CustomerData>;
-}
-
-
-export interface User {
-  id: string;
-  username: string;
-  fullName: string;
-  email: string;
-  emailVerified: boolean;
-  provider: string;
-  providerId?: string;
-  avatar?: string;
-  role: 'customer' | 'admin' | 'physician';
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  customerData?: any; // Customer data if user is a customer
-}
-
-export interface CreateUserRequest {
-  fullName: string;
-  email: string;
-  password: string;
-  role: 'customer' | 'admin' | 'physician';
-  isActive?: boolean;
-}
-
-export interface UpdateUserRequest {
-  fullName?: string;
-  email?: string;
-  password?: string;
-  role?: 'customer' | 'admin' | 'physician';
-  isActive?: boolean;
 }
 
 class AdminService {

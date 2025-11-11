@@ -15,7 +15,8 @@ export interface PhysicianSpecialty {
 
 export interface Physician {
   id: string;
-  fullName: string | null;
+  firstName: string | null;
+  lastName: string | null;
   email: string;
   avatar?: string | null;
   specialty: string;
@@ -76,6 +77,46 @@ export interface CreateRatingRequest {
   physicianId: string;
   rating: number;
   comment?: string;
+}
+
+export interface PhysicianLocation {
+  id: string;
+  physicianId: string;
+  locationName: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+  latitude: string;
+  longitude: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateLocationRequest {
+  locationName: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  latitude: string;
+  longitude: string;
+  status?: 'active' | 'inactive';
+}
+
+export interface UpdateLocationRequest {
+  locationName?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  latitude?: string;
+  longitude?: string;
+  status?: 'active' | 'inactive';
 }
 
 class PhysicianService {
@@ -214,6 +255,43 @@ class PhysicianService {
       throw new Error(response.message || 'Failed to upload image');
     }
     return response.data.imageUrl;
+  }
+
+  // Location endpoints
+  async getAllLocations(): Promise<PhysicianLocation[]> {
+    const response = await httpClient.get<ApiResponse<{ locations: PhysicianLocation[] }>>(
+      API_ENDPOINTS.PHYSICIAN.LOCATIONS
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch locations');
+    }
+    return response.data.locations;
+  }
+
+  async createLocation(data: CreateLocationRequest): Promise<PhysicianLocation> {
+    const response = await httpClient.post<ApiResponse<{ location: PhysicianLocation }>>(
+      API_ENDPOINTS.PHYSICIAN.LOCATIONS,
+      data
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to create location');
+    }
+    return response.data.location;
+  }
+
+  async updateLocation(id: string, data: UpdateLocationRequest): Promise<PhysicianLocation> {
+    const response = await httpClient.patch<ApiResponse<{ location: PhysicianLocation }>>(
+      API_ENDPOINTS.PHYSICIAN.LOCATION_BY_ID(id),
+      data
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to update location');
+    }
+    return response.data.location;
+  }
+
+  async deleteLocation(id: string): Promise<void> {
+    await httpClient.delete(API_ENDPOINTS.PHYSICIAN.LOCATION_BY_ID(id));
   }
 }
 

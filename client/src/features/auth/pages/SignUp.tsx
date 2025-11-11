@@ -46,7 +46,8 @@ export const SignUp = (): JSX.Element => {
     resolver: zodResolver(signupSchema),
     mode: "onChange",
     defaultValues: {
-      fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -54,13 +55,15 @@ export const SignUp = (): JSX.Element => {
     },
   });
 
-  const fullNameValue = watch("fullName");
+  const firstNameValue = watch("firstName");
+  const lastNameValue = watch("lastName");
   const emailValue = watch("email");
   const agreeToTermsValue = watch("agreeToTerms");
 
   const onSubmit = (data: SignupFormData) => {
     signup({
-      fullName: data.fullName,
+      firstName: data.firstName,
+      lastName: data.lastName,
       email: data.email,
       password: data.password,
     });
@@ -70,7 +73,8 @@ export const SignUp = (): JSX.Element => {
     console.log(`${platform} signup clicked`);
   };
 
-  const isFullNameValid = fullNameValue && !errors.fullName;
+  const isFirstNameValid = firstNameValue && !errors.firstName;
+  const isLastNameValid = lastNameValue && !errors.lastName;
   const isEmailValid = emailValue && !errors.email;
 
   return (
@@ -115,30 +119,58 @@ export const SignUp = (): JSX.Element => {
           </h2>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Full Name Field */}
+            {/* First Name Field */}
             <div className="flex flex-col gap-1.5 mb-[16px]">
               <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
-                Full Name
+                First Name
               </Label>
               <div className="relative w-full lg:w-[353px]">
                 <Input
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="John"
                   maxLength={100}
-                  className={`w-full h-auto pl-4 ${isFullNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.fullName
+                  className={`w-full h-auto pl-4 ${isFirstNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.firstName
                     ? "border-red-500"
                     : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
-                  {...register("fullName")}
-                  data-testid="input-fullname"
+                  {...register("firstName")}
+                  data-testid="input-firstname"
                 />
-                {isFullNameValid && (
-                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" data-testid="icon-fullname-valid" />
+                {isFirstNameValid && (
+                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" data-testid="icon-firstname-valid" />
                 )}
               </div>
-              {errors.fullName && (
-                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]" data-testid="error-fullname">
-                  {errors.fullName.message}
+              {errors.firstName && (
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]" data-testid="error-firstname">
+                  {errors.firstName.message}
+                </span>
+              )}
+            </div>
+
+            {/* Last Name Field */}
+            <div className="flex flex-col gap-1.5 mb-[16px]">
+              <Label className="[font-family:'Inter',Helvetica] font-normal text-black text-sm tracking-[0] leading-[17.5px]">
+                Last Name
+              </Label>
+              <div className="relative w-full lg:w-[353px]">
+                <Input
+                  type="text"
+                  placeholder="Doe"
+                  maxLength={100}
+                  className={`w-full h-auto pl-4 ${isLastNameValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.lastName
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
+                    } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+                  {...register("lastName")}
+                  data-testid="input-lastname"
+                />
+                {isLastNameValid && (
+                  <CheckIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#00856f] pointer-events-none" data-testid="icon-lastname-valid" />
+                )}
+              </div>
+              {errors.lastName && (
+                <span className="text-red-500 text-sm [font-family:'Inter',Helvetica]" data-testid="error-lastname">
+                  {errors.lastName.message}
                 </span>
               )}
             </div>

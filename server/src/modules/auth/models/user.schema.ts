@@ -22,8 +22,8 @@ export const userRole = pgEnum("user_role",[USER_ROLES.CUSTOMER, USER_ROLES.ADMI
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  fullName: text("full_name"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   password: text("password"), // Made optional for OAuth providers
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false),
@@ -56,8 +56,8 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  fullName: true,
+  firstName: true,
+  lastName: true,
   password: true,
   email: true,
   provider: true,
@@ -169,15 +169,9 @@ export const insertPhysicianRatingSchema = createInsertSchema(physicianRatings).
 export const customerData = pgTable("customer_data", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
   gender: text("gender").notNull(), // 'male' or 'female'
-  birthDay: text("birth_day").notNull(),
-  birthMonth: text("birth_month").notNull(),
-  birthYear: text("birth_year").notNull(),
-  diagnosisDay: text("diagnosis_day").notNull(),
-  diagnosisMonth: text("diagnosis_month").notNull(),
-  diagnosisYear: text("diagnosis_year").notNull(),
+  birthday: timestamp("birthday").notNull(), // Combined birthday field
+  diagnosisDate: timestamp("diagnosis_date").notNull(), // Combined diagnosis date field
   weight: text("weight").notNull(), // Stored as string, e.g., "70"
   height: text("height").notNull(), // Stored as string, e.g., "175"
   diabetesType: text("diabetes_type").notNull(), // 'type1', 'type2', 'gestational', 'prediabetes'
@@ -190,6 +184,19 @@ export const insertCustomerDataSchema = createInsertSchema(customerData).omit({
   userId: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  birthday: z.string().or(z.date()).transform((val) => {
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
+  diagnosisDate: z.string().or(z.date()).transform((val) => {
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
 });
 
 // Schema for admin creating customer data (dates optional, diabetesType required)
@@ -199,12 +206,8 @@ export const insertCustomerDataAdminSchema = createInsertSchema(customerData).om
   createdAt: true,
   updatedAt: true,
 }).extend({
-  birthDay: z.string().min(1, "Birth day is required"),
-  birthMonth: z.string().min(1, "Birth month is required"),
-  birthYear: z.string().min(1, "Birth year is required"),
-  diagnosisDay: z.string().min(1, "Diagnosis day is required"),
-  diagnosisMonth: z.string().min(1, "Diagnosis month is required"),
-  diagnosisYear: z.string().min(1, "Diagnosis year is required"),
+  birthday: z.string().min(1, "Birthday is required").transform((val) => new Date(val)),
+  diagnosisDate: z.string().min(1, "Diagnosis date is required").transform((val) => new Date(val)),
   weight: z.string().min(1, "Weight is required"),
   height: z.string().min(1, "Height is required"),
   diabetesType: z.string().min(1, "Diabetes type is required"),
@@ -215,7 +218,22 @@ export const updateCustomerDataSchema = createInsertSchema(customerData).omit({
   userId: true,
   createdAt: true,
   updatedAt: true,
-}).partial();
+}).partial().extend({
+  birthday: z.string().or(z.date()).optional().transform((val) => {
+    if (!val) return undefined;
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
+  diagnosisDate: z.string().or(z.date()).optional().transform((val) => {
+    if (!val) return undefined;
+    if (typeof val === 'string') {
+      return new Date(val);
+    }
+    return val;
+  }),
+});
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -238,3 +256,53 @@ export type InsertPhysicianRating = z.infer<typeof insertPhysicianRatingSchema>;
 export type CustomerData = typeof customerData.$inferSelect;
 export type InsertCustomerData = z.infer<typeof insertCustomerDataSchema>;
 export type UpdateCustomerData = z.infer<typeof updateCustomerDataSchema>;
+
+// Physician Locations Table
+export const LOCATION_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+
+export const locationStatusEnum = z.enum([LOCATION_STATUS.ACTIVE, LOCATION_STATUS.INACTIVE]);
+export const locationStatus = pgEnum("location_status", [LOCATION_STATUS.ACTIVE, LOCATION_STATUS.INACTIVE]);
+
+export const physicianLocations = pgTable("physician_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  physicianId: varchar("physician_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  locationName: text("location_name").notNull(),
+  address: text("address"), // Full address from Google Maps
+  city: text("city"),
+  state: text("state"),
+  country: text("country"),
+  postalCode: text("postal_code"),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
+  status: locationStatus().default(LOCATION_STATUS.ACTIVE).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPhysicianLocationSchema = createInsertSchema(physicianLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  latitude: z.string().transform((val) => val),
+  longitude: z.string().transform((val) => val),
+  status: z.enum([LOCATION_STATUS.ACTIVE, LOCATION_STATUS.INACTIVE]).default(LOCATION_STATUS.ACTIVE),
+});
+
+export const updatePhysicianLocationSchema = createInsertSchema(physicianLocations).omit({
+  id: true,
+  physicianId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial().extend({
+  latitude: z.string().optional().transform((val) => val || undefined),
+  longitude: z.string().optional().transform((val) => val || undefined),
+  status: z.enum([LOCATION_STATUS.ACTIVE, LOCATION_STATUS.INACTIVE]).optional(),
+});
+
+export type PhysicianLocation = typeof physicianLocations.$inferSelect;
+export type InsertPhysicianLocation = z.infer<typeof insertPhysicianLocationSchema>;
+export type UpdatePhysicianLocation = z.infer<typeof updatePhysicianLocationSchema>;

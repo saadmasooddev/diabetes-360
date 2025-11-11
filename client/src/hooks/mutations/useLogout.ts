@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
-import type { LogoutRequest } from '@/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';

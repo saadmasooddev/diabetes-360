@@ -17,15 +17,21 @@ const authController = new AuthController();
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - firstName
+ *               - lastName
  *               - email
  *               - password
  *             properties:
- *               username:
+ *               firstName:
  *                 type: string
- *                 example: johndoe
- *                 minLength: 3
- *                 maxLength: 50
+ *                 example: John
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *                 minLength: 1
+ *                 maxLength: 100
  *               email:
  *                 type: string
  *                 format: email
@@ -35,9 +41,6 @@ const authController = new AuthController();
  *                 format: password
  *                 minLength: 8
  *                 example: SecurePass123!
- *               fullName:
- *                 type: string
- *                 example: John Doe
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -50,6 +53,25 @@ const authController = new AuthController();
  *                   properties:
  *                     data:
  *                       $ref: '#/components/schemas/AuthResponse'
+ *                   example:
+ *                     status: 200
+ *                     success: true
+ *                     message: Account created successfully
+ *                     data:
+ *                       user:
+ *                         id: "uuid-string"
+ *                         firstName: "John"
+ *                         lastName: "Doe"
+ *                         email: "john@example.com"
+ *                         role: "customer"
+ *                         tier: "free"
+ *                         profileComplete: false
+ *                         profileData: null
+ *                         createdAt: "2024-01-01T00:00:00Z"
+ *                         updatedAt: "2024-01-01T00:00:00Z"
+ *                       tokens:
+ *                         accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *       400:
  *         description: Bad request - validation error
  *         content:
@@ -63,7 +85,7 @@ const authController = new AuthController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/signup", (req, res, next) => authController.signup(req, res, next));
+router.post("/signup", (req, res) => authController.signup(req, res));
 
 /**
  * @swagger
@@ -101,6 +123,134 @@ router.post("/signup", (req, res, next) => authController.signup(req, res, next)
  *                   properties:
  *                     data:
  *                       $ref: '#/components/schemas/AuthResponse'
+ *                   example:
+ *                     status: 200
+ *                     success: true
+ *                     message: Login successful
+ *                     data:
+ *                       id: "uuid-string"
+ *                       firstName: "John"
+ *                       lastName: "Doe"
+ *                       email: "john@example.com"
+ *                       emailVerified: false
+ *                       provider: "manual"
+ *                       providerId: null
+ *                       avatar: null
+ *                       role: "customer"
+ *                       tier: "free"
+ *                       isActive: true
+ *                       profileComplete: true
+ *                       profileData:
+ *                         id: "uuid-string"
+ *                         userId: "uuid-string"
+ *                         gender: "male"
+ *                         birthday: "1990-01-15T00:00:00Z"
+ *                         diagnosisDate: "2020-05-10T00:00:00Z"
+ *                         weight: "70"
+ *                         height: "175"
+ *                         diabetesType: "type2"
+ *                         createdAt: "2024-01-01T00:00:00Z"
+ *                         updatedAt: "2024-01-01T00:00:00Z"
+ *                       createdAt: "2024-01-01T00:00:00Z"
+ *                       updatedAt: "2024-01-01T00:00:00Z"
+ *                       tokens:
+ *                         accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                         refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *             examples:
+ *               customer:
+ *                 summary: Customer user
+ *                 value:
+ *                   status: 200
+ *                   success: true
+ *                   message: Profile retrieved successfully
+ *                   data:
+ *                     id: "uuid-string"
+ *                     firstName: "John"
+ *                     lastName: "Doe"
+ *                     email: "john@example.com"
+ *                     emailVerified: false
+ *                     provider: "manual"
+ *                     providerId: null
+ *                     avatar: null
+ *                     role: "customer"
+ *                     tier: "free"
+ *                     isActive: true
+ *                     profileComplete: true
+ *                     profileData:
+ *                       id: "uuid-string"
+ *                       userId: "uuid-string"
+ *                       gender: "male"
+ *                       birthday: "1990-01-15T00:00:00Z"
+ *                       diagnosisDate: "2020-05-10T00:00:00Z"
+ *                       weight: "70"
+ *                       height: "175"
+ *                       diabetesType: "type2"
+ *                       createdAt: "2024-01-01T00:00:00Z"
+ *                       updatedAt: "2024-01-01T00:00:00Z"
+ *                     createdAt: "2024-01-01T00:00:00Z"
+ *                     updatedAt: "2024-01-01T00:00:00Z"
+ *                     tokens:
+ *                       accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                       refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *               physician:
+ *                 summary: Physician user
+ *                 value:
+ *                   status: 200
+ *                   success: true
+ *                   message: Profile retrieved successfully
+ *                   data:
+ *                     id: "uuid-string"
+ *                     firstName: "Alice"
+ *                     lastName: "Smith"
+ *                     email: "alice@example.com"
+ *                     emailVerified: true
+ *                     provider: "manual"
+ *                     providerId: null
+ *                     avatar: null
+ *                     role: "physician"
+ *                     tier: "paid"
+ *                     isActive: true
+ *                     profileComplete: true
+ *                     profileData:
+ *                       id: "uuid-string"
+ *                       userId: "uuid-string"
+ *                       specialtyId: "uuid-string"
+ *                       specialty: "Endocrinology"
+ *                       practiceStartDate: "2010-05-01T00:00:00Z"
+ *                       consultationFee: "100"
+ *                       imageUrl: "https://example.com/physician.jpg"
+ *                       createdAt: "2024-01-01T00:00:00Z"
+ *                       updatedAt: "2024-01-01T00:00:00Z"
+ *                     createdAt: "2024-01-01T00:00:00Z"
+ *                     updatedAt: "2024-01-01T00:00:00Z"
+ *                     tokens:
+ *                       accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                       refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *               incomplete:
+ *                 summary: Profile incomplete (profileData is null)
+ *                 value:
+ *                   status: 200
+ *                   success: true
+ *                   message: Profile retrieved successfully
+ *                   data:
+ *                     id: "uuid-string"
+ *                     firstName: "Joe"
+ *                     lastName: "Bloggs"
+ *                     email: "joe@example.com"
+ *                     emailVerified: false
+ *                     provider: "manual"
+ *                     providerId: null
+ *                     avatar: null
+ *                     role: "customer"
+ *                     tier: "free"
+ *                     isActive: true
+ *                     profileComplete: false
+ *                     profileData: null
+ *                     createdAt: "2024-01-01T00:00:00Z"
+ *                     updatedAt: "2024-01-01T00:00:00Z"
+ *                     tokens:
+ *                       accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                       refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *       401:
  *         description: Unauthorized - invalid credentials
  *         content:
@@ -108,7 +258,7 @@ router.post("/signup", (req, res, next) => authController.signup(req, res, next)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/login", (req, res, next) => authController.login(req, res, next));
+router.post("/login", (req, res) => authController.login(req, res));
 
 /**
  * @swagger
@@ -147,7 +297,7 @@ router.post("/login", (req, res, next) => authController.login(req, res, next));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/refresh", (req, res, next) => authController.refreshTokens(req, res, next));
+router.post("/refresh", (req, res) => authController.refreshTokens(req, res));
 
 /**
  * @swagger
@@ -181,7 +331,7 @@ router.post("/refresh", (req, res, next) => authController.refreshTokens(req, re
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/logout", (req, res, next) => authController.logout(req, res, next));
+router.post("/logout", (req, res) => authController.logout(req, res));
 
 /**
  * @swagger
@@ -262,6 +412,6 @@ router.post("/forgot-password", (req, res, next) => authController.forgotPasswor
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/reset-password", (req, res, next) => authController.resetPassword(req, res, next));
+router.post("/reset-password", (req, res) => authController.resetPassword(req, res));
 
 export { router as authRoutes };

@@ -32,6 +32,8 @@ export const API_ENDPOINTS = {
     ALL_PHYSICIANS: '/api/physician/physicians',
     PHYSICIANS_BY_SPECIALTY: (specialtyId: string) => `/api/physician/specialties/${specialtyId}/physicians`,
     RATING: (physicianId: string) => `/api/physician/ratings/${physicianId}`,
+    LOCATIONS: '/api/physician/locations',
+    LOCATION_BY_ID: (id: string) => `/api/physician/locations/${id}`,
     ADMIN: {
       SPECIALTIES: '/api/physician/admin/specialties',
       SPECIALTY_BY_ID: (id: string) => `/api/physician/admin/specialties/${id}`,
@@ -52,6 +54,7 @@ export const API_ENDPOINTS = {
     AVAILABLE_SLOTS: (physicianId: string) => `/api/booking/physicians/${physicianId}/available-slots`,
     DELETE_SLOT: (slotId: string) => `/api/booking/slots/${slotId}`,
     UPDATE_SLOT_PRICE: (priceId: string) => `/api/booking/slot-prices/${priceId}`,
+    UPDATE_SLOT_LOCATIONS: (slotId: string) => `/api/booking/slots/${slotId}/locations`,
     BOOK_SLOT: '/api/booking/book',
   },
 } as const;

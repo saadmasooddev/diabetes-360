@@ -16,8 +16,9 @@ import { useToast } from '@/hooks/use-toast';
 import { genderOptions, diabetesTypeOptions, dayOptions, monthOptions, yearOptions, weightOptions, heightOptions } from '@/mocks/profileData';
 
 const createUserSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required'),
-  email: z.string().email('Invalid email address'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['customer', 'admin', 'physician']),
   isActive: z.boolean(),
@@ -40,8 +41,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
     imagePreview: '',
   });
   const [customerFields, setCustomerFields] = useState({
-    firstName: '',
-    lastName: '',
     gender: 'male' as 'male' | 'female',
     birthDay: '',
     birthMonth: '',
@@ -123,20 +122,27 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 
       // If customer role, include customer data (at least diabetes type)
       if (data.role === 'customer' && customerFields.diabetesType) {
-        userData.customerData = {
-          firstName: customerFields.firstName || data.fullName.split(' ')[0] || '',
-          lastName: customerFields.lastName || data.fullName.split(' ').slice(1).join(' ') || '',
+        const customerData: any = {
           gender: customerFields.gender,
-          birthDay: customerFields.birthDay,
-          birthMonth: customerFields.birthMonth,
-          birthYear: customerFields.birthYear,
-          diagnosisDay: customerFields.diagnosisDay,
-          diagnosisMonth: customerFields.diagnosisMonth,
-          diagnosisYear: customerFields.diagnosisYear,
           weight: customerFields.weight,
           height: customerFields.height,
           diabetesType: customerFields.diabetesType,
         };
+
+        // Transform separate date fields to combined format
+        if (customerFields.birthDay && customerFields.birthMonth && customerFields.birthYear) {
+          const paddedMonth = String(customerFields.birthMonth).padStart(2, '0');
+          const paddedDay = String(customerFields.birthDay).padStart(2, '0');
+          customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
+        }
+
+        if (customerFields.diagnosisDay && customerFields.diagnosisMonth && customerFields.diagnosisYear) {
+          const paddedMonth = String(customerFields.diagnosisMonth).padStart(2, '0');
+          const paddedDay = String(customerFields.diagnosisDay).padStart(2, '0');
+          customerData.diagnosisDate = `${customerFields.diagnosisYear}-${paddedMonth}-${paddedDay}`;
+        }
+
+        userData.customerData = customerData;
       }
 
       await createUserMutation.mutateAsync(userData);
@@ -163,15 +169,30 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
       <div className="flex-1 overflow-y-auto px-4 sm:px-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" id="create-user-form">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="firstName">First Name</Label>
             <Input
-              id="fullName"
-              {...register('fullName')}
-              placeholder="Enter full name"
+              id="firstName"
+              type="text"
+              {...register('firstName')}
+              placeholder="Enter first name"
               disabled={isLoading}
             />
-            {errors.fullName && (
-              <p className="text-sm text-red-600">{errors.fullName.message}</p>
+            {errors.firstName && (
+              <p className="text-sm text-red-600">{errors.firstName.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              type="text"
+              {...register('lastName')}
+              placeholder="Enter last name"
+              disabled={isLoading}
+            />
+            {errors.lastName && (
+              <p className="text-sm text-red-600">{errors.lastName.message}</p>
             )}
           </div>
 
@@ -316,27 +337,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
           {watchedRole === 'customer' && (
             <div className="space-y-4 pt-4 border-t">
               <h3 className="font-semibold text-gray-900">Customer Information</h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="customerFirstName">First Name</Label>
-                  <Input
-                    id="customerFirstName"
-                    value={customerFields.firstName}
-                    onChange={(e) => setCustomerFields({ ...customerFields, firstName: e.target.value })}
-                    placeholder="Enter first name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="customerLastName">Last Name</Label>
-                  <Input
-                    id="customerLastName"
-                    value={customerFields.lastName}
-                    onChange={(e) => setCustomerFields({ ...customerFields, lastName: e.target.value })}
-                    placeholder="Enter last name"
-                  />
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="customerGender">Gender</Label>

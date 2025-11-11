@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { PhysicianController } from "../controllers/physician.controller";
-import { authenticateToken, requireAdmin } from "../../../shared/middleware/auth";
+import { authenticateToken,  requirePhysicianOrAdmin } from "../../../shared/middleware/auth";
 import { createMulterConfig } from "../../../shared/config/multer.config";
 
 const router = Router();
+
+router.use(authenticateToken);
+
 const physicianController = new PhysicianController();
 
 const uploadPhysicianImage = createMulterConfig({
@@ -107,7 +110,7 @@ router.get("/physicians", (req, res, next) =>
  *                             properties:
  *                               id:
  *                                 type: string
- *                               fullName:
+ *                               username:
  *                                 type: string
  *                               specialty:
  *                                 type: string
@@ -194,13 +197,10 @@ router.get("/ratings/:physicianId", (req, res, next) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/ratings", authenticateToken, (req, res, next) => 
+router.post("/ratings",  (req, res, next) => 
   physicianController.createRating(req, res, next)
 );
 
-// Admin routes for specialty management
-router.use(authenticateToken);
-router.use(requireAdmin);
 
 /**
  * @swagger
@@ -480,6 +480,209 @@ router.put("/admin/physician-data/:userId", (req, res, next) =>
  */
 router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) => 
   physicianController.uploadPhysicianImage(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/physician/locations:
+ *   get:
+ *     summary: Get all locations for the authenticated physician
+ *     tags: [Physician Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Locations retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         locations:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/PhysicianLocation'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/locations",  (req, res, next) => 
+  physicianController.getAllLocations(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/physician/locations:
+ *   post:
+ *     summary: Create a new location for the authenticated physician
+ *     tags: [Physician Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - locationName
+ *               - latitude
+ *               - longitude
+ *             properties:
+ *               locationName:
+ *                 type: string
+ *                 example: "Main Clinic"
+ *               address:
+ *                 type: string
+ *                 example: "123 Main Street"
+ *               city:
+ *                 type: string
+ *                 example: "Karachi"
+ *               state:
+ *                 type: string
+ *                 example: "Sindh"
+ *               country:
+ *                 type: string
+ *                 example: "Pakistan"
+ *               postalCode:
+ *                 type: string
+ *                 example: "75500"
+ *               latitude:
+ *                 type: string
+ *                 example: "24.8607"
+ *               longitude:
+ *                 type: string
+ *                 example: "67.0011"
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *                 default: active
+ *     responses:
+ *       200:
+ *         description: Location created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         location:
+ *                           $ref: '#/components/schemas/PhysicianLocation'
+ *       400:
+ *         description: Invalid location data
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/locations",  (req, res, next) => 
+  physicianController.createLocation(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/physician/locations/{id}:
+ *   patch:
+ *     summary: Update a location for the authenticated physician
+ *     tags: [Physician Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Location ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               locationName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               postalCode:
+ *                 type: string
+ *               latitude:
+ *                 type: string
+ *               longitude:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Location updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         location:
+ *                           $ref: '#/components/schemas/PhysicianLocation'
+ *       400:
+ *         description: Invalid location data or unauthorized
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Location not found
+ */
+router.patch("/locations/:id",  (req, res, next) => 
+  physicianController.updateLocation(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/physician/locations/{id}:
+ *   delete:
+ *     summary: Delete a location for the authenticated physician
+ *     tags: [Physician Locations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Location ID
+ *     responses:
+ *       200:
+ *         description: Location deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Unauthorized
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Location not found
+ */
+router.delete("/locations/:id",  (req, res, next) => 
+  physicianController.deleteLocation(req, res, next)
 );
 
 export { router as physicianRoutes };

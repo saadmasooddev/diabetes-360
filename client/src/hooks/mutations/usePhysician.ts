@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { physicianService, type CreateSpecialtyRequest, type UpdateSpecialtyRequest, type CreatePhysicianDataRequest, type UpdatePhysicianDataRequest, type CreateRatingRequest } from '@/services/physicianService';
+import { physicianService, type CreateSpecialtyRequest, type UpdateSpecialtyRequest, type CreatePhysicianDataRequest, type UpdatePhysicianDataRequest, type CreateRatingRequest, CreateLocationRequest, UpdateLocationRequest } from '@/services/physicianService';
 import { useToast } from '@/hooks/use-toast';
 
 // Public consultation hooks
@@ -228,6 +228,88 @@ export const useUploadPhysicianImage = () => {
       toast({
         title: 'Upload Failed',
         description: error.message || 'Failed to upload image.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+// Location hooks
+export const usePhysicianLocations = () => {
+  return useQuery({
+    queryKey: ['physician', 'locations'],
+    queryFn: () => physicianService.getAllLocations(),
+  });
+};
+
+export const useCreateLocation = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateLocationRequest) => 
+      physicianService.createLocation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['physician', 'locations'] });
+      toast({
+        title: 'Location Added',
+        description: 'Location has been added successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Failed to Add Location',
+        description: error.message || 'Failed to add location.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useUpdateLocation = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateLocationRequest }) =>
+      physicianService.updateLocation(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['physician', 'locations'] });
+      toast({
+        title: 'Location Updated',
+        description: 'Location has been updated successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Update Failed',
+        description: error.message || 'Failed to update location.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useDeleteLocation = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => physicianService.deleteLocation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['physician', 'locations'] });
+      toast({
+        title: 'Location Deleted',
+        description: 'Location has been deleted successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Deletion Failed',
+        description: error.message || 'Failed to delete location.',
         variant: 'destructive',
       });
     },

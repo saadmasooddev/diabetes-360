@@ -24,6 +24,22 @@ export interface AvailabilityDate {
   updatedAt: string;
 }
 
+export interface PhysicianLocation {
+  id: string;
+  physicianId: string;
+  locationName: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+  latitude: string;
+  longitude: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Slot {
   id: string;
   availabilityId: string;
@@ -35,6 +51,7 @@ export interface Slot {
   slotSize?: SlotSize;
   prices?: Array<SlotPrice & { slotType: SlotType }>;
   types?: SlotType[];
+  locations?: PhysicianLocation[];
   isBooked?: boolean;
 }
 
@@ -54,6 +71,7 @@ export interface CreateSlotsRequest {
   endTime: string;
   slotTypeIds: string[];
   prices: Array<{ slotTypeId: string; price: string }>;
+  locationIds?: string[];
 }
 
 export interface BookSlotRequest {
@@ -62,6 +80,10 @@ export interface BookSlotRequest {
 
 export interface UpdateSlotPriceRequest {
   price: string;
+}
+
+export interface UpdateSlotLocationsRequest {
+  locationIds: string[];
 }
 
 class BookingService {
@@ -160,6 +182,17 @@ class BookingService {
       throw new Error(response.message || 'Failed to update slot price');
     }
     return response.data.price;
+  }
+
+  async updateSlotLocations(slotId: string, data: UpdateSlotLocationsRequest): Promise<PhysicianLocation[]> {
+    const response = await httpClient.patch<ApiResponse<{ locations: PhysicianLocation[] }>>(
+      API_ENDPOINTS.BOOKING.UPDATE_SLOT_LOCATIONS(slotId),
+      data
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to update slot locations');
+    }
+    return response.data.locations;
   }
 
   async bookSlot(data: BookSlotRequest): Promise<{ id: string; slotId: string; status: string }> {
