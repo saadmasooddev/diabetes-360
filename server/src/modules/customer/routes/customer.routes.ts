@@ -62,6 +62,7 @@ router.get("/profile", (req, res, next) =>
   customerController.getCustomerData(req, res, next)
 );
 
+
 /**
  * @swagger
  * /api/customer/profile:
