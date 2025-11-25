@@ -55,6 +55,7 @@ export const bookedSlots = pgTable("booked_slots", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "restrict" }),
+  slotTypeId: varchar("slot_type_id").notNull().references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
   status: text("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -107,6 +108,7 @@ export const insertBookedSlotSchema = createInsertSchema(bookedSlots).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
+  slotTypeId: z.string().min(1, "Slot type ID is required"),
   status: z.enum(["pending", "confirmed", "cancelled", "completed"]).default("pending"),
 });
 

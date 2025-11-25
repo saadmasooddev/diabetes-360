@@ -1,19 +1,40 @@
 import { db } from "../../../app/config/db";
 import { 
   customerData,
+  users,
   type CustomerData,
   type InsertCustomerData,
   type UpdateCustomerData,
+  User,
 } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
+import { UserRepository } from "../../user/repository/user.repository";
 
 export class CustomerRepository {
-  async getCustomerDataByUserId(userId: string): Promise<CustomerData | undefined> {
+  private userRepository: UserRepository;
+  constructor() {
+    this.userRepository = new UserRepository();
+  }
+
+  async getCustomerDataByUserId(userId: string) {
     const data = await db
-      .select()
+      .select({
+        birthday: customerData.birthday,
+        gender: customerData.gender,
+        id: customerData.id,
+        diagnosisDate: customerData.diagnosisDate,
+        weight: customerData.weight,
+        height: customerData.height,
+        diabetesType: customerData.diabetesType,
+        createdAt: customerData.createdAt,
+        updatedAt: customerData.updatedAt,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
       .from(customerData)
       .where(eq(customerData.userId, userId))
-      .limit(1);
+      .limit(1)
+      .leftJoin(users, eq(customerData.userId, users.id));
     return data[0];
   }
 
@@ -29,11 +50,12 @@ export class CustomerRepository {
     return customerDataRecord;
   }
 
-  async updateCustomerData(userId: string, data: UpdateCustomerData): Promise<CustomerData> {
+  async updateCustomerData(userId: string, data: UpdateCustomerData) {
+    const { firstName, lastName, ...rest } = data;
     const [customerDataRecord] = await db
       .update(customerData)
       .set({
-        ...data,
+        ...rest,
         updatedAt: new Date(),
       })
       .where(eq(customerData.userId, userId))
@@ -42,8 +64,26 @@ export class CustomerRepository {
     if (!customerDataRecord) {
       throw new Error("Customer data not found");
     }
-    
-    return customerDataRecord;
+    const object: Partial<User> = {
+      updatedAt: new Date(),
+    }
+
+    if(firstName) {
+      object.firstName = firstName;
+    }
+
+    if(lastName) {
+      object.lastName = lastName;
+    }
+
+    if(object.firstName || object.lastName) 
+      await this.userRepository.updateUser(userId, object);
+
+    return {
+      ...customerDataRecord,
+      firstName: object.firstName,
+      lastName: object.lastName,
+    };
   }
 
   async deleteCustomerData(userId: string): Promise<void> {

@@ -116,9 +116,9 @@ const options: swaggerJsdoc.Options = {
               enum: ['customer', 'admin', 'physician'],
               example: 'customer',
             },
-            tier: {
+            paymentType: {
               type: 'string',
-              enum: ['free', 'paid'],
+              enum: ['free', 'monthly', 'annual'],
               example: 'free',
             },
             isActive: {

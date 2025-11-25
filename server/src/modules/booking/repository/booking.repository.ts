@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, gte, sql, inArray, or } from "drizzle-orm";
+import { eq, and, gte, lte, sql, inArray, or } from "drizzle-orm";
 import {
   slotSize,
   availabilityDate,
@@ -29,6 +29,15 @@ import type {
   SlotLocation,
 } from "../models/booking.schema";
 
+export type SlotWithDetails = {
+  id: string;
+  startTime: string;
+  endTime: string;
+  slotSize: number;
+  types: Array<{ id: string, type: string; }>;
+  locations: Array<{ locationName: string; address?: string | null; city?: string | null; state?: string | null; country?: string | null; postalCode?: string | null; latitude: string; longitude: string; }>;
+  isBooked: boolean;
+}
 export class BookingRepository {
   // Slot Size operations
   async getAllSlotSizes(): Promise<SlotSize[]> {
@@ -344,7 +353,6 @@ export class BookingRepository {
       }
     >
   > {
-    const dateStr = date.toISOString().split("T")[0];
     const availability = await this.getAvailabilityDateByPhysicianAndDate(physicianId, date);
 
     if (!availability) return [];
@@ -499,12 +507,10 @@ export class BookingRepository {
         (startMinutes < slotEndMinutes && endMinutes > slotStartMinutes) ||
         (slotStartMinutes < endMinutes && slotEndMinutes > startMinutes);
 
+      // If time overlaps, prevent creating new slots regardless of type
+      // This ensures no overlapping time slots can be created, even with different types
       if (timeOverlaps) {
-        // Check if slot types overlap
-        const hasCommonType = slot.typeIds.some((tid) => slotTypeIds.includes(tid));
-        if (hasCommonType) {
-          return true; // Overlapping found
-        }
+        return true; // Overlapping found - time conflict regardless of type
       }
     }
 
@@ -572,6 +578,221 @@ export class BookingRepository {
       locationId,
     }));
     return await this.createMultipleSlotLocations(insertData);
+  }
+
+  // Get dates with available booking counts for a specific month/year
+  async getDatesWithCountsForMonth(
+    physicianId: string,
+    month: number,
+    year: number
+  ): Promise<Array<{ date: string; count: number }>> {
+    if (month < 1 || month > 12) {
+      return [];
+    }
+
+    // Calculate start and end of month
+    const startDate = new Date(year, month - 1, 1);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    // Get all availability dates for the month
+    const availabilities = await db
+      .select()
+      .from(availabilityDate)
+      .where(
+        and(
+          eq(availabilityDate.physicianId, physicianId),
+          gte(availabilityDate.date, startDate),
+          lte(availabilityDate.date, endDate)
+        )
+      )
+      .orderBy(availabilityDate.date);
+
+    if (availabilities.length === 0) {
+      return [];
+    }
+
+    const availabilityIds = availabilities.map((a) => a.id);
+
+    // Get all slots for these availabilities
+    const allSlots = await db
+      .select()
+      .from(slots)
+      .where(inArray(slots.availabilityId, availabilityIds));
+
+    if (allSlots.length === 0) {
+      return availabilities.map((a) => ({
+        date: new Date(a.date).toISOString().split("T")[0],
+        count: 0,
+      }));
+    }
+
+    const slotIds = allSlots.map((s) => s.id);
+
+    // Get booked slots (pending or confirmed)
+    const bookedSlotsResult = await db
+      .select({ slotId: bookedSlots.slotId })
+      .from(bookedSlots)
+      .where(
+        and(
+          inArray(bookedSlots.slotId, slotIds),
+          or(
+            eq(bookedSlots.status, "pending"),
+            eq(bookedSlots.status, "confirmed")
+          )
+        )
+      );
+
+    const bookedSlotIds = new Set(bookedSlotsResult.map((b) => b.slotId));
+
+    // Count available slots per date
+    const slotMap = new Map<string, number>();
+    allSlots.forEach((slot) => {
+      const availability = availabilities.find((a) => a.id === slot.availabilityId);
+      if (availability) {
+        const dateStr = new Date(availability.date).toISOString().split("T")[0];
+        if (!slotMap.has(dateStr)) {
+          slotMap.set(dateStr, 0);
+        }
+        // Only count if slot is not booked
+        if (!bookedSlotIds.has(slot.id)) {
+          slotMap.set(dateStr, slotMap.get(dateStr)! + 1);
+        }
+      }
+    });
+
+    // Return dates with counts
+    return availabilities.map((a) => {
+      const dateStr = new Date(a.date).toISOString().split("T")[0];
+      return {
+        date: dateStr,
+        count: slotMap.get(dateStr) || 0,
+      };
+    });
+  }
+
+  // Get organized slots for a specific date (without unnecessary fields)
+  async getOrganizedSlotsForDate(
+    physicianId: string,
+    date: Date
+  ): Promise<
+    SlotWithDetails[]
+  > {
+    const availability = await this.getAvailabilityDateByPhysicianAndDate(
+      physicianId,
+      date
+    );
+
+    if (!availability) {
+      return [];
+    }
+
+    const slotsList = await this.getSlotsByAvailabilityId(availability.id);
+    if (slotsList.length === 0) {
+      return [];
+    }
+
+    const slotIds = slotsList.map((s) => s.id);
+
+    // Get slot sizes
+    const slotSizes = await db
+      .select()
+      .from(slotSize)
+      .where(inArray(slotSize.id, slotsList.map((s) => s.slotSizeId)));
+    const sizeMap = new Map(slotSizes.map((s) => [s.id, s.size]));
+
+
+    const typeJunctions = await db
+      .select()
+      .from(slotTypeJunction)
+      .where(inArray(slotTypeJunction.slotId, slotIds));
+
+    const typeIds = Array.from(new Set(typeJunctions.map((j) => j.slotTypeId)))
+    const types =
+      typeIds.length > 0
+        ? await db.select().from(slotType).where(inArray(slotType.id, typeIds))
+        : [];
+    const typeMap = new Map(types.map((t) => [t.id, { id: t.id, type: t.type }]));
+
+    // Get booked slots
+    const bookedSlotsResult = await db
+      .select({ slotId: bookedSlots.slotId })
+      .from(bookedSlots)
+      .where(
+        and(
+          inArray(bookedSlots.slotId, slotIds),
+          or(
+            eq(bookedSlots.status, "pending"),
+            eq(bookedSlots.status, "confirmed")
+          )
+        )
+      );
+    const bookedSlotIds = new Set(bookedSlotsResult.map((b) => b.slotId));
+
+    // Get locations
+    const slotLocationRecords = await db
+      .select({
+        slotId: slotLocations.slotId,
+        location: physicianLocations,
+      })
+      .from(slotLocations)
+      .innerJoin(
+        physicianLocations,
+        eq(slotLocations.locationId, physicianLocations.id)
+      )
+      .where(inArray(slotLocations.slotId, slotIds));
+
+    const locationMap = new Map<
+      string,
+      Array<typeof physicianLocations.$inferSelect>
+    >();
+    slotLocationRecords.forEach((sl) => {
+      if (!locationMap.has(sl.slotId)) {
+        locationMap.set(sl.slotId, []);
+      }
+      locationMap.get(sl.slotId)!.push(sl.location);
+    });
+
+    // Organize type map
+    const typesMap = new Map<string, { id: string, type: string }[]>();
+    typeJunctions.forEach((j) => {
+      if (!typesMap.has(j.slotId)) {
+        typesMap.set(j.slotId, []);
+      }
+      const slotType = typeMap.get(j.slotTypeId);
+      if (slotType) {
+        typesMap.get(j.slotId)!.push({ id: slotType.id, type: slotType.type });
+      }
+    });
+
+    // Build organized response
+    return slotsList.map((slot) => {
+      const slotLocations = locationMap.get(slot.id) || [];
+      const organizedLocations = slotLocations.length > 0
+        ? slotLocations.map((loc) => ({
+            locationName: loc.locationName,
+            address: loc.address,
+            city: loc.city,
+            state: loc.state,
+            country: loc.country,
+            postalCode: loc.postalCode,
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          }))
+        : [ ];
+
+      const types = typesMap.get(slot.id) || [];
+
+      return {
+        id: slot.id,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        slotSize: sizeMap.get(slot.slotSizeId) || 0,
+        types,
+        locations: organizedLocations,
+        isBooked: bookedSlotIds.has(slot.id),
+      };
+    });
   }
 }
 

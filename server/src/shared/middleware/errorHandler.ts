@@ -4,6 +4,7 @@ import { AppError } from "../errors";
 import { ZodError } from "zod";
 
 export function handleError(res: Response, error: any, data: any = null): void {
+  console.log(error)
   if (error instanceof AppError) {
     sendError(res, error.message, error.statusCode, data);
     return;
@@ -19,6 +20,5 @@ export function handleError(res: Response, error: any, data: any = null): void {
 }
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
-  console.log(err)
   handleError(res, err);
 }

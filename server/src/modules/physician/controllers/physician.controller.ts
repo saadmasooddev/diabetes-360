@@ -150,6 +150,26 @@ export class PhysicianController {
     }
   }
 
+  async getPhysiciansPaginated(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string | undefined;
+      const specialtyId = req.query.specialtyId as string | undefined;
+
+      const result = await this.physicianService.getPhysiciansPaginated({
+        page,
+        limit,
+        search,
+        specialtyId,
+      });
+
+      sendSuccess(res, result, "Physicians retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
   async getPhysiciansBySpecialty(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { specialtyId } = req.params;
@@ -218,6 +238,20 @@ export class PhysicianController {
         throw new BadRequestError("User ID not found");
       }
       console.log("The physician ID is", physicianId);
+      const locations = await this.physicianService.getAllLocationsByPhysicianId(physicianId);
+      sendSuccess(res, { locations }, "Locations retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  // Admin endpoint to get locations for a specific physician
+  async getAllLocationsByPhysicianId(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { physicianId } = req.params;
+      if (!physicianId) {
+        throw new BadRequestError("Physician ID is required");
+      }
       const locations = await this.physicianService.getAllLocationsByPhysicianId(physicianId);
       sendSuccess(res, { locations }, "Locations retrieved successfully");
     } catch (error: any) {

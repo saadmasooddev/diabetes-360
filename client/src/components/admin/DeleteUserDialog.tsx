@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/spinner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useDeleteUser } from '@/hooks/mutations/useAdmin';
 
@@ -9,18 +10,15 @@ interface DeleteUserDialogProps {
 }
 
 export function DeleteUserDialog({ userId, onClose }: DeleteUserDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const deleteUserMutation = useDeleteUser();
+  const isLoading = deleteUserMutation.isPending;
 
   const handleDelete = async () => {
-    setIsLoading(true);
     try {
       await deleteUserMutation.mutateAsync(userId);
       onClose();
     } catch (error) {
       // Error is handled by the mutation hook
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -43,7 +41,14 @@ export function DeleteUserDialog({ userId, onClose }: DeleteUserDialogProps) {
             onClick={handleDelete}
             disabled={isLoading}
           >
-            {isLoading ? 'Deleting...' : 'Delete User'}
+            {isLoading ? (
+              <>
+                <ButtonSpinner className="mr-2 h-4 w-4" />
+                Deleting...
+              </>
+            ) : (
+              'Delete User'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

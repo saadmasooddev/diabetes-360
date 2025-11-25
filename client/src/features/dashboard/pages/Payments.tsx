@@ -27,13 +27,6 @@ export function Payments() {
   };
 
   const handleContinuePayment = () => {
-    console.log('Processing payment...', {
-      paymentMethod,
-      cardNumber,
-      expirationDate,
-      cvv,
-      saveCard,
-    });
     // Show success screen
     setPaymentStep('success');
   };

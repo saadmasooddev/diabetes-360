@@ -5,21 +5,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFreeTierLimits, useUpdateFreeTierLimits, useCreateFreeTierLimits } from '@/hooks/mutations/useSettings';
 import { Settings } from 'lucide-react';
+import { handleNumberInput } from '@/lib/utils';
+import { ButtonSpinner } from '@/components/ui/spinner';
 
 export function FreeTierLimitsManagement() {
   const { data: limits, isLoading } = useFreeTierLimits();
   const updateMutation = useUpdateFreeTierLimits();
   const createMutation = useCreateFreeTierLimits();
 
-  const [glucoseLimit, setGlucoseLimit] = useState<number>(2);
-  const [stepsLimit, setStepsLimit] = useState<number>(2);
-  const [waterLimit, setWaterLimit] = useState<number>(2);
+  const [glucoseLimit, setGlucoseLimit] = useState<string>('2');
+  const [stepsLimit, setStepsLimit] = useState<string>('2');
+  const [waterLimit, setWaterLimit] = useState<string>('2');
+  const [discountedConsultationQuota, setDiscountedConsultationQuota] = useState<string>('0');
+  const [freeConsultationQuota, setFreeConsultationQuota] = useState<string>('0');
 
   useEffect(() => {
     if (limits) {
-      setGlucoseLimit(limits.glucoseLimit);
-      setStepsLimit(limits.stepsLimit);
-      setWaterLimit(limits.waterLimit);
+      setGlucoseLimit(String(limits.glucoseLimit));
+      setStepsLimit(String(limits.stepsLimit));
+      setWaterLimit(String(limits.waterLimit));
+      setDiscountedConsultationQuota(String(limits.discountedConsultationQuota || 0));
+      setFreeConsultationQuota(String(limits.freeConsultationQuota || 0));
     }
   }, [limits]);
 
@@ -27,9 +33,11 @@ export function FreeTierLimitsManagement() {
     e.preventDefault();
 
     const data = {
-      glucoseLimit: Number(glucoseLimit),
-      stepsLimit: Number(stepsLimit),
-      waterLimit: Number(waterLimit),
+      glucoseLimit: Number(glucoseLimit) || 0,
+      stepsLimit: Number(stepsLimit) || 0,
+      waterLimit: Number(waterLimit) || 0,
+      discountedConsultationQuota: Number(discountedConsultationQuota) || 0,
+      freeConsultationQuota: Number(freeConsultationQuota) || 0,
     };
 
     if (limits) {
@@ -56,7 +64,7 @@ export function FreeTierLimitsManagement() {
           Free Tier Limits Management
         </CardTitle>
         <CardDescription className="text-sm">
-          Configure daily logging limits for free tier users. Each metric type has its own limit.
+          Configure daily logging limits for free tier users and consultation quotas for new users. Each metric type has its own limit.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
@@ -73,10 +81,14 @@ export function FreeTierLimitsManagement() {
                 </Label>
                 <Input
                   id="glucose-limit"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   min="0"
                   value={glucoseLimit}
-                  onChange={(e) => setGlucoseLimit(Number(e.target.value))}
+                  onChange={(e) => {
+                    const sanitized = handleNumberInput(glucoseLimit, e.target.value);
+                    setGlucoseLimit(sanitized);
+                  }}
                   required
                   className="w-full"
                   style={{
@@ -96,10 +108,14 @@ export function FreeTierLimitsManagement() {
                 </Label>
                 <Input
                   id="steps-limit"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   min="0"
                   value={stepsLimit}
-                  onChange={(e) => setStepsLimit(Number(e.target.value))}
+                  onChange={(e) => {
+                    const sanitized = handleNumberInput(stepsLimit, e.target.value);
+                    setStepsLimit(sanitized);
+                  }}
                   required
                   className="w-full"
                   style={{
@@ -119,10 +135,14 @@ export function FreeTierLimitsManagement() {
                 </Label>
                 <Input
                   id="water-limit"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   min="0"
                   value={waterLimit}
-                  onChange={(e) => setWaterLimit(Number(e.target.value))}
+                  onChange={(e) => {
+                    const sanitized = handleNumberInput(waterLimit, e.target.value);
+                    setWaterLimit(sanitized);
+                  }}
                   required
                   className="w-full"
                   style={{
@@ -137,15 +157,77 @@ export function FreeTierLimitsManagement() {
               </div>
             </div>
 
+            <div className="pt-4 border-t">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Consultation Quotas (for new users)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="discounted-quota" className="text-sm font-medium text-gray-700">
+                    Discounted Consultation Quota
+                  </Label>
+                  <Input
+                    id="discounted-quota"
+                    type="text"
+                    inputMode="numeric"
+                    min="0"
+                    value={discountedConsultationQuota}
+                    onChange={(e) => {
+                      const sanitized = handleNumberInput(discountedConsultationQuota, e.target.value);
+                      setDiscountedConsultationQuota(sanitized);
+                    }}
+                    required
+                    className="w-full"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 0, 0, 0.2)',
+                    }}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Number of discounted consultations (20% off) available for new paid users
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="free-quota" className="text-sm font-medium text-gray-700">
+                    Free Consultation Quota
+                  </Label>
+                  <Input
+                    id="free-quota"
+                    type="text"
+                    inputMode="numeric"
+                    min="0"
+                    value={freeConsultationQuota}
+                    onChange={(e) => {
+                      const sanitized = handleNumberInput(freeConsultationQuota, e.target.value);
+                      setFreeConsultationQuota(sanitized);
+                    }}
+                    required
+                    className="w-full"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 0, 0, 0.2)',
+                    }}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Number of free consultations available for new annual paid users
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Note: These quotas apply to all new users. Existing users will continue on their old quotas.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
                   if (limits) {
-                    setGlucoseLimit(limits.glucoseLimit);
-                    setStepsLimit(limits.stepsLimit);
-                    setWaterLimit(limits.waterLimit);
+                    setGlucoseLimit(String(limits.glucoseLimit));
+                    setStepsLimit(String(limits.stepsLimit));
+                    setWaterLimit(String(limits.waterLimit));
                   }
                 }}
                 disabled={isSubmitting}
@@ -161,7 +243,16 @@ export function FreeTierLimitsManagement() {
                   minWidth: '120px',
                 }}
               >
-                {isSubmitting ? 'Saving...' : limits ? 'Update Limits' : 'Create Limits'}
+                {isSubmitting ? (
+                  <>
+                    <ButtonSpinner className="mr-2" />
+                    Saving...
+                  </>
+                ) : limits ? (
+                  'Update Limits'
+                ) : (
+                  'Create Limits'
+                )}
               </Button>
             </div>
           </form>

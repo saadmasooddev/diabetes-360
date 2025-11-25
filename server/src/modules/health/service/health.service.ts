@@ -1,7 +1,8 @@
 import { HealthRepository } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
-import type { InsertHealthMetric, HealthMetric, MertricRecord } from "../models/health.schema";
+import type { InsertHealthMetric, HealthMetric, MertricRecord, InsertActivityLog, ActivityLog, InsertExerciseLog, ExerciseLog, InsertHealthMetricTarget, UpdateHealthMetricTarget, HealthMetricTarget } from "../models/health.schema";
 import { BadRequestError } from "../../../shared/errors";
+import { FreeTierLimits } from "../../settings/models/settings.schema";
 
 export class HealthService {
   private healthRepository: HealthRepository;
@@ -12,14 +13,14 @@ export class HealthService {
     this.settingsService = new SettingsService();
   }
 
-  async createMetric(data: InsertHealthMetric, userTier: string = "free"): Promise<HealthMetric> {
+  async createMetric(data: InsertHealthMetric, paymentType: string = "free"): Promise<HealthMetric> {
     // Heart rate is only available for paid users
-    if (data.heartRate && userTier !== "paid") {
+    if (data.heartRate && paymentType === "free") {
       throw new BadRequestError("Heart rate tracking is only available for paid users. Please upgrade to access this feature.");
     }
 
     // Check daily limit for free tier users per metric type
-    if (userTier === "free") {
+    if (paymentType === "free") {
       // Determine which metric type is being logged
       let metricType: 'glucose' | 'steps' | 'water' | null = null;
       
@@ -49,8 +50,18 @@ export class HealthService {
     return await this.healthRepository.createMetric(data);
   }
 
-  async getLatestMetric(userId: string): Promise<HealthMetric | null> {
+  async getLatestMetric(userId: string): Promise<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric> }> {
     return await this.healthRepository.getLatestMetric(userId);
+  }
+
+  async getLatestMetricsWithLimit(userId: string): Promise<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric>, limits: FreeTierLimits }> {
+    const limits = await this.settingsService.getFreeTierLimits();
+    const latestMetrics = await this.healthRepository.getLatestMetric(userId);
+    return {
+      current: latestMetrics.current,
+      previous: latestMetrics.previous,
+      limits: limits,
+    }
   }
 
   async getMetricsByUser(
@@ -86,8 +97,19 @@ export class HealthService {
     glucose: { daily: number; weekly: number; monthly: number };
     water: { daily: number; weekly: number; monthly: number };
     steps: { daily: number; weekly: number; monthly: number };
+    heartRate: { daily: number; weekly: number; monthly: number };
+    targets: {
+      recommended: HealthMetricTarget[];
+      user: HealthMetricTarget[];
+    };
   }> {
-    return await this.healthRepository.getAggregatedStatistics(userId);
+    const statistics = await this.healthRepository.getAggregatedStatistics(userId);
+    const targets = await this.healthRepository.getTargetsForUser(userId);
+    
+    return {
+      ...statistics,
+      targets,
+    };
   }
 
   async getFilteredMetrics(
@@ -102,6 +124,137 @@ export class HealthService {
     heartBeatRecords: MertricRecord[];
   }> {
     return await this.healthRepository.getFilteredMetrics(userId, startDate, endDate, types);
+  }
+
+  // Activity Logs Methods
+  async createActivityLog(data: InsertActivityLog): Promise<ActivityLog> {
+    return await this.healthRepository.createActivityLog(data);
+  }
+
+  async getActivityLogs(
+    userId: string,
+    activityType?: "walking" | "yoga",
+    limit: number = 30,
+    offset: number = 0
+  ): Promise<ActivityLog[]> {
+    return await this.healthRepository.getActivityLogsByUser(userId, activityType, limit, offset);
+  }
+
+  async getTodayActivityLogs(userId: string, activityType?: "walking" | "yoga"): Promise<ActivityLog[]> {
+    return await this.healthRepository.getTodayActivityLogs(userId, activityType);
+  }
+
+  async getActivityLogsForChart(
+    userId: string,
+    activityType: "walking" | "yoga",
+    days: number = 7
+  ): Promise<ActivityLog[]> {
+    return await this.healthRepository.getActivityLogsForChart(userId, activityType, days);
+  }
+
+  async getTotalActivityMinutesToday(userId: string, activityType?: "walking" | "yoga"): Promise<number> {
+    return await this.healthRepository.getTotalActivityMinutesToday(userId, activityType);
+  }
+
+  // Exercise Logs Methods
+  async createExerciseLog(data: InsertExerciseLog): Promise<ExerciseLog> {
+    return await this.healthRepository.createExerciseLog(data);
+  }
+
+  async createExerciseLogsBatch(data: InsertExerciseLog[]): Promise<ExerciseLog[]> {
+    return await this.healthRepository.createExerciseLogsBatch(data);
+  }
+
+  async getExerciseLogs(
+    userId: string,
+    exerciseType?: "pushups" | "squats" | "chinups" | "situps",
+    limit: number = 30,
+    offset: number = 0
+  ): Promise<ExerciseLog[]> {
+    return await this.healthRepository.getExerciseLogsByUser(userId, exerciseType, limit, offset);
+  }
+
+  async getTodayExerciseLogs(userId: string): Promise<ExerciseLog[]> {
+    return await this.healthRepository.getTodayExerciseLogs(userId);
+  }
+
+  async getTodayExerciseTotals(userId: string): Promise<{
+    pushups: number;
+    squats: number;
+    chinups: number;
+    situps: number;
+  }> {
+    return await this.healthRepository.getTodayExerciseTotals(userId);
+  }
+
+  async getExerciseLogsForChart(
+    userId: string,
+    exerciseType: "pushups" | "squats" | "chinups" | "situps",
+    days: number = 7
+  ): Promise<ExerciseLog[]> {
+    return await this.healthRepository.getExerciseLogsForChart(userId, exerciseType, days);
+  }
+
+  async getStrengthProgressPercentage(userId: string, days: number = 30): Promise<number> {
+    return await this.healthRepository.getStrengthProgressPercentage(userId, days);
+  }
+
+  // Health Metric Targets Methods
+  async getRecommendedTargets(): Promise<HealthMetricTarget[]> {
+    return await this.healthRepository.getRecommendedTargets();
+  }
+
+  async getUserTargets(userId: string): Promise<HealthMetricTarget[]> {
+    return await this.healthRepository.getUserTargets(userId);
+  }
+
+  async getTargetsForUser(userId: string): Promise<{
+    recommended: HealthMetricTarget[];
+    user: HealthMetricTarget[];
+  }> {
+    return await this.healthRepository.getTargetsForUser(userId);
+  }
+
+  async upsertRecommendedTarget(data: InsertHealthMetricTarget): Promise<HealthMetricTarget> {
+    // Ensure userId is null for recommended targets
+    if (data.userId) {
+      throw new BadRequestError("Recommended targets must have userId set to null");
+    }
+    return await this.healthRepository.upsertTarget({ ...data, userId: null });
+  }
+
+  async upsertUserTarget(userId: string, data: InsertHealthMetricTarget): Promise<HealthMetricTarget> {
+    // Ensure userId matches
+    if (data.userId && data.userId !== userId) {
+      throw new BadRequestError("User ID mismatch");
+    }
+    return await this.healthRepository.upsertTarget({ ...data, userId });
+  }
+
+  async deleteUserTarget(userId: string, metricType: "glucose" | "steps" | "water_intake" | "heart_rate"): Promise<void> {
+    return await this.healthRepository.deleteUserTarget(userId, metricType);
+  }
+
+  async upsertRecommendedTargetsBatch(targets: InsertHealthMetricTarget[]): Promise<HealthMetricTarget[]> {
+    // Ensure all targets have userId set to null
+    const validatedTargets = targets.map(t => {
+      if (t.userId) {
+        throw new BadRequestError("Recommended targets must have userId set to null");
+      }
+      return { ...t, userId: null };
+    });
+    return await this.healthRepository.upsertTargetsBatch(validatedTargets);
+  }
+
+  async upsertUserTargetsBatch(userId: string, targets: InsertHealthMetricTarget[]): Promise<HealthMetricTarget[]> {
+    // Ensure all targets have matching userId
+    const validatedTargets = targets.map(t => {
+      if (t.userId && t.userId !== userId) {
+        throw new BadRequestError("User ID mismatch");
+      }
+      return { ...t, userId };
+    });
+    return await this.healthRepository.upsertTargetsBatch(validatedTargets);
   }
 }
 

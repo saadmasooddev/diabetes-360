@@ -69,3 +69,10 @@ export const useUpdateCustomerData = () => {
   });
 };
 
+export const useGetConsultationQuotas = () => {
+  return useQuery({
+    queryKey: ['consultationQuotas'],
+    queryFn: () => customerService.getConsultationQuotas(),
+  });
+};
+

@@ -16,6 +16,8 @@ export const ROLE_PERMISSIONS = {
     'create:own_health_metrics',
     'update:own_health_metrics',
     'delete:own_health_metrics',
+    'read:health_targets',
+    'write:own_health_targets',
   ],
   [USER_ROLES.PHYSICIAN]: [
     'read:own_profile',
@@ -48,6 +50,9 @@ export const ROLE_PERMISSIONS = {
     'read:settings',
     'update:settings',
     'delete:settings',
+    'read:health_targets',
+    'write:health_targets',
+    'write:own_health_targets',
   ],
 } as const;
 

@@ -10,19 +10,23 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { UserManagement } from '@/components/admin/UserManagement';
 import { FreeTierLimitsManagement } from '@/components/admin/FreeTierLimitsManagement';
 import { PhysicianSettings } from '@/components/admin/PhysicianSettings';
+import { HealthMetricTargetsManagement } from '@/components/admin/HealthMetricTargetsManagement';
+import { UserHealthTargets } from '@/components/customer/UserHealthTargets';
 import { useAuthStore } from '@/stores/authStore';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { User, Mail, Shield, Bell, Key, Smartphone, SettingsIcon, CalendarIcon, MapPin } from 'lucide-react';
-import { useGetCustomerData } from '@/hooks/mutations/useCustomer';
+import { useGetCustomerData, useGetConsultationQuotas } from '@/hooks/mutations/useCustomer';
 import { CustomerProfileEdit } from '@/components/customer/CustomerProfileEdit';
 import { PhysicianAvailabilityManagement } from '@/components/physician/PhysicianAvailabilityManagement';
 import { ManageLocation } from '@/components/physician/ManageLocation';
+import { parseDateToComponents } from '@/lib/utils';
 
 export function Settings() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const { data: customerData, isLoading: isLoadingCustomerData, refetch: refetchCustomerData } = useGetCustomerData();
+  const { data: consultationQuotas, isLoading: isLoadingQuotas } = useGetConsultationQuotas();
   const isCustomer = user?.role === 'customer';
   const hasCustomerData = isCustomer && customerData?.customerData;
 
@@ -41,6 +45,8 @@ export function Settings() {
         return 'outline';
     }
   };
+  const { day: birthDay, month: birthMonth, year: birthYear } = parseDateToComponents(customerData?.customerData?.birthday || '');
+  const { day: diagnosisDay, month: diagnosisMonth, year: diagnosisYear } = parseDateToComponents(customerData?.customerData?.diagnosisDate || '');
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
@@ -108,6 +114,11 @@ export function Settings() {
                       <SettingsIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline">Limits</span>
                       <span className="sm:hidden">Limits</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="targets" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 py-1.5 sm:py-2">
+                      <SettingsIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Targets</span>
+                      <span className="sm:hidden">Targets</span>
                     </TabsTrigger>
                   </>
                 )}
@@ -188,7 +199,7 @@ export function Settings() {
                             <Label className="text-sm font-medium text-gray-700">Date of Birth</Label>
                             <div className="mt-1 p-3 bg-gray-50 rounded-lg">
                               <p className="text-sm text-gray-900">
-                                {customerData.customerData.birthDay}/{customerData.customerData.birthMonth}/{customerData.customerData.birthYear}
+                                {birthDay}/{birthMonth}/{birthYear}
                               </p>
                             </div>
                           </div>
@@ -196,7 +207,7 @@ export function Settings() {
                             <Label className="text-sm font-medium text-gray-700">Diagnosis Date</Label>
                             <div className="mt-1 p-3 bg-gray-50 rounded-lg">
                               <p className="text-sm text-gray-900">
-                                {customerData.customerData.diagnosisDay}/{customerData.customerData.diagnosisMonth}/{customerData.customerData.diagnosisYear}
+                                {diagnosisDay}/{diagnosisMonth}/{diagnosisYear}
                               </p>
                             </div>
                           </div>
@@ -282,6 +293,34 @@ export function Settings() {
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 lg:p-6 pt-0">
                   <div className="space-y-4 sm:space-y-6">
+                    {isCustomer && (
+                      <>
+                        <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
+                          <h3 className="font-semibold text-sm sm:text-base text-teal-900 mb-3">Consultation Quotas</h3>
+                          {isLoadingQuotas ? (
+                            <p className="text-sm text-gray-600">Loading quotas...</p>
+                          ) : consultationQuotas?.quota ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-700">Discounted Consultations Left:</span>
+                                <span className="font-semibold text-teal-700">
+                                  {consultationQuotas.quota.discountedConsultationsLeft} / {consultationQuotas.quota.discountedQuotaLimit}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-700">Free Consultations Left:</span>
+                                <span className="font-semibold text-teal-700">
+                                  {consultationQuotas.quota.freeConsultationsLeft} / {consultationQuotas.quota.freeQuotaLimit}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-600">Unable to load quotas</p>
+                          )}
+                        </div>
+                        <Separator />
+                      </>
+                    )}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Key className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
@@ -325,6 +364,9 @@ export function Settings() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* User Health Targets */}
+              <UserHealthTargets />
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6 overflow-x-hidden max-w-full">
@@ -410,6 +452,9 @@ export function Settings() {
                 </TabsContent>
                 <TabsContent value="limits" className="space-y-6 overflow-x-hidden">
                   <FreeTierLimitsManagement />
+                </TabsContent>
+                <TabsContent value="targets" className="space-y-6 overflow-x-hidden">
+                  <HealthMetricTargetsManagement />
                 </TabsContent>
               </>
             )}

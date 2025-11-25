@@ -11,14 +11,14 @@ import { HealthTrendChart } from '../components/HealthTrendChart';
 import { AddMetricDialog } from '../components/AddMetricDialog';
 import { LimitReachedDialog } from '../components/LimitReachedDialog';
 import {
-  useHealthMetrics,
-  useChartMetrics,
   useTodaysMetricCounts,
   useAddHealthMetric,
   useFilteredMetrics,
+  useLatestHealthMetric,
+  useTargetsForUser,
 } from '@/hooks/mutations/useHealth';
 import { useFreeTierLimits } from '@/hooks/mutations/useSettings';
-import { MertricRecord } from '@shared/schema';
+import { formatDate } from '@/lib/utils';
 
 export type MetricType = 'glucose' | 'steps' | 'water' | 'heartbeat';
 type IntervalType = 'daily' | 'weekly' | 'monthly';
@@ -38,6 +38,7 @@ export function Dashboard() {
 
   const { data: todaysCounts = { glucose: 0, steps: 0, water: 0 } } = useTodaysMetricCounts();
   const { data: freeTierLimits } = useFreeTierLimits();
+  const { data: targets } = useTargetsForUser();
   const addMetricMutation = useAddHealthMetric();
 
   // Helper function to calculate date range based on interval
@@ -57,10 +58,21 @@ export function Dashboard() {
       startDate.setHours(0, 0, 0, 0);
     }
     return {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate,
+      startDate: formatDate(startDate, 'yyyy-MM-dd'),
+      endDate: formatDate(new Date(endDate), 'yyyy-MM-dd')
     };
   };
+
+  const { data: latestMetric } = useLatestHealthMetric();
+  const latestBloodSugar = parseFloat(latestMetric?.current?.bloodSugar ?? '0')
+  const latestSteps = latestMetric?.current?.steps ?? 0;
+  const latestWaterIntake = parseFloat(latestMetric?.current?.waterIntake ?? '0');
+  const latestHeartRate = latestMetric?.current?.heartRate ?? 0;
+
+  const previousBloodSugar = parseFloat(latestMetric?.previous?.bloodSugar ?? '0');
+  const previousSteps = latestMetric?.previous?.steps ?? 0;
+  const previousWaterIntake = parseFloat(latestMetric?.previous?.waterIntake ?? '0');
+  const previousHeartRate = latestMetric?.previous?.heartRate ?? 0;
 
   const glucoseDateRange = getDateRange(glucoseInterval);
   const { data: glucoseMetrics } = useFilteredMetrics(
@@ -90,7 +102,7 @@ export function Dashboard() {
     ['heart_beat']
   );
 
-  const isFreeUser = user?.tier === 'free' || !user?.tier;
+  const isFreeUser = user?.paymentType === 'free' || !user?.paymentType;
 
   const getHasReachedLimit = (metricType: MetricType): boolean => {
     if (!isFreeUser || !freeTierLimits) return false;
@@ -145,19 +157,20 @@ export function Dashboard() {
     };
 
     if (selectedMetricType === 'glucose') {
-      metricData.bloodSugar = numericValue.toString();
+      metricData.bloodSugar = numericValue;
     } else if (selectedMetricType === 'steps') {
-      metricData.steps = Math.round(numericValue);
+      metricData.steps = numericValue;
     } else if (selectedMetricType === 'water') {
-      metricData.waterIntake = numericValue.toString();
+      metricData.waterIntake = numericValue;
     } else if (selectedMetricType === 'heartbeat') {
-      metricData.heartRate = Math.round(numericValue);
+      metricData.heartRate = numericValue;
     }
 
     addMetricMutation.mutate(metricData, {
       onSuccess: () => {
         setDialogOpen(false);
         setMetricValue('');
+        setSelectedMetricType('glucose'); // Reset to default
       },
     });
   };
@@ -205,7 +218,7 @@ export function Dashboard() {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, glucoseInterval),
-        value: parseFloat(m.value as string || '0'),
+        value: m.value || 0,
       };
     });
   }, [glucoseMetrics, glucoseInterval]);
@@ -229,7 +242,7 @@ export function Dashboard() {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, waterInterval),
-        value: parseFloat(m.value as string || '0'),
+        value: m.value || 0,
       };
     });
   }, [waterMetrics, waterInterval]);
@@ -246,27 +259,52 @@ export function Dashboard() {
     });
   }, [heartbeatMetrics, heartbeatInterval]);
 
-  const getTrendArrow = (metrics: MertricRecord[]) => {
-    if (!metrics?.length) return null;
-    const currentValue = metrics[0]?.value as number || 0;
-    const previousValue = metrics[1]?.value as number || 0;
+  const getTrendArrow = (currentValue: number, previousValue: number) => {
+    if (currentValue === 0 && previousValue === 0) return null;
     return currentValue > previousValue ?
       <ArrowUp className="ml-2 inline-block" style={{ color: '#4CAF50', width: '24px', height: '24px' }} />
       : <ArrowDown className="ml-2 inline-block" style={{ color: '#F44336', width: '24px', height: '24px' }} />;
+  };
+
+  // Helper function to get target values for a metric type
+  const getTargets = (metricType: 'glucose' | 'steps' | 'water_intake' | 'heart_rate') => {
+    const recommended = targets?.recommended.find(t => t.metricType === metricType);
+    const user = targets?.user.find(t => t.metricType === metricType);
+
+    return {
+      recommended: recommended ? parseFloat(recommended.targetValue) : undefined,
+      user: user ? parseFloat(user.targetValue) : undefined,
+    };
   };
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
       <Sidebar />
 
-      <main className="flex-1 flex justify-center" style={{ padding: '32px' }}>
-        <div className="w-full" style={{ maxWidth: '1145px' }}>
+      <main className="flex-1 flex justify-center" style={{ padding: '24px 16px' }}>
+        <div className="w-full" style={{ maxWidth: '1200px' }}>
+          {/* Welcome Header */}
+          <div className="mb-8">
+            <h1
+              className="text-3xl font-bold mb-2"
+              style={{ color: '#00453A' }}
+            >
+              Health Dashboard
+            </h1>
+            <p
+              className="text-base"
+              style={{ color: '#546E7A' }}
+            >
+              Track your health metrics and monitor your progress
+            </p>
+          </div>
+
           {/* Metric Cards Row */}
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mb-8 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
             <HealthMetricCard
               type="glucose"
-              latestValue={glucoseMetrics?.bloodSugarRecords[0]?.value as string || '0'}
-              trendArrow={getTrendArrow(glucoseMetrics?.bloodSugarRecords || [])}
+              latestValue={latestBloodSugar.toString()}
+              trendArrow={getTrendArrow(latestBloodSugar, previousBloodSugar)}
               onAddLog={() => handleAddLog('glucose')}
               onUploadPicture={handleUploadPicture}
               onUpgrade={handleUpgrade}
@@ -276,8 +314,8 @@ export function Dashboard() {
 
             <HealthMetricCard
               type="steps"
-              latestValue={stepsMetrics?.stepsRecords[0]?.value as number || 0}
-              trendArrow={getTrendArrow(stepsMetrics?.stepsRecords || [])}
+              latestValue={latestSteps.toString()}
+              trendArrow={getTrendArrow(latestSteps, previousSteps)}
               onAddLog={() => handleAddLog('steps')}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('steps')}
@@ -286,8 +324,8 @@ export function Dashboard() {
 
             <HealthMetricCard
               type="water"
-              latestValue={waterMetrics?.waterIntakeRecords[0]?.value as string || '0'}
-              trendArrow={getTrendArrow(waterMetrics?.waterIntakeRecords || [])}
+              latestValue={latestWaterIntake.toString()}
+              trendArrow={getTrendArrow(latestWaterIntake, previousWaterIntake)}
               onAddLog={() => handleAddLog('water')}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('water')}
@@ -295,11 +333,11 @@ export function Dashboard() {
             />
 
             {/* Heart Beat Card - Only for paid users */}
-            {user?.tier === 'paid' && (
+            {user?.paymentType !== 'free' && user?.paymentType && (
               <HealthMetricCard
                 type="heartbeat"
-                latestValue={heartbeatMetrics?.heartBeatRecords[0]?.value as number || 0}
-                trendArrow={getTrendArrow(heartbeatMetrics?.heartBeatRecords || [])}
+                latestValue={latestHeartRate.toString()}
+                trendArrow={getTrendArrow(latestHeartRate, previousHeartRate)}
                 onAddLog={() => handleAddLog('heartbeat')}
                 onUpgrade={handleUpgrade}
                 disabled={false}
@@ -309,17 +347,19 @@ export function Dashboard() {
           </div>
 
           {/* Health Assessment Button */}
-          <div className="mb-8 flex justify-center">
+          <div className="mb-10 flex justify-center">
             <Button
               onClick={handleHealthAssessment}
+              className="transition-all duration-300 hover:scale-105 hover:shadow-lg"
               style={{
-                background: '#00856F',
+                background: 'linear-gradient(135deg, #00856F 0%, #006B5C 100%)',
                 color: '#FFFFFF',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 fontSize: '16px',
                 fontWeight: 600,
-                padding: '14px 48px',
+                padding: '16px 56px',
                 border: 'none',
+                boxShadow: '0 4px 12px rgba(0, 133, 111, 0.3)',
               }}
               data-testid="button-health-assessment"
             >
@@ -328,7 +368,7 @@ export function Dashboard() {
           </div>
 
           {/* Charts Section */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             <HealthTrendChart
               title="Glucose Trend"
               data={glucoseData}
@@ -342,6 +382,9 @@ export function Dashboard() {
               }}
               interval={glucoseInterval}
               onIntervalChange={setGlucoseInterval}
+              recommendedTarget={getTargets('glucose').recommended}
+              userTarget={getTargets('glucose').user}
+              metricType="glucose"
             />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -357,6 +400,9 @@ export function Dashboard() {
                 }}
                 interval={stepsInterval}
                 onIntervalChange={setStepsInterval}
+                recommendedTarget={getTargets('steps').recommended}
+                userTarget={getTargets('steps').user}
+                metricType="steps"
               />
 
               <HealthTrendChart
@@ -372,11 +418,14 @@ export function Dashboard() {
                 }}
                 interval={waterInterval}
                 onIntervalChange={setWaterInterval}
+                recommendedTarget={getTargets('water_intake').recommended}
+                userTarget={getTargets('water_intake').user}
+                metricType="water_intake"
               />
             </div>
 
             {/* Heart Beat Chart - Only for paid users */}
-            {user?.tier === 'paid' && (
+            {user?.paymentType !== 'free' && user?.paymentType && (
               <HealthTrendChart
                 title="Heart Rate Trend"
                 data={heartbeatData}
@@ -390,6 +439,9 @@ export function Dashboard() {
                 }}
                 interval={heartbeatInterval}
                 onIntervalChange={setHeartbeatInterval}
+                recommendedTarget={getTargets('heart_rate').recommended}
+                userTarget={getTargets('heart_rate').user}
+                metricType="heart_rate"
               />
             )}
           </div>

@@ -1,10 +1,11 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { authService } from '@/services/authService';
 import type { LoginRequest, AuthData } from '@/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';
 import { ROUTES } from '@/config/routes';
+import { userService } from '@/services/userService';
 
 export const useLogin = () => {
   const { toast } = useToast();
@@ -37,3 +38,10 @@ export const useLogin = () => {
     },
   });
 };
+
+export const useUserProfile = () => {
+  return useQuery({
+    queryKey: ['user', 'profile'],
+    queryFn: () => userService.getUserProfile(),
+  });
+}

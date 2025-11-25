@@ -5,6 +5,7 @@ import { handleError } from "../../../shared/middleware/errorHandler";
 import { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { BadRequestError } from "../../../shared/errors";
 import { USER_ROLES } from "../../../shared/constants/roles";
+import { parseLocalDate } from "server/src/shared/utils/utils";
 
 export class BookingController {
   private bookingService: BookingService;
@@ -101,18 +102,14 @@ export class BookingController {
         throw new BadRequestError("User ID not found");
       }
 
-      const { date, slotSizeId, startTime, endTime, slotTypeIds, prices, locationIds } = req.body;
+      const { date, slotSizeId, startTime, endTime, slotTypeIds, locationIds } = req.body;
 
-      if (!date || !slotSizeId || !startTime || !endTime || !slotTypeIds || !prices) {
+      if (!date || !slotSizeId || !startTime || !endTime || !slotTypeIds) {
         throw new BadRequestError("All fields are required");
       }
 
       if (!Array.isArray(slotTypeIds) || slotTypeIds.length === 0) {
         throw new BadRequestError("At least one slot type is required");
-      }
-
-      if (!Array.isArray(prices) || prices.length === 0) {
-        throw new BadRequestError("At least one price is required");
       }
 
       const dateObj = new Date(date);
@@ -127,7 +124,6 @@ export class BookingController {
         startTime,
         endTime,
         slotTypeIds,
-        prices,
         locationIds
       );
 
@@ -280,13 +276,98 @@ export class BookingController {
         throw new BadRequestError("User ID not found");
       }
 
-      const { slotId } = req.body;
+      const { slotId, slotTypeId } = req.body;
       if (!slotId) {
         throw new BadRequestError("Slot ID is required");
       }
+      if (!slotTypeId) {
+        throw new BadRequestError("Slot type ID is required");
+      }
 
-      const booking = await this.bookingService.bookSlot(customerId, slotId);
+      const booking = await this.bookingService.bookSlot(customerId, slotId, slotTypeId);
       sendSuccess(res, { booking }, "Slot booked successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getPhysicianDates(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { physicianId } = req.params;
+      if (!physicianId) {
+        throw new BadRequestError("Physician ID is required");
+      }
+
+
+      const { month, year, isCount, selectedDate } = req.query;
+
+      if (!month || !year || isCount === undefined) {
+        throw new BadRequestError("Month, year, and isCount are required");
+      }
+
+      const monthNum = parseInt(month as string, 10);
+      const yearNum = parseInt(year as string, 10);
+      const isCountBool = isCount === "true"
+
+      if (isNaN(monthNum) || isNaN(yearNum)) {
+        throw new BadRequestError("Month and year must be valid numbers");
+      }
+      if (monthNum < 1 || monthNum > 12) {
+        throw new BadRequestError("Invalid month. Must be between 1 and 12");
+      }
+
+      if (yearNum < 2020 || yearNum > 2100) {
+        throw new BadRequestError("Invalid year. Must be between 2020 and 2100");
+      }
+      
+      if(!selectedDate){
+        throw new BadRequestError("Selected date is required");
+      }
+
+      const selectedDateObj = parseLocalDate(selectedDate as string) 
+      if (isNaN(selectedDateObj.getTime())) {
+        throw new BadRequestError("Invalid date format");
+      }
+
+      const isBeforeToday = (inputDate: Date) => {
+        const dateToCheck = inputDate
+        const today = new Date()
+        today.setHours(0, 0, 0, 0);
+        return dateToCheck < today;
+      }
+
+      if (isBeforeToday(selectedDateObj)) {
+        throw new BadRequestError("Selected date must be today or in the future");
+      }
+
+      const result = await this.bookingService.getPhysicianDatesWithSlots(
+        physicianId,
+        monthNum,
+        yearNum,
+        isCountBool,
+        selectedDateObj
+      );
+
+      sendSuccess(res, result, "Physician dates retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async calculateBookingPrice(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const customerId = req.user?.userId;
+      if (!customerId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const { physicianId } = req.params;
+      if (!physicianId) {
+        throw new BadRequestError("Physician ID is required");
+      }
+
+      const priceCalculation = await this.bookingService.calculateBookingPrice(physicianId, customerId);
+      sendSuccess(res, { price: priceCalculation }, "Booking price calculated successfully");
     } catch (error: any) {
       handleError(res, error);
     }

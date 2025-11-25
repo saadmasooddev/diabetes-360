@@ -5,6 +5,8 @@ import { ApiResponse } from '@/types/auth.types';
 
 export interface CustomerData {
   id: string;
+  firstName: string;
+  lastName: string;
   userId: string;
   gender: string;
   birthday: string; // ISO date string from API
@@ -18,6 +20,22 @@ export interface CustomerData {
 
 export interface CustomerDataResponse {
   customerData: CustomerData;
+}
+interface CustomerProfileResponse {
+  profileData: CustomerData;
+}
+
+export interface ConsultationQuota {
+  discountedConsultationsUsed: number;
+  freeConsultationsUsed: number;
+  discountedConsultationsLeft: number;
+  freeConsultationsLeft: number;
+  discountedQuotaLimit: number;
+  freeQuotaLimit: number;
+}
+
+export interface ConsultationQuotaResponse {
+  quota: ConsultationQuota;
 }
 
 // Helper function to transform separate date fields to combined date format
@@ -47,6 +65,8 @@ function parseDateToComponents(dateString: string): { day: string; month: string
 // Transform form data (separate date fields) to API format (combined dates)
 function transformFormDataToAPI(data: ProfileDataFormValues | Partial<ProfileDataFormValues>): any {
   const apiData: any = {
+    firstName: data.firstName,
+    lastName: data.lastName,
     gender: data.gender,
     weight: data.weight,
     height: data.height,
@@ -91,20 +111,20 @@ function transformAPIDataToForm(data: CustomerData): CustomerData & {
 
 class CustomerService {
   async getCustomerData(): Promise<CustomerDataResponse> {
-    const response = await httpClient.get<ApiResponse<CustomerDataResponse>>(API_ENDPOINTS.CUSTOMER.PROFILE);
+    const response = await httpClient.get<ApiResponse<CustomerProfileResponse>>(API_ENDPOINTS.CUSTOMER.PROFILE);
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch customer data');
     }
     // Transform API response to include separate date fields for form compatibility
     return {
-      customerData: transformAPIDataToForm(response.data.customerData),
+      customerData: transformAPIDataToForm(response.data.profileData),
     };
   }
 
   async createCustomerData(data: ProfileDataFormValues): Promise<CustomerDataResponse> {
     // Transform form data to API format
     const apiData = transformFormDataToAPI(data);
-    const response = await httpClient.post<ApiResponse<CustomerDataResponse>>(
+    const response = await httpClient.post<ApiResponse<CustomerProfileResponse>>(
       API_ENDPOINTS.CUSTOMER.PROFILE,
       apiData
     );
@@ -113,14 +133,14 @@ class CustomerService {
     }
     // Transform response back to form format
     return {
-      customerData: transformAPIDataToForm(response.data.customerData),
+      customerData: transformAPIDataToForm(response.data.profileData),
     };
   }
 
   async updateCustomerData(data: Partial<ProfileDataFormValues>): Promise<CustomerDataResponse> {
     // Transform form data to API format
     const apiData = transformFormDataToAPI(data);
-    const response = await httpClient.put<ApiResponse<CustomerDataResponse>>(
+    const response = await httpClient.put<ApiResponse<CustomerProfileResponse>>(
       API_ENDPOINTS.CUSTOMER.PROFILE,
       apiData
     );
@@ -129,8 +149,18 @@ class CustomerService {
     }
     // Transform response back to form format
     return {
-      customerData: transformAPIDataToForm(response.data.customerData),
+      customerData: transformAPIDataToForm(response.data.profileData),
     };
+  }
+
+  async getConsultationQuotas(): Promise<ConsultationQuotaResponse> {
+    const response = await httpClient.get<ApiResponse<ConsultationQuotaResponse>>(
+      API_ENDPOINTS.CUSTOMER.CONSULTATION_QUOTAS
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch consultation quotas');
+    }
+    return response.data;
   }
 }
 

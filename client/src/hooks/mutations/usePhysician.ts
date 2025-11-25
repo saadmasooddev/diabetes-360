@@ -25,6 +25,22 @@ export const usePhysiciansBySpecialty = (specialtyId: string | null) => {
   });
 };
 
+export const usePhysiciansPaginated = (params: {
+  page: number;
+  limit: number;
+  search?: string;
+  specialtyId?: string | null;
+}) => {
+  return useQuery({
+    queryKey: ['physician', 'paginated', params.page, params.limit, params.search, params.specialtyId],
+    queryFn: () => physicianService.getPhysiciansPaginated({
+      ...params,
+      specialtyId: params.specialtyId || undefined,
+    }),
+    placeholderData: (previousData) => previousData,
+  });
+};
+
 export const usePhysicianRating = (physicianId: string | null) => {
   return useQuery({
     queryKey: ['physician', 'ratings', physicianId],
@@ -239,6 +255,15 @@ export const usePhysicianLocations = () => {
   return useQuery({
     queryKey: ['physician', 'locations'],
     queryFn: () => physicianService.getAllLocations(),
+  });
+};
+
+// Admin hook to get locations for a specific physician
+export const usePhysicianLocationsByPhysicianId = (physicianId: string | null) => {
+  return useQuery({
+    queryKey: ['physician', 'admin', 'locations', physicianId],
+    queryFn: () => physicianService.getAllLocationsByPhysicianId(physicianId!),
+    enabled: !!physicianId,
   });
 };
 

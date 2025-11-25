@@ -141,6 +141,50 @@ class PhysicianService {
     return response.data.physicians;
   }
 
+  async getPhysiciansPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    specialtyId?: string;
+  }): Promise<{
+    physicians: Physician[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', params.page.toString());
+    queryParams.append('limit', params.limit.toString());
+    if (params.search) {
+      queryParams.append('search', params.search);
+    }
+    if (params.specialtyId) {
+      queryParams.append('specialtyId', params.specialtyId);
+    }
+
+    const response = await httpClient.get<ApiResponse<{
+      physicians: Physician[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+      };
+    }>>(`${API_ENDPOINTS.PHYSICIAN.PHYSICIANS_PAGINATED}?${queryParams.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch physicians');
+    }
+    return response.data;
+  }
+
   async getPhysiciansBySpecialty(specialtyId: string): Promise<Physician[]> {
     const response = await httpClient.get<ApiResponse<{ physicians: Physician[] }>>(
       API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId)
@@ -261,6 +305,17 @@ class PhysicianService {
   async getAllLocations(): Promise<PhysicianLocation[]> {
     const response = await httpClient.get<ApiResponse<{ locations: PhysicianLocation[] }>>(
       API_ENDPOINTS.PHYSICIAN.LOCATIONS
+    );
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch locations');
+    }
+    return response.data.locations;
+  }
+
+  // Admin endpoint to get locations for a specific physician
+  async getAllLocationsByPhysicianId(physicianId: string): Promise<PhysicianLocation[]> {
+    const response = await httpClient.get<ApiResponse<{ locations: PhysicianLocation[] }>>(
+      API_ENDPOINTS.PHYSICIAN.ADMIN.LOCATIONS(physicianId)
     );
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to fetch locations');

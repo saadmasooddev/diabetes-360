@@ -20,6 +20,28 @@ export const API_ENDPOINTS = {
     TODAY_COUNT: '/api/health/metrics/today-count',
     STATISTICS: '/api/health/metrics/statistics',
     FILTERED: '/api/health/metrics/filtered',
+    TARGETS: {
+      BASE: '/api/health/targets',
+      RECOMMENDED: '/api/health/targets/recommended',
+      RECOMMENDED_BATCH: '/api/health/targets/recommended/batch',
+      USER: '/api/health/targets/user',
+      USER_BATCH: '/api/health/targets/user/batch',
+      DELETE_USER: (metricType: string) => `/api/health/targets/user/${metricType}`,
+    },
+    ACTIVITIES: {
+      ADD: '/api/health/activities/add',
+      LIST: '/api/health/activities',
+      TODAY: '/api/health/activities/today',
+      TODAY_TOTAL: '/api/health/activities/today/total',
+    },
+    EXERCISES: {
+      ADD: '/api/health/exercises/add',
+      ADD_BATCH: '/api/health/exercises/add/batch',
+      LIST: '/api/health/exercises',
+      TODAY: '/api/health/exercises/today',
+      TODAY_TOTALS: '/api/health/exercises/today/totals',
+      STRENGTH_PROGRESS: '/api/health/exercises/strength-progress',
+    },
   },
   ADMIN: {
     USERS: '/api/admin/users',
@@ -30,6 +52,7 @@ export const API_ENDPOINTS = {
   PHYSICIAN: {
     SPECIALTIES: '/api/physician/specialties',
     ALL_PHYSICIANS: '/api/physician/physicians',
+    PHYSICIANS_PAGINATED: '/api/physician/physicians',
     PHYSICIANS_BY_SPECIALTY: (specialtyId: string) => `/api/physician/specialties/${specialtyId}/physicians`,
     RATING: (physicianId: string) => `/api/physician/ratings/${physicianId}`,
     LOCATIONS: '/api/physician/locations',
@@ -39,10 +62,12 @@ export const API_ENDPOINTS = {
       SPECIALTY_BY_ID: (id: string) => `/api/physician/admin/specialties/${id}`,
       PHYSICIAN_DATA: (userId: string) => `/api/physician/admin/physician-data/${userId}`,
       UPLOAD_IMAGE: '/api/physician/admin/upload-image',
+      LOCATIONS: (physicianId: string) => `/api/physician/admin/locations/${physicianId}`,
     },
   },
   CUSTOMER: {
     PROFILE: '/api/customer/profile',
+    CONSULTATION_QUOTAS: '/api/customer/consultation-quotas',
   },
   BOOKING: {
     SLOT_SIZES: '/api/booking/slot-sizes',
@@ -50,11 +75,12 @@ export const API_ENDPOINTS = {
     AVAILABILITY_DATES: '/api/booking/availability-dates',
     CREATE_SLOTS: '/api/booking/slots',
     DATES_WITH_AVAILABILITY: (physicianId: string) => `/api/booking/physicians/${physicianId}/dates-with-availability`,
+    PHYSICIAN_DATES: (physicianId: string) => `/api/booking/physicians/${physicianId}/dates`,
     PHYSICIAN_SLOTS: (physicianId: string) => `/api/booking/physicians/${physicianId}/slots`,
     AVAILABLE_SLOTS: (physicianId: string) => `/api/booking/physicians/${physicianId}/available-slots`,
     DELETE_SLOT: (slotId: string) => `/api/booking/slots/${slotId}`,
-    UPDATE_SLOT_PRICE: (priceId: string) => `/api/booking/slot-prices/${priceId}`,
     UPDATE_SLOT_LOCATIONS: (slotId: string) => `/api/booking/slots/${slotId}/locations`,
     BOOK_SLOT: '/api/booking/book',
+    CALCULATE_BOOKING_PRICE: (physicianId: string) => `/api/booking/physicians/${physicianId}/calculate-price`,
   },
 } as const;

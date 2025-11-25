@@ -2,9 +2,7 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse 
 import { TokenManager } from './tokenManager';
 import { refreshService } from '@/services/refreshService';
 import type { TokenPair } from '@/types/auth.types';
-
-export const BASE_URL = import.meta.env.VITE_REACT_API_BASE_URL || '';
-export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+import { BASE_URL } from './env';
 
 class HttpClient {
   private readonly baseURL = BASE_URL;
@@ -15,10 +13,21 @@ class HttpClient {
   constructor() {
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
-      timeout: 10000,
+      timeout: 45 * 1000,
       headers: {
         'Content-Type': 'application/json',
       },
+      validateStatus: status => {
+        if(status === 401){
+          return false
+        }
+        else if (status >= 200 && status < 500){
+          return true
+        }
+        else {
+          return false
+        }
+      } 
     });
 
     this.setupInterceptors();

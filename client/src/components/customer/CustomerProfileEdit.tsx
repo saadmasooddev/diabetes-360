@@ -31,6 +31,8 @@ import {
 } from '@/mocks/profileData';
 import { useUpdateCustomerData } from '@/hooks/mutations/useCustomer';
 import type { CustomerData } from '@/services/customerService';
+import { parseDateToComponents } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 interface CustomerProfileEditProps {
   customerData: CustomerData;
@@ -41,6 +43,10 @@ interface CustomerProfileEditProps {
 export function CustomerProfileEdit({ customerData, onClose, onSuccess }: CustomerProfileEditProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const updateCustomerData = useUpdateCustomerData();
+  const { user: authUser, setUser } = useAuthStore();
+
+  const { day: birthDay, month: birthMonth, year: birthYear } = parseDateToComponents(customerData.birthday);
+  const { day: diagnosisDay, month: diagnosisMonth, year: diagnosisYear } = parseDateToComponents(customerData.diagnosisDate);
 
   const form = useForm<ProfileDataFormValues>({
     resolver: zodResolver(profileDataSchema),
@@ -48,12 +54,12 @@ export function CustomerProfileEdit({ customerData, onClose, onSuccess }: Custom
       firstName: customerData.firstName,
       lastName: customerData.lastName,
       gender: customerData.gender as 'male' | 'female',
-      birthDay: customerData.birthDay,
-      birthMonth: customerData.birthMonth,
-      birthYear: customerData.birthYear,
-      diagnosisDay: customerData.diagnosisDay,
-      diagnosisMonth: customerData.diagnosisMonth,
-      diagnosisYear: customerData.diagnosisYear,
+      birthDay,
+      birthMonth,
+      birthYear,
+      diagnosisDay,
+      diagnosisMonth,
+      diagnosisYear,
       weight: customerData.weight,
       height: customerData.height,
       diabetesType: customerData.diabetesType as 'type1' | 'type2' | 'gestational' | 'prediabetes',
@@ -64,6 +70,26 @@ export function CustomerProfileEdit({ customerData, onClose, onSuccess }: Custom
     setIsSubmitting(true);
     try {
       await updateCustomerData.mutateAsync(data);
+      if (authUser) {
+        setUser({ ...authUser, firstName: data.firstName, lastName: data.lastName });
+      }
+      // Reset form to updated values
+      const { day: birthDay, month: birthMonth, year: birthYear } = parseDateToComponents(customerData.birthday);
+      const { day: diagnosisDay, month: diagnosisMonth, year: diagnosisYear } = parseDateToComponents(customerData.diagnosisDate);
+      form.reset({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        gender: data.gender,
+        birthDay,
+        birthMonth,
+        birthYear,
+        diagnosisDay,
+        diagnosisMonth,
+        diagnosisYear,
+        weight: data.weight,
+        height: data.height,
+        diabetesType: data.diabetesType,
+      });
       onSuccess();
     } catch (error) {
       // Error handling is done in the mutation hook

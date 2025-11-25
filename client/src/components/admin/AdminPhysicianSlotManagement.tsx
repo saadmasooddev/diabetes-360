@@ -1,35 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner, InlineLoader } from '@/components/ui/spinner';
 import { Calendar } from '@/components/ui/calendar';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useDatesWithAvailability, useSlotsForDate, useUpdateSlotPrice, useUpdateSlotLocations } from '@/hooks/mutations/useBooking';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useDatesWithAvailability, useSlotsForDate, useUpdateSlotLocations } from '@/hooks/mutations/useBooking';
+import { usePhysicianLocationsByPhysicianId } from '@/hooks/mutations/usePhysician';
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarIcon, Edit2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slot } from '@/services/bookingService';
-import { cn } from '@/lib/utils';
+import { cn, formatTime12 } from '@/lib/utils';
+import { formatDate } from 'date-fns';
+import { SlotCardSkeleton } from '@/components/ui/skeletons';
 
-const formatDate = (date: Date, formatStr: string): string => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  if (formatStr === 'MMM dd, yyyy') {
-    return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}, ${date.getFullYear()}`;
-  }
-  if (formatStr === 'yyyy-MM-dd') {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  }
-  return date.toLocaleDateString();
-};
 
-const formatTime24 = (time: string): string => {
-  if (!time) return '';
-  if (time.match(/^\d{2}:\d{2}$/)) return time;
-  if (time.match(/^\d{2}:\d{2}:\d{2}$/)) return time.substring(0, 5);
-  return time;
-};
 
 interface AdminPhysicianSlotManagementProps {
   physicianId: string;
@@ -40,19 +28,16 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [editingPrice, setEditingPrice] = useState<string>('');
   const [editingLocationSlotId, setEditingLocationSlotId] = useState<string | null>(null);
-  const [editingLocationIds, setEditingLocationIds] = useState<string[]>([]);
+  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
   const [calendarKey, setCalendarKey] = useState(0);
 
-  const { data: datesWithAvailability = [] } = useDatesWithAvailability(physicianId);
-  const { data: slots = [], refetch: refetchSlots } = useSlotsForDate(
+  const { data: datesWithAvailability = [], isLoading: isLoadingDates } = useDatesWithAvailability(physicianId);
+  const { data: slots = [], isLoading: isLoadingSlots, refetch: refetchSlots } = useSlotsForDate(
     physicianId,
     selectedDate ? formatDate(selectedDate, 'yyyy-MM-dd') : null
   );
 
-  const updatePriceMutation = useUpdateSlotPrice();
   const updateLocationMutation = useUpdateSlotLocations();
 
   const availableDates = datesWithAvailability.map((d) => {
@@ -93,36 +78,21 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
     }
   };
 
-  const handleEditPrice = (priceId: string, currentPrice: string) => {
-    setEditingPriceId(priceId);
-    setEditingPrice(currentPrice);
-  };
-
-  const handleSavePrice = async () => {
-    if (!editingPriceId || !editingPrice) return;
-    updatePriceMutation.mutate({
-      priceId: editingPriceId,
-      data: { price: editingPrice },
-    });
-    setEditingPriceId(null);
-    setEditingPrice('');
-    refetchSlots();
-  };
-
   const handleEditLocations = (slot: Slot) => {
     setEditingLocationSlotId(slot.id);
-    setEditingLocationIds(slot.locations?.map(loc => loc.id) || []);
+    // Set the first location if any exist, otherwise null
+    setEditingLocationId(slot.locations && slot.locations.length > 0 ? slot.locations[0].id : null);
   };
 
   const handleSaveLocations = async () => {
-    if (!editingLocationSlotId) return;
+    if (!editingLocationSlotId || !editingLocationId) return;
     try {
       await updateLocationMutation.mutateAsync({
         slotId: editingLocationSlotId,
-        data: { locationIds: editingLocationIds },
+        data: { locationIds: [editingLocationId] },
       });
       setEditingLocationSlotId(null);
-      setEditingLocationIds([]);
+      setEditingLocationId(null);
       await refetchSlots();
     } catch (error) {
       // Error handled by mutation
@@ -142,47 +112,53 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          <Calendar
-            key={crypto.randomUUID()}
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            disabled={(date) => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              return date < today;
-            }}
-            modifiers={{
-              hasAvailability: availableDates,
-            }}
-            modifiersClassNames={{
-              hasAvailability: 'bg-teal-100 text-teal-900 font-semibold hover:bg-teal-200',
-            }}
-            className=" flex justify-center items-center rounded-md border w-full"
-            classNames={{
-              months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4 w-full",
-              caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-medium text-teal-900",
-              nav: "space-x-1 flex items-center",
-              nav_button: cn(
-                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-teal-100 rounded-md text-teal-900 border border-teal-200"
-              ),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              table: "w-full border-collapse space-y-1",
-              head_row: "flex",
-              head_cell: "text-teal-700 rounded-md w-9 font-normal text-[0.8rem]",
-              row: "flex w-full mt-2",
-              cell: " mx-1  h-9 w-9 text-center text-sm p-0 relative",
-              day: cn(
-                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-teal-50 rounded-md transition-colors"
-              ),
-              day_selected: "bg-teal-600 text-white hover:bg-teal-700 focus:bg-teal-700",
-              day_today: "bg-teal-50 text-teal-900 font-semibold",
-              day_disabled: "text-gray-300 opacity-50",
-            }}
-          />
+          {isLoadingDates ? (
+            <div className="flex justify-center items-center py-8">
+              <InlineLoader text="Loading availability dates..." />
+            </div>
+          ) : (
+            <Calendar
+              key={crypto.randomUUID()}
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date < today;
+              }}
+              modifiers={{
+                hasAvailability: availableDates,
+              }}
+              modifiersClassNames={{
+                hasAvailability: 'bg-teal-100 text-teal-900 font-semibold hover:bg-teal-200',
+              }}
+              className=" flex justify-center items-center rounded-md border w-full"
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4 w-full",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium text-teal-900",
+                nav: "space-x-1 flex items-center",
+                nav_button: cn(
+                  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-teal-100 rounded-md text-teal-900 border border-teal-200"
+                ),
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-teal-700 rounded-md w-9 font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: " mx-1  h-9 w-9 text-center text-sm p-0 relative",
+                day: cn(
+                  "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-teal-50 rounded-md transition-colors"
+                ),
+                day_selected: "bg-teal-600 text-white hover:bg-teal-700 focus:bg-teal-700",
+                day_today: "bg-teal-50 text-teal-900 font-semibold",
+                day_disabled: "text-gray-300 opacity-50",
+              }}
+            />
+          )}
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <div className="w-4 h-4 bg-teal-100 rounded"></div>
             <span>Dates with availability</span>
@@ -199,30 +175,30 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 pt-2">
-              {slots.length === 0 ? (
+              {isLoadingSlots ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <SlotCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : slots.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">No slots created for this date</p>
               ) : (
                 slots.map((slot: Slot) => (
                   <AdminSlotCard
                     key={slot.id}
                     slot={slot}
-                    onEditPrice={handleEditPrice}
-                    editingPriceId={editingPriceId}
-                    editingPrice={editingPrice}
-                    onSavePrice={handleSavePrice}
-                    onCancelEdit={() => {
-                      setEditingPriceId(null);
-                      setEditingPrice('');
-                    }}
                     onEditLocations={handleEditLocations}
                     editingLocationSlotId={editingLocationSlotId}
-                    editingLocationIds={editingLocationIds}
-                    onLocationIdsChange={setEditingLocationIds}
+                    editingLocationId={editingLocationId}
+                    onLocationIdChange={setEditingLocationId}
                     onSaveLocations={handleSaveLocations}
                     onCancelLocationEdit={() => {
                       setEditingLocationSlotId(null);
-                      setEditingLocationIds([]);
+                      setEditingLocationId(null);
                     }}
+                    physicianId={physicianId}
+                    updateLocationMutation={updateLocationMutation}
                   />
                 ))
               )}
@@ -236,32 +212,26 @@ export function AdminPhysicianSlotManagement({ physicianId }: AdminPhysicianSlot
 
 interface AdminSlotCardProps {
   slot: Slot;
-  onEditPrice: (priceId: string, currentPrice: string) => void;
-  editingPriceId: string | null;
-  editingPrice: string;
-  onSavePrice: () => void;
-  onCancelEdit: () => void;
   onEditLocations: (slot: Slot) => void;
   editingLocationSlotId: string | null;
-  editingLocationIds: string[];
-  onLocationIdsChange: (ids: string[]) => void;
+  editingLocationId: string | null;
+  onLocationIdChange: (id: string | null) => void;
   onSaveLocations: () => void;
   onCancelLocationEdit: () => void;
+  physicianId: string;
+  updateLocationMutation: ReturnType<typeof useUpdateSlotLocations>;
 }
 
 function AdminSlotCard({
   slot,
-  onEditPrice,
-  editingPriceId,
-  editingPrice,
-  onSavePrice,
-  onCancelEdit,
   onEditLocations,
   editingLocationSlotId,
-  editingLocationIds,
-  onLocationIdsChange,
+  editingLocationId,
+  onLocationIdChange,
   onSaveLocations,
   onCancelLocationEdit,
+  physicianId,
+  updateLocationMutation,
 }: AdminSlotCardProps) {
   const isBooked = slot.isBooked;
   const isEditingLocations = editingLocationSlotId === slot.id;
@@ -271,23 +241,9 @@ function AdminSlotCard({
     type => type.type.toLowerCase() === 'onsite' || type.type.toLowerCase() === 'offline'
   );
 
-  // For admin, we'll use locations from slot data
-  // In a real scenario, you might want to fetch all locations for this physician
-  const availableLocations = slot.locations || [];
-
-  const handleStartEdit = (priceId: string, currentPrice: string) => {
-    onEditPrice(priceId, currentPrice);
-  };
-
-  const handleSave = () => {
-    if (editingPriceId && editingPrice) {
-      onSavePrice();
-    }
-  };
-
-  const handleCancel = () => {
-    onCancelEdit();
-  };
+  // Fetch all locations for this physician
+  const { data: allLocations = [], isLoading: isLoadingLocations } = usePhysicianLocationsByPhysicianId(physicianId);
+  const availableLocations = allLocations.filter(loc => loc.status === 'active');
 
   return (
     <div className={cn(
@@ -299,51 +255,12 @@ function AdminSlotCard({
       <div className="flex justify-between items-start">
         <div>
           <p className={cn("font-medium", isBooked ? "text-orange-900" : "text-gray-900")}>
-            {formatTime24(slot.startTime)} - {formatTime24(slot.endTime)}
+            {formatTime12(slot.startTime)} - {formatTime12(slot.endTime)}
           </p>
           <p className={cn("text-sm", isBooked ? "text-orange-700" : "text-gray-600")}>
             {slot.slotSize?.size} minutes • {slot.types?.map((t: any) => t.type).join(', ')}
           </p>
         </div>
-      </div>
-      <div className="space-y-2 pt-2">
-        {slot.prices?.map((price) => (
-          <div key={price.id} className={cn(
-            "flex items-center justify-between p-2 rounded",
-            isBooked ? "bg-orange-100" : "bg-gray-50"
-          )}>
-            <span className={cn("text-sm font-medium", isBooked ? "text-orange-900" : "text-gray-900")}>
-              {price.slotType?.type}: PKR {parseFloat(price.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            {!slot.isBooked && (
-              <div className="flex items-center gap-2">
-                {editingPriceId === price.id ? (
-                  <>
-                    <Input
-                      type="number"
-                      value={editingPrice}
-                      onChange={(e) => onEditPrice(price.id, e.target.value)}
-                      className="w-24 h-8"
-                      min="0"
-                      step="0.01"
-                    />
-                    <Button size="sm" onClick={handleSave} className="bg-teal-600 hover:bg-teal-700">Save</Button>
-                    <Button size="sm" variant="outline" onClick={handleCancel}>Cancel</Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleStartEdit(price.id, price.price)}
-                    className="hover:bg-teal-50"
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* Locations Section */}
@@ -368,43 +285,51 @@ function AdminSlotCard({
 
           {isEditingLocations ? (
             <div className="space-y-2">
-              {availableLocations.length === 0 ? (
-                <p className="text-sm text-yellow-600">No locations available for editing</p>
-              ) : (
-                <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                  {availableLocations.map((location) => (
-                    <div key={location.id} className="flex items-start space-x-2">
-                      <Checkbox
-                        id={`admin-edit-loc-${location.id}`}
-                        checked={editingLocationIds.includes(location.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            onLocationIdsChange([...editingLocationIds, location.id]);
-                          } else {
-                            onLocationIdsChange(editingLocationIds.filter(id => id !== location.id));
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`admin-edit-loc-${location.id}`} className="flex-1 cursor-pointer text-sm">
-                        <div className="font-medium">{location.locationName}</div>
-                        {location.address && (
-                          <div className="text-xs text-gray-600">{location.address}</div>
-                        )}
-                      </Label>
-                    </div>
-                  ))}
+              {isLoadingLocations ? (
+                <div className="p-2">
+                  <InlineLoader text="Loading locations..." />
                 </div>
+              ) : availableLocations.length === 0 ? (
+                <p className="text-sm text-yellow-600">No active locations found for this physician. Please ask the physician to add locations first.</p>
+              ) : (
+                <RadioGroup value={editingLocationId || ''} onValueChange={(value) => onLocationIdChange(value || null)}>
+                  <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                    {availableLocations.map((location) => (
+                      <div key={location.id} className="flex items-start space-x-2">
+                        <RadioGroupItem value={location.id} id={`admin-edit-loc-${location.id}`} className="mt-1" />
+                        <Label htmlFor={`admin-edit-loc-${location.id}`} className="flex-1 cursor-pointer text-sm">
+                          <div className="font-medium">{location.locationName}</div>
+                          {location.address && (
+                            <div className="text-xs text-gray-600">{location.address}</div>
+                          )}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
               )}
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   onClick={onSaveLocations}
-                  disabled={editingLocationIds.length === 0}
+                  disabled={!editingLocationId || updateLocationMutation.isPending}
                   className="bg-teal-600 hover:bg-teal-700"
                 >
-                  Save
+                  {updateLocationMutation.isPending ? (
+                    <>
+                      <ButtonSpinner className="mr-1 h-3 w-3" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save'
+                  )}
                 </Button>
-                <Button size="sm" variant="outline" onClick={onCancelLocationEdit}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onCancelLocationEdit}
+                  disabled={updateLocationMutation.isPending}
+                >
                   Cancel
                 </Button>
               </div>
@@ -412,16 +337,14 @@ function AdminSlotCard({
           ) : (
             <div className="space-y-1">
               {slot.locations && slot.locations.length > 0 ? (
-                slot.locations.map((location) => (
-                  <div key={location.id} className="text-sm p-2 bg-gray-50 rounded">
-                    <div className="font-medium">{location.locationName}</div>
-                    {location.address && (
-                      <div className="text-xs text-gray-600">{location.address}</div>
-                    )}
-                  </div>
-                ))
+                <div className="text-sm p-2 bg-gray-50 rounded">
+                  <div className="font-medium">{slot.locations[0].locationName}</div>
+                  {slot.locations[0].address && (
+                    <div className="text-xs text-gray-600">{slot.locations[0].address}</div>
+                  )}
+                </div>
               ) : (
-                <p className="text-sm text-gray-500 italic">No locations assigned</p>
+                <p className="text-sm text-gray-500 italic">No location assigned</p>
               )}
             </div>
           )}

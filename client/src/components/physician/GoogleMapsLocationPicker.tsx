@@ -99,7 +99,6 @@ export function GoogleMapsLocationPicker({
       <APIProvider apiKey={apiKey} version="beta">
         <Map
           onClick={(e) => {
-            console.log(e.detail.placeId, "lattitude", e.detail.latLng?.lat, "longitude", e.detail.latLng?.lng);
             if (e.detail.latLng) {
               setLatlong({ lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
             }
@@ -211,7 +210,6 @@ export const AutocompleteCustomHybrid = ({ onPlaceSelect, onLocationSelect, coor
       ) => {
         if (status === 'OK' && results && results[0]) {
           const result = results[0];
-          console.log("The result is", result);
           setInputValue(result.formatted_address);
 
           const addressComponents = result.address_components || [];
@@ -235,9 +233,8 @@ export const AutocompleteCustomHybrid = ({ onPlaceSelect, onLocationSelect, coor
           } else {
             isInitialGeocodeRef.current = false;
           }
-        } else {
-          console.error('Geocoder failed due to: ' + status);
         }
+        // Geocoder error handled silently
       }
     );
   }, [geocodingLibrary, coords.lat, coords.lng, onLocationSelect]);

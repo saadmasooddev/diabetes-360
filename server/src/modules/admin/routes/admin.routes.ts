@@ -40,11 +40,11 @@ router.use(requireAdmin);
  *           enum: [customer, admin, physician]
  *         description: Filter users by role
  *       - in: query
- *         name: tier
+ *         name: paymentType
  *         schema:
  *           type: string
- *           enum: [free, paid]
- *         description: Filter users by tier
+ *           enum: [free, monthly, annual]
+ *         description: Filter users by payment type
  *     responses:
  *       200:
  *         description: Users retrieved successfully
@@ -186,9 +186,9 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *                 type: string
  *                 enum: [customer, admin, physician]
  *                 default: customer
- *               tier:
+ *               paymentType:
  *                 type: string
- *                 enum: [free, paid]
+ *                 enum: [free, monthly, annual]
  *                 default: free
  *               isActive:
  *                 type: boolean
@@ -311,9 +311,9 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *               role:
  *                 type: string
  *                 enum: [customer, admin, physician]
- *               tier:
+ *               paymentType:
  *                 type: string
- *                 enum: [free, paid]
+ *                 enum: [free, monthly, annual]
  *               isActive:
  *                 type: boolean
  *               physicianData:

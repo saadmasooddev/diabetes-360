@@ -33,6 +33,8 @@ import {
 import { ROUTES } from '@/config/routes';
 import { useCreateCustomerData, useGetCustomerData, useUpdateCustomerData } from '@/hooks/mutations/useCustomer';
 import { useState, useEffect } from 'react';
+import { parseDateToComponents } from '@/lib/utils';
+import { ButtonSpinner } from '@/components/ui/spinner';
 
 export function ProfileData() {
   const [, setLocation] = useLocation();
@@ -62,20 +64,6 @@ export function ProfileData() {
   // Populate form with existing data if available
   useEffect(() => {
 
-    function parseDateToComponents(dateString: string): { day: string; month: string; year: string } {
-      if (!dateString) return { day: '', month: '', year: '' };
-      try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return { day: '', month: '', year: '' };
-        return {
-          day: String(date.getDate()).padStart(2, '0'),
-          month: String(date.getMonth() + 1).padStart(2, '0'),
-          year: String(date.getFullYear()),
-        };
-      } catch {
-        return { day: '', month: '', year: '' };
-      }
-    }
     const { day: birthDay, month: birthMonth, year: birthYear } = parseDateToComponents(existingData?.customerData?.birthday || '');
     const { day: diagnosisDay, month: diagnosisMonth, year: diagnosisYear } = parseDateToComponents(existingData?.customerData?.diagnosisDate || '');
 
@@ -579,7 +567,14 @@ export function ProfileData() {
                 }}
                 data-testid="button-submit-details"
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Details'}
+                {isSubmitting ? (
+                  <>
+                    <ButtonSpinner className="mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Details'
+                )}
               </Button>
             </form>
           </Form>

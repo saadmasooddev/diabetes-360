@@ -18,6 +18,7 @@ export const ROUTES = {
   DIABOT: "/dashboard/diabot",
   HEALTH_PLANS: "/dashboard/plans",
   PAYMENTS: "/dashboard/payments",
+  STRENGTH_TRAINING_PROGRESS: "/dashboard/strength-training",
 
   // Feature Routes
   METRICS_HISTORY: "/metrics",

@@ -1,17 +1,26 @@
-import { BookingRepository } from "../repository/booking.repository";
+import { BookingRepository, SlotWithDetails } from "../repository/booking.repository";
+import { ConsultationQuotaRepository } from "../repository/consultation-quota.repository";
+import { SettingsService } from "../../settings/service/settings.service";
+import { UserRepository } from "../../user/repository/user.repository";
 import { BadRequestError, ConflictError, NotFoundError, ForbiddenError } from "../../../shared/errors";
+import { db } from "../../../app/config/db";
+import { users, physicianData } from "../../auth/models/user.schema";
+import { eq } from "drizzle-orm";
 import type {
   InsertSlot,
-  InsertSlotPrice,
   InsertSlotTypeJunction,
-  UpdateSlotPrice,
-} from "../../auth/models/user.schema";
-
+} from "../models/booking.schema";
 export class BookingService {
   private bookingRepository: BookingRepository;
+  private consultationQuotaRepository: ConsultationQuotaRepository;
+  private settingsService: SettingsService;
+  private userRepository: UserRepository;
 
   constructor() {
     this.bookingRepository = new BookingRepository();
+    this.consultationQuotaRepository = new ConsultationQuotaRepository();
+    this.settingsService = new SettingsService();
+    this.userRepository = new UserRepository();
   }
 
   async getAllSlotSizes() {
@@ -71,7 +80,6 @@ export class BookingService {
     startTime: string,
     endTime: string,
     slotTypeIds: string[],
-    prices: { slotTypeId: string; price: string }[],
     locationIds?: string[]
   ) {
     // Validate date is in the future
@@ -127,7 +135,7 @@ export class BookingService {
 
     if (hasOverlap) {
       throw new ConflictError(
-        "Slots overlap with existing slots of the same type for this date"
+        "Slots overlap with existing slots for this date. Please delete existing slots in this time range before creating new ones."
       );
     }
 
@@ -153,22 +161,6 @@ export class BookingService {
     });
 
     await this.bookingRepository.createMultipleSlotTypeJunctions(junctionData);
-
-    // Create slot prices
-    const priceData: InsertSlotPrice[] = [];
-    createdSlots.forEach((slot) => {
-      prices.forEach((price) => {
-        if (slotTypeIds.includes(price.slotTypeId)) {
-          priceData.push({
-            slotId: slot.id,
-            slotTypeId: price.slotTypeId,
-            price: price.price,
-          });
-        }
-      });
-    });
-
-    await this.bookingRepository.createMultipleSlotPrices(priceData);
 
     // Create slot locations if provided (for offline consultations)
     if (locationIds && locationIds.length > 0) {
@@ -311,7 +303,7 @@ export class BookingService {
     return await this.bookingRepository.updateSlotLocations(slotId, locationIds);
   }
 
-  async bookSlot(customerId: string, slotId: string) {
+  async bookSlot(customerId: string, slotId: string, slotTypeId: string) {
     const slot = await this.bookingRepository.getSlotById(slotId);
     if (!slot) {
       throw new NotFoundError("Slot not found");
@@ -323,9 +315,22 @@ export class BookingService {
       throw new ConflictError("Slot is already booked");
     }
 
+    // Validate that the slot type exists and is associated with this slot
+    const slotWithDetails = await this.bookingRepository.getSlotWithDetails(slotId);
+    if (!slotWithDetails) {
+      throw new NotFoundError("Slot details not found");
+    }
+
+    // Check if the provided slotTypeId is valid for this slot
+    const validSlotTypeIds = slotWithDetails.types.map((t) => t.id);
+    if (!validSlotTypeIds.includes(slotTypeId)) {
+      throw new BadRequestError("Invalid slot type for this slot");
+    }
+
     return await this.bookingRepository.createBookedSlot({
       customerId,
       slotId,
+      slotTypeId,
       status: "pending",
     });
   }
@@ -366,6 +371,147 @@ export class BookingService {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
+  }
+
+  async getPhysicianDatesWithSlots(
+    physicianId: string,
+    month: number,
+    year: number,
+    isCount: boolean,
+    selectedDate: Date
+  ) {
+
+    const currentDate = new Date();
+    const monthsDiff = (year - currentDate.getFullYear()) * 12 + 
+                       (month - currentDate.getMonth());
+    
+    // Limit to 12 months in the past and 12 months in the future
+    if (monthsDiff < -12 || monthsDiff > 12) {
+      throw new BadRequestError("Query range limited to 12 months in the past and 12 months in the future");
+    }
+
+    type PhysicianDatesWithSlots = {
+      dates: Array<{ date: string; count: number }> | [];
+      slots: Array<SlotWithDetails>;
+    }
+    const result: PhysicianDatesWithSlots  = {
+      dates: [],
+      slots: [],
+    };
+
+    // If isCount is true, get dates with counts
+    if (isCount) {
+      result.dates = await this.bookingRepository.getDatesWithCountsForMonth(
+        physicianId,
+        month,
+        year
+      );
+    }
+
+    result.slots = await this.bookingRepository.getOrganizedSlotsForDate(
+      physicianId,
+      selectedDate
+    );
+
+
+    return result;
+  }
+
+  /**
+   * Calculate booking price based on consultation fee and user subscription status
+   * Returns the price breakdown with original fee, discounted fee (if applicable), and final price
+   */
+  async calculateBookingPrice(physicianId: string, customerId: string): Promise<{
+    originalFee: string;
+    discountedFee: string | null;
+    finalPrice: string;
+    isFree: boolean;
+    isDiscounted: boolean;
+    discountPercentage?: number;
+  }> {
+    // Get physician consultation fee
+    const [physician] = await db
+      .select({
+        consultationFee: physicianData.consultationFee,
+      })
+      .from(physicianData)
+      .where(eq(physicianData.userId, physicianId))
+      .limit(1);
+
+    if (!physician || !physician.consultationFee) {
+      throw new NotFoundError("Physician consultation fee not found");
+    }
+
+    const originalFee = parseFloat(physician.consultationFee);
+
+    // Get customer user data
+    const customer = await this.userRepository.getUser(customerId);
+    if (!customer) {
+      throw new NotFoundError("Customer not found");
+    }
+
+    // Get user consultation quota
+    const quota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(customerId);
+    
+    // Get system-wide quota limits
+    const systemLimits = await this.settingsService.getFreeTierLimits();
+    const discountedQuotaLimit = systemLimits.discountedConsultationQuota || 0;
+    const freeQuotaLimit = systemLimits.freeConsultationQuota || 0;
+
+    // Check if user is paid (paymentType is not 'free')
+    const isPaid = customer.paymentType !== "free";
+    const paymentType = customer.paymentType; // monthly, annual, or free
+
+    // Calculate price based on user status
+    let finalPrice = originalFee;
+    let discountedFee: string | null = null;
+    let isFree = false;
+    let isDiscounted = false;
+    let discountPercentage: number | undefined;
+
+    if (isPaid) {
+      // For paid users
+      if (paymentType === "annual") {
+        // Annual users get free consultations if quota not exhausted
+        if (quota.freeConsultationsUsed < freeQuotaLimit) {
+          finalPrice = 0;
+          isFree = true;
+        } else if (quota.discountedConsultationsUsed < discountedQuotaLimit) {
+          // Apply discount (assuming 20% discount, adjust as needed)
+          discountPercentage = 20;
+          discountedFee = (originalFee * 0.8).toFixed(2);
+          finalPrice = parseFloat(discountedFee);
+          isDiscounted = true;
+        } else {
+          // No discount, pay original fee
+          finalPrice = originalFee;
+        }
+      } else {
+        // Monthly users get discounted consultations if quota not exhausted
+        if (quota.discountedConsultationsUsed < discountedQuotaLimit) {
+          // Apply discount (assuming 20% discount, adjust as needed)
+          discountPercentage = 20;
+          discountedFee = (originalFee * 0.8).toFixed(2);
+          finalPrice = parseFloat(discountedFee);
+          isDiscounted = true;
+        } else {
+          // No discount, pay original fee
+          finalPrice = originalFee;
+        }
+      }
+    } else {
+      // Free tier users pay full price
+      finalPrice = originalFee;
+    }
+
+    return {
+      originalFee: originalFee.toFixed(2),
+      discountedFee: discountedFee,
+      finalPrice: finalPrice.toFixed(2),
+      isFree,
+      isDiscounted,
+      discountPercentage,
+    };
   }
 }
 

@@ -57,7 +57,7 @@ export const LogIn = (): JSX.Element => {
   };
 
   const handleSocialLogin = (platform: string) => {
-    console.log(`${platform} login clicked`);
+    // Social login functionality to be implemented
   };
 
   const isEmailValid = emailValue && !errors.email;
@@ -114,8 +114,8 @@ export const LogIn = (): JSX.Element => {
                   placeholder="helloworld@gmail.com"
                   maxLength={50}
                   className={`w-full h-auto pl-4 ${isEmailValid ? 'pr-12' : 'pr-4'} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("email")}
                   data-testid="input-email"
@@ -141,8 +141,8 @@ export const LogIn = (): JSX.Element => {
                   placeholder="Enter your password"
                   maxLength={128}
                   className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.password
-                      ? "border-red-500"
-                      : "border-[#d8dadc]"
+                    ? "border-red-500"
+                    : "border-[#d8dadc]"
                     } [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
                   {...register("password")}
                   data-testid="input-password"

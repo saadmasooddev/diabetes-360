@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ export function UserManagement() {
   const toggleStatusMutation = useToggleUserStatus();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
 
   const filteredUsers = users.filter(user =>
     `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -33,8 +35,13 @@ export function UserManagement() {
     setDeleteUserId(user.id);
   };
 
-  const handleToggleStatus = (user: User) => {
-    toggleStatusMutation.mutate({ id: user.id, isActive: !user.isActive });
+  const handleToggleStatus = async (user: User) => {
+    setTogglingUserId(user.id);
+    try {
+      await toggleStatusMutation.mutateAsync({ id: user.id, isActive: !user.isActive });
+    } finally {
+      setTogglingUserId(null);
+    }
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -152,8 +159,16 @@ export function UserManagement() {
                               <Edit className="h-4 w-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                              {user.isActive ? (
+                            <DropdownMenuItem
+                              onClick={() => handleToggleStatus(user)}
+                              disabled={togglingUserId === user.id || toggleStatusMutation.isPending}
+                            >
+                              {togglingUserId === user.id ? (
+                                <>
+                                  <ButtonSpinner className="h-4 w-4 mr-2" />
+                                  {user.isActive ? 'Deactivating...' : 'Activating...'}
+                                </>
+                              ) : user.isActive ? (
                                 <>
                                   <UserX className="h-4 w-4 mr-2" />
                                   Deactivate
@@ -188,7 +203,7 @@ export function UserManagement() {
               <div key={user.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{user.fullName || user.username}</h3>
+                    <h3 className="font-medium text-gray-900">{user.firstName} {user.lastName}</h3>
                     <p className="text-sm text-gray-600 mt-1">{user.email}</p>
                   </div>
                   <DropdownMenu>
@@ -202,8 +217,16 @@ export function UserManagement() {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                        {user.isActive ? (
+                      <DropdownMenuItem
+                        onClick={() => handleToggleStatus(user)}
+                        disabled={togglingUserId === user.id || toggleStatusMutation.isPending}
+                      >
+                        {togglingUserId === user.id ? (
+                          <>
+                            <ButtonSpinner className="h-4 w-4 mr-2" />
+                            {user.isActive ? 'Deactivating...' : 'Activating...'}
+                          </>
+                        ) : user.isActive ? (
                           <>
                             <UserX className="h-4 w-4 mr-2" />
                             Deactivate

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +15,7 @@ import { useSpecialtiesAdmin } from '@/hooks/mutations/usePhysician';
 import { useUploadPhysicianImage } from '@/hooks/mutations/usePhysician';
 import { useToast } from '@/hooks/use-toast';
 import { genderOptions, diabetesTypeOptions, dayOptions, monthOptions, yearOptions, weightOptions, heightOptions } from '@/mocks/profileData';
+import { handleNumberInput } from '@/lib/utils';
 
 const createUserSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -32,7 +34,6 @@ interface CreateUserDialogProps {
 
 export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [physicianFields, setPhysicianFields] = useState({
     specialtyId: '',
     practiceStartDate: '',
@@ -53,14 +54,16 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
     diabetesType: '' as 'type1' | 'type2' | 'gestational' | 'prediabetes' | '',
   });
   const createUserMutation = useCreateUser();
-  const { data: specialties = [] } = useSpecialtiesAdmin();
+  const { data: specialties = [], isLoading: isLoadingSpecialties } = useSpecialtiesAdmin();
   const uploadImageMutation = useUploadPhysicianImage();
+  const isLoading = createUserMutation.isPending || uploadImageMutation.isPending;
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -86,7 +89,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
   };
 
   const onSubmit = async (data: CreateUserForm) => {
-    setIsLoading(true);
     try {
       const userData: any = { ...data };
 
@@ -146,6 +148,36 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
       }
 
       await createUserMutation.mutateAsync(userData);
+
+      // Reset form state after successful creation
+      reset({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        role: 'customer',
+        isActive: true,
+      });
+      setPhysicianFields({
+        specialtyId: '',
+        practiceStartDate: '',
+        consultationFee: '',
+        imageFile: null,
+        imagePreview: '',
+      });
+      setCustomerFields({
+        gender: 'male',
+        birthDay: '',
+        birthMonth: '',
+        birthYear: '',
+        diagnosisDay: '',
+        diagnosisMonth: '',
+        diagnosisYear: '',
+        weight: '',
+        height: '',
+        diabetesType: '',
+      });
+
       onClose();
     } catch (error: any) {
       toast({
@@ -153,8 +185,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
         description: error.message || 'Failed to create user.',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -260,9 +290,10 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
                 <Select
                   value={physicianFields.specialtyId}
                   onValueChange={(value) => setPhysicianFields({ ...physicianFields, specialtyId: value })}
+                  disabled={isLoadingSpecialties || isLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select specialty" />
+                    <SelectValue placeholder={isLoadingSpecialties ? "Loading specialties..." : "Select specialty"} />
                   </SelectTrigger>
                   <SelectContent>
                     {specialties.map((specialty) => (
@@ -305,11 +336,15 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
                 <Label htmlFor="consultationFee">Consultation Fee (PKR) *</Label>
                 <Input
                   id="consultationFee"
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   min="0"
                   step="0.01"
                   value={physicianFields.consultationFee}
-                  onChange={(e) => setPhysicianFields({ ...physicianFields, consultationFee: e.target.value })}
+                  onChange={(e) => {
+                    const sanitized = handleNumberInput(physicianFields.consultationFee, e.target.value);
+                    setPhysicianFields({ ...physicianFields, consultationFee: sanitized });
+                  }}
                   placeholder="0.00"
                   required={watchedRole === 'physician'}
                 />
@@ -533,7 +568,14 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
           disabled={isLoading}
           className="bg-teal-600 hover:bg-teal-700"
         >
-          {isLoading ? 'Creating...' : 'Create User'}
+          {isLoading ? (
+            <>
+              <ButtonSpinner className="mr-2 h-4 w-4" />
+              Creating...
+            </>
+          ) : (
+            'Create User'
+          )}
         </Button>
       </DialogFooter>
     </DialogContent>

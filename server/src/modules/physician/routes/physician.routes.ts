@@ -53,8 +53,42 @@ router.get("/specialties", (req, res, next) => physicianController.getSpecialtie
  * @swagger
  * /api/physician/physicians:
  *   get:
- *     summary: Get all physicians for consultation
+ *     summary: Get paginated physicians with search and specialty filtering
  *     tags: [Consultation]
+ *     description: >
+ *       Retrieves a paginated list of physicians. You can filter the list by specialty and
+ *       search by name or specialty keyword. All query parameters are optional.
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number to retrieve (starts from 1). Default is 1.
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Number of physicians per page (default is 10; max is 100).
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: >
+ *           Search term to filter by physician name or specialty. If set to "all", all physicians will be shown (only applies when specialtyId is not provided).
+ *       - in: query
+ *         name: specialtyId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Filter physicians by a specific specialty ID.
  *     responses:
  *       200:
  *         description: Physicians retrieved successfully
@@ -72,9 +106,48 @@ router.get("/specialties", (req, res, next) => physicianController.getSpecialtie
  *                           type: array
  *                           items:
  *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               firstName:
+ *                                 type: string
+ *                               lastName:
+ *                                 type: string
+ *                               email:
+ *                                 type: string
+ *                               specialty:
+ *                                 type: string
+ *                               experience:
+ *                                 type: string
+ *                               rating:
+ *                                 type: number
+ *                               totalRatings:
+ *                                 type: integer
+ *                               consultationFee:
+ *                                 type: string
+ *                               imageUrl:
+ *                                 type: string
+ *                                 nullable: true
+ *                         pagination:
+ *                           type: object
+ *                           properties:
+ *                             page:
+ *                               type: integer
+ *                             limit:
+ *                               type: integer
+ *                             total:
+ *                               type: integer
+ *                             totalPages:
+ *                               type: integer
+ *                             hasNext:
+ *                               type: boolean
+ *                             hasPrev:
+ *                               type: boolean
+ *       400:
+ *         description: Bad request (invalid page, limit, or specialtyId)
  */
-router.get("/physicians", (req, res, next) => 
-  physicianController.getAllPhysicians(req, res, next)
+router.get("/physicians", (req, res, next) =>
+  physicianController.getPhysiciansPaginated(req, res, next)
 );
 
 /**
@@ -480,6 +553,45 @@ router.put("/admin/physician-data/:userId", (req, res, next) =>
  */
 router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) => 
   physicianController.uploadPhysicianImage(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/physician/admin/locations/{physicianId}:
+ *   get:
+ *     summary: Get all locations for a specific physician (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: physicianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Physician ID
+ *     responses:
+ *       200:
+ *         description: Locations retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         locations:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/PhysicianLocation'
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/admin/locations/:physicianId", (req, res, next) => 
+  physicianController.getAllLocationsByPhysicianId(req, res, next)
 );
 
 /**

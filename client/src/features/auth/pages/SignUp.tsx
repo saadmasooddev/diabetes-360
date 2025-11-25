@@ -70,7 +70,7 @@ export const SignUp = (): JSX.Element => {
   };
 
   const handleSocialSignup = (platform: string) => {
-    console.log(`${platform} signup clicked`);
+    // Social signup functionality to be implemented
   };
 
   const isFirstNameValid = firstNameValue && !errors.firstName;
@@ -302,7 +302,9 @@ export const SignUp = (): JSX.Element => {
                 <button
                   type="button"
                   className="font-semibold text-[#00856f] underline"
-                  onClick={() => console.log("Terms clicked")}
+                  onClick={() => {
+                    // Terms and conditions functionality to be implemented
+                  }}
                   data-testid="link-terms"
                 >
                   Terms and Conditions

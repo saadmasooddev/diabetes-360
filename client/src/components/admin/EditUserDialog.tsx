@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,6 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 import { genderOptions, diabetesTypeOptions, dayOptions, monthOptions, yearOptions, weightOptions, heightOptions } from '@/mocks/profileData';
 import { AdminPhysicianSlotManagement } from './AdminPhysicianSlotManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { parseDateToComponents, handleNumberInput } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, 'First name is required').optional(),
@@ -103,21 +106,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
     }
   }, [physicianData, user.role]);
 
-  // Helper function to parse date string to separate components
-  const parseDateToComponents = (dateString: string): { day: string; month: string; year: string } => {
-    if (!dateString) return { day: '', month: '', year: '' };
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return { day: '', month: '', year: '' };
-      return {
-        day: String(date.getDate()).padStart(2, '0'),
-        month: String(date.getMonth() + 1).padStart(2, '0'),
-        year: String(date.getFullYear()),
-      };
-    } catch {
-      return { day: '', month: '', year: '' };
-    }
-  };
 
   // Load customer data from fetched user data
   useEffect(() => {
@@ -411,11 +399,15 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
                       <Label htmlFor="consultationFee">Consultation Fee (PKR) *</Label>
                       <Input
                         id="consultationFee"
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         min="0"
                         step="0.01"
                         value={physicianFields.consultationFee}
-                        onChange={(e) => setPhysicianFields({ ...physicianFields, consultationFee: e.target.value })}
+                        onChange={(e) => {
+                          const sanitized = handleNumberInput(physicianFields.consultationFee, e.target.value);
+                          setPhysicianFields({ ...physicianFields, consultationFee: sanitized });
+                        }}
                         placeholder="0.00"
                         required={(watchedRole === 'physician' || user.role === 'physician')}
                         disabled={isLoading}
@@ -664,7 +656,14 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
               disabled={isLoading}
               className="bg-teal-600 hover:bg-teal-700"
             >
-              {isLoading ? 'Updating...' : 'Update User'}
+              {isLoading ? (
+                <>
+                  <ButtonSpinner className="mr-2" />
+                  Updating...
+                </>
+              ) : (
+                'Update User'
+              )}
             </Button>
           )}
         </DialogFooter>

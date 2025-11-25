@@ -8,6 +8,8 @@ export const freeTierLimits = pgTable("free_tier_limits", {
   glucoseLimit: integer("glucose_limit").notNull().default(2),
   stepsLimit: integer("steps_limit").notNull().default(2),
   waterLimit: integer("water_limit").notNull().default(2),
+  discountedConsultationQuota: integer("discounted_consultation_quota"),
+  freeConsultationQuota: integer("free_consultation_quota"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -20,6 +22,8 @@ export const insertFreeTierLimitsSchema = createInsertSchema(freeTierLimits).omi
   glucoseLimit: z.number().int().min(0),
   stepsLimit: z.number().int().min(0),
   waterLimit: z.number().int().min(0),
+  discountedConsultationQuota: z.number().int().min(0).optional(),
+  freeConsultationQuota: z.number().int().min(0).optional(),
 });
 
 export const updateFreeTierLimitsSchema = insertFreeTierLimitsSchema.partial();

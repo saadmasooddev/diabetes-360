@@ -1,17 +1,44 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { healthTips, exercisePlans, weeklyChallenges } from '@/mocks/tipsExercises';
+import { healthTips, exercisePlans, weeklyChallenges, type ExercisePlan } from '@/mocks/tipsExercises';
+import { ROUTES } from '@/config/routes';
+import { useAddActivityLog } from '@/hooks/mutations/useHealth';
+import { useAuthStore } from '@/stores/authStore';
+import { handleNumberInput } from '@/lib/utils';
+import { ButtonSpinner } from '@/components/ui/spinner';
 
 interface TipsExercisesProps {
   isPremium?: boolean;
 }
 
+type ModalType = 'time' | 'exercises';
+
 export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
+  const [, setLocation] = useLocation();
+  const { user } = useAuthStore();
+  const addActivityLog = useAddActivityLog();
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>('time');
+  const [selectedExercise, setSelectedExercise] = useState<ExercisePlan | null>(null);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(30);
+  const [exerciseCounts, setExerciseCounts] = useState({
+    pushups: '',
+    squats: '',
+    chinups: '',
+    situps: '',
+  });
 
   const nextTip = () => {
     setCurrentTipIndex((prev) => (prev + 1) % healthTips.length);
@@ -28,6 +55,76 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
   const visibleWeeklyChallenges = isPremium
     ? weeklyChallenges
     : weeklyChallenges.filter(challenge => !challenge.isLocked);
+
+  const handleExerciseStart = (plan: ExercisePlan) => {
+    // Navigate to Strength Training Progress page for Strength Training
+    if (plan.title === 'Strength Training') {
+      setLocation(ROUTES.STRENGTH_TRAINING_PROGRESS);
+      return;
+    }
+
+    // For other exercises, show the time modal
+    setSelectedExercise(plan);
+    setModalType('time');
+    setIsExerciseModalOpen(true);
+  };
+
+  const handleLogExercise = async () => {
+    if (modalType === 'time' && selectedExercise) {
+      // Determine activity type based on exercise plan title
+      let activityType: 'walking' | 'yoga' = 'walking';
+      if (selectedExercise.title.toLowerCase().includes('yoga')) {
+        activityType = 'yoga';
+      } else if (selectedExercise.title.toLowerCase().includes('walk')) {
+        activityType = 'walking';
+      }
+
+      // Log the activity
+      try {
+        await addActivityLog.mutateAsync({
+          activityType,
+          hours,
+          minutes,
+        });
+        // Close modal and reset all state
+        setIsExerciseModalOpen(false);
+        setHours(0);
+        setMinutes(30);
+        setSelectedExercise(null);
+        setModalType('time');
+      } catch (error) {
+        // Error is handled by the mutation hook (toast notification)
+      }
+    } else {
+      // This is for strength training exercises - handled in StrengthTrainingProgress page
+      setIsExerciseModalOpen(false);
+      setExerciseCounts({
+        pushups: '',
+        squats: '',
+        chinups: '',
+        situps: '',
+      });
+      setSelectedExercise(null);
+      setModalType('exercises');
+    }
+  };
+
+  const handleExerciseCountChange = (exercise: keyof typeof exerciseCounts, value: string) => {
+    const currentValue = exerciseCounts[exercise];
+    const sanitized = handleNumberInput(currentValue, value);
+    // Only allow integers (no decimals for exercise counts)
+    if (sanitized === '' || /^\d+$/.test(sanitized)) {
+      setExerciseCounts(prev => ({
+        ...prev,
+        [exercise]: sanitized,
+      }));
+    }
+  };
+
+  const incrementHours = () => setHours((prev) => Math.min(prev + 1, 23));
+  const decrementHours = () => setHours((prev) => Math.max(prev - 1, 0));
+  const incrementMinutes = () => setMinutes((prev) => Math.min(prev + 1, 59));
+  const decrementMinutes = () => setMinutes((prev) => Math.max(prev - 1, 0));
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F7F9F9' }}>
@@ -211,7 +308,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                   }}
                   data-testid={`card-exercise-${plan.id}`}
                 >
-                  <Image
+                  <img
                     src={plan.image}
                     alt={plan.title}
                     className="w-full h-[180px] object-cover"
@@ -252,6 +349,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                       {plan.description}
                     </p>
                     <Button
+                      onClick={() => handleExerciseStart(plan)}
                       className="w-full"
                       style={{
                         background: '#00856F',
@@ -488,6 +586,342 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
           </div>
         </div>
       </main>
+
+      {/* Exercise Logging Modal */}
+      <Dialog open={isExerciseModalOpen} onOpenChange={setIsExerciseModalOpen}>
+        <DialogContent
+          className={modalType === 'time' ? 'sm:max-w-md' : 'sm:max-w-2xl'}
+          style={{
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            padding: '40px',
+          }}
+        >
+          {modalType === 'time' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle
+                  className="text-center mb-8"
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: 600,
+                    color: '#00453A',
+                  }}
+                >
+                  Enter estimated time
+                  <br />
+                  you exercised
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex items-center justify-center gap-8 mb-12">
+                {/* Hours Input */}
+                <div className="flex flex-col items-center">
+                  <div className="relative py-8">
+                    <button
+                      onClick={incrementHours}
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Increment hours"
+                      data-testid="button-increment-hours"
+                    >
+                      ▲
+                    </button>
+                    <div
+                      className="text-center"
+                      style={{
+                        fontSize: '64px',
+                        fontWeight: 400,
+                        color: '#00453A',
+                        fontFamily: 'system-ui',
+                        lineHeight: '1',
+                        minWidth: '100px',
+                      }}
+                      data-testid="text-hours"
+                    >
+                      {hours.toString().padStart(2, '0')}
+                    </div>
+                    <button
+                      onClick={decrementHours}
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Decrement hours"
+                      data-testid="button-decrement-hours"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  <span
+                    className="mt-2"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      color: '#546E7A',
+                    }}
+                  >
+                    Hours
+                  </span>
+                </div>
+
+                {/* Minutes Input */}
+                <div className="flex flex-col items-center">
+                  <div className="relative py-8">
+                    <button
+                      onClick={incrementMinutes}
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Increment minutes"
+                      data-testid="button-increment-minutes"
+                    >
+                      ▲
+                    </button>
+                    <div
+                      className="text-center"
+                      style={{
+                        fontSize: '64px',
+                        fontWeight: 400,
+                        color: '#00453A',
+                        fontFamily: 'system-ui',
+                        lineHeight: '1',
+                        minWidth: '100px',
+                      }}
+                      data-testid="text-minutes"
+                    >
+                      {minutes.toString().padStart(2, '0')}
+                    </div>
+                    <button
+                      onClick={decrementMinutes}
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label="Decrement minutes"
+                      data-testid="button-decrement-minutes"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                  <span
+                    className="mt-2"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 400,
+                      color: '#546E7A',
+                    }}
+                  >
+                    Minutes
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleLogExercise}
+                className="w-full"
+                disabled={addActivityLog.isPending}
+                style={{
+                  background: '#00856F',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  height: 'auto',
+                }}
+                data-testid="button-log-exercise"
+              >
+                {addActivityLog.isPending ? (
+                  <>
+                    <ButtonSpinner className="mr-2" />
+                    Logging...
+                  </>
+                ) : (
+                  'Log Now'
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle
+                  className="mb-8"
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    color: '#00453A',
+                  }}
+                >
+                  Enter number of exercises
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="grid grid-cols-2 gap-6 mb-8">
+                {/* Push-ups */}
+                <div>
+                  <div className="mb-2">
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#00856F',
+                      }}
+                    >
+                      Push-ups (30)
+                    </span>
+                    <button
+                      className="ml-2 text-teal-600 hover:text-teal-700 text-sm"
+                      style={{ fontWeight: 500 }}
+                      data-testid="link-tutorial-pushups"
+                    >
+                      Watch Tutorial
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={exerciseCounts.pushups}
+                    onChange={(e) => handleExerciseCountChange('pushups', e.target.value)}
+                    placeholder="Enter the number of Pushups"
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      fontSize: '14px',
+                      color: '#00453A',
+                    }}
+                    data-testid="input-pushups"
+                  />
+                </div>
+
+                {/* Squats */}
+                <div>
+                  <div className="mb-2">
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#00856F',
+                      }}
+                    >
+                      Squats (15)
+                    </span>
+                    <button
+                      className="ml-2 text-teal-600 hover:text-teal-700 text-sm"
+                      style={{ fontWeight: 500 }}
+                      data-testid="link-tutorial-squats"
+                    >
+                      Watch Tutorial
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={exerciseCounts.squats}
+                    onChange={(e) => handleExerciseCountChange('squats', e.target.value)}
+                    placeholder="Enter the number of Pushups"
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      fontSize: '14px',
+                      color: '#00453A',
+                    }}
+                    data-testid="input-squats"
+                  />
+                </div>
+
+                {/* Chinups */}
+                <div>
+                  <div className="mb-2">
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#00856F',
+                      }}
+                    >
+                      Chinups (10)
+                    </span>
+                    <button
+                      className="ml-2 text-teal-600 hover:text-teal-700 text-sm"
+                      style={{ fontWeight: 500 }}
+                      data-testid="link-tutorial-chinups"
+                    >
+                      Watch Tutorial
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={exerciseCounts.chinups}
+                    onChange={(e) => handleExerciseCountChange('chinups', e.target.value)}
+                    placeholder="Enter the number of Pushups"
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      fontSize: '14px',
+                      color: '#00453A',
+                    }}
+                    data-testid="input-chinups"
+                  />
+                </div>
+
+                {/* Sit-ups */}
+                <div>
+                  <div className="mb-2">
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#00856F',
+                      }}
+                    >
+                      Sit-ups (30)
+                    </span>
+                    <button
+                      className="ml-2 text-teal-600 hover:text-teal-700 text-sm"
+                      style={{ fontWeight: 500 }}
+                      data-testid="link-tutorial-situps"
+                    >
+                      Watch Tutorial
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={exerciseCounts.situps}
+                    onChange={(e) => handleExerciseCountChange('situps', e.target.value)}
+                    placeholder="Enter the number of Pushups"
+                    className="w-full px-4 py-3 rounded-lg border"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      fontSize: '14px',
+                      color: '#00453A',
+                    }}
+                    data-testid="input-situps"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={handleLogExercise}
+                className="w-full"
+                disabled={addActivityLog.isPending}
+                style={{
+                  background: '#00856F',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  height: 'auto',
+                }}
+                data-testid="button-log-exercise"
+              >
+                {addActivityLog.isPending ? (
+                  <>
+                    <ButtonSpinner className="mr-2" />
+                    Logging...
+                  </>
+                ) : (
+                  'Log Now'
+                )}
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

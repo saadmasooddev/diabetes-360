@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { GOOGLE_MAPS_API_KEY } from '@/utils/httpClient';
+import { GOOGLE_MAPS_API_KEY } from '@/utils/env';
 
 export function ManageLocation() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -169,16 +169,7 @@ export function ManageLocation() {
                       </div>
                     )}
 
-                    <div className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <span className="font-medium">Lat:</span> {parseFloat(location.latitude).toFixed(4)}
-                        </div>
-                        <div>
-                          <span className="font-medium">Lng:</span> {parseFloat(location.longitude).toFixed(4)}
-                        </div>
-                      </div>
-                    </div>
+
                   </CardContent>
                 </Card>
               ))}

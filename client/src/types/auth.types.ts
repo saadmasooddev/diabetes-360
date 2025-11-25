@@ -1,4 +1,4 @@
-export type UserTier = 'free' | 'paid';
+export type PaymentType = 'free' | 'monthly' | 'annual';
 
 export interface CustomerData {
   id: string;
@@ -35,7 +35,7 @@ export interface User {
   providerId?: string;
   avatar?: string;
   role: 'customer' | 'admin' | 'physician';
-  tier?: UserTier;
+  paymentType?: PaymentType;
   isActive: boolean;
   profileComplete: boolean;
   profileData?: CustomerData | PhysicianData | null;

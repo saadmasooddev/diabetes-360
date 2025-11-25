@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type {  RefreshTokenResponse, RefreshTokenData } from '@/types/auth.types';
-import { BASE_URL } from '@/utils/httpClient';
+import { BASE_URL } from '@/utils/env';
 
 
 class RefreshService {

@@ -8,12 +8,18 @@ import {
   updateCustomerDataSchema,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
+import { ConsultationQuotaRepository } from "../../booking/repository/consultation-quota.repository";
+import { SettingsService } from "../../settings/service/settings.service";
 
 export class CustomerController {
   private customerService: CustomerService;
+  private consultationQuotaRepository: ConsultationQuotaRepository;
+  private settingsService: SettingsService;
 
   constructor() {
     this.customerService = new CustomerService();
+    this.consultationQuotaRepository = new ConsultationQuotaRepository();
+    this.settingsService = new SettingsService();
   }
 
   async getCustomerData(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -31,7 +37,7 @@ export class CustomerController {
       }
 
       const data = await this.customerService.getCustomerDataByUserId(userId);
-      sendSuccess(res, { customerData: data }, "Customer data retrieved successfully");
+      sendSuccess(res, {  profileData: data }, "Customer data retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
     }
@@ -53,7 +59,7 @@ export class CustomerController {
       }
 
       const data = await this.customerService.createCustomerData(userId, validationResult.data);
-      sendSuccess(res, { customerData: data }, "Profile completed successfully");
+      sendSuccess(res, { profileData: data }, "Profile completed successfully");
     } catch (error: any) {
       handleError(res, error);
     }
@@ -81,7 +87,38 @@ export class CustomerController {
       }
 
       const data = await this.customerService.updateCustomerData(userId, validationResult.data);
-      sendSuccess(res, { customerData: data }, "Customer data updated successfully");
+      sendSuccess(res, {  profileData: data }, "Customer data updated successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getConsultationQuotas(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        throw new BadRequestError("User ID is required");
+      }
+
+      // Get user consultation quota
+      const quota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(userId);
+      
+      // Get system-wide quota limits
+      const systemLimits = await this.settingsService.getFreeTierLimits();
+      const discountedQuotaLimit = systemLimits.discountedConsultationQuota || 0;
+      const freeQuotaLimit = systemLimits.freeConsultationQuota || 0;
+
+      sendSuccess(res, { 
+        quota: {
+          discountedConsultationsUsed: quota.discountedConsultationsUsed,
+          freeConsultationsUsed: quota.freeConsultationsUsed,
+          discountedConsultationsLeft: Math.max(0, discountedQuotaLimit - quota.discountedConsultationsUsed),
+          freeConsultationsLeft: Math.max(0, freeQuotaLimit - quota.freeConsultationsUsed),
+          discountedQuotaLimit,
+          freeQuotaLimit,
+        }
+      }, "Consultation quotas retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
     }

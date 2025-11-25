@@ -70,16 +70,21 @@ export interface CreateSlotsRequest {
   startTime: string;
   endTime: string;
   slotTypeIds: string[];
-  prices: Array<{ slotTypeId: string; price: string }>;
   locationIds?: string[];
+}
+
+export interface BookingPriceCalculation {
+  originalFee: string;
+  discountedFee: string | null;
+  finalPrice: string;
+  isFree: boolean;
+  isDiscounted: boolean;
+  discountPercentage?: number;
 }
 
 export interface BookSlotRequest {
   slotId: string;
-}
-
-export interface UpdateSlotPriceRequest {
-  price: string;
+  slotTypeId: string;
 }
 
 export interface UpdateSlotLocationsRequest {
@@ -169,17 +174,43 @@ class BookingService {
     return response.data.slots;
   }
 
+  async getPhysicianDatesWithSlots(params: {
+    physicianId: string;
+    month: number;
+    year: number;
+    isCount: boolean;
+    selectedDate: string;
+  }): Promise<{
+    dates: Array<{ date: string; count: number }>;
+    slots: Slot[];
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('month', params.month.toString());
+    queryParams.append('year', params.year.toString());
+    queryParams.append('isCount', params.isCount.toString());
+    queryParams.append('selectedDate', params.selectedDate);
+
+    const response = await httpClient.get<ApiResponse<{
+      dates: Array<{ date: string; count: number }>;
+      slots: Slot[];
+    }>>(`${API_ENDPOINTS.BOOKING.PHYSICIAN_DATES(params.physicianId)}?${queryParams.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch physician dates and slots');
+    }
+    return response.data;
+  }
+
   async deleteSlot(slotId: string): Promise<void> {
     await httpClient.delete(API_ENDPOINTS.BOOKING.DELETE_SLOT(slotId));
   }
 
-  async updateSlotPrice(priceId: string, data: UpdateSlotPriceRequest): Promise<SlotPrice> {
-    const response = await httpClient.patch<ApiResponse<{ price: SlotPrice }>>(
-      API_ENDPOINTS.BOOKING.UPDATE_SLOT_PRICE(priceId),
-      data
+  async calculateBookingPrice(physicianId: string): Promise<BookingPriceCalculation> {
+    const response = await httpClient.get<ApiResponse<{ price: BookingPriceCalculation }>>(
+      API_ENDPOINTS.BOOKING.CALCULATE_BOOKING_PRICE(physicianId)
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to update slot price');
+      throw new Error(response.message || 'Failed to calculate booking price');
     }
     return response.data.price;
   }

@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface ChartDataPoint {
   time: string;
@@ -22,6 +22,9 @@ interface HealthTrendChartProps {
   };
   interval?: IntervalType;
   onIntervalChange?: (interval: IntervalType) => void;
+  recommendedTarget?: number;
+  userTarget?: number;
+  metricType?: 'glucose' | 'steps' | 'water_intake' | 'heart_rate';
 }
 
 export function HealthTrendChart({
@@ -33,32 +36,51 @@ export function HealthTrendChart({
   yAxisConfig,
   interval = 'daily',
   onIntervalChange,
+  recommendedTarget,
+  userTarget,
+  metricType,
 }: HealthTrendChartProps) {
+  // Prepare data with target values for each point
+  const chartData = data.map(point => ({
+    ...point,
+    recommendedTarget: recommendedTarget,
+    userTarget: userTarget,
+  }));
   return (
     <Card
+      className="transition-all duration-300 hover:shadow-xl"
       style={{
         background: '#FFFFFF',
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: '12px',
-        padding: '24px',
+        border: '1px solid rgba(0, 133, 111, 0.12)',
+        borderRadius: '16px',
+        padding: '28px',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)',
       }}
       data-testid={testId}
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b" style={{ borderColor: 'rgba(0, 133, 111, 0.1)' }}>
         <h3
           className="font-semibold"
           style={{
             color: '#00453A',
-            fontSize: '20px',
+            fontSize: '22px',
             lineHeight: '28px',
-            fontWeight: 600,
+            fontWeight: 700,
+            letterSpacing: '-0.02em',
           }}
         >
           {title}
         </h3>
         {onIntervalChange && (
           <Select value={interval} onValueChange={(value) => onIntervalChange(value as IntervalType)}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger
+              className="w-36 transition-all duration-200 hover:border-[#00856F]"
+              style={{
+                border: '1.5px solid rgba(0, 133, 111, 0.2)',
+                borderRadius: '10px',
+                padding: '8px 12px',
+              }}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -70,7 +92,7 @@ export function HealthTrendChart({
         )}
       </div>
       <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data}>
+        <AreaChart data={chartData}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
@@ -105,9 +127,70 @@ export function HealthTrendChart({
             stroke="#00856F"
             strokeWidth={2}
             fill={`url(#${gradientId})`}
+            name="Current Value"
           />
+          {recommendedTarget !== undefined && recommendedTarget !== null && (
+            <ReferenceLine
+              y={recommendedTarget}
+              stroke="#FF9800"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              label={{ value: "Recommended", position: "right", fill: "#FF9800", fontSize: 11 }}
+            />
+          )}
+          {userTarget !== undefined && userTarget !== null && (
+            <ReferenceLine
+              y={userTarget}
+              stroke="#2196F3"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              label={{ value: "Your Target", position: "right", fill: "#2196F3", fontSize: 11 }}
+            />
+          )}
         </AreaChart>
       </ResponsiveContainer>
+
+      {/* Custom Legend */}
+      {(recommendedTarget !== undefined || userTarget !== undefined) && (
+        <div
+          className="mt-6 pt-4 flex flex-wrap items-center justify-center gap-6"
+          style={{
+            borderTop: '1px solid rgba(0, 133, 111, 0.1)',
+          }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-5 h-1 rounded-full"
+              style={{ background: '#00856F' }}
+            ></div>
+            <span className="text-sm font-medium" style={{ color: '#546E7A' }}>
+              Current Progress
+            </span>
+          </div>
+          {recommendedTarget !== undefined && recommendedTarget !== null && (
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-5 h-1 border-t-2 border-dashed rounded-full"
+                style={{ borderColor: '#FF9800' }}
+              ></div>
+              <span className="text-sm font-medium" style={{ color: '#546E7A' }}>
+                Recommended Target
+              </span>
+            </div>
+          )}
+          {userTarget !== undefined && userTarget !== null && (
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-5 h-1 border-t-2 border-dashed rounded-full"
+                style={{ borderColor: '#2196F3' }}
+              ></div>
+              <span className="text-sm font-medium" style={{ color: '#546E7A' }}>
+                Your Target
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

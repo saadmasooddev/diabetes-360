@@ -404,15 +404,259 @@ router.patch("/slots/:slotId/locations", authenticateToken, (req, res) =>
  *             type: object
  *             required:
  *               - slotId
+ *               - slotTypeId
  *             properties:
  *               slotId:
  *                 type: string
+ *                 description: The ID of the slot to book
+ *                 example: "slot-123"
+ *               slotTypeId:
+ *                 type: string
+ *                 description: The ID of the slot type (online/onsite) selected by the user. Must be one of the slot types available for this slot.
+ *                 example: "type-online-123"
  *     responses:
  *       200:
  *         description: Slot booked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         booking:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             slotId:
+ *                               type: string
+ *                             slotTypeId:
+ *                               type: string
+ *                             status:
+ *                               type: string
+ *                               enum: [pending, confirmed, cancelled, completed]
+ *       400:
+ *         description: Bad request (missing slotId or slotTypeId, invalid slot type, or slot already booked)
+ *       404:
+ *         description: Slot not found
  */
 router.post("/book", authenticateToken, (req, res) =>
   bookingController.bookSlot(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/physicians/{physicianId}/dates:
+ *   get:
+ *     summary: Get physician dates with availability counts and slots
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: physicianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Physician ID (UUID)
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         description: Month (1-12)
+ *         example: 12
+ *       - in: query
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 2020
+ *           maximum: 2100
+ *         description: Year (2020-2100)
+ *         example: 2024
+ *       - in: query
+ *         name: isCount
+ *         required: true
+ *         schema:
+ *           type: boolean
+ *         description: If true, returns dates with available booking counts. If false, skips the dates query.
+ *         example: true
+ *       - in: query
+ *         name: selectedDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           pattern: '^\\d{4}-\\d{2}-\\d{2}$'
+ *         description: Selected date in YYYY-MM-DD format (e.g., 2024-12-25). Returns organized slots for this date.
+ *         example: "2024-12-25"
+ *     responses:
+ *       200:
+ *         description: Physician dates and slots retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         dates:
+ *                           type: array
+ *                           description: Array of dates with available booking counts (only if isCount is true)
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               date:
+ *                                 type: string
+ *                                 format: date
+ *                                 example: "2024-12-25"
+ *                               count:
+ *                                 type: integer
+ *                                 description: Number of available bookings for this date
+ *                                 example: 5
+ *                         slots:
+ *                           type: array
+ *                           description: Array of organized slots for the selected date (only if selectedDate is provided)
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 description: Slot ID (UUID)
+ *                                 example: "123e4567-e89b-12d3-a456-426614174000"
+ *                               startTime:
+ *                                 type: string
+ *                                 example: "09:00:00"
+ *                               endTime:
+ *                                 type: string
+ *                                 example: "09:30:00"
+ *                               slotSize:
+ *                                 type: integer
+ *                                 description: Slot size in minutes
+ *                                 example: 30
+ *                               types:
+ *                                 type: array
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     type:
+ *                                       type: string
+ *                                       example: "online"
+ *                                     price:
+ *                                       type: string
+ *                                       example: "100.00"
+ *                               locations:
+ *                                 type: array
+ *                                 description: Locations for offline/onsite consultations (only if applicable)
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     locationName:
+ *                                       type: string
+ *                                     address:
+ *                                       type: string
+ *                                       nullable: true
+ *                                     city:
+ *                                       type: string
+ *                                       nullable: true
+ *                                     state:
+ *                                       type: string
+ *                                       nullable: true
+ *                                     country:
+ *                                       type: string
+ *                                       nullable: true
+ *                                     postalCode:
+ *                                       type: string
+ *                                       nullable: true
+ *                                     latitude:
+ *                                       type: string
+ *                                     longitude:
+ *                                       type: string
+ *                               isBooked:
+ *                                 type: boolean
+ *                                 description: Whether the slot is already booked
+ *       400:
+ *         description: Bad request (invalid parameters, date format, or query range)
+ *       404:
+ *         description: Physician not found
+ */
+router.get("/physicians/:physicianId/dates", authenticateToken, (req, res) =>
+  bookingController.getPhysicianDates(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/physicians/{physicianId}/calculate-price:
+ *   get:
+ *     summary: Calculate booking price for a physician consultation
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: physicianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Physician ID (UUID)
+ *     responses:
+ *       200:
+ *         description: Booking price calculated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         price:
+ *                           type: object
+ *                           properties:
+ *                             originalFee:
+ *                               type: string
+ *                               description: Original consultation fee
+ *                               example: "100.00"
+ *                             discountedFee:
+ *                               type: string
+ *                               nullable: true
+ *                               description: Discounted fee if applicable
+ *                               example: "80.00"
+ *                             finalPrice:
+ *                               type: string
+ *                               description: Final price to be charged
+ *                               example: "80.00"
+ *                             isFree:
+ *                               type: boolean
+ *                               description: Whether the consultation is free
+ *                             isDiscounted:
+ *                               type: boolean
+ *                               description: Whether a discount is applied
+ *                             discountPercentage:
+ *                               type: number
+ *                               nullable: true
+ *                               description: Discount percentage if applicable
+ *                               example: 20
+ *       400:
+ *         description: Bad request
+ *       404:
+ *         description: Physician or customer not found
+ */
+router.get("/physicians/:physicianId/calculate-price", authenticateToken, (req, res) =>
+  bookingController.calculateBookingPrice(req, res)
 );
 
 export { router as bookingRoutes };

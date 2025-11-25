@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/utils/httpClient";
+import { BASE_URL } from "@/utils/env";
 import React from "react";
 
 interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -14,8 +14,8 @@ export const Image: React.FC<ImageProps> = ({
   ...props
 }) => {
   const resolvedSrc =
-    pointToServer && src && !src.startsWith("http") && !src.startsWith("/")
-      ? `${BASE_URL}/${src}`
+    pointToServer && src && !src.startsWith("http")
+      ? `${BASE_URL}${BASE_URL.includes("localhost") ? "" : "/public"}/${src.startsWith("/") ? src.substring(1) : src}`
       : src;
 
 

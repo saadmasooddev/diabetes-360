@@ -15,6 +15,8 @@ export const profileDataSchema = z.object({
   diabetesType: z.enum(['type1', 'type2', 'gestational', 'prediabetes'], {
     error: 'Please select diabetes type',
   }),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
 });
 
 export type ProfileDataFormValues = z.infer<typeof profileDataSchema>;

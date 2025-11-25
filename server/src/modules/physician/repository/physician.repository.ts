@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, avg, sql } from "drizzle-orm";
+import { eq, and, or, avg, sql, like, ilike, desc, asc, SQL } from "drizzle-orm";
 import { 
   physicianSpecialties, 
   physicianData, 
@@ -185,6 +185,134 @@ export class PhysicianRepository {
     );
 
     return physiciansWithRatings;
+  }
+
+  // Get paginated physicians with search and specialty filter
+  async getPhysiciansPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    specialtyId?: string;
+  }): Promise<{
+    physicians: any[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const { page, limit, search, specialtyId } = params;
+    const offset = (page - 1) * limit;
+
+    // Build base query conditions
+    const conditions = [
+      eq(users.role, USER_ROLES.PHYSICIAN),
+      eq(users.isActive, true),
+    ];
+
+    // Add specialty filter if provided
+    if (specialtyId) {
+      conditions.push(eq(physicianData.specialtyId, specialtyId));
+    }
+
+    // Build search conditions if search term is provided
+    let searchConditions :SQL<unknown>[] = [];
+    if (search && search.trim() !== '' && search.toLowerCase() !== 'all') {
+      const searchTerm = `%${search.trim()}%`;
+      searchConditions = [
+        ilike(sql`CONCAT(${users.firstName}, ' ', ${users.lastName})`, searchTerm),
+        ilike(physicianSpecialties.name, searchTerm),
+      ];
+    }
+
+    // Build final where conditions
+    const finalConditions :SQL<unknown>[] = [...conditions];
+    if (searchConditions.length > 0) {
+      finalConditions.push(or(...searchConditions));
+    }
+
+    // Get total count for pagination
+    const countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .innerJoin(physicianData, eq(users.id, physicianData.userId))
+      .innerJoin(physicianSpecialties, eq(physicianData.specialtyId, physicianSpecialties.id))
+      .where(and(...finalConditions));
+
+    const [countResult] = await countQuery;
+    const total = countResult?.count ? parseInt(countResult.count.toString()) : 0;
+    const totalPages = Math.ceil(total / limit);
+
+    // Get paginated physicians
+    let query = db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        isActive: users.isActive,
+        specialtyId: physicianData.specialtyId,
+        practiceStartDate: physicianData.practiceStartDate,
+        consultationFee: physicianData.consultationFee,
+        imageUrl: physicianData.imageUrl,
+        specialty: physicianSpecialties.name,
+      })
+      .from(users)
+      .innerJoin(physicianData, eq(users.id, physicianData.userId))
+      .innerJoin(physicianSpecialties, eq(physicianData.specialtyId, physicianSpecialties.id))
+      .where(and(...finalConditions))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(asc(users.firstName), asc(users.lastName));
+
+    const physicians = await query;
+
+    // Get average ratings for each physician
+    const physiciansWithRatings = await Promise.all(
+      physicians.map(async (physician) => {
+        const [avgRating] = await db
+          .select({
+            averageRating: avg(physicianRatings.rating),
+            totalRatings: sql<number>`count(${physicianRatings.id})`,
+          })
+          .from(physicianRatings)
+          .where(eq(physicianRatings.physicianId, physician.id));
+
+        const rating = avgRating?.averageRating 
+          ? parseFloat(avgRating.averageRating.toString()) 
+          : 0;
+        const totalRatings = avgRating?.totalRatings ? parseInt(avgRating.totalRatings.toString()) : 0;
+
+        // Calculate years of experience
+        const startDate = new Date(physician.practiceStartDate);
+        const now = new Date();
+        const yearsExperience = Math.max(1, Math.floor(
+          (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365)
+        ));
+
+        return {
+          ...physician,
+          rating: rating,
+          totalRatings: totalRatings,
+          experience: `${yearsExperience}+ years`,
+        };
+      })
+    );
+
+    return {
+      physicians: physiciansWithRatings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   // Get physicians by specialty for consultation

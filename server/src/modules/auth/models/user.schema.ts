@@ -3,22 +3,17 @@ import { pgTable, text, varchar, timestamp, numeric, integer, boolean, pgEnum } 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const USER_TIERS = {
-  FREE: "free",
-  PAID: "paid",
-} as const;
-
 export const USER_ROLES = {
   CUSTOMER: "customer",
   ADMIN: "admin",
   PHYSICIAN: "physician",
 } as const;
 
-export const userTierEnum = z.enum([USER_TIERS.FREE, USER_TIERS.PAID]);
-export const userTier = pgEnum("tier",[USER_TIERS.FREE, USER_TIERS.PAID]);
-
 export const userRoleEnum = z.enum([USER_ROLES.CUSTOMER, USER_ROLES.ADMIN, USER_ROLES.PHYSICIAN]);
-export const userRole = pgEnum("user_role",[USER_ROLES.CUSTOMER, USER_ROLES.ADMIN, USER_ROLES.PHYSICIAN]);
+export const userRole = pgEnum("role",[USER_ROLES.CUSTOMER, USER_ROLES.ADMIN, USER_ROLES.PHYSICIAN]);
+
+export const paymentTypeEnum = z.enum(['monthly', 'annual', 'free']);
+export const paymentType = pgEnum("payment_type", ['monthly', 'annual', 'free']);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -29,8 +24,8 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   provider: text("provider").notNull().default("manual"), // manual, google, apple, facebook
   providerId: text("provider_id"), // External provider ID
-  role: userRole().default(USER_ROLES.CUSTOMER).notNull(), // customer, admin, physician
-  tier: userTier().default(USER_TIERS.FREE).notNull(), // free, paid
+  role: userRole("role").default(USER_ROLES.CUSTOMER).notNull(), // customer, admin, physician
+  paymentType: paymentType("payment_type").default('free').notNull(), // 'monthly', 'annual', or 'free'
   isActive: boolean("is_active").default(true),
   profileComplete: boolean("profile_complete").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -233,6 +228,8 @@ export const updateCustomerDataSchema = createInsertSchema(customerData).omit({
     }
     return val;
   }),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -277,7 +274,7 @@ export const physicianLocations = pgTable("physician_locations", {
   postalCode: text("postal_code"),
   latitude: numeric("latitude", { precision: 10, scale: 7 }).notNull(),
   longitude: numeric("longitude", { precision: 10, scale: 7 }).notNull(),
-  status: locationStatus().default(LOCATION_STATUS.ACTIVE).notNull(),
+  status: locationStatus('status').default(LOCATION_STATUS.ACTIVE).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -92,6 +92,31 @@ export class PhysicianService {
     return await this.physicianRepository.getAllPhysicians();
   }
 
+  async getPhysiciansPaginated(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    specialtyId?: string;
+  }) {
+    // Validate page and limit
+    if (params.page < 1) {
+      throw new BadRequestError("Page must be greater than 0");
+    }
+    if (params.limit < 1 || params.limit > 100) {
+      throw new BadRequestError("Limit must be between 1 and 100");
+    }
+
+    // Validate specialty if provided
+    if (params.specialtyId) {
+      const specialty = await this.physicianRepository.getSpecialtyById(params.specialtyId);
+      if (!specialty) {
+        throw new NotFoundError("Specialty not found");
+      }
+    }
+
+    return await this.physicianRepository.getPhysiciansPaginated(params);
+  }
+
   async getPhysiciansBySpecialty(specialtyId: string) {
     const specialty = await this.physicianRepository.getSpecialtyById(specialtyId);
     if (!specialty) {

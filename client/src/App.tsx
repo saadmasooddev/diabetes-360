@@ -25,6 +25,7 @@ import { Home } from "@/features/dashboard/pages/Home";
 import DiaBot from "@/features/dashboard/pages/DiaBot";
 import { Settings } from "@/pages/Settings";
 import { ROUTES } from "@/config/routes";
+import { StrengthTrainingProgress } from "./features/dashboard/pages/StrengthTrainingProgress";
 
 function Router() {
   useAuthInit();
@@ -101,6 +102,11 @@ function Router() {
       <Route path={ROUTES.SETTINGS}>
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path={ROUTES.STRENGTH_TRAINING_PROGRESS}>
+        <ProtectedRoute>
+          <StrengthTrainingProgress />
         </ProtectedRoute>
       </Route>
 

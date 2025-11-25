@@ -35,6 +35,10 @@ router.use(authenticateToken);
  *                           properties:
  *                             id:
  *                               type: string
+ *                             firstName:
+ *                               type: string
+ *                             lastName:
+ *                               type: string
  *                             userId:
  *                               type: string
  *                             gender:
@@ -74,6 +78,8 @@ router.get("/profile", (req, res, next) =>
  *             type: object
  *             required:
  *               - gender
+ *               - firstName
+ *               - lastName
  *               - birthDay
  *               - birthMonth
  *               - birthYear
@@ -106,6 +112,10 @@ router.get("/profile", (req, res, next) =>
  *               diabetesType:
  *                 type: string
  *                 enum: [type1, type2, gestational, prediabetes]
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Profile completed successfully
@@ -143,6 +153,10 @@ router.post("/profile", (req, res, next) =>
  *           schema:
  *             type: object
  *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
  *               gender:
  *                 type: string
  *                 enum: [male, female]
@@ -167,6 +181,47 @@ router.post("/profile", (req, res, next) =>
  */
 router.put("/profile", (req, res, next) => 
   customerController.updateCustomerData(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/customer/consultation-quotas:
+ *   get:
+ *     summary: Get user consultation quotas
+ *     tags: [Customer]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Consultation quotas retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         quota:
+ *                           type: object
+ *                           properties:
+ *                             discountedConsultationsUsed:
+ *                               type: integer
+ *                             freeConsultationsUsed:
+ *                               type: integer
+ *                             discountedConsultationsLeft:
+ *                               type: integer
+ *                             freeConsultationsLeft:
+ *                               type: integer
+ *                             discountedQuotaLimit:
+ *                               type: integer
+ *                             freeQuotaLimit:
+ *                               type: integer
+ */
+router.get("/consultation-quotas", (req, res, next) => 
+  customerController.getConsultationQuotas(req, res, next)
 );
 
 export { router as customerRoutes };
