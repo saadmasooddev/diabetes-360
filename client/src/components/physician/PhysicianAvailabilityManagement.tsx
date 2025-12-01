@@ -404,7 +404,7 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
       </div>
 
       <div className="space-y-2">
-        <Label>Start Time (24-hour format)</Label>
+        <Label>Start Time (12-hour format)</Label>
         <Input
           type="time"
           value={startTime}
@@ -414,7 +414,7 @@ function CreateSlotsForm({ slotSizes, slotTypes, onSubmit, onCancel, isLoading }
       </div>
 
       <div className="space-y-2">
-        <Label>End Time (24-hour format)</Label>
+        <Label>End Time (12-hour format)</Label>
         <Select
           value={endTime}
           onValueChange={setEndTime}

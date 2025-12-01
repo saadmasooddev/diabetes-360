@@ -136,3 +136,18 @@ export const MULTER_CONSTANTS = {
   ALLOWED_IMAGE_TYPES,
 };
 
+
+export const  memoryUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: MAX_FILE_SIZE, 
+  },
+  fileFilter: (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    console.log(file.mimetype)
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new BadRequestError("Only image files are allowed"));
+    }
+  },
+});

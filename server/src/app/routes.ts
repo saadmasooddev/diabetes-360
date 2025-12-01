@@ -7,6 +7,7 @@ import { settingsRoutes } from "../modules/settings/routes/settings.routes";
 import { physicianRoutes } from "../modules/physician/routes/physician.routes";
 import { customerRoutes } from "../modules/customer/routes/customer.routes";
 import { bookingRoutes } from "../modules/booking/routes/booking.routes";
+import { foodScannerRoutes } from "../modules/foodScanner/routes/foodScanner.routes";
 
 export function registerRoutes(app: Express): Express {
 
@@ -18,6 +19,7 @@ export function registerRoutes(app: Express): Express {
   app.use("/api/physician", physicianRoutes);
   app.use("/api/customer", customerRoutes);
   app.use("/api/booking", bookingRoutes);
+  app.use("/api/food-scanner", foodScannerRoutes);
 
   return app;
 }

@@ -26,6 +26,11 @@ const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
  *             type: object
  *             description: userId is automatically extracted from the authenticated user's token
  *             properties:
+ *               recordedAt:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2024-01-15T10:30:00Z"
+ *                 description: The date and time the metric was recorded
  *               bloodSugar:
  *                 type: number
  *                 nullable: true
@@ -817,51 +822,6 @@ router.get(
   (req, res) => healthController.getTotalActivityMinutesToday(req, res)
 );
 
-/**
- * @swagger
- * /api/health/exercises/add:
- *   post:
- *     summary: Log a single exercise
- *     tags: [Health Exercises]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: userId is automatically extracted from the authenticated user's token
- *             required:
- *               - exerciseType
- *               - count
- *             properties:
- *               exerciseType:
- *                 type: string
- *                 enum: [pushups, squats, chinups, situps]
- *                 example: "pushups"
- *                 description: Type of exercise
- *               count:
- *                 type: integer
- *                 minimum: 0
- *                 example: 20
- *                 description: Number of repetitions
- *     responses:
- *       200:
- *         description: Exercise logged successfully
- *       400:
- *         description: Bad request - validation error
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.post(
-  "/exercises/add",
-  authenticateToken,
-  requirePermission("create:own_health_metrics"),
-  (req, res) => healthController.addExerciseLog(req, res)
-);
 
 /**
  * @swagger

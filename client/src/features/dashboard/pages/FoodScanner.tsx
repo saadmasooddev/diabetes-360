@@ -3,9 +3,11 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Image } from '@/components/ui/image';
-import { Upload, ArrowLeft, AlertTriangle, Lock } from 'lucide-react';
-import { mockScanResult } from '@/mocks/scanResults';
+import { Upload, ArrowLeft, Lock } from 'lucide-react';
 import { NutritionProgressBar } from '../components/NutritionProgressBar';
+import { useScanFood } from '@/hooks/mutations/useFoodScanner';
+import { useAuthStore } from '@/stores/authStore';
+import type { ScanResult } from '@/mocks/scanResults';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
 
@@ -13,12 +15,16 @@ interface FoodScannerProps {
   isPremium?: boolean;
 }
 
-export function FoodScanner({ isPremium = false }: FoodScannerProps) {
+export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
   const [currentStep, setCurrentStep] = useState<ScanStep>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [scanLinePosition, setScanLinePosition] = useState(0);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scanFoodMutation = useScanFood();
+  const user = useAuthStore((state) => state.user);
+  const isPremium = isPremiumProp ?? (user?.paymentType !== 'free' && user?.paymentType);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -33,8 +39,22 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
     fileInputRef.current?.click();
   };
 
-  const handleScanClick = () => {
+  const handleScanClick = async () => {
+    if (!selectedFile) return;
+
     setCurrentStep('scanning');
+
+    try {
+      const result = await scanFoodMutation.mutateAsync(selectedFile);
+      setScanResult(result);
+      // Wait for animation to complete before showing results
+      setTimeout(() => {
+        setCurrentStep('results');
+      }, 3000);
+    } catch (error) {
+      // Error is handled by the mutation hook (toast notification)
+      setCurrentStep('upload');
+    }
   };
 
   const handleBackClick = () => {
@@ -42,6 +62,10 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
     setSelectedFile(null);
     setPreviewUrl(null);
     setScanLinePosition(0);
+    setScanResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Scanning animation effect - Smoother version
@@ -64,15 +88,8 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
         setScanLinePosition(position);
       }, 10); // More frequent updates (10ms instead of 20ms)
 
-      // Complete scanning after 3 seconds
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-        setCurrentStep('results');
-      }, 3000);
-
       return () => {
         clearInterval(interval);
-        clearTimeout(timeout);
       };
     }
   }, [currentStep]);
@@ -142,7 +159,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                   </h3>
                   <div className="flex gap-4">
                     <Image
-                      src={previewUrl || ''}
+                      src={scanResult?.foodImage || previewUrl || ''}
                       alt="Food"
                       className="w-32 h-32 rounded-2xl object-cover"
                       data-testid="img-food-overview"
@@ -167,7 +184,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                           }}
                           data-testid="text-food-name"
                         >
-                          {mockScanResult.foodName}
+                          {scanResult?.foodName || 'Loading...'}
                         </p>
                       </div>
                       <div>
@@ -189,7 +206,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                           }}
                           data-testid="text-food-category"
                         >
-                          {mockScanResult.foodCategory}
+                          {scanResult?.foodCategory || 'Loading...'}
                         </p>
                       </div>
                     </div>
@@ -217,202 +234,24 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                     Breakdown Section
                   </h3>
                   <div>
-                    <NutritionProgressBar item={mockScanResult.breakdown.carbs} />
-                    <NutritionProgressBar item={mockScanResult.breakdown.fiber} />
-                    <NutritionProgressBar item={mockScanResult.breakdown.sugars} />
-                    <NutritionProgressBar item={mockScanResult.breakdown.protein} />
-                    <NutritionProgressBar item={mockScanResult.breakdown.fat} />
-                    <NutritionProgressBar item={mockScanResult.breakdown.calories} />
+                    {scanResult ? (
+                      <>
+                        <NutritionProgressBar item={scanResult.breakdown.carbs} />
+                        <NutritionProgressBar item={scanResult.breakdown.fiber} />
+                        <NutritionProgressBar item={scanResult.breakdown.sugars} />
+                        <NutritionProgressBar item={scanResult.breakdown.protein} />
+                        <NutritionProgressBar item={scanResult.breakdown.fat} />
+                        <NutritionProgressBar item={scanResult.breakdown.calories} />
+                      </>
+                    ) : (
+                      <p>Loading breakdown...</p>
+                    )}
                   </div>
                 </Card>
               </div>
 
               {/* Right Column */}
               <div className="space-y-6">
-                {/* Personalized Insight */}
-                <Card
-                  className="p-6"
-                  style={{
-                    background: '#FFFFFF',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                  }}
-                  data-testid="card-personalized-insight"
-                >
-                  <h3
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#00453A',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    Personalized Insight
-                  </h3>
-
-                  {isPremium ? (
-                    /* Premium Content */
-                    <div className="space-y-6">
-                      {/* Calories and Recommendation Row */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Calories Section */}
-                        <div
-                          className="p-4 rounded-lg"
-                          style={{ background: '#F7F9F9' }}
-                          data-testid="container-calories"
-                        >
-                          <p
-                            style={{
-                              fontSize: '14px',
-                              fontWeight: 500,
-                              color: '#546E7A',
-                              marginBottom: '8px',
-                            }}
-                          >
-                            Calories
-                          </p>
-                          <p
-                            style={{
-                              fontSize: '32px',
-                              fontWeight: 700,
-                              color: '#00453A',
-                              marginBottom: '12px',
-                            }}
-                            data-testid="text-calories-value"
-                          >
-                            {mockScanResult.personalizedInsight.calories}
-                            <span
-                              style={{
-                                fontSize: '20px',
-                                fontWeight: 400,
-                              }}
-                            >
-                              g
-                            </span>
-                          </p>
-                          {/* Wave visualization */}
-                          <div
-                            className="h-16 rounded-lg relative overflow-hidden"
-                            style={{ background: '#C8E6C9' }}
-                            data-testid="chart-calories-wave"
-                          >
-                            <svg
-                              viewBox="0 0 200 64"
-                              preserveAspectRatio="none"
-                              className="absolute inset-0 w-full h-full"
-                            >
-                              <path
-                                d="M0,32 Q50,16 100,32 T200,32 L200,64 L0,64 Z"
-                                fill="#A5D6A7"
-                                opacity="0.7"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-
-                        {/* Eat in Moderation Section */}
-                        <div
-                          className="p-4 rounded-lg flex flex-col justify-center"
-                          style={{ background: '#FFF9E6' }}
-                          data-testid="container-recommendation"
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <p
-                              style={{
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                color: '#00453A',
-                              }}
-                            >
-                              {mockScanResult.personalizedInsight.recommendation}
-                            </p>
-                            <AlertTriangle size={20} color="#FFA726" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Suggestion Text */}
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 400,
-                          color: '#546E7A',
-                          lineHeight: '1.5',
-                        }}
-                        data-testid="text-suggestion"
-                      >
-                        {mockScanResult.personalizedInsight.suggestionText}
-                      </p>
-
-                      {/* Suggested Protein Foods */}
-                      <div>
-                        <p
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            color: '#546E7A',
-                            marginBottom: '12px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                          }}
-                        >
-                          Suggested Protein Foods
-                        </p>
-                        <div className="grid grid-cols-2 gap-4">
-                          {mockScanResult.personalizedInsight.suggestedFoods.map((food, index) => (
-                            <div
-                              key={index}
-                              className="rounded-lg overflow-hidden"
-                              data-testid={`card-suggested-food-${index}`}
-                            >
-                              <Image
-                                src={food.image}
-                                alt={food.name}
-                                className="w-full h-24 object-cover"
-                                data-testid={`img-suggested-food-${index}`}
-                              />
-                              <p
-                                className="text-center py-2"
-                                style={{
-                                  fontSize: '12px',
-                                  fontWeight: 500,
-                                  color: '#00453A',
-                                  background: '#F7F9F9',
-                                }}
-                                data-testid={`text-suggested-food-name-${index}`}
-                              >
-                                {food.name}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Locked State */
-                    <div className="flex flex-col items-center justify-center text-center py-8">
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                        style={{ background: '#E8F5F3' }}
-                      >
-                        <Lock size={32} color="#00856F" />
-                      </div>
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#546E7A',
-                          maxWidth: '250px',
-                        }}
-                      >
-                        Subscribe to Premium
-                        <br />
-                        to access personalized insights
-                      </p>
-                    </div>
-                  )}
-                </Card>
-
                 {/* Nutritional Highlight */}
                 <Card
                   className="p-6"
@@ -435,7 +274,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                   </h3>
 
                   <Image
-                    src={previewUrl || ''}
+                    src={scanResult?.foodImage || previewUrl || ''}
                     alt="Food highlight"
                     className="w-full h-48 rounded-2xl object-cover mb-4"
                     data-testid="img-nutritional-highlight"
@@ -462,37 +301,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
                         }}
                         data-testid="text-carb-count"
                       >
-                        {mockScanResult.nutritionalHighlight.carbohydrateCount}
-                      </p>
-                    </div>
-
-                    {/* Glycemic Index - Locked */}
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#546E7A',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        Glycemic Index
-                      </p>
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
-                        style={{ background: '#E8F5F3' }}
-                      >
-                        <Lock size={24} color="#00856F" />
-                      </div>
-                      <p
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 500,
-                          color: '#546E7A',
-                          maxWidth: '140px',
-                        }}
-                      >
-                        Subscribe to Premium to access personalized insights
+                        {scanResult?.nutritionalHighlight.carbohydrateCount || 'Loading...'}
                       </p>
                     </div>
                   </div>
@@ -599,6 +408,7 @@ export function FoodScanner({ isPremium = false }: FoodScannerProps) {
               ) : currentStep === 'upload' ? (
                 <Button
                   onClick={handleScanClick}
+                  disabled={scanFoodMutation.isPending}
                   className="w-full max-w-[400px]"
                   style={{
                     background: '#00856F',

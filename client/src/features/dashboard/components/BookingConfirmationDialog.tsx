@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { formatTime12 } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
-import type { Slot, SlotType } from '@/services/bookingService';
+import type { Slot } from '@/services/bookingService';
 
 interface BookingPrice {
   originalFee: string;
@@ -66,8 +65,8 @@ export function BookingConfirmationDialog({
               </div>
             </div>
 
-            {/* Show selected slot type (read-only) */}
-            {selectedSlot.types && selectedSlot.types.length > 0 && effectiveSlotTypeId && (
+            {/* Consultation Type Selection */}
+            {selectedSlot.types && selectedSlot.types.length > 0 && (
               <div>
                 <Label className="text-sm font-medium mb-2 block">Consultation Type</Label>
                 <div className="p-4 rounded-lg border border-[#00856F] bg-[#E0F2F1]">
@@ -76,7 +75,7 @@ export function BookingConfirmationDialog({
                       const selectedType = selectedSlot.types.find((t) => t.id === effectiveSlotTypeId);
                       if (!selectedType) return '';
                       const displayName = selectedType.type.charAt(0).toUpperCase() + selectedType.type.slice(1);
-                      return `${displayName} Consultation`;
+                      return `${displayName === 'Online' ? 'Online' : 'In-Person'} Consultation`;
                     })()}
                   </div>
                 </div>

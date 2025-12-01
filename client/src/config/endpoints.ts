@@ -35,7 +35,6 @@ export const API_ENDPOINTS = {
       TODAY_TOTAL: '/api/health/activities/today/total',
     },
     EXERCISES: {
-      ADD: '/api/health/exercises/add',
       ADD_BATCH: '/api/health/exercises/add/batch',
       LIST: '/api/health/exercises',
       TODAY: '/api/health/exercises/today',
@@ -82,5 +81,8 @@ export const API_ENDPOINTS = {
     UPDATE_SLOT_LOCATIONS: (slotId: string) => `/api/booking/slots/${slotId}/locations`,
     BOOK_SLOT: '/api/booking/book',
     CALCULATE_BOOKING_PRICE: (physicianId: string) => `/api/booking/physicians/${physicianId}/calculate-price`,
+  },
+  FOOD_SCANNER: {
+    SCAN: '/api/food-scanner/scan',
   },
 } as const;

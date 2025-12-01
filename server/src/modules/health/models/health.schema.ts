@@ -11,18 +11,18 @@ export const healthMetrics = pgTable("health_metrics", {
   steps: integer("steps"),
   waterIntake: numeric("water_intake"),
   heartRate: integer("heart_rate"),
-  recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  recordedAt: timestamp("recorded_at", { withTimezone: true}).notNull().defaultNow(),
 });
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics).omit({
   id: true,
-  recordedAt: true,
 }).extend({
   userId: z.string().min(1),
   bloodSugar: z.number().nullable().optional(),
   waterIntake: z.number().nullable().optional(),
   steps: z.number().int().nullable().optional(),
   heartRate: z.number().int().nullable().optional(),
+  recordedAt: z.coerce.date().nullable().optional()
 });
 
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
@@ -41,11 +41,11 @@ export const activityLogs = pgTable("activity_logs", {
 
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
   id: true,
-  recordedAt: true,
 }).extend({
   userId: z.string().min(1),
   activityType: z.enum(["walking", "yoga"]),
   durationMinutes: z.number().int().min(0),
+  recordedAt: z.coerce.date().nullable().optional()
 });
 
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
@@ -59,16 +59,16 @@ export const exerciseLogs = pgTable("exercise_logs", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   exerciseType: exerciseTypeEnum("exercise_type").notNull(), // 'pushups', 'squats', 'chinups', 'situps'
   count: integer("count").notNull(),
-  recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const insertExerciseLogSchema = createInsertSchema(exerciseLogs).omit({
   id: true,
-  recordedAt: true,
 }).extend({
   userId: z.string().min(1),
   exerciseType: z.enum(["pushups", "squats", "chinups", "situps"]),
   count: z.number().int().min(0),
+  recordedAt: z.coerce.date().nullable().optional()
 });
 
 export type InsertExerciseLog = z.infer<typeof insertExerciseLogSchema>;

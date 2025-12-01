@@ -13,6 +13,7 @@ export const useHealthMetrics = (userId: string | undefined, limit: number = 30)
     staleTime: 0,
   });
 };
+console.log("the new date is", new Date(), new Date().toISOString())
 
 export const useChartMetrics = (userId: string | undefined, days: number = 7) => {
   return useQuery<HealthMetric[]>({
@@ -228,43 +229,6 @@ export const useStrengthProgress = (days: number = 30) => {
     queryFn: () => healthService.getStrengthProgress(days),
     refetchOnMount: 'always',
     staleTime: 0,
-  });
-};
-
-export const useAddExerciseLog = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: { exerciseType: 'pushups' | 'squats' | 'chinups' | 'situps'; count: number }) => {
-      return await healthService.addExerciseLog(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.LIST],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.TODAY],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.TODAY_TOTALS],
-      });
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.STRENGTH_PROGRESS],
-      });
-
-      toast({
-        title: "Success",
-        description: "Exercise logged successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to log exercise",
-        variant: "destructive",
-      });
-    },
   });
 };
 

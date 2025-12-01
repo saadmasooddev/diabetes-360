@@ -156,10 +156,6 @@ export class HealthService {
     return await this.healthRepository.getTotalActivityMinutesToday(userId, activityType);
   }
 
-  // Exercise Logs Methods
-  async createExerciseLog(data: InsertExerciseLog): Promise<ExerciseLog> {
-    return await this.healthRepository.createExerciseLog(data);
-  }
 
   async createExerciseLogsBatch(data: InsertExerciseLog[]): Promise<ExerciseLog[]> {
     return await this.healthRepository.createExerciseLogsBatch(data);

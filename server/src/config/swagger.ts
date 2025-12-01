@@ -427,6 +427,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Physician Locations',
         description: 'Physician location management endpoints',
       },
+      {
+        name: 'Food Scanner',
+        description: 'Food Scanner API integration endpoints for food scanning and nutrition analysis',
+      },
     ],
   },
   apis: [

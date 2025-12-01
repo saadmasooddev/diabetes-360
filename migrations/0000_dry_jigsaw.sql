@@ -45,7 +45,7 @@ CREATE TABLE "health_metrics" (
 	"blood_sugar" numeric,
 	"steps" integer,
 	"water_intake" numeric,
-	"recorded_at" timestamp DEFAULT now() NOT NULL
+	"recorded_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "free_tier_limits" (

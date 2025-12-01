@@ -38,32 +38,14 @@ function mapPhysicianToDoctor(physician: Physician) {
 }
 
 // Helper function to auto-select slot type based on slot's available types
-function getAutoSelectedSlotTypeId(slot: Slot): string | null {
+function getAutoSelectedSlotTypeId(slot: Slot, defaultDisplay: 'online' | 'offline'): string | null {
   if (!slot.types || slot.types.length === 0) {
     return null;
   }
+  const filterType = defaultDisplay === 'online' ? 'online' : 'onsite';
+  const type = slot.types?.find(t => t.type.toLowerCase() === filterType)
+  if (type) return type.id
 
-  // Check if it's an online-only slot
-  const hasOnline = slot.types.some((t) => t.type.toLowerCase() === 'online');
-  const hasOffline = slot.types.some(
-    (t) => t.type.toLowerCase() === 'onsite' || t.type.toLowerCase() === 'offline'
-  );
-
-  // If it's online-only, select online type
-  if (hasOnline && !hasOffline) {
-    const onlineType = slot.types.find((t) => t.type.toLowerCase() === 'online');
-    return onlineType?.id || null;
-  }
-
-  // If it has offline/onsite types, select the first one
-  if (hasOffline) {
-    const offlineType = slot.types.find(
-      (t) => t.type.toLowerCase() === 'onsite' || t.type.toLowerCase() === 'offline'
-    );
-    return offlineType?.id || null;
-  }
-
-  // Fallback: return first type
   return slot.types[0]?.id || null;
 }
 
@@ -231,10 +213,10 @@ export function FindDoctor() {
     }
   };
 
-  const handleSlotSelect = (slot: Slot) => {
+  const handleSlotSelect = (slot: Slot, defaultDisplay: 'online' | 'offline') => {
     setSelectedSlot(slot);
     // Auto-select the appropriate slot type based on the slot's available types
-    const autoSelectedTypeId = getAutoSelectedSlotTypeId(slot);
+    const autoSelectedTypeId = getAutoSelectedSlotTypeId(slot, defaultDisplay);
     setSelectedSlotTypeId(autoSelectedTypeId);
     setIsConsultationTypeDialogOpen(true);
   };
@@ -322,7 +304,7 @@ export function FindDoctor() {
               isLoadingPrice={isLoadingPrice}
               isBooking={bookSlotMutation.isPending}
               onConfirm={handleConfirmConsultationType}
-              autoSelectedSlotTypeId={selectedSlot ? getAutoSelectedSlotTypeId(selectedSlot) : null}
+              autoSelectedSlotTypeId={selectedSlotTypeId}
             />
           </>
         ) : (

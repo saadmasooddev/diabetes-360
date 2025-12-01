@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { Slot } from '@/services/bookingService';
+import { PhysicianLocation } from "@shared/schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -99,4 +101,52 @@ export function handleNumberInput(currentValue: string, newValue: string): strin
   }
 
   return sanitized;
+}
+
+
+export function getTimePeriod(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'Morning';
+  if (hour >= 12 && hour < 17) return 'Afternoon';
+  if (hour >= 17 && hour < 21) return 'Evening';
+  return 'Night';
+}
+
+
+export function groupSlotsByPeriod(slots: Slot[]): Map<string, Slot[]> {
+  const grouped = new Map<string, Slot[]>();
+  
+  slots.forEach((slot) => {
+    const hour = parseInt(slot.startTime.split(':')[0]);
+    const period = getTimePeriod(hour);
+    
+    if (!grouped.has(period)) {
+      grouped.set(period, []);
+    }
+    grouped.get(period)!.push(slot);
+  });
+  
+  // Sort slots within each period by time
+  grouped.forEach((slots, period) => {
+    slots.sort((a, b) => {
+      const timeA = a.startTime;
+      const timeB = b.startTime;
+      return timeA.localeCompare(timeB);
+    });
+  });
+  
+  return grouped;
+}
+
+export function sortLocationByDistance(locations: {id: string, locationName: string}[], locationDistances: Record<string, number>){
+  return locations.sort((a, b) => {
+    const distA = locationDistances[a.id];
+    const distB = locationDistances[b.id];
+
+    if (distA !== undefined && distB !== undefined) {
+      return distA - distB;
+    }
+    if (distA !== undefined) return -1;
+    if (distB !== undefined) return 1;
+    return a.locationName.localeCompare(b.locationName);
+  });
 }

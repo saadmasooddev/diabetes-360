@@ -37,6 +37,7 @@ export class HealthRepository {
       steps: data.steps,
       waterIntake: data.waterIntake,
       heartRate: data.heartRate,
+      recordedAt: data.recordedAt
     }).returning();
     return metric;
   }
@@ -415,11 +416,11 @@ export class HealthRepository {
 
   // Activity Logs Methods
   async createActivityLog(data: InsertActivityLog): Promise<ActivityLog> {
-    console.log("the data is", data)
     const [log] = await db.insert(activityLogs).values({
       userId: data.userId,
       activityType: data.activityType,
       durationMinutes: data.durationMinutes,
+      recordedAt: data.recordedAt
     }).returning();
     return log;
   }
@@ -509,16 +510,6 @@ export class HealthRepository {
     return result[0]?.total || 0;
   }
 
-  // Exercise Logs Methods
-  async createExerciseLog(data: InsertExerciseLog): Promise<ExerciseLog> {
-    const [log] = await db.insert(exerciseLogs).values({
-      userId: data.userId,
-      exerciseType: data.exerciseType,
-      count: data.count,
-    }).returning();
-    return log;
-  }
-
   async createExerciseLogsBatch(data: InsertExerciseLog[]): Promise<ExerciseLog[]> {
     if (data.length === 0) return [];
     
@@ -527,6 +518,7 @@ export class HealthRepository {
         userId: d.userId,
         exerciseType: d.exerciseType,
         count: d.count,
+        recordedAt: d.recordedAt
       }))
     ).returning();
     return logs;

@@ -37,7 +37,7 @@ class HealthService {
   async addMetric(data: any): Promise<HealthMetric> {
     const response = await httpClient.post<ApiResponse<HealthMetric>>(
       API_ENDPOINTS.HEALTH.ADD,
-      data
+      {...data, recordedAt: new Date().toISOString()}
     );
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to add metric');
@@ -134,7 +134,7 @@ class HealthService {
   async addActivityLog(data: { activityType: 'walking' | 'yoga'; hours?: number; minutes?: number }): Promise<ActivityLog> {
     const response = await httpClient.post<ApiResponse<ActivityLog>>(
       API_ENDPOINTS.HEALTH.ACTIVITIES.ADD,
-      data
+      {...data, recordedAt: new Date().toISOString()}
     );
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to log activity');
@@ -181,22 +181,10 @@ class HealthService {
     return response.data.totalMinutes;
   }
 
-  // Exercise Logs Methods
-  async addExerciseLog(data: { exerciseType: 'pushups' | 'squats' | 'chinups' | 'situps'; count: number }): Promise<ExerciseLog> {
-    const response = await httpClient.post<ApiResponse<ExerciseLog>>(
-      API_ENDPOINTS.HEALTH.EXERCISES.ADD,
-      data
-    );
-    if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to log exercise');
-    }
-    return response.data;
-  }
-
   async addExerciseLogsBatch(exercises: Array<{ exerciseType: 'pushups' | 'squats' | 'chinups' | 'situps'; count: number }>): Promise<ExerciseLog[]> {
     const response = await httpClient.post<ApiResponse<ExerciseLog[]>>(
       API_ENDPOINTS.HEALTH.EXERCISES.ADD_BATCH,
-      { exercises }
+      { exercises: exercises.map(ex => ({ ...ex, recordedAt: new Date().toISOString()})) }
     );
     if (!response.success || !response.data) {
       throw new Error(response.message || 'Failed to log exercises');

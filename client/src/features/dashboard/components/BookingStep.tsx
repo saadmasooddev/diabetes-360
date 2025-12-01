@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Sunset } from 'lucide-react';
 import { BookingCalendar } from './BookingCalendar';
 import { LocationFilter } from './LocationFilter';
 import { OnlineSlotsSection } from './OnlineSlotsSection';
@@ -29,7 +29,7 @@ interface BookingStepProps {
   availableSlots: Slot[];
   isLoadingSlots: boolean;
   selectedSlot: Slot | null;
-  onSlotSelect: (slot: Slot) => void;
+  onSlotSelect: (slot: Slot, defaultDisplay: 'online' | 'offline') => void;
   selectedLocationId: string | null;
   onLocationChange: (locationId: string | null) => void;
   locationDistances: Record<string, number>;
@@ -84,12 +84,9 @@ export function BookingStep({
       : unbookedSlots;
 
     // Separate online-only vs slots with offline/onsite
-    const onlineOnlySlots = filteredSlots.filter((slot) => {
+    const onlineSlots = filteredSlots.filter((slot) => {
       const hasOnline = slot.types?.some((t) => t.type.toLowerCase() === 'online');
-      const hasOffline = slot.types?.some(
-        (t) => t.type.toLowerCase() === 'onsite' || t.type.toLowerCase() === 'offline'
-      );
-      return hasOnline && !hasOffline;
+      return hasOnline;
     });
 
     const offlineSlots = filteredSlots.filter((slot) => {
@@ -99,10 +96,10 @@ export function BookingStep({
       return hasOffline;
     });
 
-    return { onlineOnlySlots, offlineSlots, filteredSlots };
+    return { onlineSlots, offlineSlots, filteredSlots };
   };
 
-  const { onlineOnlySlots, offlineSlots, filteredSlots } = getFilteredSlots();
+  const { onlineSlots, offlineSlots, filteredSlots } = getFilteredSlots();
   const allLocations = getAllLocations();
 
   return (
@@ -163,45 +160,112 @@ export function BookingStep({
 
         {/* Available Slots */}
         {selectedDate && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4" style={{ color: '#00453A' }}>
-              Available Slots for {formatDate(selectedDate, 'MMM dd, yyyy')}
-            </h3>
+          <div className="mb-8">
+            {/* Section Header */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-semibold" style={{ color: '#00453A' }}>
+                  Available Slots
+                </h3>
+                <div className="text-sm font-medium px-3 py-1 rounded-full bg-[#E0F2F1]" style={{ color: '#00856F' }}>
+                  {formatDate(selectedDate, 'MMM dd, yyyy')}
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                Select a time slot to book your consultation
+              </p>
+            </div>
+
             {isLoadingSlots && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {Array.from({ length: 6 }).map((_, index) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {Array.from({ length: 10 }).map((_, index) => (
                   <SlotCardSkeleton key={index} />
                 ))}
               </div>
             )}
             {!isLoadingSlots && (
               <>
-                <LocationFilter
-                  locations={allLocations}
-                  selectedLocationId={selectedLocationId}
-                  onLocationChange={onLocationChange}
-                  locationDistances={locationDistances}
-                />
-
-                {filteredSlots.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
-                    {selectedLocationId
-                      ? 'No available slots for the selected location'
-                      : 'No available slots for this date'}
-                  </p>
-                ) : (
-                  <div className="space-y-6">
-                    <OnlineSlotsSection
-                      slots={onlineOnlySlots}
-                      selectedSlotId={selectedSlot?.id || null}
-                      onSlotSelect={onSlotSelect}
-                    />
-                    <OfflineSlotsSection
-                      slots={offlineSlots}
-                      selectedSlotId={selectedSlot?.id || null}
-                      onSlotSelect={onSlotSelect}
+                {/* Location Filter */}
+                {allLocations.length > 0 && (
+                  <div className="mb-6">
+                    <LocationFilter
+                      locations={allLocations}
+                      selectedLocationId={selectedLocationId}
+                      onLocationChange={onLocationChange}
                       locationDistances={locationDistances}
                     />
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {filteredSlots.length === 0 ? (
+                  <div className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 p-12 text-center">
+                    <div className="max-w-md mx-auto">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <svg
+                          className="w-8 h-8 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <h4 className="text-lg font-semibold mb-2" style={{ color: '#00453A' }}>
+                        No slots available
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {selectedLocationId
+                          ? 'No available slots for the selected location on this date. Try selecting a different location or date.'
+                          : 'No available slots for this date. Please select a different date.'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-10">
+                    {/* Online Consultations Section */}
+                    {onlineSlots.length > 0 && (
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-transparent to-transparent rounded-2xl -z-10" />
+                        <OnlineSlotsSection
+                          slots={onlineSlots}
+                          selectedSlotId={selectedSlot?.id || null}
+                          onSlotSelect={(slot) => onSlotSelect(slot, 'online')}
+                        />
+                      </div>
+                    )}
+
+                    {/* Divider between sections */}
+                    {onlineSlots.length > 0 && offlineSlots.length > 0 && (
+                      <div className="relative py-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-4 text-sm font-medium text-gray-500">
+                            OR
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* In-Person Consultations Section */}
+                    {offlineSlots.length > 0 && (
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-green-50/50 via-transparent to-transparent rounded-2xl -z-10" />
+                        <OfflineSlotsSection
+                          slots={offlineSlots}
+                          selectedSlotId={selectedSlot?.id || null}
+                          onSlotSelect={(slot) => onSlotSelect(slot, 'offline')}
+                          locationDistances={locationDistances}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -213,3 +277,15 @@ export function BookingStep({
   );
 }
 
+export function getPeriodIcon(period: string) {
+  switch (period) {
+    case 'Morning':
+      return <Sun className="h-4 w-4" />;
+    case 'Afternoon':
+      return <Sunset className="h-4 w-4" />;
+    case 'Evening':
+      return <Moon className="h-4 w-4" />;
+    default:
+      return <Sun className="h-4 w-4" />;
+  }
+}

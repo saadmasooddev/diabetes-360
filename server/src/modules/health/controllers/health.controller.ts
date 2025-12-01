@@ -292,27 +292,6 @@ export class HealthController {
     }
   }
 
-  // Exercise Logs Controllers
-  async addExerciseLog(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const validationResult = insertExerciseLogSchema.safeParse({
-        ...req.body,
-        userId: userId,
-      });
-
-      if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid exercise log data"
-        );
-      }
-
-      const log = await this.healthService.createExerciseLog(validationResult.data);
-      sendSuccess(res, log, "Exercise logged successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
 
   async addExerciseLogsBatch(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
