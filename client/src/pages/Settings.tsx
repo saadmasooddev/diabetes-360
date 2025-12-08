@@ -9,22 +9,26 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { FreeTierLimitsManagement } from '@/components/admin/FreeTierLimitsManagement';
+import { FoodScanLimitsManagement } from '@/components/admin/FoodScanLimitsManagement';
 import { PhysicianSettings } from '@/components/admin/PhysicianSettings';
 import { HealthMetricTargetsManagement } from '@/components/admin/HealthMetricTargetsManagement';
 import { UserHealthTargets } from '@/components/customer/UserHealthTargets';
 import { useAuthStore } from '@/stores/authStore';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { User, Mail, Shield, Bell, Key, Smartphone, SettingsIcon, CalendarIcon, MapPin } from 'lucide-react';
+import { User, Mail, Shield, Bell, Key, SettingsIcon, CalendarIcon, MapPin } from 'lucide-react';
 import { useGetCustomerData, useGetConsultationQuotas } from '@/hooks/mutations/useCustomer';
 import { CustomerProfileEdit } from '@/components/customer/CustomerProfileEdit';
 import { PhysicianAvailabilityManagement } from '@/components/physician/PhysicianAvailabilityManagement';
 import { ManageLocation } from '@/components/physician/ManageLocation';
 import { parseDateToComponents } from '@/lib/utils';
+import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
+import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
 
 export function Settings() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const { data: customerData, isLoading: isLoadingCustomerData, refetch: refetchCustomerData } = useGetCustomerData();
   const { data: consultationQuotas, isLoading: isLoadingQuotas } = useGetConsultationQuotas();
   const isCustomer = user?.role === 'customer';
@@ -329,20 +333,13 @@ export function Settings() {
                           <p className="text-xs sm:text-sm text-gray-600">Change your password</p>
                         </div>
                       </div>
-                      <Button variant="outline" className="w-full sm:w-auto">Change Password</Button>
-                    </div>
-
-                    <Separator />
-
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 flex-shrink-0" />
-                        <div>
-                          <h3 className="font-medium text-sm sm:text-base text-gray-900">Two-Factor Authentication</h3>
-                          <p className="text-xs sm:text-sm text-gray-600">Add an extra layer of security</p>
-                        </div>
-                      </div>
-                      <Switch className="self-start sm:self-auto" />
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => setIsChangePasswordOpen(true)}
+                      >
+                        Change Password
+                      </Button>
                     </div>
 
                     <Separator />
@@ -365,9 +362,18 @@ export function Settings() {
                 </CardContent>
               </Card>
 
+              {/* Two-Factor Authentication */}
+              <TwoFactorAuth />
+
               {/* User Health Targets */}
               <UserHealthTargets />
             </TabsContent>
+
+            {/* Change Password Dialog */}
+            <ChangePasswordDialog
+              open={isChangePasswordOpen}
+              onOpenChange={setIsChangePasswordOpen}
+            />
 
             <TabsContent value="notifications" className="space-y-6 overflow-x-hidden max-w-full">
               <Card
@@ -452,6 +458,7 @@ export function Settings() {
                 </TabsContent>
                 <TabsContent value="limits" className="space-y-6 overflow-x-hidden">
                   <FreeTierLimitsManagement />
+                  <FoodScanLimitsManagement />
                 </TabsContent>
                 <TabsContent value="targets" className="space-y-6 overflow-x-hidden">
                   <HealthMetricTargetsManagement />

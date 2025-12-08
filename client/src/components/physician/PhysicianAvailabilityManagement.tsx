@@ -18,6 +18,7 @@ import { cn, formatTime12 } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SlotCardSkeleton } from '@/components/ui/skeletons';
+import { BookingCalendar } from '@/features/dashboard/components/BookingCalendar';
 
 const formatDate = (date: Date, formatStr: string): string => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -35,11 +36,12 @@ export function PhysicianAvailabilityManagement() {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingLocationSlotId, setEditingLocationSlotId] = useState<string | null>(null);
   const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [calendarKey, setCalendarKey] = useState(0);
 
   const { data: slotSizes = [], isLoading: isLoadingSlotSizes } = useSlotSizes();
@@ -89,7 +91,7 @@ export function PhysicianAvailabilityManagement() {
     setIsViewModalOpen(open);
     if (!open) {
       // Reset selected date when modal closes to allow reopening
-      setSelectedDate(undefined);
+      setSelectedDate(new Date());
       // Force calendar re-render to allow same date selection
       setCalendarKey(prev => prev + 1);
     }
@@ -172,47 +174,7 @@ export function PhysicianAvailabilityManagement() {
               <InlineLoader text="Loading availability dates..." />
             </div>
           ) : (
-            <Calendar
-              key={crypto.randomUUID()}
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleDateSelect}
-              disabled={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return date < today;
-              }}
-              modifiers={{
-                hasAvailability: availableDates,
-              }}
-              modifiersClassNames={{
-                hasAvailability: 'bg-teal-100 text-teal-900 font-semibold hover:bg-teal-200',
-              }}
-              className=" flex justify-center items-center rounded-md border w-full"
-              classNames={{
-                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                month: "space-y-4 w-full",
-                caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-medium text-teal-900",
-                nav: "space-x-1 flex items-center",
-                nav_button: cn(
-                  "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-teal-100 rounded-md text-teal-900 border border-teal-200"
-                ),
-                nav_button_previous: "absolute left-1",
-                nav_button_next: "absolute right-1",
-                table: "w-full border-collapse space-y-1",
-                head_row: "flex",
-                head_cell: "text-teal-700 rounded-md w-9 font-normal text-[0.8rem]",
-                row: "flex w-full mt-2",
-                cell: " mx-1  h-9 w-9 text-center text-sm p-0 relative",
-                day: cn(
-                  "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-teal-50 rounded-md transition-colors"
-                ),
-                day_selected: "bg-teal-600 text-white hover:bg-teal-700 focus:bg-teal-700",
-                day_today: "bg-teal-50 text-teal-900 font-semibold",
-                day_disabled: "text-gray-300 opacity-50",
-              }}
-            />
+            <BookingCalendar selectedDate={selectedDate} onDateSelect={handleDateSelect} availableDates={availableDates} onMonthChange={setCalendarMonth} calendarMonth={calendarMonth} />
           )}
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <div className="w-4 h-4 bg-teal-100 rounded"></div>

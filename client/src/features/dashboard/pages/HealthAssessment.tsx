@@ -122,56 +122,45 @@ export function HealthAssessment() {
                 Glucose Analysis
               </h2>
             </div>
-            <div
-              className="overflow-x-auto pb-2 scrollbar-thin"
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(0, 133, 111, 0.3) transparent',
-              }}
-            >
-              <div className="flex gap-8 lg:gap-10" style={{ minWidth: 'min-content' }}>
-                <div className="flex-shrink-0" style={{ minWidth: '200px' }}>
-                  <CircularGauge
-                    value={glucoseDaily}
-                    maxValue={200}
-                    label="Daily Average"
-                    unit="mg/dL"
-                    metricType="glucose"
-                    size={180}
-                    recommendedTarget={glucoseTargets.recommended}
-                    userTarget={glucoseTargets.user}
-                  />
-                </div>
-                <div className="flex-shrink-0" style={{ minWidth: '200px' }}>
-                  <CircularGauge
-                    value={glucoseWeekly}
-                    maxValue={200}
-                    label="Weekly Average"
-                    unit="mg/dL"
-                    metricType="glucose"
-                    size={180}
-                    recommendedTarget={glucoseTargets.recommended}
-                    userTarget={glucoseTargets.user}
-                  />
-                </div>
-                <div className="flex-shrink-0" style={{ minWidth: '200px' }}>
-                  <CircularGauge
-                    value={glucoseMonthly}
-                    maxValue={200}
-                    label="Monthly Average"
-                    unit="mg/dL"
-                    metricType="glucose"
-                    size={180}
-                    recommendedTarget={glucoseTargets.recommended}
-                    userTarget={glucoseTargets.user}
-                  />
-                </div>
+            <div className="flex flex-col sm:flex-row gap-8 items-center">
+              <div className="w-full flex justify-center">
+                <CircularGauge
+                  value={glucoseDaily}
+                  label="Daily Average"
+                  unit="mg/dL"
+                  metricType="glucose"
+                  size={200}
+                  recommendedTarget={glucoseTargets.recommended}
+                  userTarget={glucoseTargets.user}
+                />
+              </div>
+              <div className="w-full flex justify-center">
+                <CircularGauge
+                  value={glucoseWeekly}
+                  label="Weekly Average"
+                  unit="mg/dL"
+                  metricType="glucose"
+                  size={200}
+                  recommendedTarget={glucoseTargets.recommended}
+                  userTarget={glucoseTargets.user}
+                />
+              </div>
+              <div className="w-full flex justify-center">
+                <CircularGauge
+                  value={glucoseMonthly}
+                  label="Monthly Average"
+                  unit="mg/dL"
+                  metricType="glucose"
+                  size={200}
+                  recommendedTarget={glucoseTargets.recommended}
+                  userTarget={glucoseTargets.user}
+                />
               </div>
             </div>
           </Card>
 
-          {/* Hydration and Activity Analysis */}
-          <div className={`grid grid-cols-1 ${isPaidUser ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6 mb-8`}>
+          {/* Hydration and Activity Analysis - Stacked Vertically */}
+          <div className="flex flex-col gap-6 mb-8">
             {/* Hydration Analysis */}
             <Card
               className="p-6 transition-all duration-300 hover:shadow-xl"
@@ -204,50 +193,39 @@ export function HealthAssessment() {
                   Hydration Analysis
                 </h2>
               </div>
-              <div
-                className="overflow-x-auto pb-2 scrollbar-thin"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(0, 133, 111, 0.3) transparent',
-                }}
-              >
-                <div className="flex gap-6 lg:gap-8" style={{ minWidth: 'min-content' }}>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={parseFloat(waterDaily)}
-                      maxValue={5}
-                      label="Daily"
-                      unit="L"
-                      size={140}
-                      metricType="hydration"
-                      recommendedTarget={waterTargets.recommended}
-                      userTarget={waterTargets.user}
-                    />
-                  </div>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={parseFloat(waterWeekly)}
-                      maxValue={5}
-                      label="Weekly"
-                      unit="L"
-                      size={140}
-                      metricType="hydration"
-                      recommendedTarget={waterTargets.recommended}
-                      userTarget={waterTargets.user}
-                    />
-                  </div>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={parseFloat(waterMonthly)}
-                      maxValue={5}
-                      label="Monthly"
-                      unit="L"
-                      size={140}
-                      metricType="hydration"
-                      recommendedTarget={waterTargets.recommended}
-                      userTarget={waterTargets.user}
-                    />
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-8 items-center">
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={parseFloat(waterDaily)}
+                    label="Daily"
+                    unit="L"
+                    size={180}
+                    metricType="hydration"
+                    recommendedTarget={waterTargets.recommended}
+                    userTarget={waterTargets.user}
+                  />
+                </div>
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={parseFloat(waterWeekly)}
+                    label="Weekly"
+                    unit="L"
+                    size={180}
+                    metricType="hydration"
+                    recommendedTarget={waterTargets.recommended}
+                    userTarget={waterTargets.user}
+                  />
+                </div>
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={parseFloat(waterMonthly)}
+                    label="Monthly"
+                    unit="L"
+                    size={180}
+                    metricType="hydration"
+                    recommendedTarget={waterTargets.recommended}
+                    userTarget={waterTargets.user}
+                  />
                 </div>
               </div>
             </Card>
@@ -284,50 +262,39 @@ export function HealthAssessment() {
                   Activity Analysis
                 </h2>
               </div>
-              <div
-                className="overflow-x-auto pb-2 scrollbar-thin"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgba(0, 133, 111, 0.3) transparent',
-                }}
-              >
-                <div className="flex gap-6 lg:gap-8" style={{ minWidth: 'min-content' }}>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={stepsDaily}
-                      maxValue={15000}
-                      label="Daily"
-                      unit=" steps"
-                      size={140}
-                      metricType="activity"
-                      recommendedTarget={stepsTargets.recommended}
-                      userTarget={stepsTargets.user}
-                    />
-                  </div>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={stepsWeekly}
-                      maxValue={15000}
-                      label="Weekly"
-                      unit=" steps"
-                      size={140}
-                      metricType="activity"
-                      recommendedTarget={stepsTargets.recommended}
-                      userTarget={stepsTargets.user}
-                    />
-                  </div>
-                  <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                    <CircularGauge
-                      value={stepsMonthly}
-                      maxValue={15000}
-                      label="Monthly"
-                      unit=" steps"
-                      size={140}
-                      metricType="activity"
-                      recommendedTarget={stepsTargets.recommended}
-                      userTarget={stepsTargets.user}
-                    />
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-8 items-center">
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={stepsDaily}
+                    label="Daily"
+                    unit=" steps"
+                    size={180}
+                    metricType="activity"
+                    recommendedTarget={stepsTargets.recommended}
+                    userTarget={stepsTargets.user}
+                  />
+                </div>
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={stepsWeekly}
+                    label="Weekly"
+                    unit=" steps"
+                    size={180}
+                    metricType="activity"
+                    recommendedTarget={stepsTargets.recommended}
+                    userTarget={stepsTargets.user}
+                  />
+                </div>
+                <div className="w-full flex justify-center">
+                  <CircularGauge
+                    value={stepsMonthly}
+                    label="Monthly"
+                    unit=" steps"
+                    size={180}
+                    metricType="activity"
+                    recommendedTarget={stepsTargets.recommended}
+                    userTarget={stepsTargets.user}
+                  />
                 </div>
               </div>
             </Card>
@@ -365,50 +332,39 @@ export function HealthAssessment() {
                     Heart Rate Analysis
                   </h2>
                 </div>
-                <div
-                  className="overflow-x-auto pb-2 scrollbar-thin"
-                  style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(0, 133, 111, 0.3) transparent',
-                  }}
-                >
-                  <div className="flex gap-6 lg:gap-8" style={{ minWidth: 'min-content' }}>
-                    <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                      <CircularGauge
-                        value={heartRateDaily}
-                        maxValue={200}
-                        label="Daily"
-                        unit=" BPM"
-                        size={140}
-                        metricType="heartRate"
-                        recommendedTarget={heartRateTargets.recommended}
-                        userTarget={heartRateTargets.user}
-                      />
-                    </div>
-                    <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                      <CircularGauge
-                        value={heartRateWeekly}
-                        maxValue={200}
-                        label="Weekly"
-                        unit=" BPM"
-                        size={140}
-                        metricType="heartRate"
-                        recommendedTarget={heartRateTargets.recommended}
-                        userTarget={heartRateTargets.user}
-                      />
-                    </div>
-                    <div className="flex-shrink-0" style={{ minWidth: '160px' }}>
-                      <CircularGauge
-                        value={heartRateMonthly}
-                        maxValue={200}
-                        label="Monthly"
-                        unit=" BPM"
-                        size={140}
-                        metricType="heartRate"
-                        recommendedTarget={heartRateTargets.recommended}
-                        userTarget={heartRateTargets.user}
-                      />
-                    </div>
+                <div className="flex flex-col sm:flex-row gap-8 items-center">
+                  <div className="w-full flex justify-center">
+                    <CircularGauge
+                      value={heartRateDaily}
+                      label="Daily"
+                      unit=" BPM"
+                      size={180}
+                      metricType="heartRate"
+                      recommendedTarget={heartRateTargets.recommended}
+                      userTarget={heartRateTargets.user}
+                    />
+                  </div>
+                  <div className="w-full flex justify-center">
+                    <CircularGauge
+                      value={heartRateWeekly}
+                      label="Weekly"
+                      unit=" BPM"
+                      size={180}
+                      metricType="heartRate"
+                      recommendedTarget={heartRateTargets.recommended}
+                      userTarget={heartRateTargets.user}
+                    />
+                  </div>
+                  <div className="w-full flex justify-center">
+                    <CircularGauge
+                      value={heartRateMonthly}
+                      label="Monthly"
+                      unit=" BPM"
+                      size={180}
+                      metricType="heartRate"
+                      recommendedTarget={heartRateTargets.recommended}
+                      userTarget={heartRateTargets.user}
+                    />
                   </div>
                 </div>
               </Card>

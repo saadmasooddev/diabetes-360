@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/auth.controller";
+import { authenticateToken } from "server/src/shared/middleware/auth";
 
 const router = Router();
 const authController = new AuthController();
@@ -262,6 +263,60 @@ router.post("/login", (req, res) => authController.login(req, res));
 
 /**
  * @swagger
+ * /api/auth/verify-2fa:
+ *   post:
+ *     summary: Verify two-factor authentication code during login
+ *     tags: [Authentication]
+ *     description: Verifies the 2FA code after initial login credentials are validated
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - token
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john@example.com
+ *               token:
+ *                 type: string
+ *                 minLength: 6
+ *                 maxLength: 6
+ *                 example: "123456"
+ *                 description: 6-digit TOTP code from authenticator app or backup code
+ *     responses:
+ *       200:
+ *         description: 2FA verified successfully, login complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Unauthorized - invalid verification code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post("/verify-2fa", (req, res) => authController.verify2FALogin(req, res));
+
+/**
+ * @swagger
  * /api/auth/refresh:
  *   post:
  *     summary: Refresh access token using refresh token
@@ -413,5 +468,48 @@ router.post("/forgot-password", (req, res, next) => authController.forgotPasswor
  *               $ref: '#/components/schemas/Error'
  */
 router.post("/reset-password", (req, res) => authController.resetPassword(req, res));
+
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 example: OldSecurePass123!
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 8
+ *                 example: NewSecurePass123!
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *       400:
+ *         description: Bad request - invalid old password or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post("/change-password", authenticateToken, (req, res) => authController.changeUserPassword(req, res));
 
 export { router as authRoutes };

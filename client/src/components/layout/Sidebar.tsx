@@ -12,7 +12,8 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -38,6 +39,7 @@ const mainNavItems: NavItem[] = [
   { label: 'Tips & Exercises', icon: <Dumbbell className="h-5 w-5" />, path: ROUTES.TIPS_EXERCISES, testId: 'nav-tips' },
   { label: 'Medical Records', icon: <FileText className="h-5 w-5" />, path: ROUTES.MEDICAL_RECORDS, testId: 'nav-records' },
   { label: 'DiaBot (AI Chatbot)', icon: <Bot className="h-5 w-5" />, path: ROUTES.DIABOT, testId: 'nav-diabot' },
+  { label: 'Health Plans', icon: <DollarSign className='h-5 w-5' />, path: ROUTES.HEALTH_PLANS, testId: 'nav-payments' },
 ];
 
 interface SidebarProps {
@@ -85,9 +87,12 @@ export function Sidebar({ className }: SidebarProps) {
         />
       )}
 
+      {/* Spacer for larger screens to prevent layout shift */}
+      <div className="hidden lg:block w-64 flex-shrink-0" />
+
       <aside className={cn(
-        "fixed z-40 flex h-screen w-64 flex-col border-r bg-white transition-transform dark:bg-gray-900 lg:static lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full",
+        "fixed z-40 flex h-screen w-64 flex-col border-r bg-white transition-transform dark:bg-gray-900",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         className
       )}>
         {/* User Profile */}

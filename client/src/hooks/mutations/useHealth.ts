@@ -13,7 +13,6 @@ export const useHealthMetrics = (userId: string | undefined, limit: number = 30)
     staleTime: 0,
   });
 };
-console.log("the new date is", new Date(), new Date().toISOString())
 
 export const useChartMetrics = (userId: string | undefined, days: number = 7) => {
   return useQuery<HealthMetric[]>({

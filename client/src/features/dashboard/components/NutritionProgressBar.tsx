@@ -8,9 +8,8 @@ interface NutritionProgressBarProps {
 export function NutritionProgressBar({ item }: NutritionProgressBarProps) {
   return (
     <div
-      className={`flex items-center justify-between py-4 border-b border-gray-100 last:border-0 ${
-        item.isGrayed ? 'opacity-40' : ''
-      }`}
+      className={`flex items-center justify-between py-4 border-b border-gray-100 last:border-0 ${item.isGrayed ? 'opacity-40' : ''
+        }`}
       data-testid={`row-breakdown-${item.name.toLowerCase()}`}
     >
       <span
@@ -39,17 +38,20 @@ export function NutritionProgressBar({ item }: NutritionProgressBarProps) {
         </div>
       ) : (
         <>
-          <div className="flex-1 relative h-6 mx-4">
+          <div className="flex-1 relative h-6 mx-4 overflow-hidden">
             {/* Background track with three zones */}
-            <div className="absolute inset-0 flex rounded-full overflow-hidden">
+            <div className="absolute inset-0 flex rounded-full">
               <div className="flex-1 bg-green-200" />
               <div className="flex-1 bg-yellow-200" />
               <div className="flex-1 bg-red-200" />
             </div>
-            {/* Position indicator */}
+            {/* Position indicator - clamped to prevent overflow */}
             <div
               className="absolute top-0 bottom-0 w-1 bg-black rounded-full"
-              style={{ left: `${item.position}%` }}
+              style={{
+                left: `${Math.min(Math.max(item.position, 0), 100)}%`,
+                transform: 'translateX(-50%)',
+              }}
             />
           </div>
           <div className="flex items-center gap-4">

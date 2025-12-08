@@ -1,17 +1,17 @@
 import { db } from "../../../app/config/db";
-import { 
-  type User, 
-  type InsertUser, 
-  type RefreshToken, 
-  type InsertRefreshToken, 
+import {
+  type User,
+  type InsertUser,
+  type RefreshToken,
+  type InsertRefreshToken,
   type PasswordResetToken,
   type InsertPasswordResetToken,
-  users, 
+  users,
   refreshTokens,
   passwordResetTokens,
   physicianData,
   customerData,
-  physicianSpecialties
+  physicianSpecialties,
 } from "../models/user.schema";
 import { eq, and, getTableColumns } from "drizzle-orm";
 
@@ -21,19 +21,25 @@ export class AuthRepository {
     return user[0];
   }
 
-
   async getUserByEmail(email: string) {
-    const user = await db.select({ 
-      ...getTableColumns(users),
-      profileData:{
-        ...customerData,
-        ...physicianData,
-        specialty: physicianSpecialties.name,
-      },
-    }).from(users).where(eq(users.email, email)).limit(1)
+    const user = await db
+      .select({
+        ...getTableColumns(users),
+        profileData: {
+          ...customerData,
+          ...physicianData,
+          specialty: physicianSpecialties.name,
+        },
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
       .leftJoin(customerData, eq(users.id, customerData.userId))
       .leftJoin(physicianData, eq(users.id, physicianData.userId))
-      .leftJoin(physicianSpecialties, eq(physicianData.specialtyId, physicianSpecialties.id))
+      .leftJoin(
+        physicianSpecialties,
+        eq(physicianData.specialtyId, physicianSpecialties.id)
+      );
     return user[0];
   }
 
@@ -42,18 +48,26 @@ export class AuthRepository {
     return newUser[0];
   }
 
-  async createRefreshToken(tokenData: InsertRefreshToken): Promise<RefreshToken> {
-    const newRefreshToken = await db.insert(refreshTokens).values(tokenData).returning();
+  async createRefreshToken(
+    tokenData: InsertRefreshToken
+  ): Promise<RefreshToken> {
+    const newRefreshToken = await db
+      .insert(refreshTokens)
+      .values(tokenData)
+      .returning();
     return newRefreshToken[0];
   }
 
+  async removeRefreshToken(userId: string) {
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  }
+
   async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
-    const refreshToken = await db.select().from(refreshTokens)
+    const refreshToken = await db
+      .select()
+      .from(refreshTokens)
       .where(
-        and(
-          eq(refreshTokens.token, token),
-          eq(refreshTokens.revoked, false)
-        )
+        and(eq(refreshTokens.token, token), eq(refreshTokens.revoked, false))
       )
       .limit(1);
     const tokenData = refreshToken[0];
@@ -61,26 +75,40 @@ export class AuthRepository {
     if (tokenData && tokenData.expiresAt < new Date()) {
       return undefined;
     }
-    
+
     return tokenData;
   }
 
   async revokeRefreshToken(token: string): Promise<void> {
-    await db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.token, token));
+    await db
+      .update(refreshTokens)
+      .set({ revoked: true })
+      .where(eq(refreshTokens.token, token));
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
-    await db.update(refreshTokens).set({ revoked: true }).where(eq(refreshTokens.userId, userId));
+    await db
+      .update(refreshTokens)
+      .set({ revoked: true })
+      .where(eq(refreshTokens.userId, userId));
   }
 
   // Password reset token methods
-  async createPasswordResetToken(tokenData: InsertPasswordResetToken): Promise<PasswordResetToken> {
-    const newToken = await db.insert(passwordResetTokens).values(tokenData).returning();
+  async createPasswordResetToken(
+    tokenData: InsertPasswordResetToken
+  ): Promise<PasswordResetToken> {
+    const newToken = await db
+      .insert(passwordResetTokens)
+      .values(tokenData)
+      .returning();
     return newToken[0];
   }
 
-  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
-    const resetToken = await db.select()
+  async getPasswordResetToken(
+    token: string
+  ): Promise<PasswordResetToken | undefined> {
+    const resetToken = await db
+      .select()
       .from(passwordResetTokens)
       .where(
         and(
@@ -93,26 +121,32 @@ export class AuthRepository {
   }
 
   async markPasswordResetTokenAsUsed(token: string): Promise<void> {
-    await db.update(passwordResetTokens)
+    await db
+      .update(passwordResetTokens)
       .set({ used: true })
       .where(eq(passwordResetTokens.token, token));
   }
 
   async revokeAllPasswordResetTokens(userId: string): Promise<void> {
-    await db.update(passwordResetTokens)
+    await db
+      .update(passwordResetTokens)
       .set({ used: true })
       .where(eq(passwordResetTokens.userId, userId));
   }
 
-  async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
-    await db.update(users)
+  async updateUserPassword(
+    userId: string,
+    hashedPassword: string
+  ): Promise<void> {
+    await db
+      .update(users)
       .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 
   // Admin methods
-  async getAllUsers(): Promise<Omit<User, 'password'>[]> {
-    const { password, ...userColumns} = getTableColumns(users)
+  async getAllUsers(): Promise<Omit<User, "password">[]> {
+    const { password, ...userColumns } = getTableColumns(users);
     return await db.select(userColumns).from(users);
   }
 
@@ -122,7 +156,8 @@ export class AuthRepository {
   }
 
   async updateUser(id: string, updateData: Partial<InsertUser>): Promise<User> {
-    const updatedUser = await db.update(users)
+    const updatedUser = await db
+      .update(users)
       .set({ ...updateData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();

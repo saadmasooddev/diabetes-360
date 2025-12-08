@@ -26,6 +26,7 @@ export const ROUTES = {
   // Other Routes
   PROFILE_DATA: "/profile-data",
   BLOGS: "/blogs",
+
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

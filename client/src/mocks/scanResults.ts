@@ -16,14 +16,12 @@ export interface SuggestedFood {
 export interface PersonalizedInsight {
   calories: string;
   recommendation: string;
-  suggestionText: string;
   suggestedFoods: SuggestedFood[];
 }
 
 export interface ScanResult {
   foodName: string;
   foodCategory: string;
-  foodImage: string; // Will use the uploaded image
   breakdown: {
     carbs: BreakdownItem;
     fiber: BreakdownItem;
@@ -35,6 +33,9 @@ export interface ScanResult {
   nutritionalHighlight: {
     carbohydrateCount: string;
     glycemicIndex: string | null; // null means locked
+    consumptionGuidance?: string;
+    estimatedWeight?: string;
   };
-  personalizedInsight: PersonalizedInsight;
+  foodSuggestions?: string[];
+  personalizedInsight?: PersonalizedInsight;
 }

@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Image } from '@/components/ui/image';
-import { Upload, ArrowLeft, Lock } from 'lucide-react';
-import { NutritionProgressBar } from '../components/NutritionProgressBar';
+import { ArrowLeft } from 'lucide-react';
 import { useScanFood } from '@/hooks/mutations/useFoodScanner';
+import { useFoodScanStatus } from '@/hooks/mutations/useSettings';
 import { useAuthStore } from '@/stores/authStore';
 import type { ScanResult } from '@/mocks/scanResults';
+import { UploadArea } from '../components/FoodScanner/UploadArea';
+import { ScanningAnimation } from '../components/FoodScanner/ScanningAnimation';
+import { FoodOverview } from '../components/FoodScanner/FoodOverview';
+import { PersonalizedInsight } from '../components/FoodScanner/PersonalizedInsight';
+import { BreakdownSection } from '../components/FoodScanner/BreakdownSection';
+import { NutritionalHighlight } from '../components/FoodScanner/NutritionalHighlight';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
 
@@ -24,7 +27,8 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scanFoodMutation = useScanFood();
   const user = useAuthStore((state) => state.user);
-  const isPremium = isPremiumProp ?? (user?.paymentType !== 'free' && user?.paymentType);
+  const isPremium = user?.paymentType !== 'free';
+  const { data: scanStatus, refetch: refetchScanStatus } = useFoodScanStatus();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,11 +46,18 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
   const handleScanClick = async () => {
     if (!selectedFile) return;
 
+    // Check if user can scan
+    if (scanStatus && !scanStatus.canScan) {
+      return;
+    }
+
     setCurrentStep('scanning');
 
     try {
       const result = await scanFoodMutation.mutateAsync(selectedFile);
       setScanResult(result);
+      // Refetch scan status after successful scan
+      refetchScanStatus();
       // Wait for animation to complete before showing results
       setTimeout(() => {
         setCurrentStep('results');
@@ -68,14 +79,14 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
     }
   };
 
-  // Scanning animation effect - Smoother version
+  // Scanning animation effect
   useEffect(() => {
     if (currentStep === 'scanning') {
       let position = 0;
       let direction = 1;
 
       const interval = setInterval(() => {
-        position += direction * 0.8; // Smaller increment for smoother movement
+        position += direction * 0.8;
 
         if (position >= 100) {
           direction = -1;
@@ -86,7 +97,7 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
         }
 
         setScanLinePosition(position);
-      }, 10); // More frequent updates (10ms instead of 20ms)
+      }, 10);
 
       return () => {
         clearInterval(interval);
@@ -133,250 +144,54 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
           )}
 
           {currentStep === 'results' ? (
-            /* Results Screen - New Figma Design */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="container-results">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {/* Food Overview */}
-                <Card
-                  className="p-6"
-                  style={{
-                    background: '#FFFFFF',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                  }}
-                  data-testid="card-food-overview"
-                >
-                  <h3
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#00453A',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    Food Overview
-                  </h3>
-                  <div className="flex gap-4">
-                    <Image
-                      src={scanResult?.foodImage || previewUrl || ''}
-                      alt="Food"
-                      className="w-32 h-32 rounded-2xl object-cover"
-                      data-testid="img-food-overview"
-                    />
-                    <div className="flex flex-col justify-center gap-3">
-                      <div>
-                        <p
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            color: '#546E7A',
-                            marginBottom: '4px',
-                          }}
-                        >
-                          Food Name
-                        </p>
-                        <p
-                          style={{
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            color: '#00453A',
-                          }}
-                          data-testid="text-food-name"
-                        >
-                          {scanResult?.foodName || 'Loading...'}
-                        </p>
-                      </div>
-                      <div>
-                        <p
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            color: '#546E7A',
-                            marginBottom: '4px',
-                          }}
-                        >
-                          Food Category
-                        </p>
-                        <p
-                          style={{
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            color: '#00453A',
-                          }}
-                          data-testid="text-food-category"
-                        >
-                          {scanResult?.foodCategory || 'Loading...'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Breakdown Section */}
-                <Card
-                  className="p-6"
-                  style={{
-                    background: '#FFFFFF',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                  }}
-                  data-testid="card-breakdown"
-                >
-                  <h3
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#00453A',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    Breakdown Section
-                  </h3>
-                  <div>
-                    {scanResult ? (
-                      <>
-                        <NutritionProgressBar item={scanResult.breakdown.carbs} />
-                        <NutritionProgressBar item={scanResult.breakdown.fiber} />
-                        <NutritionProgressBar item={scanResult.breakdown.sugars} />
-                        <NutritionProgressBar item={scanResult.breakdown.protein} />
-                        <NutritionProgressBar item={scanResult.breakdown.fat} />
-                        <NutritionProgressBar item={scanResult.breakdown.calories} />
-                      </>
-                    ) : (
-                      <p>Loading breakdown...</p>
-                    )}
-                  </div>
-                </Card>
+            /* Results Screen */
+            <div className="space-y-6" data-testid="container-results">
+              {/* Top Row: Food Overview + Personalized Insight */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <FoodOverview scanResult={scanResult} previewUrl={previewUrl} />
+                <PersonalizedInsight scanResult={scanResult} isPremium={isPremium} />
               </div>
 
-              {/* Right Column */}
-              <div className="space-y-6">
-                {/* Nutritional Highlight */}
-                <Card
-                  className="p-6"
-                  style={{
-                    background: '#FFFFFF',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                  }}
-                  data-testid="card-nutritional-highlight"
-                >
-                  <h3
-                    style={{
-                      fontSize: '20px',
-                      fontWeight: 700,
-                      color: '#00453A',
-                      marginBottom: '20px',
-                    }}
-                  >
-                    Nutritional Highlight
-                  </h3>
-
-                  <Image
-                    src={scanResult?.foodImage || previewUrl || ''}
-                    alt="Food highlight"
-                    className="w-full h-48 rounded-2xl object-cover mb-4"
-                    data-testid="img-nutritional-highlight"
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Carbohydrate Count */}
-                    <div>
-                      <p
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 500,
-                          color: '#546E7A',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        Carbohydrate Count
-                      </p>
-                      <p
-                        style={{
-                          fontSize: '32px',
-                          fontWeight: 700,
-                          color: '#00453A',
-                        }}
-                        data-testid="text-carb-count"
-                      >
-                        {scanResult?.nutritionalHighlight.carbohydrateCount || 'Loading...'}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
+              {/* Bottom Row: Breakdown Section + Nutritional Highlight */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <BreakdownSection scanResult={scanResult} />
+                <NutritionalHighlight
+                  scanResult={scanResult}
+                  previewUrl={previewUrl}
+                  isPremium={isPremium}
+                />
               </div>
             </div>
+          ) : currentStep === 'scanning' ? (
+            /* Scanning Screen */
+            <div
+              className="flex flex-col items-center max-w-[800px] mx-auto"
+              style={{ marginTop: showHeader ? '0' : '120px' }}
+              data-testid="container-scanning"
+            >
+              <ScanningAnimation previewUrl={previewUrl} scanLinePosition={scanLinePosition} />
+            </div>
           ) : (
-            /* Upload and Scanning Screen */
-            <div className="flex flex-col items-center max-w-[800px] mx-auto" style={{ marginTop: showHeader ? '0' : '120px' }}>
-              {/* Upload/Scanning Area */}
-              <Card
-                className={`w-full mb-8 relative overflow-hidden ${!previewUrl ? 'cursor-pointer hover:border-[#00856F]' : ''} transition-colors`}
-                style={{
-                  background: '#FFFFFF',
-                  border: '2px dashed rgba(0, 0, 0, 0.1)',
-                  borderRadius: '24px',
-                  minHeight: '400px',
-                  padding: '0',
-                }}
-                onClick={!previewUrl ? handleUploadClick : undefined}
-                data-testid="card-upload-area"
-              >
-                {previewUrl ? (
-                  <div className="relative w-full h-full min-h-[400px]">
-                    <Image
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-[24px]"
-                      style={{
-                        filter: currentStep === 'scanning' ? 'grayscale(70%) brightness(0.8)' : 'none',
-                      }}
-                      data-testid="img-preview"
-                    />
-
-                    {/* Scanning Line Animation */}
-                    {currentStep === 'scanning' && (
-                      <div
-                        className="absolute left-0 right-0 h-1"
-                        style={{
-                          top: `${scanLinePosition}%`,
-                          background: '#00856F',
-                          boxShadow: '0 0 10px rgba(0, 133, 111, 0.6)',
-                          transition: 'top 0.05s linear',
-                        }}
-                        data-testid="scan-line"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center gap-4 min-h-[400px] p-12">
-                    <div
-                      className="flex items-center justify-center rounded-full"
-                      style={{
-                        width: '120px',
-                        height: '120px',
-                        background: '#F7F9F9',
-                      }}
-                      data-testid="icon-upload-container"
-                    >
-                      <Upload size={48} color="#00856F" strokeWidth={2} />
-                    </div>
-                    <p
-                      style={{
-                        fontSize: '16px',
-                        fontWeight: 500,
-                        color: '#546E7A',
-                      }}
-                      data-testid="text-upload-instruction"
-                    >
-                      Click to upload a food picture
-                    </p>
-                  </div>
-                )}
-              </Card>
-
+            /* Upload Screen */
+            <div
+              className="flex flex-col items-center max-w-[800px] mx-auto"
+              style={{ marginTop: showHeader ? '0' : '120px' }}
+              data-testid="container-upload"
+            >
+              <UploadArea
+                previewUrl={previewUrl}
+                onFileSelect={handleFileSelect}
+                onUploadClick={handleUploadClick}
+                onScanClick={handleScanClick}
+                isScanning={false}
+                isPending={scanFoodMutation.isPending}
+                canScan={scanStatus?.canScan ?? true}
+                limitMessage={
+                  scanStatus && !scanStatus.canScan
+                    ? `Daily limit reached. You have used ${scanStatus.currentCount} out of ${scanStatus.limit} scans today.`
+                    : undefined
+                }
+              />
               {/* Hidden File Input */}
               <input
                 ref={fileInputRef}
@@ -386,62 +201,6 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
                 className="hidden"
                 data-testid="input-file"
               />
-
-              {/* Action Button */}
-              {!previewUrl ? (
-                <Button
-                  onClick={handleUploadClick}
-                  className="w-full max-w-[400px]"
-                  style={{
-                    background: '#00856F',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
-                    fontSize: '16px',
-                    padding: '16px 32px',
-                    borderRadius: '8px',
-                    height: 'auto',
-                  }}
-                  data-testid="button-upload-picture"
-                >
-                  Upload Picture
-                </Button>
-              ) : currentStep === 'upload' ? (
-                <Button
-                  onClick={handleScanClick}
-                  disabled={scanFoodMutation.isPending}
-                  className="w-full max-w-[400px]"
-                  style={{
-                    background: '#00856F',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
-                    fontSize: '16px',
-                    padding: '16px 32px',
-                    borderRadius: '8px',
-                    height: 'auto',
-                  }}
-                  data-testid="button-scan"
-                >
-                  Scan
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  className="w-full max-w-[400px]"
-                  style={{
-                    background: '#00856F',
-                    color: '#FFFFFF',
-                    fontWeight: 600,
-                    fontSize: '16px',
-                    padding: '16px 32px',
-                    borderRadius: '8px',
-                    height: 'auto',
-                    opacity: 0.8,
-                  }}
-                  data-testid="button-scanning"
-                >
-                  Scanning..
-                </Button>
-              )}
             </div>
           )}
         </div>

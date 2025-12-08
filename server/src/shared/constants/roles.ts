@@ -18,6 +18,7 @@ export const ROLE_PERMISSIONS = {
     'delete:own_health_metrics',
     'read:health_targets',
     'write:own_health_targets',
+    'scan:food'
   ],
   [USER_ROLES.PHYSICIAN]: [
     'read:own_profile',

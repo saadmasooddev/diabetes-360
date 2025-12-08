@@ -1,5 +1,5 @@
 import { SettingsRepository } from "../repository/settings.repository";
-import type { InsertFreeTierLimits, UpdateFreeTierLimits, FreeTierLimits } from "../models/settings.schema";
+import type { InsertFreeTierLimits, UpdateFreeTierLimits, FreeTierLimits, InsertFoodScanLimits, UpdateFoodScanLimits, FoodScanLimits } from "../models/settings.schema";
 import { BadRequestError } from "server/src/shared/errors";
 
 export class SettingsService {
@@ -8,6 +8,10 @@ export class SettingsService {
     glucoseLimit: 2,
     stepsLimit: 2,
     waterLimit: 2,
+  };
+  private readonly DEFAULT_FOOD_SCAN_LIMITS = {
+    freeUserLimit: 5,
+    paidUserLimit: 20,
   };
 
   constructor() {
@@ -60,6 +64,44 @@ export class SettingsService {
 
   async upsertFreeTierLimits(data: InsertFreeTierLimits): Promise<FreeTierLimits> {
     return await this.settingsRepository.upsertFreeTierLimits(data);
+  }
+
+  // Food Scan Limits Methods
+  async getFoodScanLimits(): Promise<FoodScanLimits> {
+    let limits = await this.settingsRepository.getFoodScanLimits();
+    
+    if (!limits) {
+      // Return default structure if no limits configured
+      return {
+        id: '',
+        freeUserLimit: this.DEFAULT_FOOD_SCAN_LIMITS.freeUserLimit,
+        paidUserLimit: this.DEFAULT_FOOD_SCAN_LIMITS.paidUserLimit,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+    
+    return limits;
+  }
+
+  async createFoodScanLimits(data: InsertFoodScanLimits): Promise<FoodScanLimits> {
+    return await this.settingsRepository.createFoodScanLimits(data);
+  }
+
+  async updateFoodScanLimits(data: UpdateFoodScanLimits): Promise<FoodScanLimits> {
+    return await this.settingsRepository.updateFoodScanLimits(data);
+  }
+
+  async upsertFoodScanLimits(data: InsertFoodScanLimits): Promise<FoodScanLimits> {
+    return await this.settingsRepository.upsertFoodScanLimits(data);
+  }
+
+  async getUserScanStatus(userId: string, isPaid: boolean): Promise<{ canScan: boolean; currentCount: number; limit: number }> {
+    return await this.settingsRepository.getUserScanStatus(userId, isPaid);
+  }
+
+  async incrementUserScanCount(userId: string): Promise<void> {
+    await this.settingsRepository.incrementUserScanCount(userId);
   }
 }
 

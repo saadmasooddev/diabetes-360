@@ -61,6 +61,22 @@ class AuthService {
     }
     return response.data.message;
   }
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<string> {
+    const response = await httpClient.post<ForgotPasswordResponse>(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, { oldPassword, newPassword });
+    if (!response.success) {
+      throw new Error(response.message || 'Password change failed');
+    }
+    return response.message || 'Password changed successfully';
+  }
+
+  async verify2FALogin(email: string, token: string): Promise<AuthData> {
+    const response = await httpClient.post<AuthResponse>(API_ENDPOINTS.AUTH.VERIFY_2FA, { email, token });
+    if (!response.success || !response.data) {
+      throw new Error(response.message || '2FA verification failed');
+    }
+    return response.data;
+  }
 }
 
 export const authService = new AuthService();

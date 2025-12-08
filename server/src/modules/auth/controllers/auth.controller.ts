@@ -5,6 +5,7 @@ import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import {  BadRequestError } from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
+import { AuthenticatedRequest } from "server/src/shared/middleware/auth";
 
 export class AuthController {
   private authService: AuthService;
@@ -45,6 +46,39 @@ export class AuthController {
 
       const authResponse = await this.authService.login(email, password);
 
+      // If 2FA is required, return response without tokens
+      if (authResponse.requiresTwoFactor) {
+        sendSuccess(res, {
+          user: authResponse.user,
+          requiresTwoFactor: true,
+        }, "Two-factor authentication required");
+        return;
+      }
+
+      sendSuccess(res, {
+        user: authResponse.user,
+        tokens: authResponse.tokens,
+        requiresTwoFactor: false,
+      }, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL);
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async verify2FALogin(req: Request, res: Response): Promise<void> {
+    try {
+      const { email, token } = req.body;
+      
+      if (!email || !token) {
+        throw new BadRequestError("Email and verification token are required");
+      }
+
+      if (token.length !== 6) {
+        throw new BadRequestError("Verification token must be 6 digits");
+      }
+
+      const authResponse = await this.authService.verify2FALogin(email, token);
+
       sendSuccess(res, {
         user: authResponse.user,
         tokens: authResponse.tokens,
@@ -66,7 +100,7 @@ export class AuthController {
 
       sendSuccess(res, { tokens }, "Tokens refreshed successfully");
     } catch (error: any) {
-      handleError(res, error);
+      handleError(res, error, { error: error.message});
     }
   }
 
@@ -121,4 +155,24 @@ export class AuthController {
       handleError(res, error);
     }
   }
-}
+
+  async changeUserPassword(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      
+      if (!oldPassword || !newPassword) {
+        throw new BadRequestError("Old password and new password are required");
+      }
+
+      if(oldPassword === newPassword) {
+        throw new BadRequestError("Old password and new password cannot be the same")
+      }
+
+      await this.authService.changeUserPassword(req.user?.userId || '', oldPassword, newPassword)
+
+      sendSuccess(res, null, "Password changed successfully")
+    } catch(error){
+      handleError(res, error)
+    }
+
+  }}

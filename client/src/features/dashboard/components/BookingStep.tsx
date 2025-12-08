@@ -149,14 +149,16 @@ export function BookingStep({
         </div>
 
         {/* Calendar */}
-        <BookingCalendar
-          selectedDate={selectedDate}
-          onDateSelect={onDateSelect}
-          calendarMonth={calendarMonth}
-          onMonthChange={onMonthChange}
-          availableDates={availableDates}
-          isLoading={isLoadingDates}
-        />
+        <div className="w-full mb-6 sm:mb-8">
+          <BookingCalendar
+            selectedDate={selectedDate}
+            onDateSelect={onDateSelect}
+            calendarMonth={calendarMonth}
+            onMonthChange={onMonthChange}
+            availableDates={availableDates}
+            isLoading={isLoadingDates}
+          />
+        </div>
 
         {/* Available Slots */}
         {selectedDate && (

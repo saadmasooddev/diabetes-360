@@ -7,6 +7,8 @@ export const API_ENDPOINTS = {
     REFRESH: '/api/auth/refresh',
     FORGOT_PASSWORD: '/api/auth/forgot-password',
     RESET_PASSWORD: '/api/auth/reset-password',
+    CHANGE_PASSWORD: '/api/auth/change-password',
+    VERIFY_2FA: '/api/auth/verify-2fa',
   },
   USER: {
     PROFILE: '/api/user/profile',
@@ -47,6 +49,15 @@ export const API_ENDPOINTS = {
   },
   SETTINGS: {
     FREE_TIER_LIMITS: '/api/settings/free-tier-limits',
+    FOOD_SCAN_LIMITS: '/api/settings/food-scan-limits',
+    FOOD_SCAN_STATUS: '/api/settings/food-scan-status',
+  },
+  TWO_FACTOR: {
+    STATUS: '/api/two-factor/status',
+    SETUP: '/api/two-factor/setup',
+    VERIFY: '/api/two-factor/verify',
+    DISABLE: '/api/two-factor/disable',
+    REGENERATE_BACKUP_CODES: '/api/two-factor/regenerate-backup-codes',
   },
   PHYSICIAN: {
     SPECIALTIES: '/api/physician/specialties',

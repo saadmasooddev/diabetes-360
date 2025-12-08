@@ -21,11 +21,12 @@ export function BookingCalendar({
 }: BookingCalendarProps) {
   return (
     <Card
-      className="p-4 sm:p-6 mb-4 sm:mb-6"
+      className="w-full p-6 sm:p-8 mb-4 sm:mb-6"
       style={{
         background: '#FFFFFF',
         border: '1px solid rgba(0, 0, 0, 0.1)',
-        borderRadius: '12px',
+        borderRadius: '16px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
       }}
     >
       {isLoading ? (
@@ -34,30 +35,49 @@ export function BookingCalendar({
           <Skeleton className="h-4 w-48" />
         </div>
       ) : (
-        <>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={onDateSelect}
-            month={calendarMonth}
-            onMonthChange={onMonthChange}
-            disabled={(date) => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              return date < today;
-            }}
-            modifiers={{
-              hasAvailability: availableDates,
-            }}
-            modifiersClassNames={{
-              hasAvailability: 'bg-teal-100 text-teal-900 font-semibold',
-            }}
-          />
-          <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
+        <div className="w-full">
+          <div className="w-full [&_.rdp]:w-full [&_.rdp-table]:w-full [&_.rdp-cell]:flex-1 [&_.rdp-day]:w-full [&_.rdp-day]:h-12 [&_.rdp-head_cell]:flex-1">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={onDateSelect}
+              month={calendarMonth}
+              onMonthChange={onMonthChange}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date < today;
+              }}
+              modifiers={{
+                hasAvailability: availableDates,
+              }}
+              modifiersClassNames={{
+                hasAvailability: 'bg-teal-100 text-teal-900 font-semibold hover:bg-teal-200',
+              }}
+              className="w-full"
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-8 sm:space-y-0 w-full",
+                month: "space-y-4 w-full",
+                caption: "flex justify-center pt-1 relative items-center mb-4",
+                caption_label: "text-lg font-semibold text-[#00453A]",
+                nav_button_previous: "absolute left-1 hover:bg-teal-50",
+                nav_button_next: "absolute right-1 hover:bg-teal-50",
+                table: "w-full border-collapse",
+                head_row: "flex w-full justify-between mb-2",
+                head_cell: "text-[#00856F] rounded-md font-semibold text-sm flex-1 text-center py-2",
+                row: "flex w-full mt-1 justify-between",
+                cell: "flex-1 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                day: "h-12 w-full p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-teal-50 transition-all duration-200 flex items-center justify-center text-sm",
+                day_selected: "bg-[#00856F] text-white hover:bg-[#006B5B] hover:text-white",
+                day_today: "bg-black text-white font-semibold",
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-600 mt-6 pt-4 border-t border-gray-100">
             <div className="w-4 h-4 bg-teal-100 rounded"></div>
             <span>Dates with available slots</span>
           </div>
-        </>
+        </div>
       )}
     </Card>
   );

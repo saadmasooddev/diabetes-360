@@ -1,4 +1,4 @@
-import { CheckIcon, EyeIcon, EyeOffIcon, ArrowLeft } from "lucide-react";
+import { CheckIcon, EyeIcon, EyeOffIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Image } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { loginSchema, type LoginFormData } from "@/schemas/auth.schema";
-import { useLogin } from "@/hooks/mutations/useLogin";
+import { useLogin, useVerify2FALogin } from "@/hooks/mutations/useLogin";
 import { ROUTES } from "@/config/routes";
 
 const socialButtons = [
@@ -33,7 +35,11 @@ const socialButtons = [
 export const LogIn = (): JSX.Element => {
   const [, navigate] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const { mutate: login, isPending } = useLogin();
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const { mutate: login, isPending, data: loginData } = useLogin();
+  const { mutate: verify2FA, isPending: isVerifying2FA } = useVerify2FALogin();
 
   const {
     register,
@@ -53,7 +59,21 @@ export const LogIn = (): JSX.Element => {
   const passwordValue = watch("password");
 
   const onSubmit = (data: LoginFormData) => {
-    login(data);
+    login(data, {
+      onSuccess: (response) => {
+        if (response.requiresTwoFactor) {
+          setUserEmail(data.email);
+          setShow2FADialog(true);
+        }
+      },
+    });
+  };
+
+  const handle2FAVerify = () => {
+    if (verificationCode.length !== 6) {
+      return;
+    }
+    verify2FA({ email: userEmail, token: verificationCode });
   };
 
   const handleSocialLogin = (platform: string) => {
@@ -231,6 +251,50 @@ export const LogIn = (): JSX.Element => {
           </div>
         </div>
       </section>
+
+      {/* 2FA Verification Dialog */}
+      <Dialog open={show2FADialog} onOpenChange={setShow2FADialog}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[400px]">
+          <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
+            <DialogTitle className="text-lg sm:text-xl">Two-Factor Authentication</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Enter the 6-digit code from your authenticator app
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={verificationCode}
+                onChange={(value) => setVerificationCode(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            <Button
+              onClick={handle2FAVerify}
+              disabled={verificationCode.length !== 6 || isVerifying2FA}
+              className="w-full bg-[#00856f] hover:bg-[#00856f]/90"
+            >
+              {isVerifying2FA ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                'Verify & Login'
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

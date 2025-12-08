@@ -60,6 +60,7 @@ export interface ApiResponse<T = any> {
 export interface AuthData {
   user: User;
   tokens: TokenPair;
+  requiresTwoFactor?: boolean;
 }
 
 export interface RefreshTokenData {

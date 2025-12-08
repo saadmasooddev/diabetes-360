@@ -1,10 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useLogout } from '@/hooks/mutations/useLogout';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -30,14 +28,12 @@ import {
   weightOptions,
   heightOptions,
 } from '@/mocks/profileData';
-import { ROUTES } from '@/config/routes';
 import { useCreateCustomerData, useGetCustomerData, useUpdateCustomerData } from '@/hooks/mutations/useCustomer';
 import { useState, useEffect } from 'react';
 import { parseDateToComponents } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
 
 export function ProfileData() {
-  const [, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const logoutMutation = useLogout();
 

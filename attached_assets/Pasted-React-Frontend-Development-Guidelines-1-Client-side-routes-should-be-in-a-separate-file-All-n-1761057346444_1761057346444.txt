@@ -30,3 +30,19 @@ React Frontend Development Guidelines:
 
 15. Responsive design - Mobile-first approach with consistent loading states and accessibility compliance. All the pages should be interactive with every user interactive element fully functional. The design should follow the figma as closely as possible
 
+16. Food Scanner Limits Management:
+    - Food scanning limits are separate for free and paid users, renewed daily at midnight
+    - Admin can configure daily scan limits for both free and paid users through the Settings page (Admin > Limits tab)
+    - Limits are stored in the `food_scan_limits` table with `free_user_limit` and `paid_user_limit` columns
+    - Daily scan tracking is managed in the `food_scan_logs` table (normalized to 3NF) with one record per user per day
+    - When a user visits the food scanner page, the system checks their daily scan status using the `useFoodScanStatus` hook
+    - The scan button is disabled when the daily limit is reached, with an appropriate message displayed
+    - The food scanner API endpoint (`/api/food-scanner/scan`) validates limits before processing and returns:
+      - `can_scan_food`: boolean flag indicating if the user can scan more food today
+      - `remaining_scans`: number of remaining scans for today
+    - Backend throws a `ForbiddenError` if the limit is reached
+    - Frontend displays toast notifications for limit-related errors
+    - Admin UI component: `FoodScanLimitsManagement` in `/components/admin/FoodScanLimitsManagement.tsx`
+    - Service methods: `getFoodScanLimits()`, `createFoodScanLimits()`, `updateFoodScanLimits()`, `getFoodScanStatus()` in `/services/settingsService.ts`
+    - React Query hooks: `useFoodScanLimits()`, `useCreateFoodScanLimits()`, `useUpdateFoodScanLimits()`, `useFoodScanStatus()` in `/hooks/mutations/useSettings.ts`
+

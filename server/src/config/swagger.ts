@@ -431,6 +431,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Food Scanner',
         description: 'Food Scanner API integration endpoints for food scanning and nutrition analysis',
       },
+      {
+        name: 'Two-Factor Authentication',
+        description: 'Two-factor authentication endpoints for TOTP-based security',
+      },
     ],
   },
   apis: [

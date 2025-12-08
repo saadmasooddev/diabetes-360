@@ -465,6 +465,14 @@
     {
       "name": "Physician Locations",
       "description": "Physician location management endpoints"
+    },
+    {
+      "name": "Food Scanner",
+      "description": "Food Scanner API integration endpoints for food scanning and nutrition analysis"
+    },
+    {
+      "name": "Two-Factor Authentication",
+      "description": "Two-factor authentication endpoints for TOTP-based security"
     }
   ],
   "paths": {
@@ -1577,6 +1585,87 @@
         }
       }
     },
+    "/api/auth/verify-2fa": {
+      "post": {
+        "summary": "Verify two-factor authentication code during login",
+        "tags": [
+          "Authentication"
+        ],
+        "description": "Verifies the 2FA code after initial login credentials are validated",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "token"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john@example.com"
+                  },
+                  "token": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "example": "123456",
+                    "description": "6-digit TOTP code from authenticator app or backup code"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA verified successfully, login complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/AuthResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/refresh": {
       "post": {
         "summary": "Refresh access token using refresh token",
@@ -1792,6 +1881,64 @@
           },
           "404": {
             "description": "Reset token not found or expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/change-password": {
+      "post": {
+        "summary": "Change user password",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "oldPassword",
+                  "newPassword"
+                ],
+                "properties": {
+                  "oldPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8,
+                    "example": "OldSecurePass123!"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 8,
+                    "example": "NewSecurePass123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid old password or validation error",
             "content": {
               "application/json": {
                 "schema": {
@@ -3053,6 +3200,86 @@
         }
       }
     },
+    "/api/food-scanner/scan": {
+      "post": {
+        "summary": "Scan a food image using AI",
+        "tags": [
+          "Food Scanner"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "food_image"
+                ],
+                "properties": {
+                  "food_image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file of the food to scan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Food scanned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "foodName": {
+                              "type": "string"
+                            },
+                            "foodCategory": {
+                              "type": "string"
+                            },
+                            "foodImage": {
+                              "type": "string"
+                            },
+                            "breakdown": {
+                              "type": "object"
+                            },
+                            "nutritionalHighlight": {
+                              "type": "object"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid image or processing error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/health/metrics/add": {
       "post": {
         "summary": "Add a new health metric entry",
@@ -3072,6 +3299,12 @@
                 "type": "object",
                 "description": "userId is automatically extracted from the authenticated user's token",
                 "properties": {
+                  "recordedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-15T10:30:00Z",
+                    "description": "The date and time the metric was recorded"
+                  },
                   "bloodSugar": {
                     "type": "number",
                     "nullable": true,
@@ -3588,7 +3821,7 @@
     },
     "/api/health/metrics/statistics": {
       "get": {
-        "summary": "Get aggregated health statistics (daily, weekly, monthly averages)",
+        "summary": "Get aggregated health statistics (daily, weekly, monthly averages) and targets",
         "tags": [
           "Health Metrics"
         ],
@@ -3599,7 +3832,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Aggregated statistics retrieved successfully",
+            "description": "Aggregated statistics and targets retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -3670,6 +3903,88 @@
                                   "type": "number",
                                   "example": 8700,
                                   "description": "Monthly average steps"
+                                }
+                              }
+                            },
+                            "heartRate": {
+                              "type": "object",
+                              "properties": {
+                                "daily": {
+                                  "type": "number",
+                                  "example": 72,
+                                  "description": "Daily average heart rate in BPM"
+                                },
+                                "weekly": {
+                                  "type": "number",
+                                  "example": 70,
+                                  "description": "Weekly average heart rate in BPM"
+                                },
+                                "monthly": {
+                                  "type": "number",
+                                  "example": 75,
+                                  "description": "Monthly average heart rate in BPM"
+                                }
+                              }
+                            },
+                            "targets": {
+                              "type": "object",
+                              "properties": {
+                                "recommended": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "userId": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "metricType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "glucose",
+                                          "steps",
+                                          "water_intake",
+                                          "heart_rate"
+                                        ]
+                                      },
+                                      "targetValue": {
+                                        "type": "string",
+                                        "format": "numeric"
+                                      }
+                                    }
+                                  },
+                                  "description": "Admin recommended targets (userId is null)"
+                                },
+                                "user": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "userId": {
+                                        "type": "string"
+                                      },
+                                      "metricType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "glucose",
+                                          "steps",
+                                          "water_intake",
+                                          "heart_rate"
+                                        ]
+                                      },
+                                      "targetValue": {
+                                        "type": "string",
+                                        "format": "numeric"
+                                      }
+                                    }
+                                  },
+                                  "description": "User-specific targets"
                                 }
                               }
                             }
@@ -4132,67 +4447,6 @@
         }
       }
     },
-    "/api/health/exercises/add": {
-      "post": {
-        "summary": "Log a single exercise",
-        "tags": [
-          "Health Exercises"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "description": "userId is automatically extracted from the authenticated user's token",
-                "required": [
-                  "exerciseType",
-                  "count"
-                ],
-                "properties": {
-                  "exerciseType": {
-                    "type": "string",
-                    "enum": [
-                      "pushups",
-                      "squats",
-                      "chinups",
-                      "situps"
-                    ],
-                    "example": "pushups",
-                    "description": "Type of exercise"
-                  },
-                  "count": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "example": 20,
-                    "description": "Number of repetitions"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Exercise logged successfully"
-          },
-          "400": {
-            "description": "Bad request - validation error"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
     "/api/health/exercises/add/batch": {
       "post": {
         "summary": "Log multiple exercises at once",
@@ -4464,6 +4718,485 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/health/targets/recommended": {
+      "get": {
+        "summary": "Get admin recommended targets for all metric types",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recommended targets retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "userId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "metricType": {
+                                "type": "string",
+                                "enum": [
+                                  "glucose",
+                                  "steps",
+                                  "water_intake",
+                                  "heart_rate"
+                                ]
+                              },
+                              "targetValue": {
+                                "type": "string",
+                                "format": "numeric"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update admin recommended target (admin only)",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "metricType",
+                  "targetValue"
+                ],
+                "properties": {
+                  "metricType": {
+                    "type": "string",
+                    "enum": [
+                      "glucose",
+                      "steps",
+                      "water_intake",
+                      "heart_rate"
+                    ]
+                  },
+                  "targetValue": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recommended target updated successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - admin only"
+          }
+        }
+      }
+    },
+    "/api/health/targets/user": {
+      "get": {
+        "summary": "Get user-specific targets for all metric types",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User targets retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "userId": {
+                                "type": "string"
+                              },
+                              "metricType": {
+                                "type": "string",
+                                "enum": [
+                                  "glucose",
+                                  "steps",
+                                  "water_intake",
+                                  "heart_rate"
+                                ]
+                              },
+                              "targetValue": {
+                                "type": "string",
+                                "format": "numeric"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update user-specific target",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "metricType",
+                  "targetValue"
+                ],
+                "properties": {
+                  "metricType": {
+                    "type": "string",
+                    "enum": [
+                      "glucose",
+                      "steps",
+                      "water_intake",
+                      "heart_rate"
+                    ]
+                  },
+                  "targetValue": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User target updated successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/health/targets": {
+      "get": {
+        "summary": "Get both recommended and user-specific targets",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Targets retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "recommended": {
+                              "type": "array",
+                              "items": {
+                                "type": "object"
+                              }
+                            },
+                            "user": {
+                              "type": "array",
+                              "items": {
+                                "type": "object"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/health/targets/user/{metricType}": {
+      "delete": {
+        "summary": "Delete user-specific target",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "metricType",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "glucose",
+                "steps",
+                "water_intake",
+                "heart_rate"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User target deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/health/targets/recommended/batch": {
+      "post": {
+        "summary": "Create or update multiple admin recommended targets (admin only)",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "targets"
+                ],
+                "properties": {
+                  "targets": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "metricType",
+                        "targetValue"
+                      ],
+                      "properties": {
+                        "metricType": {
+                          "type": "string",
+                          "enum": [
+                            "glucose",
+                            "steps",
+                            "water_intake",
+                            "heart_rate"
+                          ]
+                        },
+                        "targetValue": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recommended targets updated successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - admin only"
+          }
+        }
+      }
+    },
+    "/api/health/targets/user/batch": {
+      "post": {
+        "summary": "Create or update multiple user-specific targets",
+        "tags": [
+          "Health Metrics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "targets"
+                ],
+                "properties": {
+                  "targets": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "metricType",
+                        "targetValue"
+                      ],
+                      "properties": {
+                        "metricType": {
+                          "type": "string",
+                          "enum": [
+                            "glucose",
+                            "steps",
+                            "water_intake",
+                            "heart_rate"
+                          ]
+                        },
+                        "targetValue": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User targets updated successfully"
+          },
+          "400": {
+            "description": "Bad request"
           },
           "401": {
             "description": "Unauthorized"
@@ -5915,6 +6648,351 @@
           },
           "404": {
             "description": "Free tier limits not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/two-factor/status": {
+      "get": {
+        "summary": "Get two-factor authentication status",
+        "tags": [
+          "Two-Factor Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Returns the current 2FA status (enabled/verified) for the authenticated user",
+        "responses": {
+          "200": {
+            "description": "2FA status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "verified": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/two-factor/setup": {
+      "post": {
+        "summary": "Setup two-factor authentication",
+        "tags": [
+          "Two-Factor Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Generates a new TOTP secret and QR code for setting up 2FA with an authenticator app",
+        "responses": {
+          "200": {
+            "description": "2FA setup initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "secret": {
+                              "type": "string",
+                              "example": "JBSWY3DPEHPK3PXP",
+                              "description": "Base32 encoded TOTP secret"
+                            },
+                            "qrCodeUrl": {
+                              "type": "string",
+                              "format": "data-uri",
+                              "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+                              "description": "QR code as data URI for scanning with authenticator app"
+                            },
+                            "backupCodes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "example": [
+                                "A1B2C3D4",
+                                "E5F6G7H8",
+                                "..."
+                              ],
+                              "description": "One-time backup codes (save these securely)"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - 2FA already enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/two-factor/verify": {
+      "post": {
+        "summary": "Verify and enable two-factor authentication",
+        "tags": [
+          "Two-Factor Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Verifies the TOTP code from the authenticator app and enables 2FA",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "example": "123456",
+                    "description": "6-digit TOTP code from authenticator app"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "2FA enabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "verified": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - validation error or 2FA already enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/two-factor/disable": {
+      "post": {
+        "summary": "Disable two-factor authentication",
+        "tags": [
+          "Two-Factor Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Disables 2FA for the authenticated user. Requires 2FA to be currently enabled.",
+        "responses": {
+          "200": {
+            "description": "2FA disabled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - 2FA not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/two-factor/regenerate-backup-codes": {
+      "post": {
+        "summary": "Regenerate backup codes",
+        "tags": [
+          "Two-Factor Authentication"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Generates new backup codes for 2FA. Previous backup codes will be invalidated.",
+        "responses": {
+          "200": {
+            "description": "Backup codes regenerated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "backupCodes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "example": [
+                                "A1B2C3D4",
+                                "E5F6G7H8",
+                                "..."
+                              ],
+                              "description": "New one-time backup codes (save these securely)"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - 2FA not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
