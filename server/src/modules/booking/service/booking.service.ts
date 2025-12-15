@@ -1,5 +1,4 @@
 import { BookingRepository, SlotWithDetails } from "../repository/booking.repository";
-import { ConsultationQuotaRepository } from "../repository/consultation-quota.repository";
 import { SettingsService } from "../../settings/service/settings.service";
 import { UserRepository } from "../../user/repository/user.repository";
 import { BadRequestError, ConflictError, NotFoundError, ForbiddenError } from "../../../shared/errors";
@@ -10,17 +9,18 @@ import type {
   InsertSlot,
   InsertSlotTypeJunction,
 } from "../models/booking.schema";
+import { ConsultationService } from "./consultation.service";
 export class BookingService {
   private bookingRepository: BookingRepository;
-  private consultationQuotaRepository: ConsultationQuotaRepository;
+  private consultationService: ConsultationService;
   private settingsService: SettingsService;
   private userRepository: UserRepository;
 
   constructor() {
     this.bookingRepository = new BookingRepository();
-    this.consultationQuotaRepository = new ConsultationQuotaRepository();
     this.settingsService = new SettingsService();
     this.userRepository = new UserRepository();
+    this.consultationService = new ConsultationService()
   }
 
   async getAllSlotSizes() {
@@ -451,7 +451,7 @@ export class BookingService {
     }
 
     // Get user consultation quota
-    const quota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(customerId);
+    const quota = await this.consultationService.getOrCreateUserConsultationQuota(customerId);
     
     // Get system-wide quota limits
     const systemLimits = await this.settingsService.getFreeTierLimits();
@@ -512,6 +512,35 @@ export class BookingService {
       isDiscounted,
       discountPercentage,
     };
+  }
+
+  /**
+   * Get user consultations (upcoming or past)
+   */
+  async getUserConsultations(
+    customerId: string,
+    options: {
+      type?: 'upcoming' | 'past';
+      page?: number;
+      limit?: number;
+      skip?: number;
+    } = {}
+  ) {
+    return await this.bookingRepository.getUserConsultations(customerId, options);
+  }
+
+  /**
+   * Mark consultation as attended
+   */
+  async markConsultationAttended(bookingId: string, customerId: string) {
+    return await this.bookingRepository.markConsultationAttended(bookingId, customerId);
+  }
+
+  /**
+   * Update consultation summary (physician only)
+   */
+  async updateConsultationSummary(bookingId: string, summary: string, physicianId: string) {
+    return await this.bookingRepository.updateConsultationSummary(bookingId, summary, physicianId);
   }
 }
 

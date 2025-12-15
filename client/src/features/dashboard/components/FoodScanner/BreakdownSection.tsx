@@ -1,12 +1,19 @@
 import { Card } from '@/components/ui/card';
-import { NutritionProgressBar } from '../NutritionProgressBar';
+import { EnhancedNutritionProgressBar } from './EnhancedNutritionProgressBar';
 import type { ScanResult } from '@/mocks/scanResults';
+import type { DailyUserData, ConsumedNutrients } from '@/services/foodScannerService';
 
 interface BreakdownSectionProps {
   scanResult: ScanResult | null;
+  nutritionRequirements?: DailyUserData;
+  consumedNutrients?: ConsumedNutrients | null;
 }
 
-export function BreakdownSection({ scanResult }: BreakdownSectionProps) {
+export function BreakdownSection({
+  scanResult,
+  nutritionRequirements,
+  consumedNutrients
+}: BreakdownSectionProps) {
   return (
     <Card
       className="p-6"
@@ -25,17 +32,47 @@ export function BreakdownSection({ scanResult }: BreakdownSectionProps) {
           marginBottom: '20px',
         }}
       >
-        Breakdown Section
+        Nutritional Breakdown
       </h3>
 
       {scanResult ? (
         <>
-          <NutritionProgressBar item={scanResult.breakdown.carbs} />
-          <NutritionProgressBar item={scanResult.breakdown.fiber} />
-          <NutritionProgressBar item={scanResult.breakdown.sugars} />
-          <NutritionProgressBar item={scanResult.breakdown.protein} />
-          <NutritionProgressBar item={scanResult.breakdown.fat} />
-          <NutritionProgressBar item={scanResult.breakdown.calories} />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.carbs}
+            recommended={nutritionRequirements?.carbs}
+            consumed={consumedNutrients?.carbs}
+            unit="g"
+          />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.fiber}
+            recommended={nutritionRequirements?.fiber}
+            consumed={consumedNutrients?.fiber}
+            unit="g"
+          />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.sugars}
+            recommended={nutritionRequirements?.sugars}
+            consumed={consumedNutrients?.sugars}
+            unit="g"
+          />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.protein}
+            recommended={nutritionRequirements?.protein}
+            consumed={consumedNutrients?.protein}
+            unit="g"
+          />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.fat}
+            recommended={nutritionRequirements?.fat}
+            consumed={consumedNutrients?.fat}
+            unit="g"
+          />
+          <EnhancedNutritionProgressBar
+            item={scanResult.breakdown.calories}
+            recommended={nutritionRequirements?.calories}
+            consumed={consumedNutrients?.calories}
+            unit="kcal"
+          />
         </>
       ) : (
         <p>Loading breakdown...</p>

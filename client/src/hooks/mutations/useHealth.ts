@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { healthService } from '@/services/healthService';
 import { API_ENDPOINTS } from '@/config/endpoints';
 import type { HealthMetric, MertricRecord, ActivityLog, ExerciseLog } from '@shared/schema';
+import { ExtendedLimits } from '@/services/settingsService';
 
 export const useHealthMetrics = (userId: string | undefined, limit: number = 30) => {
   return useQuery<HealthMetric[]>({
@@ -25,7 +26,7 @@ export const useChartMetrics = (userId: string | undefined, days: number = 7) =>
 };
 
 export const useLatestHealthMetric = () => {
-  return useQuery<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric> }>({
+  return useQuery<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric>; limits: ExtendedLimits, remainingLimits: ExtendedLimits }>({
     queryKey: [API_ENDPOINTS.HEALTH.LATEST],
     queryFn: () => healthService.getLatestMetric(),
     refetchOnMount: 'always',
@@ -79,9 +80,42 @@ export const useFilteredMetrics = (
     waterIntakeRecords: MertricRecord[];
     stepsRecords: MertricRecord[];
     heartBeatRecords: MertricRecord[];
+    pagination: {
+      bloodSugar: { total: number; limit: number; offset: number };
+      waterIntake: { total: number; limit: number; offset: number };
+      steps: { total: number; limit: number; offset: number };
+      heartBeat: { total: number; limit: number; offset: number };
+    };
   }>({
     queryKey: [API_ENDPOINTS.HEALTH.FILTERED, startDate, endDate, types],
     queryFn: () => healthService.getFilteredMetrics(startDate!, endDate!, types),
+    enabled: !!startDate && !!endDate,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+};
+
+export const useFilteredMetricsPaginated = (
+  startDate: string | null,
+  endDate: string | null,
+  types: string[] = [],
+  limit: number = 30,
+  offset: number = 0
+) => {
+  return useQuery<{
+    bloodSugarRecords: MertricRecord[];
+    waterIntakeRecords: MertricRecord[];
+    stepsRecords: MertricRecord[];
+    heartBeatRecords: MertricRecord[];
+    pagination: {
+      bloodSugar: { total: number; limit: number; offset: number };
+      waterIntake: { total: number; limit: number; offset: number };
+      steps: { total: number; limit: number; offset: number };
+      heartBeat: { total: number; limit: number; offset: number };
+    };
+  }>({
+    queryKey: [API_ENDPOINTS.HEALTH.FILTERED, startDate, endDate, types, limit, offset],
+    queryFn: () => healthService.getFilteredMetrics(startDate!, endDate!, types, limit, offset),
     enabled: !!startDate && !!endDate,
     refetchOnMount: 'always',
     staleTime: 0,
@@ -222,10 +256,14 @@ export const useTodayExerciseTotals = () => {
   });
 };
 
-export const useStrengthProgress = (days: number = 30) => {
-  return useQuery<number>({
-    queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.STRENGTH_PROGRESS, days],
-    queryFn: () => healthService.getStrengthProgress(days),
+export const useStrengthProgress = (startDate: string, endDate: string) => {
+  return useQuery<{
+    logs: Array<{ date: string; total: number; pushups: number; squats: number; chinups: number; situps: number }>;
+    percentageImprovement: number;
+  }>({
+    queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.STRENGTH_PROGRESS, startDate, endDate],
+    queryFn: () => healthService.getStrengthProgress(startDate, endDate),
+    enabled: !!startDate && !!endDate,
     refetchOnMount: 'always',
     staleTime: 0,
   });

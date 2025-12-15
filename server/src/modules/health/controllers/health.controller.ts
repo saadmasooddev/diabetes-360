@@ -35,6 +35,26 @@ export class HealthController {
       const user = await this.userService.getProfile(userId);
       const paymentType = user.paymentType || "free";
 
+    // Heart rate is only available for paid users
+      const data = validationResult.data;
+      if (data.heartRate && paymentType === "free") {
+        throw new BadRequestError("Heart rate tracking is only available for paid users. Please upgrade to access this feature.");
+      }
+
+      // Validate negative values
+      if (data.bloodSugar !== null && data.bloodSugar !== undefined && parseFloat(data.bloodSugar.toString()) < 0) {
+        throw new BadRequestError("Blood sugar value cannot be negative.");
+      }
+      if (data.steps !== null && data.steps !== undefined && data.steps < 0) {
+        throw new BadRequestError("Steps value cannot be negative.");
+      }
+      if (data.waterIntake !== null && data.waterIntake !== undefined && parseFloat(data.waterIntake.toString()) < 0) {
+        throw new BadRequestError("Water intake value cannot be negative.");
+      }
+      if (data.heartRate !== null && data.heartRate !== undefined && data.heartRate < 0) {
+        throw new BadRequestError("Heart rate value cannot be negative.");
+      }
+
       const metric = await this.healthService.createMetric(
         validationResult.data,
         paymentType
@@ -48,7 +68,6 @@ export class HealthController {
   async getLatestMetric(
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
   ): Promise<void> {
     try {
       const metric = await this.healthService.getLatestMetricsWithLimit(
@@ -156,11 +175,20 @@ export class HealthController {
       const startDateStr = req.query.startDate as string;
       const endDateStr = req.query.endDate as string;
       const typesParam = req.query.type;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
 
       if (!startDateStr || !endDateStr) {
         throw new BadRequestError("startDate and endDate are required");
       }
 
+      // Validate pagination parameters
+      if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
+        throw new BadRequestError("limit must be between 1 and 100");
+      }
+      if (offset !== undefined && (isNaN(offset) || offset < 0)) {
+        throw new BadRequestError("offset must be a non-negative integer");
+      }
 
       const startDate = parseLocalDate(startDateStr);
       const endDate = parseLocalDate(endDateStr);
@@ -201,7 +229,9 @@ export class HealthController {
         userId,
         startDate,
         endDate,
-        types
+        types,
+        limit,
+        offset
       );
       sendSuccess(res, result, "Filtered metrics retrieved successfully");
     } catch (error: any) {
@@ -375,10 +405,30 @@ export class HealthController {
   async getStrengthProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
-      const days = parseInt(req.query.days as string) || 30;
+      const startDateStr = req.query.startDate as string;
+      const endDateStr = req.query.endDate as string;
 
-      const percentage = await this.healthService.getStrengthProgressPercentage(userId, days);
-      sendSuccess(res, { percentage }, "Strength progress retrieved successfully");
+      if (!startDateStr || !endDateStr) {
+        throw new BadRequestError("startDate and endDate query parameters are required");
+      }
+
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(endDateStr);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new BadRequestError("Invalid date format. Use ISO 8601 format (YYYY-MM-DD)");
+      }
+
+      if (startDate > endDate) {
+        throw new BadRequestError("startDate must be before or equal to endDate");
+      }
+
+      // Set time to end of day for endDate to include the full day
+      endDate.setHours(23, 59, 59, 999);
+      startDate.setHours(0, 0, 0, 0);
+
+      const result = await this.healthService.getStrengthProgress(userId, startDate, endDate);
+      sendSuccess(res, result, "Strength progress retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
     }
@@ -507,6 +557,16 @@ export class HealthController {
 
       const results = await this.healthService.upsertUserTargetsBatch(userId, targets);
       sendSuccess(res, results, "User targets updated successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getUserRemainingLimits(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId || '';
+      const limits = await this.healthService.getUserRemainingLimits(userId);
+      sendSuccess(res, limits, "User remaining limits retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
     }

@@ -22,4 +22,5 @@ export class UserController {
       handleError(res, error);
     }
   }
+
 }

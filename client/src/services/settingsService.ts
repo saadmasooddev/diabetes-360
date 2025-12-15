@@ -17,64 +17,52 @@ export interface FoodScanStatus {
   limit: number;
 }
 
+export type ExtendedLimits = FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }
+
 class SettingsService {
-  async getFreeTierLimits(): Promise<FreeTierLimits> {
-    const response = await httpClient.get<ApiResponse<FreeTierLimits>>(API_ENDPOINTS.SETTINGS.FREE_TIER_LIMITS);
+  // Unified limits endpoint - returns both health metrics and food scan limits
+  async getLimits(): Promise<FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }> {
+    const response = await httpClient.get<ApiResponse<ExtendedLimits>>(API_ENDPOINTS.SETTINGS.LIMITS);
     if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to fetch free tier limits');
+      throw new Error(response.message || 'Failed to fetch limits');
     }
     return response.data;
   }
 
-  async createFreeTierLimits(data: { glucoseLimit: number; stepsLimit: number; waterLimit: number }): Promise<FreeTierLimits> {
-    const response = await httpClient.post<ApiResponse<FreeTierLimits>>(
-      API_ENDPOINTS.SETTINGS.FREE_TIER_LIMITS,
+  async createLimits(data: Partial<{ 
+    glucoseLimit: number; 
+    stepsLimit: number; 
+    waterLimit: number;
+    discountedConsultationQuota: number;
+    freeConsultationQuota: number;
+    freeUserScanLimit: number;
+    paidUserScanLimit: number;
+  }>): Promise<FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }> {
+    const response = await httpClient.post<ApiResponse<FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }>>(
+      API_ENDPOINTS.SETTINGS.LIMITS,
       data
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to create free tier limits');
+      throw new Error(response.message || 'Failed to create limits');
     }
     return response.data;
   }
 
-  async updateFreeTierLimits(data: Partial<{ glucoseLimit: number; stepsLimit: number; waterLimit: number }>): Promise<FreeTierLimits> {
-    const response = await httpClient.put<ApiResponse<FreeTierLimits>>(
-      API_ENDPOINTS.SETTINGS.FREE_TIER_LIMITS,
+  async updateLimits(data: Partial<{ 
+    glucoseLimit: number; 
+    stepsLimit: number; 
+    waterLimit: number;
+    discountedConsultationQuota: number;
+    freeConsultationQuota: number;
+    freeUserScanLimit: number;
+    paidUserScanLimit: number;
+  }>): Promise<FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }> {
+    const response = await httpClient.put<ApiResponse<FreeTierLimits & { foodScanLimits?: { freeTier: number; paidTier: number } }>>(
+      API_ENDPOINTS.SETTINGS.LIMITS,
       data
     );
     if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to update free tier limits');
-    }
-    return response.data;
-  }
-
-  // Food Scan Limits Methods
-  async getFoodScanLimits(): Promise<FoodScanLimits> {
-    const response = await httpClient.get<ApiResponse<FoodScanLimits>>(API_ENDPOINTS.SETTINGS.FOOD_SCAN_LIMITS);
-    if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to fetch food scan limits');
-    }
-    return response.data;
-  }
-
-  async createFoodScanLimits(data: { freeUserLimit: number; paidUserLimit: number }): Promise<FoodScanLimits> {
-    const response = await httpClient.post<ApiResponse<FoodScanLimits>>(
-      API_ENDPOINTS.SETTINGS.FOOD_SCAN_LIMITS,
-      data
-    );
-    if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to create food scan limits');
-    }
-    return response.data;
-  }
-
-  async updateFoodScanLimits(data: Partial<{ freeUserLimit: number; paidUserLimit: number }>): Promise<FoodScanLimits> {
-    const response = await httpClient.put<ApiResponse<FoodScanLimits>>(
-      API_ENDPOINTS.SETTINGS.FOOD_SCAN_LIMITS,
-      data
-    );
-    if (!response.success || !response.data) {
-      throw new Error(response.message || 'Failed to update food scan limits');
+      throw new Error(response.message || 'Failed to update limits');
     }
     return response.data;
   }

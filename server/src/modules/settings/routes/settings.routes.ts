@@ -7,16 +7,16 @@ const settingsController = new SettingsController();
 
 /**
  * @swagger
- * /api/settings/free-tier-limits:
+ * /api/settings/limits:
  *   get:
- *     summary: Get free tier limits configuration
+ *     summary: Get all limits configuration
  *     tags: [Settings]
  *     security:
  *       - bearerAuth: []
- *     description: Returns the current free tier limits for glucose, steps, and water intake metrics
+ *     description: Returns the current limits for health metrics (glucose, steps, water) and food scanning (free and paid users)
  *     responses:
  *       200:
- *         description: Free tier limits retrieved successfully
+ *         description: Limits retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -25,7 +25,31 @@ const settingsController = new SettingsController();
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/FreeTierLimits'
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         glucoseLimit:
+ *                           type: integer
+ *                         stepsLimit:
+ *                           type: integer
+ *                         waterLimit:
+ *                           type: integer
+ *                         discountedConsultationQuota:
+ *                           type: integer
+ *                         freeConsultationQuota:
+ *                           type: integer
+ *                         foodScanLimits:
+ *                           type: object
+ *                           properties:
+ *                             freeTier:
+ *                               type: integer
+ *                             paidTier:
+ *                               type: integer
+ *                         createdAt:
+ *                           type: string
+ *                         updatedAt:
+ *                           type: string
  *       401:
  *         description: Unauthorized
  *         content:
@@ -33,29 +57,25 @@ const settingsController = new SettingsController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/free-tier-limits", authenticateToken, (req, res, next) => 
-  settingsController.getFreeTierLimits(req, res, next)
+router.get("/limits", authenticateToken, (req, res, next) => 
+  settingsController.getLimits(req, res, next)
 );
 
 /**
  * @swagger
- * /api/settings/free-tier-limits:
+ * /api/settings/limits:
  *   post:
- *     summary: Create free tier limits (Admin only)
+ *     summary: Create limits (Admin only)
  *     tags: [Settings]
  *     security:
  *       - bearerAuth: []
- *     description: Create new free tier limits. Will fail if limits already exist.
+ *     description: Create new limits. Will fail if limits already exist. Supports both health metrics and food scan limits.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - glucoseLimit
- *               - stepsLimit
- *               - waterLimit
  *             properties:
  *               glucoseLimit:
  *                 type: integer
@@ -72,9 +92,27 @@ router.get("/free-tier-limits", authenticateToken, (req, res, next) =>
  *                 minimum: 0
  *                 example: 2
  *                 description: Maximum number of water intake logs per day for free tier users
+ *               discountedConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 0
+ *               freeConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 0
+ *               freeUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 5
+ *                 description: Maximum number of food scans per day for free users
+ *               paidUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 20
+ *                 description: Maximum number of food scans per day for paid users
  *     responses:
  *       201:
- *         description: Free tier limits created successfully
+ *         description: Limits created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -83,7 +121,7 @@ router.get("/free-tier-limits", authenticateToken, (req, res, next) =>
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/FreeTierLimits'
+ *                       type: object
  *       400:
  *         description: Bad request - validation error or limits already exist
  *         content:
@@ -103,29 +141,25 @@ router.get("/free-tier-limits", authenticateToken, (req, res, next) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/free-tier-limits", authenticateToken, requirePermission('create:settings'), (req, res, next) => 
-  settingsController.createFreeTierLimits(req, res, next)
+router.post("/limits", authenticateToken, requirePermission('create:settings'), (req, res, next) => 
+  settingsController.createLimits(req, res, next)
 );
 
 /**
  * @swagger
- * /api/settings/free-tier-limits:
+ * /api/settings/limits:
  *   put:
- *     summary: Create or update free tier limits (Admin only)
+ *     summary: Create or update limits (Admin only)
  *     tags: [Settings]
  *     security:
  *       - bearerAuth: []
- *     description: Upsert operation - creates limits if they don't exist, or updates if they do
+ *     description: Upsert operation - creates limits if they don't exist, or updates if they do. Supports both health metrics and food scan limits.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - glucoseLimit
- *               - stepsLimit
- *               - waterLimit
  *             properties:
  *               glucoseLimit:
  *                 type: integer
@@ -142,9 +176,27 @@ router.post("/free-tier-limits", authenticateToken, requirePermission('create:se
  *                 minimum: 0
  *                 example: 3
  *                 description: Maximum number of water intake logs per day for free tier users
+ *               discountedConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 0
+ *               freeConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 0
+ *               freeUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 10
+ *                 description: Maximum number of food scans per day for free users
+ *               paidUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 30
+ *                 description: Maximum number of food scans per day for paid users
  *     responses:
  *       200:
- *         description: Free tier limits updated successfully
+ *         description: Limits updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -153,7 +205,7 @@ router.post("/free-tier-limits", authenticateToken, requirePermission('create:se
  *                 - type: object
  *                   properties:
  *                     data:
- *                       $ref: '#/components/schemas/FreeTierLimits'
+ *                       type: object
  *       400:
  *         description: Bad request - validation error
  *         content:
@@ -173,19 +225,19 @@ router.post("/free-tier-limits", authenticateToken, requirePermission('create:se
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put("/free-tier-limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.upsertFreeTierLimits(req, res, next)
+router.put("/limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
+  settingsController.upsertLimits(req, res, next)
 );
 
 /**
  * @swagger
- * /api/settings/free-tier-limits:
+ * /api/settings/limits:
  *   patch:
- *     summary: Partially update free tier limits (Admin only)
+ *     summary: Partially update limits (Admin only)
  *     tags: [Settings]
  *     security:
  *       - bearerAuth: []
- *     description: Update only specified limit fields. Limits must already exist.
+ *     description: Update only specified limit fields. Limits must already exist. Supports both health metrics and food scan limits.
  *     requestBody:
  *       required: true
  *       content:
@@ -208,59 +260,25 @@ router.put("/free-tier-limits", authenticateToken, requirePermission('update:set
  *                 minimum: 0
  *                 example: 3
  *                 description: Maximum number of water intake logs per day for free tier users
+ *               discountedConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *               freeConsultationQuota:
+ *                 type: integer
+ *                 minimum: 0
+ *               freeUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 8
+ *                 description: Maximum number of food scans per day for free users
+ *               paidUserScanLimit:
+ *                 type: integer
+ *                 minimum: 0
+ *                 example: 25
+ *                 description: Maximum number of food scans per day for paid users
  *     responses:
  *       200:
- *         description: Free tier limits updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/FreeTierLimits'
- *       400:
- *         description: Bad request - validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - admin access required
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       404:
- *         description: Free tier limits not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.patch("/free-tier-limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.updateFreeTierLimits(req, res, next)
-);
-
-/**
- * @swagger
- * /api/settings/food-scan-limits:
- *   get:
- *     summary: Get food scan limits configuration
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     description: Returns the current food scan limits for free and paid users
- *     responses:
- *       200:
- *         description: Food scan limits retrieved successfully
+ *         description: Limits updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -270,149 +288,39 @@ router.patch("/free-tier-limits", authenticateToken, requirePermission('update:s
  *                   properties:
  *                     data:
  *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                         freeUserLimit:
- *                           type: integer
- *                           description: Daily scan limit for free users
- *                         paidUserLimit:
- *                           type: integer
- *                           description: Daily scan limit for paid users
- *       401:
- *         description: Unauthorized
- */
-router.get("/food-scan-limits", authenticateToken, (req, res, next) => 
-  settingsController.getFoodScanLimits(req, res, next)
-);
-
-/**
- * @swagger
- * /api/settings/food-scan-limits:
- *   post:
- *     summary: Create food scan limits (Admin only)
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     description: Create new food scan limits. Will fail if limits already exist.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - freeUserLimit
- *               - paidUserLimit
- *             properties:
- *               freeUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 5
- *                 description: Maximum number of food scans per day for free users
- *               paidUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 20
- *                 description: Maximum number of food scans per day for paid users
- *     responses:
- *       201:
- *         description: Food scan limits created successfully
- *       400:
- *         description: Bad request - validation error or limits already exist
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - admin access required
- */
-router.post("/food-scan-limits", authenticateToken, requirePermission('create:settings'), (req, res, next) => 
-  settingsController.createFoodScanLimits(req, res, next)
-);
-
-/**
- * @swagger
- * /api/settings/food-scan-limits:
- *   put:
- *     summary: Create or update food scan limits (Admin only)
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     description: Upsert operation - creates limits if they don't exist, or updates if they do
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - freeUserLimit
- *               - paidUserLimit
- *             properties:
- *               freeUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 10
- *                 description: Maximum number of food scans per day for free users
- *               paidUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 30
- *                 description: Maximum number of food scans per day for paid users
- *     responses:
- *       200:
- *         description: Food scan limits updated successfully
  *       400:
  *         description: Bad request - validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - admin access required
- */
-router.put("/food-scan-limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.upsertFoodScanLimits(req, res, next)
-);
-
-/**
- * @swagger
- * /api/settings/food-scan-limits:
- *   patch:
- *     summary: Partially update food scan limits (Admin only)
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     description: Update only specified limit fields. Limits must already exist.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               freeUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 8
- *                 description: Maximum number of food scans per day for free users
- *               paidUserLimit:
- *                 type: integer
- *                 minimum: 0
- *                 example: 25
- *                 description: Maximum number of food scans per day for paid users
- *     responses:
- *       200:
- *         description: Food scan limits updated successfully
- *       400:
- *         description: Bad request - validation error
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Food scan limits not found
+ *         description: Limits not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.patch("/food-scan-limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.updateFoodScanLimits(req, res, next)
+router.patch("/limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
+  settingsController.updateLimits(req, res, next)
 );
+
+
+
+
+
 
 /**
  * @swagger
@@ -449,8 +357,8 @@ router.patch("/food-scan-limits", authenticateToken, requirePermission('update:s
  *         description: Unauthorized
  */
 router.get("/food-scan-status", authenticateToken, (req, res, next) => 
-  settingsController.getUserScanStatus(req, res, next)
-);
+  settingsController.getUserScanStatus(req, res, next))
 
 export { router as settingsRoutes };
+
 

@@ -9,7 +9,6 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { FreeTierLimitsManagement } from '@/components/admin/FreeTierLimitsManagement';
-import { FoodScanLimitsManagement } from '@/components/admin/FoodScanLimitsManagement';
 import { PhysicianSettings } from '@/components/admin/PhysicianSettings';
 import { HealthMetricTargetsManagement } from '@/components/admin/HealthMetricTargetsManagement';
 import { UserHealthTargets } from '@/components/customer/UserHealthTargets';
@@ -458,7 +457,6 @@ export function Settings() {
                 </TabsContent>
                 <TabsContent value="limits" className="space-y-6 overflow-x-hidden">
                   <FreeTierLimitsManagement />
-                  <FoodScanLimitsManagement />
                 </TabsContent>
                 <TabsContent value="targets" className="space-y-6 overflow-x-hidden">
                   <HealthMetricTargetsManagement />

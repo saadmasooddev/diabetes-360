@@ -188,6 +188,7 @@ export const useBookSlot = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking', 'available-slots'] });
       queryClient.invalidateQueries({ queryKey: ['booking', 'slots'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'my-consultations'] });
       toast({
         title: 'Slot Booked',
         description: 'Your appointment has been booked successfully.',
@@ -198,6 +199,41 @@ export const useBookSlot = () => {
       toast({
         title: 'Booking Failed',
         description: error.message || 'Failed to book slot.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useMyConsultations = (params: {
+  type?: 'upcoming' | 'past';
+  page?: number;
+  limit?: number;
+} = {}) => {
+  return useQuery({
+    queryKey: ['booking', 'my-consultations', params.type, params.page, params.limit],
+    queryFn: () => bookingService.getMyConsultations(params),
+  });
+};
+
+export const useMarkConsultationAttended = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bookingId: string) => bookingService.markConsultationAttended(bookingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['booking', 'my-consultations'] });
+      toast({
+        title: 'Success',
+        description: 'Consultation marked as attended.',
+        variant: 'default',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed',
+        description: error.message || 'Failed to mark consultation as attended.',
         variant: 'destructive',
       });
     },

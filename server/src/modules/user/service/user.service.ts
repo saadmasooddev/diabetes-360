@@ -2,9 +2,10 @@ import { NotFoundError } from "server/src/shared/errors";
 import { UserRepository } from "../repository/user.repository";
 
 export class UserService {
-  private userRepository: UserRepository;
+
+  private readonly userRepository: UserRepository;
   constructor(){
-    this.userRepository = new UserRepository();
+    this.userRepository = new UserRepository()
   }
   async getProfile(userId: string) {
     const user = await this.userRepository.getUser(userId);
@@ -13,4 +14,5 @@ export class UserService {
     }
     return user;
   }
+
 }

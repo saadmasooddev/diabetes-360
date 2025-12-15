@@ -1,20 +1,30 @@
 import { db } from "../../../app/config/db";
-import { freeTierLimits, foodScanLimits, foodScanLogs } from "../models/settings.schema";
-import type { InsertFreeTierLimits, UpdateFreeTierLimits, FreeTierLimits, InsertFoodScanLimits, UpdateFoodScanLimits, FoodScanLimits, FoodScanLogs } from "../models/settings.schema";
+import {
+  freeTierLimits,
+  foodScanLimits,
+  foodScanLogs,
+} from "../models/settings.schema";
+import type {
+  InsertFreeTierLimits,
+  UpdateFreeTierLimits,
+  FreeTierLimits,
+  InsertFoodScanLimits,
+  UpdateFoodScanLimits,
+  FoodScanLimits,
+  FoodScanLogs,
+} from "../models/settings.schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export class SettingsRepository {
   async getFreeTierLimits(): Promise<FreeTierLimits | null> {
-    const [limits] = await db
-      .select()
-      .from(freeTierLimits)
-      .limit(1);
-    
+    const [limits] = await db.select().from(freeTierLimits).limit(1);
+
     return limits || null;
   }
 
-
-  async createFreeTierLimits(data: InsertFreeTierLimits): Promise<FreeTierLimits> {
+  async createFreeTierLimits(
+    data: InsertFreeTierLimits
+  ): Promise<FreeTierLimits> {
     const [limits] = await db
       .insert(freeTierLimits)
       .values({
@@ -22,11 +32,13 @@ export class SettingsRepository {
         updatedAt: new Date(),
       })
       .returning();
-    
+
     return limits;
   }
 
-  async updateFreeTierLimits(data: UpdateFreeTierLimits): Promise<FreeTierLimits> {
+  async updateFreeTierLimits(
+    data: UpdateFreeTierLimits
+  ): Promise<FreeTierLimits> {
     const [limits] = await db
       .update(freeTierLimits)
       .set({
@@ -34,17 +46,19 @@ export class SettingsRepository {
         updatedAt: new Date(),
       })
       .returning();
-    
+
     if (!limits) {
       throw new Error("Free tier limits not found");
     }
-    
+
     return limits;
   }
 
-  async upsertFreeTierLimits(data: InsertFreeTierLimits): Promise<FreeTierLimits> {
+  async upsertFreeTierLimits(
+    data: InsertFreeTierLimits
+  ): Promise<FreeTierLimits> {
     const existing = await this.getFreeTierLimits();
-    
+
     if (existing) {
       return await this.updateFreeTierLimits(data);
     } else {
@@ -54,15 +68,14 @@ export class SettingsRepository {
 
   // Food Scan Limits Methods
   async getFoodScanLimits(): Promise<FoodScanLimits | null> {
-    const [limits] = await db
-      .select()
-      .from(foodScanLimits)
-      .limit(1);
-    
+    const [limits] = await db.select().from(foodScanLimits).limit(1);
+
     return limits || null;
   }
 
-  async createFoodScanLimits(data: InsertFoodScanLimits): Promise<FoodScanLimits> {
+  async createFoodScanLimits(
+    data: InsertFoodScanLimits
+  ): Promise<FoodScanLimits> {
     const [limits] = await db
       .insert(foodScanLimits)
       .values({
@@ -70,11 +83,13 @@ export class SettingsRepository {
         updatedAt: new Date(),
       })
       .returning();
-    
+
     return limits;
   }
 
-  async updateFoodScanLimits(data: UpdateFoodScanLimits): Promise<FoodScanLimits> {
+  async updateFoodScanLimits(
+    data: UpdateFoodScanLimits
+  ): Promise<FoodScanLimits> {
     const [limits] = await db
       .update(foodScanLimits)
       .set({
@@ -82,17 +97,19 @@ export class SettingsRepository {
         updatedAt: new Date(),
       })
       .returning();
-    
+
     if (!limits) {
       throw new Error("Food scan limits not found");
     }
-    
+
     return limits;
   }
 
-  async upsertFoodScanLimits(data: InsertFoodScanLimits): Promise<FoodScanLimits> {
+  async upsertFoodScanLimits(
+    data: InsertFoodScanLimits
+  ): Promise<FoodScanLimits> {
     const existing = await this.getFoodScanLimits();
-    
+
     if (existing) {
       return await this.updateFoodScanLimits(data);
     } else {
@@ -101,10 +118,13 @@ export class SettingsRepository {
   }
 
   // Food Scan Logs Methods
-  async getUserDailyScanCount(userId: string, scanDate: Date = new Date()): Promise<number> {
+  async getUserDailyScanCount(
+    userId: string,
+    scanDate: Date = new Date()
+  ): Promise<number> {
     // Use date in YYYY-MM-DD format for PostgreSQL date type
-    const dateStr = scanDate.toISOString().split('T')[0];
-    
+    const dateStr = scanDate.toISOString().split("T")[0];
+
     const [log] = await db
       .select()
       .from(foodScanLogs)
@@ -115,14 +135,17 @@ export class SettingsRepository {
         )
       )
       .limit(1);
-    
+
     return log?.scanCount || 0;
   }
 
-  async incrementUserScanCount(userId: string, scanDate: Date = new Date()): Promise<FoodScanLogs> {
+  async incrementUserScanCount(
+    userId: string,
+    scanDate: Date = new Date()
+  ): Promise<FoodScanLogs> {
     // Use date in YYYY-MM-DD format for PostgreSQL date type
-    const dateStr = scanDate.toISOString().split('T')[0];
-    
+    const dateStr = scanDate.toISOString().split("T")[0];
+
     // Try to update existing record
     const [updated] = await db
       .update(foodScanLogs)
@@ -137,11 +160,11 @@ export class SettingsRepository {
         )
       )
       .returning();
-    
+
     if (updated) {
       return updated;
     }
-    
+
     // If no existing record, create a new one
     const [newLog] = await db
       .insert(foodScanLogs)
@@ -151,20 +174,24 @@ export class SettingsRepository {
         scanCount: 1,
       })
       .returning();
-    
+
     return newLog;
   }
 
-  async getUserScanStatus(userId: string, isPaid: boolean, scanDate: Date = new Date()): Promise<{ canScan: boolean; currentCount: number; limit: number }> {
+  async getUserScanStatus(
+    userId: string,
+    isPaid: boolean,
+    scanDate: Date = new Date()
+  ): Promise<{ canScan: boolean; currentCount: number; limit: number }> {
     const limits = await this.getFoodScanLimits();
     if (!limits) {
       // If no limits configured, allow scanning
       return { canScan: true, currentCount: 0, limit: Infinity };
     }
-    
+
     const limit = isPaid ? limits.paidUserLimit : limits.freeUserLimit;
     const currentCount = await this.getUserDailyScanCount(userId, scanDate);
-    
+
     return {
       canScan: currentCount < limit,
       currentCount,
@@ -172,4 +199,3 @@ export class SettingsRepository {
     };
   }
 }
-

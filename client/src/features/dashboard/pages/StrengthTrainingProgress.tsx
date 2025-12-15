@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
@@ -30,10 +30,29 @@ export function StrengthTrainingProgress() {
     situps: '',
   });
 
+  // Calculate start and end dates based on selected range
+  const { startDate, endDate } = useMemo(() => {
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const start = new Date();
+    if (selectedRange === '1 Day') {
+      start.setDate(start.getDate() - 7); // Show last 7 days
+    } else if (selectedRange === '1 Month') {
+      start.setMonth(start.getMonth() - 1);
+    } else {
+      start.setFullYear(start.getFullYear() - 1);
+    }
+    start.setHours(0, 0, 0, 0);
+
+    return {
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+    };
+  }, [selectedRange]);
+
   const { data: todayTotals, isLoading: isLoadingTotals } = useTodayExerciseTotals();
-  const { data: progressPercentage = 0, isLoading: isLoadingProgress } = useStrengthProgress(
-    selectedRange === '1 Day' ? 1 : selectedRange === '1 Month' ? 30 : 365
-  );
+  const { data: strengthProgress, isLoading: isLoadingProgress } = useStrengthProgress(startDate, endDate);
   const addExerciseLogsBatch = useAddExerciseLogsBatch();
 
   const todayWorkout = [
@@ -43,19 +62,48 @@ export function StrengthTrainingProgress() {
     { name: 'Sit-ups', count: todayTotals?.situps || 0, color: '#00856F', key: 'situps' as const },
   ];
 
-  // Generate mock chart data based on progress percentage
-  const generateChartData = (range: TimeRange) => {
-    const baseValue = progressPercentage;
-    const dataPoints = range === '1 Day' ? 7 : range === '1 Month' ? 7 : 7;
-    const variation = 5;
+  // Transform logs data for chart
+  const chartData = useMemo(() => {
+    if (!strengthProgress?.logs || strengthProgress.logs.length === 0) {
+      return [];
+    }
 
-    return Array.from({ length: dataPoints }, (_, i) => ({
-      time: String(i * (range === '1 Day' ? 4 : range === '1 Month' ? 5 : 2)).padStart(2, '0'),
-      value: Math.max(0, Math.min(100, baseValue + (Math.random() * variation * 2 - variation))),
-    }));
-  };
+    return strengthProgress.logs.map((log) => {
+      // Format date for display based on range
+      const date = new Date(log.date);
+      let dateLabel: string;
 
-  const chartData = generateChartData(selectedRange);
+      if (selectedRange === '1 Day') {
+        // Show day name for 1 Day range
+        dateLabel = date.toLocaleDateString('en-US', { weekday: 'short' });
+      } else if (selectedRange === '1 Month') {
+        // Show day of month for 1 Month range
+        dateLabel = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      } else {
+        // Show month for 1 Year range
+        dateLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      }
+
+      return {
+        date: log.date,
+        dateLabel,
+        total: log.total,
+        pushups: log.pushups,
+        squats: log.squats,
+        chinups: log.chinups,
+        situps: log.situps,
+      };
+    });
+  }, [strengthProgress?.logs, selectedRange]);
+
+  // Calculate max value for Y-axis domain
+  const maxValue = useMemo(() => {
+    if (chartData.length === 0) return 100;
+    const max = Math.max(...chartData.map(d => d.total));
+    return Math.ceil(max * 1.1); // Add 10% padding
+  }, [chartData]);
+
+  const percentageImprovement = strengthProgress?.percentageImprovement ?? 0;
 
   const handleBack = () => {
     setLocation(ROUTES.TIPS_EXERCISES);
@@ -208,11 +256,11 @@ export function StrengthTrainingProgress() {
                   style={{
                     fontSize: '32px',
                     fontWeight: 700,
-                    color: '#EF5350',
+                    color: percentageImprovement >= 0 ? '#4CAF50' : '#EF5350',
                   }}
                   data-testid="text-progress-percentage"
                 >
-                  {isLoadingProgress ? '...' : `${progressPercentage}%`}
+                  {isLoadingProgress ? '...' : `${percentageImprovement >= 0 ? '+' : ''}${percentageImprovement}%`}
                 </span>
                 <span
                   style={{
@@ -221,42 +269,65 @@ export function StrengthTrainingProgress() {
                     color: '#546E7A',
                   }}
                 >
-                  00
+                  improvement
                 </span>
               </div>
             </div>
 
             {/* Chart */}
             <div className="mb-6" style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                  <XAxis
-                    dataKey="time"
-                    stroke="#546E7A"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis
-                    stroke="#546E7A"
-                    style={{ fontSize: '12px' }}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#FFFFFF',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#EF5350"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {isLoadingProgress ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Loading chart data...
+                </div>
+              ) : chartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  No data available for the selected period
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
+                    <XAxis
+                      dataKey="dateLabel"
+                      stroke="#546E7A"
+                      style={{ fontSize: '12px' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      stroke="#546E7A"
+                      style={{ fontSize: '12px' }}
+                      domain={[0, maxValue]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#FFFFFF',
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                      }}
+                      formatter={(value: number) => [value, 'Total Exercises']}
+                      labelFormatter={(label) => {
+                        const log = chartData.find(d => d.dateLabel === label);
+                        return log ? new Date(log.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : label;
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="#EF5350"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: '#EF5350' }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             {/* Time Range Selector */}

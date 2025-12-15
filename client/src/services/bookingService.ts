@@ -236,6 +236,84 @@ class BookingService {
     }
     return response.data.booking;
   }
+
+  async getMyConsultations(params: {
+    type?: 'upcoming' | 'past';
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{
+    consultations: Array<{
+      id: string;
+      customerId: string;
+      slotId: string;
+      slotTypeId: string;
+      status: string;
+      summary?: string | null;
+      isAttended: boolean;
+      createdAt: string;
+      updatedAt: string;
+      slot: {
+        id: string;
+        startTime: string;
+        endTime: string;
+        slotSize: number;
+        slotType: {
+          id: string;
+          type: string;
+        };
+        availability: {
+          id: string;
+          physicianId: string;
+          date: string;
+        };
+        physician: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          specialty?: string;
+          imageUrl?: string | null;
+          rating: number;
+        };
+        location?: {
+          locationName: string;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          country?: string | null;
+          postalCode?: string | null;
+        } | null;
+      };
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params.type) queryParams.append('type', params.type);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await httpClient.get<ApiResponse<{
+      consultations: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>>(`${API_ENDPOINTS.BOOKING.MY_CONSULTATIONS}?${queryParams.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch consultations');
+    }
+    return response.data;
+  }
+
+  async markConsultationAttended(bookingId: string): Promise<void> {
+    const response = await httpClient.patch<ApiResponse<{}>>(
+      API_ENDPOINTS.BOOKING.MARK_ATTENDED(bookingId)
+    );
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to mark consultation as attended');
+    }
+  }
 }
 
 export const bookingService = new BookingService();

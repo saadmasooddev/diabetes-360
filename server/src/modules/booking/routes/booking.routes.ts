@@ -659,5 +659,86 @@ router.get("/physicians/:physicianId/calculate-price", authenticateToken, (req, 
   bookingController.calculateBookingPrice(req, res)
 );
 
+/**
+ * @swagger
+ * /api/booking/my-consultations:
+ *   get:
+ *     summary: Get user's consultations (upcoming or past)
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [upcoming, past]
+ *         description: Filter by consultation type (upcoming or past)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Consultations retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         consultations:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ */
+router.get("/my-consultations", authenticateToken, (req, res) =>
+  bookingController.getUserConsultations(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/consultations/{bookingId}/attend:
+ *   patch:
+ *     summary: Mark consultation as attended
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Consultation marked as attended successfully
+ */
+router.patch("/consultations/:bookingId/attend", authenticateToken, (req, res) =>
+  bookingController.markConsultationAttended(req, res)
+);
+
 export { router as bookingRoutes };
 

@@ -13,7 +13,8 @@ import {
   LogOut,
   ChevronRight,
   ChevronDown,
-  DollarSign
+  DollarSign,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,12 +30,15 @@ interface NavItem {
   icon: React.ReactNode;
   path: string;
   testId: string;
+  roles?: ('customer' | 'admin' | 'physician')[];
+  paymentTypes?: ('free' | 'monthly' | 'annual')[];
 }
 
 const mainNavItems: NavItem[] = [
   { label: 'Home', icon: <Home className="h-5 w-5" />, path: ROUTES.HOME, testId: 'nav-home' },
   { label: 'Instant Consultation', icon: <Video className="h-5 w-5" />, path: ROUTES.INSTANT_CONSULTATION, testId: 'nav-consultation' },
   { label: 'Find a Doctor', icon: <UserSearch className="h-5 w-5" />, path: ROUTES.FIND_DOCTOR, testId: 'nav-doctors' },
+  { label: 'Consultations', icon: <Calendar className="h-5 w-5" />, path: ROUTES.CONSULTATIONS, testId: 'nav-consultations', roles: ['customer'], paymentTypes: ['monthly', 'annual'] },
   { label: 'Food Scanner', icon: <Scan className="h-5 w-5" />, path: ROUTES.FOOD_SCANNER, testId: 'nav-food-scanner' },
   { label: 'Tips & Exercises', icon: <Dumbbell className="h-5 w-5" />, path: ROUTES.TIPS_EXERCISES, testId: 'nav-tips' },
   { label: 'Medical Records', icon: <FileText className="h-5 w-5" />, path: ROUTES.MEDICAL_RECORDS, testId: 'nav-records' },
@@ -53,7 +57,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDashboardExpanded, setIsDashboardExpanded] = useState(false);
 
-  const isDashboardRoute = location === ROUTES.DASHBOARD || location === ROUTES.HEALTH_ASSESSMENT;
+  const isDashboardRoute = location === ROUTES.DASHBOARD || location === ROUTES.HEALTH_ASSESSMENT || location === ROUTES.HEALTH_METRICS_HISTORY;
 
   useEffect(() => {
     if (isDashboardRoute) {
@@ -172,12 +176,35 @@ export function Sidebar({ className }: SidebarProps) {
                     <ChevronRight className="h-4 w-4" />
                     <span>Health Assessment</span>
                   </Link>
+                  <Link
+                    href={ROUTES.HEALTH_METRICS_HISTORY}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      location === ROUTES.HEALTH_METRICS_HISTORY
+                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                    )}
+                    data-testid="nav-health-metrics-history"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span>Metrics History</span>
+                  </Link>
                 </div>
               )}
             </div>
 
             {/* Other nav items */}
             {mainNavItems.map((item) => {
+              // Filter by role
+              if (item.roles && !item.roles.includes(user?.role as any)) {
+                return null;
+              }
+
+              // Filter by payment type
+              if (item.paymentTypes && (!user?.paymentType || !item.paymentTypes.includes(user.paymentType))) {
+                return null;
+              }
+
               const isActive = location === item.path;
               return (
                 <Link

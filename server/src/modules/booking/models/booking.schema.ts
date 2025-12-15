@@ -4,6 +4,8 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, physicianLocations } from "../../auth/models/user.schema";
 
+const bookedSlotsStatusEnum = pgEnum("booking_status", ["pending", "confirmed", "cancelled", "completed"]);
+export const BOOKED_SLOTS_STATUS = z.enum(["pending", "confirmed", "cancelled", "completed"]);
 // Booking System Tables
 export const slotSize = pgTable("slot_size", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -56,7 +58,8 @@ export const bookedSlots = pgTable("booked_slots", {
   customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "restrict" }),
   slotTypeId: varchar("slot_type_id").notNull().references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
-  status: text("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
+  status: bookedSlotsStatusEnum("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
+  summary: text("summary"), // Consultation summary added by physician
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -126,7 +129,10 @@ export const updateBookedSlotSchema = createInsertSchema(bookedSlots).omit({
   slotId: true,
   createdAt: true,
   updatedAt: true,
-}).partial();
+}).partial().extend({
+  summary: z.string().optional().nullable(),
+  isAttended: z.boolean().optional(),
+});
 
 export const insertSlotLocationSchema = createInsertSchema(slotLocations).omit({
   id: true,

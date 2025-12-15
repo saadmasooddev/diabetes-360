@@ -156,4 +156,5 @@ const userController = new UserController();
  */
 router.get("/profile", authenticateToken, requirePermission('read:own_profile'), (req, res ) => userController.getProfile(req, res ));
 
+
 export { router as userRoutes };

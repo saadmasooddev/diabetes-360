@@ -10,7 +10,7 @@ import {
   bookedSlots,
   slotLocations,
 } from "../models/booking.schema";
-import { physicianLocations } from "../../auth/models/user.schema";
+import { physicianLocations, users, physicianData, physicianRatings, physicianSpecialties } from "../../auth/models/user.schema";
 import type {
   SlotSize,
   InsertAvailabilityDate,
@@ -793,6 +793,305 @@ export class BookingRepository {
         isBooked: bookedSlotIds.has(slot.id),
       };
     });
+  }
+
+  // Get user consultations (upcoming and past)
+  async getUserConsultations(
+    customerId: string,
+    options: {
+      type?: 'upcoming' | 'past';
+      page?: number;
+      limit?: number;
+      skip?: number
+    } = {}
+  ): Promise<{
+    consultations: Array<BookedSlot & {
+      slot: Slot & {
+        availability: AvailabilityDate;
+        slotSize: SlotSize;
+        slotType: SlotType;
+        physician: {
+          id: string;
+          firstName: string;
+          lastName: string;
+          specialty?: string;
+          imageUrl?: string | null;
+          rating?: number;
+        };
+        location?: {
+          locationName: string;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          country?: string | null;
+          postalCode?: string | null;
+        } | null;
+      };
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const { type, page = 1, limit = 10, skip } = options;
+    const offset = skip ? skip : (page - 1) * limit;
+    const now = new Date();
+
+    // Base query conditions
+    let statusCondition = or(
+      eq(bookedSlots.status, "pending"),
+      eq(bookedSlots.status, "confirmed"),
+      eq(bookedSlots.status, "completed")
+    );
+
+    if (type === 'upcoming') {
+      statusCondition = or(
+        eq(bookedSlots.status, "pending"),
+        eq(bookedSlots.status, "confirmed")
+      );
+    } else if (type === 'past') {
+      statusCondition = eq(bookedSlots.status, "completed");
+    }
+
+    // Get total count
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(bookedSlots)
+      .where(
+        and(
+          eq(bookedSlots.customerId, customerId),
+          statusCondition
+        )
+      );
+    const total = Number(totalResult[0]?.count || 0);
+
+    // Get booked slots with related data
+    // First get all bookings
+    const allBookings = await db
+      .select()
+      .from(bookedSlots)
+      .where(
+        and(
+          eq(bookedSlots.customerId, customerId),
+          statusCondition
+        )
+      );
+
+    // Get slots and availability dates for ordering
+    if (allBookings.length === 0) {
+      return { consultations: [], total, page, limit };
+    }
+
+    const slotIdsForOrdering = allBookings.map(b => b.slotId);
+    const slotsForOrdering = await db.select().from(slots).where(inArray(slots.id, slotIdsForOrdering));
+    const availabilityIdsForOrdering = slotsForOrdering.map(s => s.availabilityId);
+    const availabilitiesForOrdering = await db
+      .select()
+      .from(availabilityDate)
+      .where(inArray(availabilityDate.id, availabilityIdsForOrdering));
+
+    const slotToAvailabilityMap = new Map<string, Date>();
+    slotsForOrdering.forEach(slot => {
+      const availability = availabilitiesForOrdering.find(a => a.id === slot.availabilityId);
+      if (availability) {
+        slotToAvailabilityMap.set(slot.id, new Date(availability.date));
+      }
+    });
+
+    // Sort bookings by date
+    const sortedBookings = allBookings.sort((a, b) => {
+      const dateA = slotToAvailabilityMap.get(a.slotId) || new Date(0);
+      const dateB = slotToAvailabilityMap.get(b.slotId) || new Date(0);
+      if (type === 'upcoming') {
+        return dateA.getTime() - dateB.getTime();
+      } else {
+        return dateB.getTime() - dateA.getTime();
+      }
+    });
+
+    // Apply pagination
+    const bookings = sortedBookings.slice(offset, offset + limit);
+
+    if (bookings.length === 0) {
+      return { consultations: [], total, page, limit };
+    }
+
+    // Get all related data
+    const slotIds = bookings.map(b => b.slotId);
+    const slotsData = await db.select().from(slots).where(inArray(slots.id, slotIds));
+    const slotMap = new Map(slotsData.map(s => [s.id, s]));
+
+    const availabilityIds = slotsData.map(s => s.availabilityId);
+    const availabilities = await db
+      .select()
+      .from(availabilityDate)
+      .where(inArray(availabilityDate.id, availabilityIds));
+    const availabilityMap = new Map(availabilities.map(a => [a.id, a]));
+
+    const slotSizeIds = slotsData.map(s => s.slotSizeId);
+    const slotSizes = await db
+      .select()
+      .from(slotSize)
+      .where(inArray(slotSize.id, slotSizeIds));
+    const slotSizeMap = new Map(slotSizes.map(s => [s.id, s]));
+
+    const slotTypeIds = bookings.map(b => b.slotTypeId);
+    const slotTypes = await db
+      .select()
+      .from(slotType)
+      .where(inArray(slotType.id, slotTypeIds));
+    const slotTypeMap = new Map(slotTypes.map(t => [t.id, t]));
+
+    // Get physician data
+    const physicianIds = availabilities.map(a => a.physicianId);
+    const physicians = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(users)
+      .where(inArray(users.id, physicianIds));
+
+    const physicianDataRecords = await db
+      .select()
+      .from(physicianData)
+      .where(inArray(physicianData.userId, physicianIds));
+
+    // Get specialties
+    const specialtyIds = physicianDataRecords.map(pd => pd.specialtyId);
+    const specialties = specialtyIds.length > 0
+      ? await db
+          .select()
+          .from(physicianSpecialties)
+          .where(inArray(physicianSpecialties.id, specialtyIds))
+      : [];
+    const specialtyMap = new Map(specialties.map(s => [s.id, s.name]));
+
+    // Get physician ratings
+    const ratings = await db
+      .select({
+        physicianId: physicianRatings.physicianId,
+        avgRating: sql<number>`COALESCE(AVG(${physicianRatings.rating})::numeric, 0)`,
+      })
+      .from(physicianRatings)
+      .where(inArray(physicianRatings.physicianId, physicianIds))
+      .groupBy(physicianRatings.physicianId);
+
+    const ratingMap = new Map(ratings.map(r => [r.physicianId, Number(r.avgRating)]));
+
+    // Get locations for slots
+    const slotLocationRecords = await db
+      .select()
+      .from(slotLocations)
+      .where(inArray(slotLocations.slotId, slotIds));
+
+    const locationIds = slotLocationRecords.map(sl => sl.locationId);
+    const locations = locationIds.length > 0
+      ? await db
+          .select()
+          .from(physicianLocations)
+          .where(inArray(physicianLocations.id, locationIds))
+      : [];
+    const locationMap = new Map(locations.map(l => [l.id, l]));
+    const slotLocationMap = new Map(slotLocationRecords.map(sl => [sl.slotId, sl.locationId]));
+
+    // Build consultations array
+    const consultations = bookings.map(booking => {
+      const slot = slotMap.get(booking.slotId);
+      if (!slot) throw new Error(`Slot ${booking.slotId} not found`);
+
+      const availability = availabilityMap.get(slot.availabilityId);
+      if (!availability) throw new Error(`Availability ${slot.availabilityId} not found`);
+
+      const slotSizeRecord = slotSizeMap.get(slot.slotSizeId);
+      if (!slotSizeRecord) throw new Error(`Slot size ${slot.slotSizeId} not found`);
+
+      const slotTypeRecord = slotTypeMap.get(booking.slotTypeId);
+      if (!slotTypeRecord) throw new Error(`Slot type ${booking.slotTypeId} not found`);
+
+      const physician = physicians.find(p => p.id === availability.physicianId);
+      if (!physician) throw new Error(`Physician ${availability.physicianId} not found`);
+
+      const physicianDataRecord = physicianDataRecords.find(pd => pd.userId === physician.id);
+      const locationId = slotLocationMap.get(slot.id);
+      const location = locationId ? locationMap.get(locationId) : null;
+
+      return {
+        ...booking,
+        slot: {
+          ...slot,
+          availability,
+          slotSize: slotSizeRecord,
+          slotType: slotTypeRecord,
+          physician: {
+            id: physician.id,
+            firstName: physician.firstName,
+            lastName: physician.lastName,
+            specialty: physicianDataRecord ? specialtyMap.get(physicianDataRecord.specialtyId) || undefined : undefined,
+            imageUrl: physicianDataRecord?.imageUrl || null,
+            rating: ratingMap.get(physician.id) || 0,
+          },
+          location: location ? {
+            locationName: location.locationName,
+            address: location.address,
+            city: location.city,
+            state: location.state,
+            country: location.country,
+            postalCode: location.postalCode,
+          } : null,
+        },
+      };
+    });
+
+    return { consultations, total, page, limit };
+  }
+
+  // Update consultation attended status
+  async markConsultationAttended(bookingId: string, customerId: string): Promise<BookedSlot> {
+    const [updated] = await db
+      .update(bookedSlots)
+      .set({ isAttended: true, updatedAt: new Date() })
+      .where(
+        and(
+          eq(bookedSlots.id, bookingId),
+          eq(bookedSlots.customerId, customerId)
+        )
+      )
+      .returning();
+    if (!updated) {
+      throw new Error("Booking not found or unauthorized");
+    }
+    return updated;
+  }
+
+  // Update consultation summary (for physician)
+  async updateConsultationSummary(bookingId: string, summary: string, physicianId: string): Promise<BookedSlot> {
+    // Verify the booking belongs to this physician
+    const booking = await this.getBookedSlotById(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    const slot = await this.getSlotById(booking.slotId);
+    if (!slot) {
+      throw new Error("Slot not found");
+    }
+
+    const availability = await this.getAvailabilityDateById(slot.availabilityId);
+    if (!availability || availability.physicianId !== physicianId) {
+      throw new Error("Unauthorized: This booking does not belong to you");
+    }
+
+    const [updated] = await db
+      .update(bookedSlots)
+      .set({ summary, updatedAt: new Date() })
+      .where(eq(bookedSlots.id, bookingId))
+      .returning();
+    
+    if (!updated) {
+      throw new Error("Failed to update summary");
+    }
+    return updated;
   }
 }
 

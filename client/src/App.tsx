@@ -13,8 +13,10 @@ import { SignUp } from "@/features/auth/pages/SignUp";
 import ResetPassword from "@/features/auth/pages/ResetPassword";
 import { Dashboard } from "@/features/dashboard/pages/Dashboard";
 import { HealthAssessment } from "@/features/dashboard/pages/HealthAssessment";
+import { HealthMetricsHistory } from "@/features/dashboard/pages/HealthMetricsHistory";
 import { InstantConsultation } from "@/features/dashboard/pages/InstantConsultation";
 import { FindDoctor } from "@/features/dashboard/pages/FindDoctor";
+import { Consultations } from "@/features/dashboard/pages/Consultations";
 import { FoodScanner } from "@/features/dashboard/pages/FoodScanner";
 import { TipsExercises } from "@/features/dashboard/pages/TipsExercises";
 import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
@@ -49,6 +51,11 @@ function Router() {
           <HealthAssessment />
         </ProtectedRoute>
       </Route>
+      <Route path={ROUTES.HEALTH_METRICS_HISTORY}>
+        <ProtectedRoute>
+          <HealthMetricsHistory />
+        </ProtectedRoute>
+      </Route>
       <Route path={ROUTES.DASHBOARD}>
         <ProtectedRoute>
           <Dashboard />
@@ -62,6 +69,11 @@ function Router() {
       <Route path={ROUTES.FIND_DOCTOR}>
         <ProtectedRoute>
           <FindDoctor />
+        </ProtectedRoute>
+      </Route>
+      <Route path={ROUTES.CONSULTATIONS}>
+        <ProtectedRoute>
+          <Consultations />
         </ProtectedRoute>
       </Route>
       <Route path={ROUTES.FOOD_SCANNER}>

@@ -32,6 +32,7 @@ export const updateFreeTierLimitsSchema = insertFreeTierLimitsSchema.partial();
 export type InsertFreeTierLimits = z.infer<typeof insertFreeTierLimitsSchema>;
 export type UpdateFreeTierLimits = z.infer<typeof updateFreeTierLimitsSchema>;
 export type FreeTierLimits = typeof freeTierLimits.$inferSelect;
+export type ExtendedLimits = Omit<FreeTierLimits, 'id' | "createdAt" | "updatedAt"> & { foodScanLimits?: { freeTier: number; paidTier: number } };
 
 // Food Scan Limits Table - stores limits for free and paid users
 export const foodScanLimits = pgTable("food_scan_limits", {

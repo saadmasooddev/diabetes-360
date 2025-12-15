@@ -3,21 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useFreeTierLimits, useUpdateFreeTierLimits, useCreateFreeTierLimits } from '@/hooks/mutations/useSettings';
+import { Separator } from '@/components/ui/separator';
 import { Settings } from 'lucide-react';
 import { handleNumberInput } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
+import { useCreateLimits, useLimits, useUpdateLimits } from '@/hooks/mutations/useSettings';
 
 export function FreeTierLimitsManagement() {
-  const { data: limits, isLoading } = useFreeTierLimits();
-  const updateMutation = useUpdateFreeTierLimits();
-  const createMutation = useCreateFreeTierLimits();
+  const { data: limits, isLoading } = useLimits()
+  const updateMutation = useUpdateLimits();
+  const createMutation = useCreateLimits();
 
   const [glucoseLimit, setGlucoseLimit] = useState<string>('2');
   const [stepsLimit, setStepsLimit] = useState<string>('2');
   const [waterLimit, setWaterLimit] = useState<string>('2');
   const [discountedConsultationQuota, setDiscountedConsultationQuota] = useState<string>('0');
   const [freeConsultationQuota, setFreeConsultationQuota] = useState<string>('0');
+  const [freeUserLimit, setFreeUserLimit] = useState<string>('0');
+  const [paidUserLimit, setPaidUserLimit] = useState<string>('0');
 
   useEffect(() => {
     if (limits) {
@@ -26,6 +29,10 @@ export function FreeTierLimitsManagement() {
       setWaterLimit(String(limits.waterLimit));
       setDiscountedConsultationQuota(String(limits.discountedConsultationQuota || 0));
       setFreeConsultationQuota(String(limits.freeConsultationQuota || 0));
+      if (limits.foodScanLimits) {
+        setFreeUserLimit(String(limits.foodScanLimits.freeTier));
+        setPaidUserLimit(String(limits.foodScanLimits.paidTier));
+      }
     }
   }, [limits]);
 
@@ -38,6 +45,8 @@ export function FreeTierLimitsManagement() {
       waterLimit: Number(waterLimit) || 0,
       discountedConsultationQuota: Number(discountedConsultationQuota) || 0,
       freeConsultationQuota: Number(freeConsultationQuota) || 0,
+      freeUserScanLimit: Number(freeUserLimit) || 0,
+      paidUserScanLimit: Number(paidUserLimit) || 0,
     };
 
     if (limits) {
@@ -61,10 +70,10 @@ export function FreeTierLimitsManagement() {
       <CardHeader className="p-4 sm:p-6">
         <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
           <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
-          Free Tier Limits Management
+          Limits Management
         </CardTitle>
         <CardDescription className="text-sm">
-          Configure daily logging limits for free tier users and consultation quotas for new users. Each metric type has its own limit.
+          Configure daily logging limits for health metrics, food scanning, and consultation quotas for new users.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
@@ -217,6 +226,67 @@ export function FreeTierLimitsManagement() {
               <p className="text-xs text-gray-500 mt-2">
                 Note: These quotas apply to all new users. Existing users will continue on their old quotas.
               </p>
+            </div>
+
+            <Separator />
+
+            <div className="pt-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Food Scanner Limits</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="free-user-limit" className="text-sm font-medium text-gray-700">
+                    Free User Daily Limit
+                  </Label>
+                  <Input
+                    id="free-user-limit"
+                    type="text"
+                    inputMode="numeric"
+                    min="0"
+                    value={freeUserLimit}
+                    onChange={(e) => {
+                      const sanitized = handleNumberInput(freeUserLimit, e.target.value);
+                      setFreeUserLimit(sanitized);
+                    }}
+                    required
+                    className="w-full"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 0, 0, 0.2)',
+                    }}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Maximum number of food scans per day for free tier users
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paid-user-limit" className="text-sm font-medium text-gray-700">
+                    Paid User Daily Limit
+                  </Label>
+                  <Input
+                    id="paid-user-limit"
+                    type="text"
+                    inputMode="numeric"
+                    min="0"
+                    value={paidUserLimit}
+                    onChange={(e) => {
+                      const sanitized = handleNumberInput(paidUserLimit, e.target.value);
+                      setPaidUserLimit(sanitized);
+                    }}
+                    required
+                    className="w-full"
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 0, 0, 0.2)',
+                    }}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Maximum number of food scans per day for paid users (monthly/annual subscriptions)
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">

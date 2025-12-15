@@ -23,7 +23,7 @@ export function HealthMetricCard({
   onUploadPicture,
   onUpgrade,
   disabled = false,
-  dailyLimit = 2,
+  dailyLimit: remainingLogsLimit = 0,
 }: HealthMetricCardProps) {
   const config = {
     glucose: {
@@ -69,16 +69,19 @@ export function HealthMetricCard({
 
   const formatValue = () => {
     if (latestValue === null || latestValue === undefined) return '—';
-    if (type === 'steps' && typeof latestValue === 'number') {
-      return latestValue.toLocaleString();
+    if (type === 'steps') {
+      const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
+      return Math.round(numValue).toLocaleString();
     }
-    if (type === 'water' && typeof latestValue === 'string') {
-      return parseFloat(latestValue).toFixed(1);
+    if (type === 'water') {
+      const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
+      return numValue.toFixed(1);
     }
-    if (type === 'heartbeat' && typeof latestValue === 'number') {
-      return latestValue.toString();
+    if (type === 'heartbeat') {
+      const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
+      return Math.round(numValue).toString();
     }
-    return latestValue;
+    return latestValue.toString();
   };
 
   return (
@@ -206,7 +209,7 @@ export function HealthMetricCard({
             </Button>
           )}
         </div>
-        {type !== 'heartbeat' && dailyLimit > 0 && (
+        {type !== 'heartbeat' && remainingLogsLimit > 0 && (
           <p
             className="text-xs leading-relaxed"
             style={{
@@ -217,7 +220,7 @@ export function HealthMetricCard({
               borderTop: '1px solid rgba(0, 0, 0, 0.06)',
             }}
           >
-            *Limited to {dailyLimit} log{dailyLimit !== 1 ? 's' : ''} per day.{' '}
+            *You have {remainingLogsLimit} log{remainingLogsLimit !== 1 ? 's' : ''} left for today.{' '}
             <button
               onClick={onUpgrade}
               className="transition-colors duration-200 hover:underline"

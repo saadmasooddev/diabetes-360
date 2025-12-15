@@ -154,12 +154,14 @@ export class PhysicianController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const skip = parseInt(req.query.skip as string);
       const search = req.query.search as string | undefined;
       const specialtyId = req.query.specialtyId as string | undefined;
 
       const result = await this.physicianService.getPhysiciansPaginated({
         page,
         limit,
+        skip,
         search,
         specialtyId,
       });

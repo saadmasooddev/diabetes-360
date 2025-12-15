@@ -17,7 +17,6 @@ import {
   useLatestHealthMetric,
   useTargetsForUser,
 } from '@/hooks/mutations/useHealth';
-import { useFreeTierLimits } from '@/hooks/mutations/useSettings';
 import { formatDate } from '@/lib/utils';
 
 export type MetricType = 'glucose' | 'steps' | 'water' | 'heartbeat';
@@ -37,7 +36,6 @@ export function Dashboard() {
   const [heartbeatInterval, setHeartbeatInterval] = useState<IntervalType>('daily');
 
   const { data: todaysCounts = { glucose: 0, steps: 0, water: 0 } } = useTodaysMetricCounts();
-  const { data: freeTierLimits } = useFreeTierLimits();
   const { data: targets } = useTargetsForUser();
   const addMetricMutation = useAddHealthMetric();
 
@@ -64,14 +62,21 @@ export function Dashboard() {
   };
 
   const { data: latestMetric } = useLatestHealthMetric();
+  const freeTierLimits = latestMetric?.remainingLimits
   const latestBloodSugar = parseFloat(latestMetric?.current?.bloodSugar ?? '0')
-  const latestSteps = latestMetric?.current?.steps ?? 0;
-  const latestWaterIntake = parseFloat(latestMetric?.current?.waterIntake ?? '0');
+  // Steps and water are now totals for today, not latest values
+  const latestStepsValue = latestMetric?.current?.steps;
+  const latestSteps = typeof latestStepsValue === 'number' ? latestStepsValue : (latestStepsValue ? parseInt(String(latestStepsValue)) : 0);
+  const latestWaterIntakeValue = latestMetric?.current?.waterIntake;
+  const latestWaterIntake = latestWaterIntakeValue ? parseFloat(String(latestWaterIntakeValue)) : 0;
   const latestHeartRate = latestMetric?.current?.heartRate ?? 0;
 
   const previousBloodSugar = parseFloat(latestMetric?.previous?.bloodSugar ?? '0');
-  const previousSteps = latestMetric?.previous?.steps ?? 0;
-  const previousWaterIntake = parseFloat(latestMetric?.previous?.waterIntake ?? '0');
+  // Previous day totals for comparison
+  const previousStepsValue = latestMetric?.previous?.steps;
+  const previousSteps = typeof previousStepsValue === 'number' ? previousStepsValue : (previousStepsValue ? parseInt(String(previousStepsValue)) : 0);
+  const previousWaterIntakeValue = latestMetric?.previous?.waterIntake;
+  const previousWaterIntake = previousWaterIntakeValue ? parseFloat(String(previousWaterIntakeValue)) : 0;
   const previousHeartRate = latestMetric?.previous?.heartRate ?? 0;
 
   const glucoseDateRange = getDateRange(glucoseInterval);
@@ -102,24 +107,18 @@ export function Dashboard() {
     ['heart_beat']
   );
 
-  const isFreeUser = user?.paymentType === 'free' || !user?.paymentType;
-
   const getHasReachedLimit = (metricType: MetricType): boolean => {
-    if (!isFreeUser || !freeTierLimits) return false;
+    if (!freeTierLimits) return false;
 
-    const limit = metricType === 'glucose'
-      ? freeTierLimits.glucoseLimit
-      : metricType === 'steps'
-        ? freeTierLimits.stepsLimit
-        : freeTierLimits.waterLimit;
+    const metricsRemainingLimitsMap: Record<MetricType, number> = {
+      glucose: freeTierLimits.glucoseLimit,
+      steps: freeTierLimits.stepsLimit,
+      water: freeTierLimits.waterLimit,
+      heartbeat: Infinity
+    }
 
-    const count = metricType === 'glucose'
-      ? todaysCounts.glucose
-      : metricType === 'steps'
-        ? todaysCounts.steps
-        : todaysCounts.water;
+    return metricsRemainingLimitsMap[metricType] <= 0
 
-    return count >= limit;
   };
 
 
@@ -143,6 +142,41 @@ export function Dashboard() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate negative values
+    if (numericValue < 0) {
+      toast({
+        title: "Invalid Value",
+        description: "Value cannot be negative",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate maximum limits for steps and water
+    if (selectedMetricType === 'steps') {
+      const newTotal = latestSteps + numericValue;
+      if (newTotal > 20000) {
+        toast({
+          title: "Daily Limit Exceeded",
+          description: `Adding ${numericValue} steps would exceed the daily limit of 20,000 steps. Current total: ${Math.round(newTotal)} steps.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (selectedMetricType === 'water') {
+      const newTotal = latestWaterIntake + numericValue;
+      if (newTotal > 4) {
+        toast({
+          title: "Daily Limit Exceeded",
+          description: `Adding ${numericValue}L would exceed the daily limit of 4L. Current total: ${newTotal}L.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     const metricData: any = {
@@ -214,7 +248,8 @@ export function Dashboard() {
   const glucoseData = useMemo(() => {
     if (!glucoseMetrics?.bloodSugarRecords?.length) return [];
 
-    return glucoseMetrics.bloodSugarRecords.map(m => {
+    // Reverse the array so oldest is on left, newest on right
+    return [...glucoseMetrics.bloodSugarRecords].reverse().map(m => {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, glucoseInterval),
@@ -226,7 +261,8 @@ export function Dashboard() {
   const stepsData = useMemo(() => {
     if (!stepsMetrics?.stepsRecords?.length) return [];
 
-    return stepsMetrics.stepsRecords.map(m => {
+    // Reverse the array so oldest is on left, newest on right
+    return [...stepsMetrics.stepsRecords].reverse().map(m => {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, stepsInterval),
@@ -238,7 +274,8 @@ export function Dashboard() {
   const waterData = useMemo(() => {
     if (!waterMetrics?.waterIntakeRecords?.length) return [];
 
-    return waterMetrics.waterIntakeRecords.map(m => {
+    // Reverse the array so oldest is on left, newest on right
+    return [...waterMetrics.waterIntakeRecords].reverse().map(m => {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, waterInterval),
@@ -250,7 +287,8 @@ export function Dashboard() {
   const heartbeatData = useMemo(() => {
     if (!heartbeatMetrics?.heartBeatRecords?.length) return [];
 
-    return heartbeatMetrics.heartBeatRecords.map(m => {
+    // Reverse the array so oldest is on left, newest on right
+    return [...heartbeatMetrics.heartBeatRecords].reverse().map(m => {
       const date = new Date(m.recordedAt);
       return {
         time: formatTimeLabel(date, heartbeatInterval),
@@ -309,27 +347,27 @@ export function Dashboard() {
               onUploadPicture={handleUploadPicture}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('glucose')}
-              dailyLimit={freeTierLimits?.glucoseLimit ?? 2}
+              dailyLimit={freeTierLimits?.glucoseLimit || 0}
             />
 
             <HealthMetricCard
               type="steps"
-              latestValue={latestSteps.toString()}
+              latestValue={latestSteps}
               trendArrow={getTrendArrow(latestSteps, previousSteps)}
               onAddLog={() => handleAddLog('steps')}
               onUpgrade={handleUpgrade}
               disabled={getHasReachedLimit('steps')}
-              dailyLimit={freeTierLimits?.stepsLimit ?? 2}
+              dailyLimit={freeTierLimits?.stepsLimit || 0}
             />
 
             <HealthMetricCard
               type="water"
-              latestValue={latestWaterIntake.toString()}
+              latestValue={latestWaterIntake}
               trendArrow={getTrendArrow(latestWaterIntake, previousWaterIntake)}
               onAddLog={() => handleAddLog('water')}
               onUpgrade={handleUpgrade}
-              disabled={getHasReachedLimit('water')}
-              dailyLimit={freeTierLimits?.waterLimit ?? 2}
+              disabled={getHasReachedLimit("water")}
+              dailyLimit={freeTierLimits?.waterLimit || 0}
             />
 
             {/* Heart Beat Card - Only for paid users */}
@@ -458,11 +496,6 @@ export function Dashboard() {
         isSubmitting={addMetricMutation.isPending}
       />
 
-      <LimitReachedDialog
-        open={limitDialogOpen}
-        onOpenChange={setLimitDialogOpen}
-        onUpgrade={handleUpgrade}
-      />
     </div>
   );
 }

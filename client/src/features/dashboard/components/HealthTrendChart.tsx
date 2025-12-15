@@ -40,6 +40,40 @@ export function HealthTrendChart({
   userTarget,
   metricType,
 }: HealthTrendChartProps) {
+  // Calculate dynamic domain based on data values and targets
+  const calculateDomain = (): [number, number | string] => {
+    if (!yAxisConfig?.domain) {
+      // If no domain specified, use auto
+      return [0, 'auto'];
+    }
+
+    const [min, max] = yAxisConfig.domain;
+    
+    // Find the maximum value in the data
+    const maxDataValue = data.length > 0 
+      ? Math.max(...data.map(d => d.value || 0))
+      : 0;
+    
+    // Consider targets in the max calculation
+    const maxTarget = Math.max(
+      recommendedTarget || 0,
+      userTarget || 0
+    );
+    
+    // Calculate the actual max needed
+    const actualMax = Math.max(maxDataValue, maxTarget, max);
+    
+    // If actualMax exceeds the configured max, use actualMax with 10% padding
+    if (actualMax > max) {
+      return [min, Math.ceil(actualMax * 1.1)];
+    }
+    
+    // Otherwise use the configured domain
+    return [min, max];
+  };
+
+  const dynamicDomain = calculateDomain();
+
   // Prepare data with target values for each point
   const chartData = data.map(point => ({
     ...point,
@@ -110,7 +144,7 @@ export function HealthTrendChart({
             tick={{ fill: '#546E7A', fontSize: 12 }}
             axisLine={false}
             tickLine={false}
-            domain={yAxisConfig?.domain || [0, 'auto']}
+            domain={dynamicDomain}
             ticks={yAxisConfig?.ticks}
             label={yAxisConfig?.label ? { value: yAxisConfig.label, position: 'insideLeft', fill: '#546E7A', fontSize: 11 } : undefined}
           />

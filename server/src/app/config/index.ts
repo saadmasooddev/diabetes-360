@@ -13,12 +13,12 @@ export const config = {
     fromName: process.env.EMAIL_FROM_NAME || 'Diabetes 360',
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
-  accessTokenExpiresIn: Math.floor(Number(process.env.ACCESS_TOKEN_EXPIRES_IN || "0") * 60 || 30),
-  refreshTokenExpiresIn: Math.floor(Number(process.env.REFRESH_TOKEN_EXPIRES_IN || "0") * 24 * 60 * 60 || 45),
+  accessTokenExpiresIn: Math.floor(Number(process.env.ACCESS_TOKEN_EXPIRES_IN || "0") * 60 || 60 * 60),
+  refreshTokenExpiresIn: Math.floor(Number(process.env.REFRESH_TOKEN_EXPIRES_IN || "0") * 24 * 60 * 60 || 7 * 24 * 60 * 60),
   passio: {
     apiKey: process.env.PASSIO_API_KEY || '',
   },
   ai: {
-    baseUrl:  'https://diabetics360-dbdrcqatcgckc2ck.eastus-01.azurewebsites.net',
+    baseUrl:  process.env.AI_BASE_URL,
   },
 } as const;

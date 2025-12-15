@@ -151,7 +151,16 @@ export class AuthService {
       role: user.role as UserRole,
     });
 
-    await this.createRefreshToken(user.id, tokens.refreshToken);
+    const refreshToken = await this.authRepository.getValidRefreshToken(
+      user.id
+    );
+    try {
+      if (!refreshToken) throw new Error();
+      JWTService.verifyRefreshToken(refreshToken.token);
+      tokens.refreshToken = refreshToken.token;
+    } catch {
+      await this.createRefreshToken(user.id, tokens.refreshToken);
+    }
 
     const {
       password: __,
@@ -232,7 +241,7 @@ export class AuthService {
     });
 
     // Revoke old refresh token
-    await this.authRepository.revokeRefreshToken(refreshToken);
+    // await this.authRepository.revokeRefreshToken(refreshToken);
 
     await this.createRefreshToken(user.id, newTokens.refreshToken);
 
@@ -376,7 +385,7 @@ export class AuthService {
       expiresAt.setTime(
         expiresAt.getTime() + config.refreshTokenExpiresIn * 1000
       );
-      
+
       await this.authRepository.removeRefreshToken(userId);
       return this.authRepository.createRefreshToken({
         userId,
@@ -384,7 +393,6 @@ export class AuthService {
         expiresAt,
       });
     } catch (error) {
-      console.log(error);
       throw error;
     }
   }

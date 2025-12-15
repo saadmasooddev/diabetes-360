@@ -552,6 +552,21 @@ router.get(
  *           type: string
  *         description: JSON array string of metric types to filter. Can be passed as JSON string or single value. Valid values are blood_sugar, water_intake, steps, and heart_beat. If not provided, all types are returned.
  *         example: '["steps", "water_intake"]'
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Maximum number of records to return per metric type
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *           minimum: 0
+ *         description: Number of records to skip per metric type
  *     responses:
  *       200:
  *         description: Filtered metrics retrieved successfully
@@ -645,6 +660,57 @@ router.get(
  *                                 type: string
  *                                 format: date-time
  *                           description: Heart rate records (MertricRecord format)
+ *                         pagination:
+ *                           type: object
+ *                           properties:
+ *                             bloodSugar:
+ *                               type: object
+ *                               properties:
+ *                                 total:
+ *                                   type: integer
+ *                                   example: 150
+ *                                 limit:
+ *                                   type: integer
+ *                                   example: 30
+ *                                 offset:
+ *                                   type: integer
+ *                                   example: 0
+ *                             waterIntake:
+ *                               type: object
+ *                               properties:
+ *                                 total:
+ *                                   type: integer
+ *                                   example: 120
+ *                                 limit:
+ *                                   type: integer
+ *                                   example: 30
+ *                                 offset:
+ *                                   type: integer
+ *                                   example: 0
+ *                             steps:
+ *                               type: object
+ *                               properties:
+ *                                 total:
+ *                                   type: integer
+ *                                   example: 200
+ *                                 limit:
+ *                                   type: integer
+ *                                   example: 30
+ *                                 offset:
+ *                                   type: integer
+ *                                   example: 0
+ *                             heartBeat:
+ *                               type: object
+ *                               properties:
+ *                                 total:
+ *                                   type: integer
+ *                                   example: 80
+ *                                 limit:
+ *                                   type: integer
+ *                                   example: 30
+ *                                 offset:
+ *                                   type: integer
+ *                                   example: 0
  *       400:
  *         description: Bad request - invalid parameters
  *       401:
@@ -986,17 +1052,27 @@ router.get(
  * @swagger
  * /api/health/exercises/strength-progress:
  *   get:
- *     summary: Get strength training progress percentage
+ *     summary: Get strength training progress logs and percentage improvement
  *     tags: [Health Exercises]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: days
+ *         name: startDate
+ *         required: true
  *         schema:
- *           type: integer
- *           default: 30
- *         description: Number of days to calculate progress over
+ *           type: string
+ *           format: date
+ *         description: Start date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-01"
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-31"
  *     responses:
  *       200:
  *         description: Strength progress retrieved successfully
@@ -1010,10 +1086,37 @@ router.get(
  *                     data:
  *                       type: object
  *                       properties:
- *                         percentage:
+ *                         logs:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               date:
+ *                                 type: string
+ *                                 format: date
+ *                                 example: "2024-01-15"
+ *                               total:
+ *                                 type: integer
+ *                                 example: 150
+ *                                 description: Total exercises for the day
+ *                               pushups:
+ *                                 type: integer
+ *                                 example: 50
+ *                               squats:
+ *                                 type: integer
+ *                                 example: 30
+ *                               chinups:
+ *                                 type: integer
+ *                                 example: 20
+ *                               situps:
+ *                                 type: integer
+ *                                 example: 50
+ *                         percentageImprovement:
  *                           type: integer
- *                           example: 64
- *                           description: Progress percentage (0-100)
+ *                           example: 25
+ *                           description: Percentage improvement comparing first period with last period
+ *       400:
+ *         description: Bad request - invalid date parameters
  *       401:
  *         description: Unauthorized
  *       403:
@@ -1369,4 +1472,72 @@ router.post(
   (req, res) => healthController.upsertUserTargetsBatch(req, res)
 );
 
+/**
+ * @swagger
+ * /api/settings/remaining-limits:
+ *   get:
+ *     summary: Get user's remaining limits
+ *     tags: [Settings]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Returns the remaining limits for the user
+ *     responses:
+ *       200:
+ *         description: User remaining limits retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         limits:
+ *                           type: object
+ *                           properties:
+ *                             glucoseLimit:
+ *                               type: integer
+ *                             stepsLimit:
+ *                               type: integer
+ *                             waterLimit:
+ *                               type: integer
+ *                             discountedConsultationQuota:
+ *                               type: integer
+ *                             freeConsultationQuota:
+ *                               type: integer
+ *                             foodScanLimits:
+ *                               type: object
+ *                               properties:
+ *                                 freeTier:
+ *                                   type: integer
+ *                                 paidTier:
+ *                                   type: integer
+ *                         remaining:
+ *                           type: object
+ *                           properties:
+ *                             glucoseLimit:
+ *                               type: integer
+ *                             stepsLimit:
+ *                               type: integer
+ *                             waterLimit:
+ *                               type: integer
+ *                             discountedConsultationQuota:
+ *                               type: integer
+ *                             freeConsultationQuota:
+ *                               type: integer
+ *                             foodScanLimits:
+ *                               type: object
+ *                               properties:
+ *                                 freeTier:
+ *                                   type: integer
+ *                                 paidTier:
+ *                                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/remaining-limits", authenticateToken, (req, res, next) => 
+  healthController.getUserRemainingLimits(req, res, next)
+)
 export { router as healthRoutes };

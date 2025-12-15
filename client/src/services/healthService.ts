@@ -2,16 +2,46 @@ import { API_ENDPOINTS } from '@/config/endpoints';
 import { httpClient } from '@/utils/httpClient';
 import type { HealthMetric, MertricRecord, ActivityLog, ExerciseLog } from '@shared/schema';
 import type { ApiResponse } from '@/types/auth.types';
+import { ExtendedLimits } from './settingsService';
 
 class HealthService {
-  async getLatestMetric(): Promise<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric> }> {
-    const response = await httpClient.get<ApiResponse<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric> }>>(
+
+  async getLatestMetric(): Promise<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric>; limits: ExtendedLimits, remainingLimits: ExtendedLimits }> {
+    const response = await httpClient.get<ApiResponse<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric>;  limits: ExtendedLimits, remainingLimits : ExtendedLimits  }>>(
       `${API_ENDPOINTS.HEALTH.LATEST}`
     );
     if (!response.success) {
       throw new Error(response.message || 'Failed to fetch latest metric');
     }
-    return response.data || { current: {}, previous: {} };
+    return response.data || { current: {}, previous: {}, limits : {
+      glucoseLimit: 0,
+      stepsLimit: 0,
+      waterLimit: 0,
+      discountedConsultationQuota: 0,
+      freeConsultationQuota: 0,
+      foodScanLimits: {
+        freeTier: 0,
+        paidTier: 0,
+      },
+      paidUserScanLimit: 0,
+      id: '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }  as ExtendedLimits, 
+      remainingLimits : {
+        glucoseLimit: 0,
+        stepsLimit: 0,
+        waterLimit: 0,
+        discountedConsultationQuota: 0,
+        freeConsultationQuota: 0,
+        foodScanLimits: {
+          freeTier: 0,
+          paidTier: 0,
+        },
+        id: '',
+        createdAt: new Date(),
+        updatedAt: new Date()
+    } };
   }
 
   async getChartMetrics(userId: string, days: number = 7): Promise<HealthMetric[]> {
@@ -98,12 +128,20 @@ class HealthService {
   async getFilteredMetrics(
     startDate: string,
     endDate: string,
-    types: string[] = []
+    types: string[] = [],
+    limit?: number,
+    offset?: number
   ): Promise<{
     bloodSugarRecords: MertricRecord[];
     waterIntakeRecords: MertricRecord[];
     stepsRecords: MertricRecord[];
     heartBeatRecords: MertricRecord[];
+    pagination: {
+      bloodSugar: { total: number; limit: number; offset: number };
+      waterIntake: { total: number; limit: number; offset: number };
+      steps: { total: number; limit: number; offset: number };
+      heartBeat: { total: number; limit: number; offset: number };
+    };
   }> {
     const params = new URLSearchParams({
       startDate,
@@ -115,12 +153,26 @@ class HealthService {
       params.append('type', type);
     });
 
+    // Add pagination parameters if provided
+    if (limit !== undefined) {
+      params.append('limit', limit.toString());
+    }
+    if (offset !== undefined) {
+      params.append('offset', offset.toString());
+    }
+
     const response = await httpClient.get<
       ApiResponse<{
         bloodSugarRecords: MertricRecord[];
         waterIntakeRecords: MertricRecord[];
         stepsRecords: MertricRecord[];
         heartBeatRecords: MertricRecord[];
+        pagination: {
+          bloodSugar: { total: number; limit: number; offset: number };
+          waterIntake: { total: number; limit: number; offset: number };
+          steps: { total: number; limit: number; offset: number };
+          heartBeat: { total: number; limit: number; offset: number };
+        };
       }>
     >(`${API_ENDPOINTS.HEALTH.FILTERED}?${params.toString()}`);
     
@@ -227,14 +279,20 @@ class HealthService {
     return response.data;
   }
 
-  async getStrengthProgress(days: number = 30): Promise<number> {
-    const response = await httpClient.get<ApiResponse<{ percentage: number }>>(
-      `${API_ENDPOINTS.HEALTH.EXERCISES.STRENGTH_PROGRESS}?days=${days}`
+  async getStrengthProgress(startDate: string, endDate: string): Promise<{
+    logs: Array<{ date: string; total: number; pushups: number; squats: number; chinups: number; situps: number }>;
+    percentageImprovement: number;
+  }> {
+    const response = await httpClient.get<ApiResponse<{
+      logs: Array<{ date: string; total: number; pushups: number; squats: number; chinups: number; situps: number }>;
+      percentageImprovement: number;
+    }>>(
+      `${API_ENDPOINTS.HEALTH.EXERCISES.STRENGTH_PROGRESS}?startDate=${startDate}&endDate=${endDate}`
     );
     if (!response.success || response.data === undefined) {
       throw new Error(response.message || 'Failed to fetch strength progress');
     }
-    return response.data.percentage;
+    return response.data;
   }
 
   // Health Metric Targets Methods

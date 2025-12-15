@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ArrowLeft } from 'lucide-react';
-import { useScanFood } from '@/hooks/mutations/useFoodScanner';
+import { useScanFood, useUserDailyData, useConsumedNutrients } from '@/hooks/mutations/useFoodScanner';
 import { useFoodScanStatus } from '@/hooks/mutations/useSettings';
 import { useAuthStore } from '@/stores/authStore';
 import type { ScanResult } from '@/mocks/scanResults';
@@ -11,6 +11,7 @@ import { FoodOverview } from '../components/FoodScanner/FoodOverview';
 import { PersonalizedInsight } from '../components/FoodScanner/PersonalizedInsight';
 import { BreakdownSection } from '../components/FoodScanner/BreakdownSection';
 import { NutritionalHighlight } from '../components/FoodScanner/NutritionalHighlight';
+import { toast } from '@/hooks/use-toast';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
 
@@ -29,6 +30,18 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
   const user = useAuthStore((state) => state.user);
   const isPremium = user?.paymentType !== 'free';
   const { data: scanStatus, refetch: refetchScanStatus } = useFoodScanStatus();
+  const { data: nutritionRequirements, isLoading: isLoadingRequirements, isError: isErrorRequirements } = useUserDailyData();
+  const consumedNutrients = scanResult?.consumed
+
+  useEffect(() => {
+    if (isErrorRequirements) {
+      toast({
+        title: 'Failed to Load Nutrition Requirements',
+        description: 'Failed to load nutrition requirements. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [isErrorRequirements, toast])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -154,7 +167,11 @@ export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
 
               {/* Bottom Row: Breakdown Section + Nutritional Highlight */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BreakdownSection scanResult={scanResult} />
+                <BreakdownSection
+                  scanResult={scanResult}
+                  nutritionRequirements={nutritionRequirements}
+                  consumedNutrients={consumedNutrients}
+                />
                 <NutritionalHighlight
                   scanResult={scanResult}
                   previewUrl={previewUrl}

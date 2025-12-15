@@ -48,8 +48,7 @@ export const API_ENDPOINTS = {
     USERS: '/api/admin/users',
   },
   SETTINGS: {
-    FREE_TIER_LIMITS: '/api/settings/free-tier-limits',
-    FOOD_SCAN_LIMITS: '/api/settings/food-scan-limits',
+    LIMITS: '/api/settings/limits',
     FOOD_SCAN_STATUS: '/api/settings/food-scan-status',
   },
   TWO_FACTOR: {
@@ -92,8 +91,12 @@ export const API_ENDPOINTS = {
     UPDATE_SLOT_LOCATIONS: (slotId: string) => `/api/booking/slots/${slotId}/locations`,
     BOOK_SLOT: '/api/booking/book',
     CALCULATE_BOOKING_PRICE: (physicianId: string) => `/api/booking/physicians/${physicianId}/calculate-price`,
+    MY_CONSULTATIONS: '/api/booking/my-consultations',
+    MARK_ATTENDED: (bookingId: string) => `/api/booking/consultations/${bookingId}/attend`,
   },
   FOOD_SCANNER: {
-    SCAN: '/api/food-scanner/scan',
+    SCAN: '/api/food/scan',
+    DAILY_DATA: '/api/food/daily-data',
+    NUTRITION_CONSUMED: '/api/food/nutrition/consumed',
   },
 } as const;

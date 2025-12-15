@@ -1,20 +1,20 @@
 import { Response } from 'express';
 import { type AuthenticatedRequest } from '../../../shared/middleware/auth';
 import { sendSuccess } from '../../../app/utils/response';
-import { FoodScannerService } from '../service/foodScanner.service';
+import { FoodService } from '../service/food.service';
 import { BadRequestError, ForbiddenError } from '../../../shared/errors';
 import { handleError } from '../../../shared/middleware/errorHandler';
 import { UserService } from '../../user/service/user.service';
 import { SettingsService } from '../../settings/service/settings.service';
 import { CustomerData } from '../../auth/models/user.schema';
 
-export class FoodScannerController {
-  private foodScannerService: FoodScannerService;
+export class FoodController {
+  private foodService: FoodService;
   private userService: UserService;
   private settingsService: SettingsService;
 
   constructor() {
-    this.foodScannerService = new FoodScannerService();
+    this.foodService = new FoodService();
     this.userService = new UserService();
     this.settingsService = new SettingsService();
   }
@@ -41,11 +41,12 @@ export class FoodScannerController {
       }
 
       // Process the image
-      const result = await this.foodScannerService.scanFoodImage(
+      const result = await this.foodService.scanFoodImage(
         file.buffer,
         file.mimetype,
         isPremium,
-        profileData
+        profileData,
+        userId
       );
 
       // Increment scan count after successful scan
@@ -60,8 +61,34 @@ export class FoodScannerController {
 
       sendSuccess(res, responseWithFlag, 'Food scanned successfully');
     } catch (error: any) {
+      console.log(error)
       handleError(res, error);
     }
   }
+
+  async getPaidUserDailyData(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId || '';
+
+      const result = await this.foodService.getPaidUserDailyData(userId);
+      sendSuccess(res, result, 'Nutrition requirements retrieved successfully');
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getConsumedNutrients(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId || '';
+
+      const result = await this.foodService.getConsumedNutrients(userId);
+      sendSuccess(res, result, 'Consumed nutrients retrieved successfully');
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+
+
 }
 

@@ -372,5 +372,53 @@ export class BookingController {
       handleError(res, error);
     }
   }
+
+  async getUserConsultations(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const customerId = req.user?.userId;
+      if (!customerId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const type = req.query.type as 'upcoming' | 'past' | undefined;
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      const skip = parseInt(req.query.skip as string, 10);
+
+      if (page < 1 || limit < 1 || skip < 0) {
+        throw new BadRequestError("Page and limit must be positive integers");
+      }
+
+      const result = await this.bookingService.getUserConsultations(customerId, {
+        type,
+        page,
+        limit,
+        skip
+      });
+
+      sendSuccess(res, result, "Consultations retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async markConsultationAttended(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const customerId = req.user?.userId;
+      if (!customerId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const { bookingId } = req.params;
+      if (!bookingId) {
+        throw new BadRequestError("Booking ID is required");
+      }
+
+      await this.bookingService.markConsultationAttended(bookingId, customerId);
+      sendSuccess(res, {}, "Consultation marked as attended");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
 }
 

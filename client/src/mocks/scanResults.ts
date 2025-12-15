@@ -1,3 +1,5 @@
+import { NutritionProfile } from "@/services/foodScannerService";
+
 export interface BreakdownItem {
   name: string;
   value: string | number;
@@ -38,4 +40,6 @@ export interface ScanResult {
   };
   foodSuggestions?: string[];
   personalizedInsight?: PersonalizedInsight;
+  recommended: NutritionProfile;
+  consumed: NutritionProfile;
 }

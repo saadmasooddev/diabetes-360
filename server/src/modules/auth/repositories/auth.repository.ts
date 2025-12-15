@@ -13,7 +13,7 @@ import {
   customerData,
   physicianSpecialties,
 } from "../models/user.schema";
-import { eq, and, getTableColumns } from "drizzle-orm";
+import { eq, and, getTableColumns, gt } from "drizzle-orm";
 
 export class AuthRepository {
   async getUser(id: string): Promise<User | undefined> {
@@ -54,6 +54,14 @@ export class AuthRepository {
     const newRefreshToken = await db
       .insert(refreshTokens)
       .values(tokenData)
+      .onConflictDoUpdate({
+        target: refreshTokens.token,
+        set: {
+          token: tokenData.token,
+          expiresAt: tokenData.expiresAt,
+          revoked: false,
+        },
+      })
       .returning();
     return newRefreshToken[0];
   }
@@ -166,5 +174,22 @@ export class AuthRepository {
 
   async deleteUser(id: string): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  async getValidRefreshToken(
+    userId: string
+  ): Promise<RefreshToken | undefined> {
+    const refreshToken = await db
+      .select()
+      .from(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.userId, userId),
+          eq(refreshTokens.revoked, false),
+          gt(refreshTokens.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+    return refreshToken[0];
   }
 }

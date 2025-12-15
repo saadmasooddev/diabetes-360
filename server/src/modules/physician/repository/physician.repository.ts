@@ -191,6 +191,7 @@ export class PhysicianRepository {
   async getPhysiciansPaginated(params: {
     page: number;
     limit: number;
+    skip?: number;
     search?: string;
     specialtyId?: string;
   }): Promise<{
@@ -204,8 +205,8 @@ export class PhysicianRepository {
       hasPrev: boolean;
     };
   }> {
-    const { page, limit, search, specialtyId } = params;
-    const offset = (page - 1) * limit;
+    const { page, limit, search, specialtyId, skip } = params;
+    const offset = skip ? skip : (page - 1) * limit;
 
     // Build base query conditions
     const conditions = [
