@@ -9,17 +9,16 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 import { HealthMetricCard } from '../components/HealthMetricCard';
 import { HealthTrendChart } from '../components/HealthTrendChart';
 import { AddMetricDialog } from '../components/AddMetricDialog';
-import { LimitReachedDialog } from '../components/LimitReachedDialog';
 import {
-  useTodaysMetricCounts,
-  useAddHealthMetric,
+  useAddActivityLogsBatch,
   useFilteredMetrics,
   useLatestHealthMetric,
   useTargetsForUser,
 } from '@/hooks/mutations/useHealth';
-import { formatDate } from '@/lib/utils';
+import { calorieUtils, formatDate } from '@/lib/utils';
+import { ACTIVITY_TYPE_ENUM, EXERCISE_TYPE_ENUM, InsertHealthMetric, MetricType } from '@shared/schema';
+import { InsertExerciseLog } from '@/services/healthService';
 
-export type MetricType = 'glucose' | 'steps' | 'water' | 'heartbeat';
 type IntervalType = 'daily' | 'weekly' | 'monthly';
 
 export function Dashboard() {
@@ -28,16 +27,15 @@ export function Dashboard() {
   const [, setLocation] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
-  const [selectedMetricType, setSelectedMetricType] = useState<MetricType>('glucose');
+  const [selectedMetricType, setSelectedMetricType] = useState<MetricType>(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
   const [metricValue, setMetricValue] = useState('');
   const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>('daily');
   const [stepsInterval, setStepsInterval] = useState<IntervalType>('daily');
   const [waterInterval, setWaterInterval] = useState<IntervalType>('daily');
   const [heartbeatInterval, setHeartbeatInterval] = useState<IntervalType>('daily');
 
-  const { data: todaysCounts = { glucose: 0, steps: 0, water: 0 } } = useTodaysMetricCounts();
   const { data: targets } = useTargetsForUser();
-  const addMetricMutation = useAddHealthMetric();
+  const addActivityLogsBatch = useAddActivityLogsBatch()
 
   // Helper function to calculate date range based on interval
   const getDateRange = (interval: IntervalType): { startDate: string; endDate: string } => {
@@ -83,38 +81,38 @@ export function Dashboard() {
   const { data: glucoseMetrics } = useFilteredMetrics(
     glucoseDateRange.startDate,
     glucoseDateRange.endDate,
-    ['blood_sugar']
+    [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]
   );
 
   const stepsDateRange = getDateRange(stepsInterval);
   const { data: stepsMetrics } = useFilteredMetrics(
     stepsDateRange.startDate,
     stepsDateRange.endDate,
-    ['steps']
+    [EXERCISE_TYPE_ENUM.STEPS]
   );
 
   const waterDateRange = getDateRange(waterInterval);
   const { data: waterMetrics } = useFilteredMetrics(
     waterDateRange.startDate,
     waterDateRange.endDate,
-    ['water_intake']
+    [EXERCISE_TYPE_ENUM.WATER_INTAKE]
   );
 
   const heartbeatDateRange = getDateRange(heartbeatInterval);
   const { data: heartbeatMetrics } = useFilteredMetrics(
     heartbeatDateRange.startDate,
     heartbeatDateRange.endDate,
-    ['heart_beat']
+    [EXERCISE_TYPE_ENUM.HEART_RATE]
   );
 
   const getHasReachedLimit = (metricType: MetricType): boolean => {
     if (!freeTierLimits) return false;
 
     const metricsRemainingLimitsMap: Record<MetricType, number> = {
-      glucose: freeTierLimits.glucoseLimit,
-      steps: freeTierLimits.stepsLimit,
-      water: freeTierLimits.waterLimit,
-      heartbeat: Infinity
+      [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: freeTierLimits.glucoseLimit,
+      [EXERCISE_TYPE_ENUM.STEPS]: freeTierLimits.stepsLimit,
+      [EXERCISE_TYPE_ENUM.WATER_INTAKE]: freeTierLimits.waterLimit,
+      [EXERCISE_TYPE_ENUM.HEART_RATE]: Infinity
     }
 
     return metricsRemainingLimitsMap[metricType] <= 0
@@ -155,7 +153,7 @@ export function Dashboard() {
     }
 
     // Validate maximum limits for steps and water
-    if (selectedMetricType === 'steps') {
+    if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
       const newTotal = latestSteps + numericValue;
       if (newTotal > 20000) {
         toast({
@@ -167,7 +165,7 @@ export function Dashboard() {
       }
     }
 
-    if (selectedMetricType === 'water') {
+    if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
       const newTotal = latestWaterIntake + numericValue;
       if (newTotal > 4) {
         toast({
@@ -179,34 +177,42 @@ export function Dashboard() {
       }
     }
 
-    const metricData: any = {
+    const metricData: InsertHealthMetric = {
       userId: user.id,
       bloodSugar: null,
-      bloodPressureSystolic: null,
-      bloodPressureDiastolic: null,
       heartRate: null,
-      weight: null,
-      steps: null,
       waterIntake: null,
     };
+    const exercises: InsertExerciseLog[] = []
 
-    if (selectedMetricType === 'glucose') {
+    if (selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
       metricData.bloodSugar = numericValue;
-    } else if (selectedMetricType === 'steps') {
-      metricData.steps = numericValue;
-    } else if (selectedMetricType === 'water') {
+    } else if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
+      const calories = calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue)
+      const duration = calorieUtils.getEstimatedDurationForSteps(numericValue)
+      exercises.push({
+        exerciseType: 'Morning Walk',
+        calories,
+        activityType: ACTIVITY_TYPE_ENUM.CARDIO,
+        duration,
+        steps: numericValue,
+        pace: 'moderate',
+      })
+    } else if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
       metricData.waterIntake = numericValue;
-    } else if (selectedMetricType === 'heartbeat') {
+    } else if (selectedMetricType === EXERCISE_TYPE_ENUM.HEART_RATE) {
       metricData.heartRate = numericValue;
     }
 
-    addMetricMutation.mutate(metricData, {
-      onSuccess: () => {
-        setDialogOpen(false);
-        setMetricValue('');
-        setSelectedMetricType('glucose'); // Reset to default
-      },
-    });
+    addActivityLogsBatch.mutate({ exercises, healthMetrics: metricData },
+      {
+        onSuccess: () => {
+          setDialogOpen(false);
+          setMetricValue('');
+          setSelectedMetricType(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE); // Reset to default
+        }
+      }
+    )
   };
 
   const handleUploadPicture = () => {
@@ -305,7 +311,7 @@ export function Dashboard() {
   };
 
   // Helper function to get target values for a metric type
-  const getTargets = (metricType: 'glucose' | 'steps' | 'water_intake' | 'heart_rate') => {
+  const getTargets = (metricType: MetricType) => {
     const recommended = targets?.recommended.find(t => t.metricType === metricType);
     const user = targets?.user.find(t => t.metricType === metricType);
 
@@ -340,43 +346,43 @@ export function Dashboard() {
           {/* Metric Cards Row */}
           <div className="mb-8 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
             <HealthMetricCard
-              type="glucose"
+              type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
               latestValue={latestBloodSugar.toString()}
               trendArrow={getTrendArrow(latestBloodSugar, previousBloodSugar)}
-              onAddLog={() => handleAddLog('glucose')}
+              onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
               onUploadPicture={handleUploadPicture}
               onUpgrade={handleUpgrade}
-              disabled={getHasReachedLimit('glucose')}
+              disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
               dailyLimit={freeTierLimits?.glucoseLimit || 0}
             />
 
             <HealthMetricCard
-              type="steps"
+              type={EXERCISE_TYPE_ENUM.STEPS}
               latestValue={latestSteps}
               trendArrow={getTrendArrow(latestSteps, previousSteps)}
-              onAddLog={() => handleAddLog('steps')}
+              onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.STEPS)}
               onUpgrade={handleUpgrade}
-              disabled={getHasReachedLimit('steps')}
+              disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.STEPS)}
               dailyLimit={freeTierLimits?.stepsLimit || 0}
             />
 
             <HealthMetricCard
-              type="water"
+              type={EXERCISE_TYPE_ENUM.WATER_INTAKE}
               latestValue={latestWaterIntake}
               trendArrow={getTrendArrow(latestWaterIntake, previousWaterIntake)}
-              onAddLog={() => handleAddLog('water')}
+              onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
               onUpgrade={handleUpgrade}
-              disabled={getHasReachedLimit("water")}
+              disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
               dailyLimit={freeTierLimits?.waterLimit || 0}
             />
 
             {/* Heart Beat Card - Only for paid users */}
             {user?.paymentType !== 'free' && user?.paymentType && (
               <HealthMetricCard
-                type="heartbeat"
+                type={EXERCISE_TYPE_ENUM.HEART_RATE}
                 latestValue={latestHeartRate.toString()}
                 trendArrow={getTrendArrow(latestHeartRate, previousHeartRate)}
-                onAddLog={() => handleAddLog('heartbeat')}
+                onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.HEART_RATE)}
                 onUpgrade={handleUpgrade}
                 disabled={false}
                 dailyLimit={0}
@@ -420,9 +426,8 @@ export function Dashboard() {
               }}
               interval={glucoseInterval}
               onIntervalChange={setGlucoseInterval}
-              recommendedTarget={getTargets('glucose').recommended}
-              userTarget={getTargets('glucose').user}
-              metricType="glucose"
+              recommendedTarget={getTargets(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE).recommended}
+              userTarget={getTargets(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE).user}
             />
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -438,9 +443,8 @@ export function Dashboard() {
                 }}
                 interval={stepsInterval}
                 onIntervalChange={setStepsInterval}
-                recommendedTarget={getTargets('steps').recommended}
-                userTarget={getTargets('steps').user}
-                metricType="steps"
+                recommendedTarget={getTargets(EXERCISE_TYPE_ENUM.STEPS).recommended}
+                userTarget={getTargets(EXERCISE_TYPE_ENUM.STEPS).user}
               />
 
               <HealthTrendChart
@@ -456,9 +460,8 @@ export function Dashboard() {
                 }}
                 interval={waterInterval}
                 onIntervalChange={setWaterInterval}
-                recommendedTarget={getTargets('water_intake').recommended}
-                userTarget={getTargets('water_intake').user}
-                metricType="water_intake"
+                recommendedTarget={getTargets(EXERCISE_TYPE_ENUM.WATER_INTAKE).recommended}
+                userTarget={getTargets(EXERCISE_TYPE_ENUM.WATER_INTAKE).user}
               />
             </div>
 
@@ -477,9 +480,8 @@ export function Dashboard() {
                 }}
                 interval={heartbeatInterval}
                 onIntervalChange={setHeartbeatInterval}
-                recommendedTarget={getTargets('heart_rate').recommended}
-                userTarget={getTargets('heart_rate').user}
-                metricType="heart_rate"
+                recommendedTarget={getTargets(EXERCISE_TYPE_ENUM.HEART_RATE).recommended}
+                userTarget={getTargets(EXERCISE_TYPE_ENUM.HEART_RATE).user}
               />
             )}
           </div>
@@ -493,7 +495,7 @@ export function Dashboard() {
         value={metricValue}
         onValueChange={setMetricValue}
         onSubmit={handleSubmitLog}
-        isSubmitting={addMetricMutation.isPending}
+        isSubmitting={addActivityLogsBatch.isPending}
       />
 
     </div>

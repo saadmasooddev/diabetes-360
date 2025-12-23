@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { Slot } from '@/services/bookingService';
-import { PhysicianLocation } from "@shared/schema";
+import { CustomerData, User } from "@/types/auth.types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -150,3 +150,352 @@ export function sortLocationByDistance(locations: {id: string, locationName: str
     return a.locationName.localeCompare(b.locationName);
   });
 }
+
+class CalorieUtils{
+
+/**
+ * Calculate calories burned for an activity based on user info
+ * Uses MET (Metabolic Equivalent of Task) values
+ * Formula: Calories = MET × weight(kg) × duration(hours)
+ * 
+ * @param userInfo - User information including weight, height, birthday, and gender
+ * @param activityType - Type of activity ('walking' | 'yoga')
+ * @param durationSeconds - Duration of activity in seconds
+ * @returns Estimated calories burned (rounded to nearest integer)
+ */
+ calculateCaloriesBurned(
+  userInfo: {
+    weight: string; // in kg (e.g., "70")
+    height: string; // in cm (e.g., "175")
+    birthday: string; // ISO date string
+    gender: 'male' | 'female';
+  },
+  activityType: 'walking' | 'yoga',
+  durationSeconds: number
+): number {
+  // Parse weight (remove 'kg' if present, or use as-is)
+  const weight = parseFloat(userInfo.weight.replace(/kg/gi, '').trim());
+  if (isNaN(weight) || weight <= 0) {
+    // Default to 70kg if weight is invalid
+    console.warn('Invalid weight, using default 70kg');
+    return this.calculateCaloriesBurned({ ...userInfo, weight: '70' }, activityType, durationSeconds);
+  }
+
+  // Calculate age from birthday
+  const birthDate = new Date(userInfo.birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  // Convert duration from seconds to hours
+  const durationHours = durationSeconds / 3600;
+
+  // MET values (Metabolic Equivalent of Task)
+  // Walking (moderate pace, 3-4 mph): ~3.8 METs
+  // Yoga (Hatha yoga, general): ~2.5 METs
+  const metValues: Record<'walking' | 'yoga', number> = {
+    walking: 3.8, // Moderate pace walking
+    yoga: 2.5,    // Hatha yoga, general
+  };
+
+  const met = metValues[activityType] || 3.0; // Default to 3.0 if unknown
+
+  // Calculate calories: MET × weight(kg) × duration(hours)
+  const calories = met * weight * durationHours;
+
+  // Round to nearest integer
+  return Math.round(calories);
+}
+
+
+  // Calculate stride length in meters based on height, gender, and activity type
+  // Walking: male = heightCm × 0.415 / 100, female = heightCm × 0.413 / 100
+  // Running: male = heightCm × 0.65 / 100, female = heightCm × 0.62 / 100
+calculateStrideLength (
+    heightCm?: string | number,
+    gender?: string,
+    activityType?: string,
+  ): number {
+    if (!heightCm) return 0;
+
+    const height =
+      typeof heightCm === 'string' ? parseFloat(heightCm) : heightCm;
+    if (isNaN(height) || height <= 0) return 0;
+
+    const isMale =
+      gender?.toLowerCase() === 'male' || gender?.toLowerCase() === 'm';
+    const isRunning = activityType === 'running';
+
+    // Stride length formulas as specified:
+    // Walking: male = heightCm × 0.415 / 100, female = heightCm × 0.413 / 100
+    // Running: male = heightCm × 0.65 / 100, female = heightCm × 0.62 / 100
+    let strideLengthMeters = 0;
+
+    if (isRunning) {
+      strideLengthMeters = isMale
+        ? (height * 0.65) / 100
+        : (height * 0.62) / 100;
+    } else {
+      // Walking
+      strideLengthMeters = isMale
+        ? (height * 0.415) / 100
+        : (height * 0.413) / 100;
+    }
+
+    return strideLengthMeters;
+  };
+
+  // Calculate accurate steps based on distance, user data, and activity type
+  calculateAccurateSteps (
+    distanceMeters: number,
+    user?: User | null,
+    activityType?: string,
+  ): number  {
+    if (distanceMeters <= 0) return 0;
+
+    // For cycling, return 0 steps
+    if (activityType === 'cycling') return 0;
+
+    const profileData = user?.profileData as CustomerData;
+    const strideLength = this.calculateStrideLength(
+      profileData?.height,
+      profileData?.gender,
+      activityType,
+    );
+
+    // If we have valid stride length, use it; otherwise fall back to default
+    if (strideLength > 0) {
+      return Math.round(distanceMeters / strideLength);
+    }
+
+    // Fallback to default calculations if user data is missing
+    const distanceKm = distanceMeters / 1000;
+    let stepsPerKm = 1400; // Default walking
+
+    if (activityType === 'running') {
+      stepsPerKm = 1100;
+    }
+
+    return Math.round(distanceKm * stepsPerKm);
+  };
+
+  // Calculate accurate pace (minutes per kilometer)
+  // Formula: pace = (totalDurationSeconds / 60) / (totalDistanceMeters / 1000)
+calculateAccuratePace  (
+    distanceMeters: number,
+    durationSeconds: number,
+    user?: User | null,
+    activityType?: string,
+  ): number {
+    if (distanceMeters <= 0 || durationSeconds <= 0) return 0;
+
+    // Pace calculation: (totalDurationSeconds / 60) / (totalDistanceMeters / 1000)
+    const paceMinutes = durationSeconds / 60 / (distanceMeters / 1000);
+
+    return paceMinutes;
+  };
+
+  // Calculate calories using MET-based formula
+  // MET values based on activity type and pace:
+  // Walking: pace > 12 → 2.8, pace > 9 → 3.5, else 3.8
+  // Running: pace > 7 → 8.3, pace > 5 → 9.8, else 11.0
+  // Yoga: 2.5 MET (light intensity)
+  // Stretching: 2.3 MET (light intensity)
+  // Calories = MET × weightKg × (totalDurationSeconds / 3600)
+  calculateCalories (
+    distanceMeters: number,
+    durationSeconds: number,
+    user?: User | null,
+    activityType?: string,
+  ): number  {
+    if (durationSeconds <= 0) return 0;
+
+    // Get user weight
+    const profileData = user?.profileData as CustomerData;
+    const weightStr = profileData?.weight;
+    if (!weightStr) return 0;
+
+    const weightKg =
+      typeof weightStr === 'string' ? parseFloat(weightStr) : weightStr;
+    if (isNaN(weightKg) || weightKg <= 0) return 0;
+
+    // Determine MET value based on activity type
+    let met = 0;
+
+    if (activityType === 'yoga') {
+      met = 2.5; // Light intensity yoga
+    } else if (activityType === 'stretching') {
+      met = 2.3; // Light intensity stretching
+    } else if (activityType === 'running') {
+      // Running MET values: pace > 7 → 8.3, pace > 5 → 9.8, else 11.0
+      if (distanceMeters > 0) {
+        const paceMinutes = this.calculateAccuratePace(
+          distanceMeters,
+          durationSeconds,
+          user,
+          activityType,
+        );
+        if (paceMinutes > 7) {
+          met = 8.3;
+        } else if (paceMinutes > 5) {
+          met = 9.8;
+        } else {
+          met = 11.0;
+        }
+      } else {
+        met = 8.3; // Default moderate running
+      }
+    } else {
+      // Walking MET values: pace > 12 → 2.8, pace > 9 → 3.5, else 3.8
+      if (distanceMeters > 0) {
+        const paceMinutes = this.calculateAccuratePace(
+          distanceMeters,
+          durationSeconds,
+          user,
+          activityType,
+        );
+        if (paceMinutes > 12) {
+          met = 2.8;
+        } else if (paceMinutes > 9) {
+          met = 3.5;
+        } else {
+          met = 3.8;
+        }
+      } else {
+        met = 3.5; // Default moderate walking
+      }
+    }
+
+    // Calculate calories: MET × weightKg × (totalDurationSeconds / 3600)
+    const calories = met * weightKg * (durationSeconds / 3600);
+
+    return Math.round(calories * 10) / 10; // Round to 1 decimal place
+  };
+
+  // Calculate calories for yoga/stretching (no distance required)
+  calculateYogaCalories  (
+    durationSeconds: number,
+    user?: User | null,
+    activityType?: string,
+  ): number  {
+    return this.calculateCalories(0, durationSeconds, user, activityType);
+  };
+
+  // Generate morning walk activity metrics summary
+  generateMorningWalkMetrics  (
+    totalDuration: number,
+    totalDistance: number,
+    user?: User | null,
+    activityType?: string,
+    sessionSummary?: {
+      totalDistance?: number;
+      totalDuration?: number;
+      avgPace?: number;
+    },
+  ): {
+    totalDuration: number;
+    totalDistance: number;
+    totalCaloriesBurned: number;
+    totalSteps: number;
+    totalPace: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }  {
+    // Get final values before resetting (use sessionSummary as fallback)
+    const finalTotalDuration =
+      totalDuration || sessionSummary?.totalDuration || 0;
+    const finalTotalDistance =
+      totalDistance || sessionSummary?.totalDistance || 0;
+
+    // Recalculate final pace and calories for accuracy
+    const finalPace = this.calculateAccuratePace(
+      finalTotalDistance,
+      finalTotalDuration,
+      user,
+      activityType,
+    );
+    const finalCalories = this.calculateCalories(
+      finalTotalDistance,
+      finalTotalDuration,
+      user,
+      activityType,
+    );
+    const finalSteps = this.calculateAccurateSteps(
+      finalTotalDistance,
+      user,
+      activityType,
+    );
+
+    // Convert total duration to hours, minutes, seconds
+    const hours = Math.floor(finalTotalDuration / 3600);
+    const minutes = Math.floor((finalTotalDuration % 3600) / 60);
+    const seconds = Math.floor(finalTotalDuration % 60);
+
+    // Return all metrics
+    return {
+      totalDuration: finalTotalDuration,
+      totalDistance: finalTotalDistance,
+      totalCaloriesBurned: finalCalories,
+      totalSteps: finalSteps,
+      totalPace: finalPace,
+      hours,
+      minutes,
+      seconds,
+    };
+  };
+
+  // Generate yoga/stretching activity metrics summary
+  generateYogaStretchingMetrics  (
+    totalDuration: number,
+    calories: number,
+    user?: User | null,
+    activityType?: string,
+  ): {
+    totalDuration: number;
+    totalCalories: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }  {
+    // Get final values before resetting
+    const finalTotalDuration = totalDuration || 0;
+    const finalCalories = calories || 0;
+
+    // Recalculate final calories for accuracy
+    const recalculatedCalories =this.calculateYogaCalories(
+      finalTotalDuration,
+      user,
+      activityType,
+    );
+    const finalTotalCalories = finalCalories || recalculatedCalories || 0;
+
+    // Convert total duration to hours, minutes, seconds
+    const hours = Math.floor(finalTotalDuration / 3600);
+    const minutes = Math.floor((finalTotalDuration % 3600) / 60);
+    const seconds = Math.floor(finalTotalDuration % 60);
+
+    // Return summary with total duration and total calories
+    return {
+      totalDuration: finalTotalDuration,
+      totalCalories: finalTotalCalories,
+      hours,
+      minutes,
+      seconds,
+    };
+  };
+
+  getEstimatedCaloriesBurnedForSteps(steps: number) {
+    return steps * 0.05
+  }
+
+  getEstimatedDurationForSteps(steps: number) {
+    return steps * 1
+  }
+
+}
+
+export const calorieUtils = new CalorieUtils()

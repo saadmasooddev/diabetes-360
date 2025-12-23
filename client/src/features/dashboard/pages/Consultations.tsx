@@ -15,6 +15,7 @@ import { Image } from '@/components/ui/image';
 import { ReusablePagination } from '@/components/ui/ReusablePagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Physician } from '@/services/physicianService';
+import { PastConsultationsList } from '../components/PastConsultationsList';
 
 interface Consultation {
   id: string;
@@ -268,7 +269,7 @@ export function Consultations() {
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4" style={{ color: '#00856F' }}>
               Past Consultations
             </h2>
-            {isLoadingPast ? (
+            {isLoadingPast && (
               <div className="space-y-3 sm:space-y-4">
                 {[1, 2].map((i) => (
                   <Card key={i} className="p-4 sm:p-6">
@@ -276,82 +277,9 @@ export function Consultations() {
                   </Card>
                 ))}
               </div>
-            ) : pastConsultations.length > 0 ? (
-              <>
-                {/* Mobile: Card view, Desktop: Table view */}
-                <div className="block sm:hidden space-y-3">
-                  {pastConsultations.map((consultation) => (
-                    <Card
-                      key={consultation.id}
-                      className="p-3 sm:p-4"
-                      style={{ background: '#FFFFFF', border: '1px solid rgba(0, 0, 0, 0.1)', borderRadius: '12px' }}
-                    >
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-400 mb-1">Date</p>
-                          <p className="text-xs text-gray-700 font-medium">
-                            {formatConsultationDate(consultation.slot.availability.date)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-400 mb-1">Provider</p>
-                          <p className="text-xs text-gray-700">
-                            {consultation.slot.physician.firstName} {consultation.slot.physician.lastName} {consultation.slot.physician.specialty || ''}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-400 mb-1">Summary</p>
-                          <p className="text-xs text-gray-700">
-                            {consultation.summary || 'No summary available'}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-                <Card className="hidden sm:block p-4 sm:p-6" style={{ background: '#FFFFFF', border: '1px solid rgba(0, 0, 0, 0.1)', borderRadius: '12px' }}>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-gray-500 text-xs sm:text-sm">Date</TableHead>
-                          <TableHead className="text-gray-500 text-xs sm:text-sm">Provider</TableHead>
-                          <TableHead className="text-gray-500 text-xs sm:text-sm">Summary</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pastConsultations.map((consultation) => (
-                          <TableRow key={consultation.id}>
-                            <TableCell className="text-xs sm:text-sm text-gray-700">
-                              {formatConsultationDate(consultation.slot.availability.date)}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-gray-700">
-                              {consultation.slot.physician.firstName} {consultation.slot.physician.lastName} {consultation.slot.physician.specialty || ''}
-                            </TableCell>
-                            <TableCell className="text-xs sm:text-sm text-gray-700">
-                              {consultation.summary || 'No summary available'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
-                {pastData && pastData.total > 2 && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsPastModalOpen(true)}
-                    className="mt-3 sm:mt-4 text-teal-600 hover:text-teal-700 text-xs sm:text-sm"
-                    size="sm"
-                  >
-                    See More ({pastData.total})
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Card className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">
-                No past consultations
-              </Card>
+            )}
+            {pastConsultations && pastConsultations.length > 0 && (
+              <PastConsultationsList limit={2} showSeeAll={pastConsultations.length > 3} />
             )}
           </div>
 

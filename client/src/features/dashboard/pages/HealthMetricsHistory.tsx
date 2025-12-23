@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { formatDate } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import type { MertricRecord } from '@shared/schema';
+import { EXERCISE_TYPE_ENUM, type MertricRecord } from '@shared/schema';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -56,7 +56,7 @@ export function HealthMetricsHistory() {
     useFilteredMetricsPaginated(
       startDate,
       endDate,
-      ['blood_sugar'],
+      [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
       ITEMS_PER_PAGE,
       bloodSugarOffset
     );
@@ -65,7 +65,7 @@ export function HealthMetricsHistory() {
     useFilteredMetricsPaginated(
       startDate,
       endDate,
-      ['water_intake'],
+      [EXERCISE_TYPE_ENUM.WATER_INTAKE],
       ITEMS_PER_PAGE,
       waterIntakeOffset
     );
@@ -74,7 +74,7 @@ export function HealthMetricsHistory() {
     useFilteredMetricsPaginated(
       startDate,
       endDate,
-      ['steps'],
+      [EXERCISE_TYPE_ENUM.STEPS],
       ITEMS_PER_PAGE,
       stepsOffset
     );
@@ -83,7 +83,7 @@ export function HealthMetricsHistory() {
     useFilteredMetricsPaginated(
       startDate,
       endDate,
-      ['heart_beat'],
+      [EXERCISE_TYPE_ENUM.HEART_RATE],
       ITEMS_PER_PAGE,
       heartBeatOffset
     );

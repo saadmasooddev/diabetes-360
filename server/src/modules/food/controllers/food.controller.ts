@@ -7,6 +7,8 @@ import { handleError } from '../../../shared/middleware/errorHandler';
 import { UserService } from '../../user/service/user.service';
 import { SettingsService } from '../../settings/service/settings.service';
 import { CustomerData } from '../../auth/models/user.schema';
+import { z } from 'zod';
+import { MEAL_TYPE_ENUM } from '../models/food.schema';
 
 export class FoodController {
   private foodService: FoodService;
@@ -88,7 +90,27 @@ export class FoodController {
     }
   }
 
+  async generateRecipe(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId || '';
+      const schema = z.object({
+        name: z.string().min(1, 'Meal name is required'),
+        mealType: z.enum(Object.values(MEAL_TYPE_ENUM)),
+        nutrition_info: z.object({
+          carbs: z.number().nonnegative(),
+          proteins: z.number().nonnegative(),
+          calories: z.number().nonnegative(),
+        }),
+      });
 
+      const body = schema.parse(req.body);
+
+      const result = await this.foodService.generateRecipe(userId, body);
+      sendSuccess(res, result, 'Recipe generated successfully');
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
 
 }
 

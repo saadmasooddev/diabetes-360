@@ -1,62 +1,13 @@
-import FormData from 'form-data';
-import axios from 'axios';
-import { config } from '../../../app/config';
 import { BadRequestError } from '../../../shared/errors';
 import { UserRepository } from '../../user/repository/user.repository';
 import { CustomerData } from '../../auth/models/user.schema';
 import { FoodRepository, MealDetails, MealPlan } from '../repository/food.repository';
 import { HealthService } from '../../health/service/health.service';
-import { DailyPersonalizedInsight, MEAL_TYPE_ENUM , MealPlanMeal, zodMealTypeEnum } from '../models/food.schema';
+import { DailyPersonalizedInsight, MEAL_TYPE_ENUM  } from '../models/food.schema';
 import { PersonalizedInsight } from '@/features/dashboard/components/FoodScanner/PersonalizedInsight';
+import { formatUserInfo } from 'server/src/shared/utils/utils';
+import { FoodScanResponse, aiService,  RecipeGenerationResponse } from '../../../shared/services/ai.service';
 
-interface AIFoodItem {
-  calories: { unit: string; value: number };
-  carbohydrates: {
-    addedSugar: number;
-    dietaryFiber: number;
-    sugar: number;
-    sugarAlcohols: number;
-    unit: string;
-  };
-  cholesterol: { unit: string; value: number };
-  dairy?: { caloriesKcal: number; weightG: number };
-  foodName?: string;
-  fruits?: { caloriesKcal: number; weightG: number };
-  healthyFats?: { caloriesKcal: number; weightG: number };
-  nonHealthyFats?: { caloriesKcal: number; weightG: number };
-  nonStarchyVegetables?: { caloriesKcal: number; weightG: number };
-  protein: { unit: string; value: number };
-  proteins?: { caloriesKcal: number; weightG: number };
-  refinedGrains?: { caloriesKcal: number; weightG: number };
-  sodium: { unit: string; value: number };
-  starchyVegetables?: { caloriesKcal: number; weightG: number };
-  sugars: { weightG: number };
-  sugarsSweeteners?: { caloriesKcal: number; weightG: number };
-  totalFat: {
-    monoUnsaturated: number;
-    polyUnsaturated: number;
-    saturated: number;
-    trans: number;
-    unit: string;
-  };
-  wholeGrains?: { caloriesKcal: number; weightG: number };
-}
-
-interface AIResponse {
-  data: {
-    diabetes_analysis?: {
-      food_name: string;
-      glycemic_index: string;
-      estimated_weight_of_total_food: string;
-      consumption_guidance: string;
-      food_category: string;
-    };
-    food_suggestions?: string[];
-    food_items: AIFoodItem[];
-  };
-  message: string;
-  status: number | string;
-}
 
 interface BreakdownItem {
   name: string;
@@ -107,25 +58,18 @@ interface ScanResult {
   personalizedInsight?: PersonalizedInsight;
 }
 
-interface FoodSuggestion {
-    meal_type: string;
-    meals: Array<MealDetails>;
-}
-
-interface NutritionalRecommendation {
-  food_suggestions: FoodSuggestion[]
-  nutrient_intake: {
-    carbs: {
-      total: number;
-      sugars: number;
-      fibres: number;
-    };
+interface RecipeGenerationInput {
+  name: string;
+  mealType: typeof MEAL_TYPE_ENUM[keyof typeof MEAL_TYPE_ENUM];
+  nutrition_info: {
+    carbs: number;
     proteins: number;
-    fats: number;
     calories: number;
   };
-  personalized_insight: string[];
 }
+
+
+
 
 export class FoodService {
 
@@ -150,9 +94,9 @@ export class FoodService {
     return 'danger';
   }
 
-  private mapAIResponseToScanResult(aiResponse: AIResponse,  isPremium: boolean): Omit<ScanResult, "consumed" | "recommended">{
-    const foodItem = aiResponse.data.food_items[0];
-    const diabetesAnalysis = aiResponse.data.diabetes_analysis;
+  private mapAIResponseToScanResult(aiResponse: FoodScanResponse,  isPremium: boolean): Omit<ScanResult, "consumed" | "recommended">{
+    const foodItem = aiResponse.food_items[0];
+    const diabetesAnalysis = aiResponse.diabetes_analysis;
     
     if (!foodItem) {
       throw new BadRequestError('No food items found in the response');
@@ -228,17 +172,17 @@ export class FoodService {
 
     // Get food name and category from diabetes_analysis if available, otherwise use fallback
     const foodName = diabetesAnalysis?.food_name || foodItem.foodName || 'Unknown Food';
-    const foodCategory = diabetesAnalysis?.food_category || this.determineFoodCategory(foodItem);
+    const foodCategory = (diabetesAnalysis as any)?.food_category || this.determineFoodCategory(foodItem);
     const glycemicIndex = diabetesAnalysis?.glycemic_index || null;
-    const consumptionGuidance = diabetesAnalysis?.consumption_guidance || undefined;
-    const foodSuggestions = aiResponse.data.food_suggestions || undefined;
+    const consumptionGuidance = (diabetesAnalysis as any)?.consumption_guidance || undefined;
+    const foodSuggestions = aiResponse.food_suggestions || undefined;
 
     // Create personalized insight
     const personalizedInsight: PersonalizedInsight | undefined = isPremium && foodSuggestions && foodSuggestions.length > 0
       ? {
           calories: `${Math.round(foodItem.calories.value)}${foodItem.calories.unit}`,
           recommendation: consumptionGuidance || 'Eat in Moderation',
-          suggestedFoods: foodSuggestions.slice(0, 4).map(suggestion => ({
+          suggestedFoods: foodSuggestions.slice(0, 4).map((suggestion: string) => ({
             name: suggestion,
             image: '', // Placeholder - can be enhanced with image URLs if available
           })),
@@ -278,48 +222,10 @@ export class FoodService {
   }
 
   async scanFoodImage(imageBuffer: Buffer, imageMimetype: string, isPremium: boolean, user: CustomerData, userId: string): Promise<ScanResult> {
-    try {
-    if (!config.ai?.baseUrl) {
-      throw new BadRequestError('AI service configuration is missing');
-    }
+    const userInfo = formatUserInfo(user);
 
-    const userInfo = {
-      birthday: user.birthday,
-      gender: user.gender,
-      weight: user.weight,
-      height: user.height,
-      diabetesType: user.diabetesType,
-      diagnosisDate: user.diagnosisDate,
-    }
-
-    const formData = new FormData();
-    formData.append("user_info", JSON.stringify(userInfo))
-    formData.append('image', imageBuffer, {
-      filename: 'food.jpg',
-      contentType: imageMimetype,
-    });
-
-    // Call AI API
-    const response = await axios.post<AIResponse>(
-      `${config.ai.baseUrl}/api/analyze-food/`,
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-        },
-        timeout: 120000,
-      }
-    );
-
-    if (!response.data.data?.food_items?.length) {
-      throw new BadRequestError(response.data.message || 'Failed to process food image');
-    }
-
-    // Handle string status codes
-    if (typeof response.data.status === 'string' && response.data.status !== '200') {
-      throw new BadRequestError(response.data.message || 'Failed to process food image');
-    }
-
+    // Call AI service
+    const response = await aiService.analyzeFood(imageBuffer, imageMimetype, userInfo);
 
     // Map the response to our consistent format
     const scanResult = this.mapAIResponseToScanResult(response.data, isPremium);
@@ -348,9 +254,9 @@ export class FoodService {
       consumed
     };
       
-    } catch (error) {
-      throw new BadRequestError('Failed to scan food image. Please try again.')
-    }
+    // } catch (error) {
+    //   throw new BadRequestError('Failed to scan food image. Please try again.')
+    // }
   }
 
   async getPaidUserDailyData(userId: string): Promise<NutritionProfile &  { foodSuggestions: {
@@ -358,9 +264,6 @@ export class FoodService {
       meals: MealDetails[]
     }[], foodInsights: DailyPersonalizedInsight[] }> 
   {
-    if (!config.ai?.baseUrl) {
-      throw new BadRequestError('AI service configuration is missing');
-    }
 
 
     const today = new Date();
@@ -401,7 +304,6 @@ export class FoodService {
         meals: Array<MealDetails>;
       }>) : [];
 
-    console.log("The food suggestions are", mealPlans, "the meal plan data", mealPlanData)
       return {
         carbs: parseFloat(existingRecommendation.carbs || '0'),
         sugars: parseFloat(existingRecommendation.sugars || '0'),
@@ -474,21 +376,7 @@ export class FoodService {
     const stepsRecords = formatRecordsByDate(healthMetricsHistory.stepsRecords);
 
     // Format user info for API
-    const birthdayDate = profileData.birthday instanceof Date 
-      ? profileData.birthday 
-      : new Date(profileData.birthday);
-    const diagnosisDate = profileData.diagnosisDate instanceof Date 
-      ? profileData.diagnosisDate 
-      : new Date(profileData.diagnosisDate);
-
-    const userInfo = {
-      gender: profileData.gender,
-      birthday: birthdayDate.toISOString().split('T')[0],
-      diagnosisDate: diagnosisDate.toISOString().split('T')[0],
-      weight: `${profileData.weight}kg`,
-      height: `${profileData.height}cm`,
-      diabetesType: profileData.diabetesType 
-    };
+    const userInfo = formatUserInfo(profileData as unknown as  CustomerData)
 
     // Prepare request payload with new format
     const payload = {
@@ -519,29 +407,12 @@ export class FoodService {
       },
     };
 
-    // Call AI API
-    const response = await axios.post<{
-      data: NutritionalRecommendation;
-      message: string;
-      status: number | string;
-    }>(
-      `${config.ai.baseUrl}/api/nutritional-recommendation/`,
-      payload,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 120000,
-      }
-    );
+    // Call AI service
+    const response = await aiService.getNutritionalRecommendation(payload);
 
-    if (response.data.status !== 200 && response.data.status !== '200') {
-      throw new BadRequestError(response.data.message || 'Failed to get nutritional recommendations');
-    }
-
-    const nutrientData = response.data.data.nutrient_intake;
-    const foodSuggestionsResponse = response.data.data.food_suggestions || [];
-    const insights = response.data.data.personalized_insight || [];
+    const nutrientData = response.data.nutrient_intake;
+    const foodSuggestionsResponse = response.data.food_suggestions || [];
+    const insights = response.data.personalized_insight || [];
     
     // Calculate carbs (total - sugars - fibres)
     const carbs = nutrientData.carbs.total - nutrientData.carbs.sugars - nutrientData.carbs.fibres;
@@ -589,7 +460,6 @@ export class FoodService {
 
     const foodInsights = await this.foodRepository.upsertDailyPersonalizedInsights(userId, today, insights);
 
-    console.log("The food suggestions are", foodSuggestions)
     return {
       carbs,
       sugars: nutrientData.carbs.sugars,
@@ -613,6 +483,79 @@ export class FoodService {
       protein: parseFloat(consumed?.proteins || '0'),
       fat: parseFloat(consumed?.fats || '0'),
       calories: parseFloat(consumed?.calories || '0'),
+    };
+  }
+
+  async generateRecipe(
+    userId: string,
+    payload: RecipeGenerationInput
+  ): Promise<RecipeGenerationResponse> {
+
+    // Ensure meal exists for this user
+    const meal = await this.foodRepository.findMealByTypeAndName(
+      userId,
+      payload.mealType,
+      payload.name
+    );
+
+    if (!meal) {
+      throw new BadRequestError('Meal not found in your meal plans. Please pick a valid meal.');
+    }
+
+    // Return cached recipe if exists
+    const existingRecipe = await this.foodRepository.getRecipeByMealId(meal.id);
+    if (existingRecipe) {
+      return {
+        title: existingRecipe.title,
+        description: existingRecipe.description,
+        ingredients: existingRecipe.ingredients,
+        making_steps: existingRecipe.makingSteps,
+      };
+    }
+
+    // Get user profile for AI payload
+    const user = await this.userRepository.getUser(userId);
+    if (!user) {
+      throw new BadRequestError('User not found');
+    }
+
+    const profileData = user.profileData as unknown as CustomerData;
+    if (!profileData) {
+      throw new BadRequestError('User profile data not found');
+    }
+
+    const aiPayload = {
+      meal: {
+        type: meal.mealType,
+        name: meal.name,
+        nutrition_info: {
+          carbs: Number(meal.carbs),
+          proteins: Number(meal.proteins),
+          calories: Number(meal.calories),
+        },
+      },
+      user_info: formatUserInfo(profileData as unknown as  CustomerData),
+    };
+
+    // Call AI service
+    const response = await aiService.generateRecipe(aiPayload);
+
+    const recipeData = response.data;
+
+    // Persist recipe for reuse
+    await this.foodRepository.createRecipe({
+      mealId: meal.id,
+      title: recipeData.title,
+      description: recipeData.description,
+      ingredients: recipeData.ingredients,
+      makingSteps: recipeData.making_steps,
+    });
+
+    return {
+      title: recipeData.title,
+      description: recipeData.description,
+      ingredients: recipeData.ingredients,
+      making_steps: recipeData.making_steps,
     };
   }
 }

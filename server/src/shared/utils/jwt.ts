@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../../app/config';
 import { type UserRole } from '../constants/roles';
-import { UnauthorizedError } from '../errors';
+import { BadRequestError, UnauthorizedError } from '../errors';
 
 export interface JWTPayload {
   userId: string;
@@ -9,6 +9,7 @@ export interface JWTPayload {
   firstName: string;
   lastName: string;
   role: UserRole;
+  tokenId?: string;
   iat?: number;
   exp?: number;
 }
@@ -17,6 +18,7 @@ export interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
+
 
 export class JWTService {
 
@@ -38,7 +40,7 @@ export class JWTService {
     try {
       return jwt.verify(token, config.jwtSecret) as JWTPayload;
     } catch (error) {
-      throw new Error('Invalid or expired access token');
+      throw new BadRequestError('Invalid or expired token');
     }
   }
 
@@ -49,11 +51,12 @@ export class JWTService {
       throw new UnauthorizedError('Invalid or expired refresh token');
     }
   }
-
-  static generateTokenPair(payload: Omit<JWTPayload, 'iat' | 'exp'>): TokenPair {
+  static generateTokenPair(payload: Omit<JWTPayload, 'iat' | 'exp'>) {
+    const tid = payload.tokenId ? payload.tokenId : crypto.randomUUID()
     return {
       accessToken: this.generateAccessToken(payload),
-      refreshToken: this.generateRefreshToken(payload),
+      refreshToken: this.generateRefreshToken({...payload, tokenId: tid}),
+      tokenId: tid
     };
   }
 
@@ -63,4 +66,5 @@ export class JWTService {
     }
     return authHeader.substring(7);
   }
+
 }

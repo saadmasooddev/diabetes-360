@@ -1,12 +1,32 @@
 import { db } from "../../../app/config/db";
-import { healthMetrics, activityLogs, exerciseLogs, healthMetricTargets } from "../models/health.schema";
-import { eq, desc, and, gte, lte, sql, isNotNull, isNull } from "drizzle-orm";
-import type { InsertHealthMetric, HealthMetric, MertricRecord, InsertActivityLog, ActivityLog, InsertExerciseLog, ExerciseLog, InsertHealthMetricTarget, UpdateHealthMetricTarget, HealthMetricTarget } from "../models/health.schema";
+import { healthMetrics,  exerciseLogs, healthMetricTargets, healthInsights, metricTypes, EXERCISE_TYPE_ENUM, ACTIVITY_TYPE_ENUM } from "../models/health.schema";
+import { eq, desc, and, gte, lte, sql, isNotNull, isNull, getTableColumns, asc } from "drizzle-orm";
+import type { InsertHealthMetric, HealthMetric, MertricRecord, InsertExerciseLog, ExerciseLog, InsertHealthMetricTarget, HealthMetricTarget, HealthInsight, ExtendedHealthMetric, MetricType, ActivityType } from "../models/health.schema";
+import { PgTable } from "drizzle-orm/pg-core";
+import { formatDate } from "server/src/shared/utils/utils";
+
+export type HealthPagination = {
+  total: number; limit: number; offset: number
+}
+export interface HealthInsightsData {
+  insights: Array<HealthInsights>;
+  overallHealthSummary: string;
+  whatToDoNext: Array<HealthTips>;
+}
+export interface HealthInsights { 
+name: MetricType; insight: string
+}
+
+export interface HealthTips {
+name: string; tip: string
+}
 
 export class HealthRepository {
-  async getTodaysMetricCount(userId: string, metricType?: 'glucose' | 'steps' | 'water'): Promise<number> {
+  async getTodaysMetricCount(userId: string, metricType?: MetricType): Promise<number> {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
+    
+    let table :PgTable = healthMetrics
     
     let conditions: any[] = [
       eq(healthMetrics.userId, userId),
@@ -14,17 +34,22 @@ export class HealthRepository {
     ];
 
     // If metricType is specified, filter by that specific metric
-    if (metricType === 'glucose') {
+    if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
       conditions.push(isNotNull(healthMetrics.bloodSugar));
-    } else if (metricType === 'steps') {
-      conditions.push(isNotNull(healthMetrics.steps));
-    } else if (metricType === 'water') {
+    }else if(metricType === EXERCISE_TYPE_ENUM.STEPS) {
+      table = exerciseLogs
+      conditions = [
+        eq(exerciseLogs.userId, userId),
+        gte(exerciseLogs.recordedAt, startOfDay),
+        isNotNull(exerciseLogs.steps)
+      ]
+    } else if (metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
       conditions.push(isNotNull(healthMetrics.waterIntake));
     }
     
     const result = await db
       .select({ count: sql<number>`count(*)::int` })
-      .from(healthMetrics)
+      .from(table)
       .where(and(...conditions));
     
     return result[0]?.count || 0;
@@ -33,11 +58,10 @@ export class HealthRepository {
   async createMetric(data: InsertHealthMetric): Promise<HealthMetric> {
     const [metric] = await db.insert(healthMetrics).values({
       userId: data.userId,
-      bloodSugar: data.bloodSugar,
-      steps: data.steps,
-      waterIntake: data.waterIntake,
-      heartRate: data.heartRate,
-      recordedAt: data.recordedAt
+      bloodSugar: data.bloodSugar?.toString() || null,
+      waterIntake: data.waterIntake?.toString() || null,
+      heartRate: data.heartRate || null,
+      recordedAt: data.recordedAt || new Date()
     }).returning();
     return metric;
   }
@@ -46,28 +70,41 @@ export class HealthRepository {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     
-    let sumColumn;
+    // Steps are stored in exercise_logs
     if (metricType === 'steps') {
-      sumColumn = sql<number>`COALESCE(SUM(${healthMetrics.steps})::numeric, 0)`;
-    } else {
-      sumColumn = sql<number>`COALESCE(SUM(${healthMetrics.waterIntake})::numeric, 0)`;
+      const result = await db
+        .select({ 
+          total: sql<number>`COALESCE(SUM(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)` 
+        })
+        .from(exerciseLogs)
+        .where(
+          and(
+            eq(exerciseLogs.userId, userId),
+            gte(exerciseLogs.recordedAt, startOfDay),
+            isNotNull(exerciseLogs.steps)
+          )
+        );
+      return parseFloat(result[0]?.total?.toString() || '0');
     }
     
+    // Water intake is in health_metrics
     const result = await db
-      .select({ total: sumColumn })
+      .select({ 
+        total: sql<number>`COALESCE(SUM(${healthMetrics.waterIntake})::numeric, 0)` 
+      })
       .from(healthMetrics)
       .where(
         and(
           eq(healthMetrics.userId, userId),
           gte(healthMetrics.recordedAt, startOfDay),
-          metricType === 'steps' ? isNotNull(healthMetrics.steps) : isNotNull(healthMetrics.waterIntake)
+          isNotNull(healthMetrics.waterIntake)
         )
       );
     
     return parseFloat(result[0]?.total?.toString() || '0');
   }
 
-  async getLatestMetric(userId: string): Promise<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric> }> {
+  async getLatestMetric(userId: string): Promise<{ current: Partial<ExtendedHealthMetric>; previous: Partial<ExtendedHealthMetric> }> {
     const latestBloogSugarPromise = db
       .select()
       .from(healthMetrics)
@@ -86,15 +123,16 @@ export class HealthRepository {
     const endOfYesterday = new Date(yesterday);
     endOfYesterday.setHours(23, 59, 59, 999);
     
+    // Steps are in exercise_logs
     const previousStepsPromise = db
-      .select({ total: sql<number>`COALESCE(SUM(${healthMetrics.steps})::numeric, 0)` })
-      .from(healthMetrics)
+      .select({ total: sql<number>`COALESCE(SUM(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)` })
+      .from(exerciseLogs)
       .where(
         and(
-          eq(healthMetrics.userId, userId),
-          gte(healthMetrics.recordedAt, yesterday),
-          lte(healthMetrics.recordedAt, endOfYesterday),
-          isNotNull(healthMetrics.steps)
+          eq(exerciseLogs.userId, userId),
+          gte(exerciseLogs.recordedAt, yesterday),
+          lte(exerciseLogs.recordedAt, endOfYesterday),
+          isNotNull(exerciseLogs.steps)
         )
       );
     
@@ -133,53 +171,20 @@ export class HealthRepository {
       current: {
         bloodSugar: latestBloogSugar[0]?.bloodSugar || null,
         waterIntake: todaysWaterTotal.toString(),
-        steps: Math.round(todaysStepsTotal),
         heartRate: latestHeartRate[0]?.heartRate || null,
+        steps: Math.round(todaysStepsTotal),
       },
       previous: {
         bloodSugar: latestBloogSugar[1]?.bloodSugar || null,
         waterIntake: previousWaterTotal.toString(),
-        steps: Math.round(previousStepsTotal),
         heartRate: latestHeartRate[1]?.heartRate || null,
-      }
+        steps: Math.round(previousStepsTotal),
+      } 
     } 
   }
 
-  async getMetricsByUser(
-    userId: string,
-    limit: number = 30,
-    offset: number = 0
-  ): Promise<HealthMetric[]> {
-    return await db
-      .select()
-      .from(healthMetrics)
-      .where(eq(healthMetrics.userId, userId))
-      .orderBy(desc(healthMetrics.recordedAt))
-      .limit(limit)
-      .offset(offset);
-  }
 
-  async getMetricsForChart(
-    userId: string,
-    days: number = 7
-  ): Promise<HealthMetric[]> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
-    
-    return await db
-      .select()
-      .from(healthMetrics)
-      .where(
-        and(
-          eq(healthMetrics.userId, userId),
-          gte(healthMetrics.recordedAt, startDate)
-        )
-      )
-      .orderBy(healthMetrics.recordedAt);
-  }
-
-  async getAggregatedStatistics(userId: string): Promise<{
+  async getAggregatedStatistics(userId: string, total: boolean): Promise<{
     glucose: { daily: number; weekly: number; monthly: number };
     water: { daily: number; weekly: number; monthly: number };
     steps: { daily: number; weekly: number; monthly: number };
@@ -224,16 +229,17 @@ export class HealthRepository {
         )
       );
 
+    // Steps are in exercise_logs
     const dailySteps = await db
       .select({
-        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+        avg: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
       })
-      .from(healthMetrics)
+      .from(exerciseLogs)
       .where(
         and(
-          eq(healthMetrics.userId, userId),
-          gte(healthMetrics.recordedAt, startOfDay),
-          isNotNull(healthMetrics.steps)
+          eq(exerciseLogs.userId, userId),
+          gte(exerciseLogs.recordedAt, startOfDay),
+          isNotNull(exerciseLogs.steps)
         )
       );
     
@@ -277,16 +283,17 @@ export class HealthRepository {
         )
       );
 
+    // Steps are in exercise_logs
     const weeklySteps = await db
       .select({
-        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+        avg: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
       })
-      .from(healthMetrics)
+      .from(exerciseLogs)
       .where(
         and(
-          eq(healthMetrics.userId, userId),
-          gte(healthMetrics.recordedAt, startOfWeek),
-          isNotNull(healthMetrics.steps)
+          eq(exerciseLogs.userId, userId),
+          gte(exerciseLogs.recordedAt, startOfWeek),
+          isNotNull(exerciseLogs.steps)
         )
       );
 
@@ -324,18 +331,20 @@ export class HealthRepository {
         )
       );
 
+    // Steps are in exercise_logs
     const monthlySteps = await db
       .select({
-        avg: sql<number>`COALESCE(AVG(${healthMetrics.steps}::DECIMAL), 0)`,
+        avg: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
       })
-      .from(healthMetrics)
+      .from(exerciseLogs)
       .where(
         and(
-          eq(healthMetrics.userId, userId),
-          gte(healthMetrics.recordedAt, startOfMonth),
-          isNotNull(healthMetrics.steps)
+          eq(exerciseLogs.userId, userId),
+          gte(exerciseLogs.recordedAt, startOfMonth),
+          isNotNull(exerciseLogs.steps)
         )
       );
+    
 
     const monthlyHeartRate = await db
       .select({
@@ -344,28 +353,72 @@ export class HealthRepository {
       .from(healthMetrics)
       .where(and(eq(healthMetrics.userId, userId), gte(healthMetrics.recordedAt, startOfMonth), isNotNull(healthMetrics.heartRate)));
 
-    return {
+    
+    
+
+    const result = {
       glucose: {
         daily: Math.round(Number(dailyGlucose[0]?.avg || 0)),
         weekly: Math.round(Number(weeklyGlucose[0]?.avg || 0)),
         monthly: Math.round(Number(monthlyGlucose[0]?.avg || 0)),
+        total: 0,
       },
       water: {
         daily: Number(dailyWater[0]?.avg || 0),
         weekly: Number(weeklyWater[0]?.avg || 0),
         monthly: Number(monthlyWater[0]?.avg || 0),
+        total: 0,
       },
       steps: {
         daily: Math.round(Number(dailySteps[0]?.avg || 0)),
         weekly: Math.round(Number(weeklySteps[0]?.avg || 0)),
         monthly: Math.round(Number(monthlySteps[0]?.avg || 0)),
+        total: 0,
       },
       heartRate: {
         daily: Math.round(Number(dailyHeartRate[0]?.avg || 0)),
         weekly: Math.round(Number(weeklyHeartRate[0]?.avg || 0)),
         monthly: Math.round(Number(monthlyHeartRate[0]?.avg || 0)),
+        total: 0,
       },
-    };
+    }
+    if(total){
+      const totalGlucose = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
+        })
+        .from(healthMetrics)
+        .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.bloodSugar)));
+      
+      const totalWater = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
+        })
+        .from(healthMetrics)
+        .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.waterIntake)));
+      
+      // Steps are in exercise_logs
+      const totalSteps = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
+        })
+        .from(exerciseLogs)
+        .where(and(eq(exerciseLogs.userId, userId), isNotNull(exerciseLogs.steps)));
+
+      const totalHeartRate = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(${healthMetrics.heartRate}::DECIMAL), 0)`,
+        })
+        .from(healthMetrics)
+        .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.heartRate)));
+      
+      result.glucose.total = Number(totalGlucose[0]?.total);
+      result.water.total = Number(totalWater[0]?.total);
+      result.steps.total = Number(totalSteps[0]?.total);
+      result.heartRate.total = Number(totalHeartRate[0]?.total);
+    }
+
+    return result;
   }
 
   async getFilteredMetrics(
@@ -381,10 +434,10 @@ export class HealthRepository {
     stepsRecords: MertricRecord[];
     heartBeatRecords: MertricRecord[];
     pagination: {
-      bloodSugar: { total: number; limit: number; offset: number };
-      waterIntake: { total: number; limit: number; offset: number };
-      steps: { total: number; limit: number; offset: number };
-      heartBeat: { total: number; limit: number; offset: number };
+      bloodSugar: HealthPagination;
+      waterIntake: HealthPagination;
+      steps: HealthPagination;
+      heartBeat: HealthPagination;
     };
   }> {
 
@@ -407,10 +460,10 @@ export class HealthRepository {
     };
 
     // If no types specified, return all types
-    const requestedTypes = types.length > 0 ? types : ['blood_sugar', 'water_intake', 'steps', 'heart_beat'];
+    const requestedTypes = types.length > 0 ? types : metricTypes;
 
     // Fetch blood sugar records
-    if (requestedTypes.includes('blood_sugar')) {
+    if (requestedTypes.includes(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)) {
       const bloodSugarQuery = db
         .select({
           id: healthMetrics.id,
@@ -449,7 +502,7 @@ export class HealthRepository {
     }
 
     // Fetch water intake records
-    if (requestedTypes.includes('water_intake')) {
+    if (requestedTypes.includes(EXERCISE_TYPE_ENUM.WATER_INTAKE)) {
       const waterIntakeQuery = db
         .select({
           id: healthMetrics.id,
@@ -487,32 +540,37 @@ export class HealthRepository {
       }
     }
 
-    // Fetch steps records
-    if (requestedTypes.includes('steps')) {
+    // Fetch steps records - steps are in exercise_logs
+    if (requestedTypes.includes(EXERCISE_TYPE_ENUM.STEPS)) {
+      const stepsBaseConditions = [
+        eq(exerciseLogs.userId, userId),
+        sql`${exerciseLogs.recordedAt} between ${startDate} and ${endDate}`,
+      ];
+
       const stepsQuery = db
         .select({
-          id: healthMetrics.id,
-          userId: healthMetrics.userId,
-          value: healthMetrics.steps,
-          recordedAt: healthMetrics.recordedAt,
+          id: exerciseLogs.id,
+          userId: exerciseLogs.userId,
+          value: exerciseLogs.steps,
+          recordedAt: exerciseLogs.recordedAt,
         })
-        .from(healthMetrics)
+        .from(exerciseLogs)
         .where(
           and(
-            ...baseConditions,
-            isNotNull(healthMetrics.steps)
+            ...stepsBaseConditions,
+            isNotNull(exerciseLogs.steps)
           )
         )
-        .orderBy(desc(healthMetrics.recordedAt));
+        .orderBy(desc(exerciseLogs.recordedAt));
 
       // Get total count
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
-        .from(healthMetrics)
+        .from(exerciseLogs)
         .where(
           and(
-            ...baseConditions,
-            isNotNull(healthMetrics.steps)
+            ...stepsBaseConditions,
+            isNotNull(exerciseLogs.steps)
           )
         );
       
@@ -527,7 +585,7 @@ export class HealthRepository {
     }
 
     // Fetch heart rate records
-    if (requestedTypes.includes('heart_beat')) {
+    if (requestedTypes.includes(EXERCISE_TYPE_ENUM.HEART_RATE)) {
       const heartBeatQuery = db
         .select({
           id: healthMetrics.id,
@@ -568,102 +626,6 @@ export class HealthRepository {
     return result 
   }
 
-  // Activity Logs Methods
-  async createActivityLog(data: InsertActivityLog): Promise<ActivityLog> {
-    const [log] = await db.insert(activityLogs).values({
-      userId: data.userId,
-      activityType: data.activityType,
-      durationMinutes: data.durationMinutes,
-      recordedAt: data.recordedAt
-    }).returning();
-    return log;
-  }
-
-  async getActivityLogsByUser(
-    userId: string,
-    activityType?: "walking" | "yoga",
-    limit: number = 30,
-    offset: number = 0
-  ): Promise<ActivityLog[]> {
-    const conditions: any[] = [eq(activityLogs.userId, userId)];
-    if (activityType) {
-      conditions.push(eq(activityLogs.activityType, activityType));
-    }
-    
-    return await db
-      .select()
-      .from(activityLogs)
-      .where(and(...conditions))
-      .orderBy(desc(activityLogs.recordedAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  async getTodayActivityLogs(userId: string, activityType?: "walking" | "yoga"): Promise<ActivityLog[]> {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const conditions: any[] = [
-      eq(activityLogs.userId, userId),
-      gte(activityLogs.recordedAt, startOfDay)
-    ];
-    
-    if (activityType) {
-      conditions.push(eq(activityLogs.activityType, activityType));
-    }
-    
-    return await db
-      .select()
-      .from(activityLogs)
-      .where(and(...conditions))
-      .orderBy(desc(activityLogs.recordedAt));
-  }
-
-  async getActivityLogsForChart(
-    userId: string,
-    activityType: "walking" | "yoga",
-    days: number = 7
-  ): Promise<ActivityLog[]> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
-    
-    return await db
-      .select()
-      .from(activityLogs)
-      .where(
-        and(
-          eq(activityLogs.userId, userId),
-          eq(activityLogs.activityType, activityType),
-          gte(activityLogs.recordedAt, startDate)
-        )
-      )
-      .orderBy(activityLogs.recordedAt);
-  }
-
-  async getTotalActivityMinutesToday(userId: string, activityType?: "walking" | "yoga"): Promise<number> {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const conditions: any[] = [
-      eq(activityLogs.userId, userId),
-      gte(activityLogs.recordedAt, startOfDay)
-    ];
-    
-    if (activityType) {
-      conditions.push(eq(activityLogs.activityType, activityType));
-    }
-    
-    const result = await db
-      .select({
-        total: sql<number>`COALESCE(SUM(${activityLogs.durationMinutes}), 0)::int`,
-      })
-      .from(activityLogs)
-      .where(and(...conditions));
-    
-    return result[0]?.total || 0;
-  }
-
   async createExerciseLogsBatch(data: InsertExerciseLog[]): Promise<ExerciseLog[]> {
     if (data.length === 0) return [];
     
@@ -671,84 +633,23 @@ export class HealthRepository {
       data.map(d => ({
         userId: d.userId,
         exerciseType: d.exerciseType,
-        count: d.count,
-        recordedAt: d.recordedAt
+        calories: d.calories,
+        activityType: d.activityType,
+        pace: d.pace || null,
+        sets: d.sets || null,
+        weight: d.weight || null,
+        steps: d.steps ? d.steps.toString() : null,
+        muscle: d.muscle || null,
+        duration: Number(d.duration) || null,
+        repitition: d.repitition || null,
+        recordedAt: d.recordedAt ? new Date(d.recordedAt) : new Date()
       }))
     ).returning();
     return logs;
   }
 
-  async getExerciseLogsByUser(
-    userId: string,
-    exerciseType?: "pushups" | "squats" | "chinups" | "situps",
-    limit: number = 30,
-    offset: number = 0
-  ): Promise<ExerciseLog[]> {
-    const conditions: any[] = [eq(exerciseLogs.userId, userId)];
-    if (exerciseType) {
-      conditions.push(eq(exerciseLogs.exerciseType, exerciseType));
-    }
-    
-    return await db
-      .select()
-      .from(exerciseLogs)
-      .where(and(...conditions))
-      .orderBy(desc(exerciseLogs.recordedAt))
-      .limit(limit)
-      .offset(offset);
-  }
 
-  async getTodayExerciseLogs(userId: string): Promise<ExerciseLog[]> {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    return await db
-      .select()
-      .from(exerciseLogs)
-      .where(
-        and(
-          eq(exerciseLogs.userId, userId),
-          gte(exerciseLogs.recordedAt, startOfDay)
-        )
-      )
-      .orderBy(desc(exerciseLogs.recordedAt));
-  }
 
-  async getTodayExerciseTotals(userId: string): Promise<{
-    pushups: number;
-    squats: number;
-    chinups: number;
-    situps: number;
-  }> {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const logs = await db
-      .select()
-      .from(exerciseLogs)
-      .where(
-        and(
-          eq(exerciseLogs.userId, userId),
-          gte(exerciseLogs.recordedAt, startOfDay)
-        )
-      );
-    
-    const totals = {
-      pushups: 0,
-      squats: 0,
-      chinups: 0,
-      situps: 0,
-    };
-    
-    logs.forEach(log => {
-      if (log.exerciseType === "pushups") totals.pushups += log.count;
-      else if (log.exerciseType === "squats") totals.squats += log.count;
-      else if (log.exerciseType === "chinups") totals.chinups += log.count;
-      else if (log.exerciseType === "situps") totals.situps += log.count;
-    });
-    
-    return totals;
-  }
 
   async getExerciseLogsForChart(
     userId: string,
@@ -773,79 +674,19 @@ export class HealthRepository {
   }
 
   async getStrengthProgressPercentage(userId: string, days: number = 30): Promise<number> {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
-    
-    // Get average total exercises per day over the period
-    const logs = await db
-      .select()
-      .from(exerciseLogs)
-      .where(
-        and(
-          eq(exerciseLogs.userId, userId),
-          gte(exerciseLogs.recordedAt, startDate)
-        )
-      );
-    
-    if (logs.length === 0) return 0;
-    
-    // Group by day and calculate daily totals
-    const dailyTotals: { [key: string]: number } = {};
-    logs.forEach(log => {
-      const day = log.recordedAt.toISOString().split('T')[0];
-      if (!dailyTotals[day]) dailyTotals[day] = 0;
-      dailyTotals[day] += log.count;
-    });
-    
-    const avgDailyTotal = Object.values(dailyTotals).reduce((a, b) => a + b, 0) / Object.keys(dailyTotals).length;
-    
-    // Calculate percentage based on a target (e.g., 100 exercises per day = 100%)
-    const target = 100;
-    const percentage = Math.min(100, Math.round((avgDailyTotal / target) * 100));
-    
-    return percentage;
+    // Note: The exercise_logs structure has changed and no longer uses count-based exercises
+    // This method returns 0 as the structure now uses calories, activityType, etc.
+    return 0;
   }
 
   async getStrengthProgressLogs(
     userId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<Array<{ date: string; total: number; pushups: number; squats: number; chinups: number; situps: number }>> {
-    // Get all exercise logs within the date range
-    const logs = await db
-      .select()
-      .from(exerciseLogs)
-      .where(
-        and(
-          eq(exerciseLogs.userId, userId),
-          gte(exerciseLogs.recordedAt, startDate),
-          lte(exerciseLogs.recordedAt, endDate)
-        )
-      )
-      .orderBy(exerciseLogs.recordedAt);
-    
-    // Group by date and calculate daily totals
-    const dailyData: { [key: string]: { total: number; pushups: number; squats: number; chinups: number; situps: number } } = {};
-    
-    logs.forEach(log => {
-      const date = log.recordedAt.toISOString().split('T')[0];
-      if (!dailyData[date]) {
-        dailyData[date] = { total: 0, pushups: 0, squats: 0, chinups: 0, situps: 0 };
-      }
-      dailyData[date].total += log.count;
-      if (log.exerciseType === 'pushups') dailyData[date].pushups += log.count;
-      else if (log.exerciseType === 'squats') dailyData[date].squats += log.count;
-      else if (log.exerciseType === 'chinups') dailyData[date].chinups += log.count;
-      else if (log.exerciseType === 'situps') dailyData[date].situps += log.count;
-    });
-    
-    // Convert to array and sort by date
-    const result = Object.entries(dailyData)
-      .map(([date, data]) => ({ date, ...data }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-    
-    return result;
+  ): Promise<Array<{ recordedAt: string; value: number; pushups: number; squats: number; chinups: number; situps: number }>> {
+    // Note: The exercise_logs structure has changed and no longer uses count-based exercises
+    // This method returns empty array as the structure now uses calories, activityType, etc.
+    return [];
   }
 
   // Health Metric Targets Methods
@@ -876,7 +717,7 @@ export class HealthRepository {
 
   async getTargetByMetricType(
     userId: string | null,
-    metricType: "glucose" | "steps" | "water_intake" | "heart_rate"
+    metricType: MetricType 
   ): Promise<HealthMetricTarget | null> {
     const conditions: any[] = [eq(healthMetricTargets.metricType, metricType)];
     
@@ -921,7 +762,7 @@ export class HealthRepository {
     }
   }
 
-  async deleteUserTarget(userId: string, metricType: "glucose" | "steps" | "water_intake" | "heart_rate"): Promise<void> {
+  async deleteUserTarget(userId: string, metricType: MetricType): Promise<void> {
     await db
       .delete(healthMetricTargets)
       .where(
@@ -942,5 +783,155 @@ export class HealthRepository {
     
     return results;
   }
+
+  // Health Insights Methods
+  async getHealthInsightsByUserId(userId: string): Promise<HealthInsight | null> {
+    const [insight] = await db
+      .select()
+      .from(healthInsights)
+      .where(eq(healthInsights.userId, userId))
+      .orderBy(desc(healthInsights.updatedAt))
+      .limit(1);
+    
+    return insight || null;
+  }
+
+  async createOrUpdateHealthInsights(
+    userId: string,
+    data: HealthInsightsData 
+  ): Promise<HealthInsight> {
+    const existing = await this.getHealthInsightsByUserId(userId);
+
+    if (existing) {
+      const [updated] = await db
+        .update(healthInsights)
+        .set({
+          insights: data.insights,
+          overallHealthSummary: data.overallHealthSummary,
+          whatToDoNext: data.whatToDoNext,
+          updatedAt: new Date(),
+        })
+        .where(eq(healthInsights.id, existing.id))
+        .returning();
+      
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(healthInsights)
+        .values({
+          userId,
+          insights: data.insights,
+          overallHealthSummary: data.overallHealthSummary,
+          whatToDoNext: data.whatToDoNext,
+        })
+        .returning();
+      
+      return created;
+    }
+  }
+
+  async getCaloriesByActivityType(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    sameDates: boolean
+  ): Promise<{
+      totals: {
+        cardio: number;
+        strength_training: number;
+        stretching: number;
+        total: number;
+      };
+      chartData: {
+        cardio: Array<ExerciseLog>;
+        strength_training: Array<ExerciseLog>;
+        stretching: Array<ExerciseLog>;
+      };
+  }> {
+
+    const caloriesSum =sql<number>`CAST(SUM(${exerciseLogs.calories}) AS INTEGER)` 
+    const recordedAtCast = sql<Date>`CAST(${exerciseLogs.recordedAt} AS DATE)`.as('rec')
+
+    const columns = !sameDates ? {
+      calories: caloriesSum ,
+      recordedAt: recordedAtCast
+    }: {
+      ...getTableColumns(exerciseLogs),
+    }
+
+    const condition = [and(
+      eq(exerciseLogs.userId, userId),
+      gte(exerciseLogs.recordedAt, startDate)
+    )]
+
+     if(!sameDates){
+      condition.push(
+        lte(exerciseLogs.recordedAt, endDate),
+      )
+     }
+
+    const cardioPromise = db
+      .select(columns)
+      .from(exerciseLogs) 
+      .where(and(
+        ...condition, 
+        eq(exerciseLogs.activityType, ACTIVITY_TYPE_ENUM.CARDIO
+      )))
+
+    const strengthTrainingPromise = db
+      .select(columns)
+      .from(exerciseLogs) 
+      .where(and(
+        ...condition, 
+        eq(exerciseLogs.activityType, ACTIVITY_TYPE_ENUM.STRENGTH_TRAINING
+      )))
+    
+    const stretchingPromise = db
+      .select(columns)
+      .from(exerciseLogs) 
+      .where(and(
+        ...condition, 
+        eq(exerciseLogs.activityType, ACTIVITY_TYPE_ENUM.STRETCHING
+      )))
+    
+    if(!sameDates) {
+      cardioPromise
+        .groupBy(recordedAtCast)
+        .orderBy(recordedAtCast)
+      strengthTrainingPromise
+        .groupBy(recordedAtCast)
+        .orderBy(recordedAtCast)
+      stretchingPromise
+        .groupBy(recordedAtCast)
+        .orderBy(recordedAtCast)
+    }
+
+
+    const [cardio, strengthTraining, stretching] = await Promise.all(
+      [cardioPromise, strengthTrainingPromise, stretchingPromise]
+    )
+
+
+    const cardioCaloriesBurnt = cardio.reduce((acc, curr) => acc + curr.calories, 0)
+    const strengthTrainingCaloriesBurnt = strengthTraining.reduce((acc, curr) => acc + curr.calories, 0)
+    const stretchingCaloriesBurnt = stretching.reduce((acc, curr) => acc + curr.calories, 0)
+
+    const totalCaloriesBurnt = cardioCaloriesBurnt + strengthTrainingCaloriesBurnt + stretchingCaloriesBurnt
+
+    return {
+      totals: {
+        cardio: cardioCaloriesBurnt,
+        strength_training: strengthTrainingCaloriesBurnt,
+        stretching: stretchingCaloriesBurnt,
+        total: totalCaloriesBurnt
+      },
+      chartData :{
+        cardio,
+        strength_training: strengthTraining,
+        stretching: stretching
+      }
+    }
+  }
+
 }
 

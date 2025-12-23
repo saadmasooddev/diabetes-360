@@ -1,8 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, ArrowDown, Droplet, Activity, Heart, Footprints } from 'lucide-react';
-import type { HealthMetric } from '@shared/schema';
-import type { MetricType } from '../pages/Dashboard';
+import { EXERCISE_TYPE_ENUM, MetricType, type HealthMetric } from '@shared/schema';
 
 interface HealthMetricCardProps {
   type: MetricType;
@@ -26,7 +25,7 @@ export function HealthMetricCard({
   dailyLimit: remainingLogsLimit = 0,
 }: HealthMetricCardProps) {
   const config = {
-    glucose: {
+    [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: {
       title: 'Blood Glucose',
       unit: 'mg/dL',
       showUploadButton: true,
@@ -35,7 +34,7 @@ export function HealthMetricCard({
       iconColor: '#4CAF50',
       borderColor: '#4CAF50',
     },
-    steps: {
+    [EXERCISE_TYPE_ENUM.STEPS]: {
       title: 'Steps Walked',
       unit: 'steps',
       showUploadButton: false,
@@ -44,7 +43,7 @@ export function HealthMetricCard({
       iconColor: '#2196F3',
       borderColor: '#2196F3',
     },
-    water: {
+    [EXERCISE_TYPE_ENUM.WATER_INTAKE]: {
       title: 'Water Intake',
       unit: 'L',
       showUploadButton: false,
@@ -53,7 +52,7 @@ export function HealthMetricCard({
       iconColor: '#00856F',
       borderColor: '#00856F',
     },
-    heartbeat: {
+    [EXERCISE_TYPE_ENUM.HEART_RATE]: {
       title: 'Heart Rate',
       unit: 'bpm',
       showUploadButton: false,
@@ -69,15 +68,15 @@ export function HealthMetricCard({
 
   const formatValue = () => {
     if (latestValue === null || latestValue === undefined) return '—';
-    if (type === 'steps') {
+    if (type === EXERCISE_TYPE_ENUM.STEPS) {
       const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
       return Math.round(numValue).toLocaleString();
     }
-    if (type === 'water') {
+    if (type === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
       const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
       return numValue.toFixed(1);
     }
-    if (type === 'heartbeat') {
+    if (type === EXERCISE_TYPE_ENUM.HEART_RATE) {
       const numValue = typeof latestValue === 'number' ? latestValue : parseFloat(latestValue.toString());
       return Math.round(numValue).toString();
     }
@@ -209,7 +208,7 @@ export function HealthMetricCard({
             </Button>
           )}
         </div>
-        {type !== 'heartbeat' && remainingLogsLimit > 0 && (
+        {type !== EXERCISE_TYPE_ENUM.HEART_RATE && remainingLogsLimit > 0 && (
           <p
             className="text-xs leading-relaxed"
             style={{

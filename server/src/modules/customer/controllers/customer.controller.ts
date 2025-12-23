@@ -105,7 +105,7 @@ export class CustomerController {
       const quota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(userId);
       
       // Get system-wide quota limits
-      const systemLimits = await this.settingsService.getFreeTierLimits();
+      const systemLimits = await this.settingsService.getLogLimits();
       const discountedQuotaLimit = systemLimits.discountedConsultationQuota || 0;
       const freeQuotaLimit = systemLimits.freeConsultationQuota || 0;
 

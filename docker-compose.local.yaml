@@ -10,18 +10,17 @@ services:
       - POSTGRES_PASSWORD=password
     ports:
       - 5432:5432
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.local
-    container_name: diabetes
-    env_file:
-      - ./.env
-    ports:
-      - 5000:5000
-    volumes:
-      - diabetes:/app/src
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.local
+  #   container_name: diabetes
+  #   env_file:
+  #     - ./.env
+  #   ports:
+  #     - 5000:5000
+  #   volumes:
+  #     - diabetes:/app/src
 
 volumes:
   my_postgres:

@@ -141,15 +141,6 @@ export class PhysicianController {
     }
   }
 
-  async getAllPhysicians(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const physicians = await this.physicianService.getAllPhysicians();
-      sendSuccess(res, { physicians }, "Physicians retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
   async getPhysiciansPaginated(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;

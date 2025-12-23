@@ -88,9 +88,6 @@ export class PhysicianService {
     return await this.physicianRepository.getSpecialtiesForConsultation();
   }
 
-  async getAllPhysicians() {
-    return await this.physicianRepository.getAllPhysicians();
-  }
 
   async getPhysiciansPaginated(params: {
     page: number;

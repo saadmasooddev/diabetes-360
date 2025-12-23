@@ -1,9 +1,11 @@
+import { EXERCISE_TYPE_ENUM, MetricType } from "@shared/schema";
+
 interface CircularGaugeProps {
   value: number;
   label: string;
   unit: string;
   size?: number;
-  metricType?: string;
+  metricType: MetricType;
   recommendedTarget?: number;
   userTarget?: number;
 }
@@ -13,7 +15,7 @@ export function CircularGauge({
   label,
   unit,
   size = 160,
-  metricType = "",
+  metricType,
   recommendedTarget,
   userTarget,
 }: CircularGaugeProps) {
@@ -27,28 +29,28 @@ export function CircularGauge({
   // Get gradient colors based on metric type
   const getGradientColors = () => {
     switch (metricType) {
-      case 'glucose':
+      case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
         return {
           start: '#4CAF50',
           end: '#66BB6A',
           bg: 'rgba(76, 175, 80, 0.1)',
           shadow: 'rgba(76, 175, 80, 0.3)',
         };
-      case 'hydration':
+      case EXERCISE_TYPE_ENUM.WATER_INTAKE:
         return {
           start: '#00856F',
           end: '#00A085',
           bg: 'rgba(0, 133, 111, 0.1)',
           shadow: 'rgba(0, 133, 111, 0.3)',
         };
-      case 'activity':
+      case EXERCISE_TYPE_ENUM.STEPS:
         return {
           start: '#2196F3',
           end: '#42A5F5',
           bg: 'rgba(33, 150, 243, 0.1)',
           shadow: 'rgba(33, 150, 243, 0.3)',
         };
-      case 'heartRate':
+      case EXERCISE_TYPE_ENUM.HEART_RATE:
         return {
           start: '#E91E63',
           end: '#EC407A',

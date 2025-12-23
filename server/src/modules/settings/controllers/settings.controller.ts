@@ -18,7 +18,7 @@ export class SettingsController {
 
   async getLimits(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const limits = await this.settingsService.getFreeTierLimits();
+      const limits = await this.settingsService.getLogLimits();
       sendSuccess(res, limits, "Limits retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
@@ -66,7 +66,7 @@ export class SettingsController {
       }
 
       // Return combined result - use getFreeTierLimits to get the full combined response
-      const combinedResult = await this.settingsService.getFreeTierLimits();
+      const combinedResult = await this.settingsService.getLogLimits();
 
       sendSuccess(res, combinedResult, "Limits created successfully", 201);
     } catch (error: any) {
@@ -107,7 +107,7 @@ export class SettingsController {
         results.freeTierLimits = await this.settingsService.updateFreeTierLimits(validationResult.data);
       } else {
         // Get existing free tier limits if not updating
-        results.freeTierLimits = await this.settingsService.getFreeTierLimits();
+        results.freeTierLimits = await this.settingsService.getLogLimits();
       }
 
       // Update food scan limits if any food scan data provided
@@ -126,7 +126,7 @@ export class SettingsController {
       }
 
       // Return combined result - use getFreeTierLimits to get the full combined response
-      const combinedResult = await this.settingsService.getFreeTierLimits();
+      const combinedResult = await this.settingsService.getLogLimits();
 
       sendSuccess(res, combinedResult, "Limits updated successfully");
     } catch (error: any) {
@@ -175,7 +175,7 @@ export class SettingsController {
       }
 
       // Return combined result - use getFreeTierLimits to get the full combined response
-      const combinedResult = await this.settingsService.getFreeTierLimits();
+      const combinedResult = await this.settingsService.getLogLimits();
 
       sendSuccess(res, combinedResult, "Limits updated successfully");
     } catch (error: any) {

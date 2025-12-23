@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, numeric, integer, boolean, pgEnum, primaryKey, PrimaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, physicianLocations } from "../../auth/models/user.schema";
 
-const bookedSlotsStatusEnum = pgEnum("booking_status", ["pending", "confirmed", "cancelled", "completed"]);
+export const bookedSlotsStatusEnum = pgEnum("booking_status_enum", ["pending", "confirmed", "cancelled", "completed"]);
 export const BOOKED_SLOTS_STATUS = z.enum(["pending", "confirmed", "cancelled", "completed"]);
 // Booking System Tables
 export const slotSize = pgTable("slot_size", {
@@ -32,9 +32,17 @@ export const slots = pgTable("slots", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const SLOT_TYPE = {
+  ONLINE: "online",
+  OFFLINE: "offline",
+  ONSITE: "onsite",
+} as const;
+export const slotTypeSchema = z.enum(Object.values(SLOT_TYPE) as [string, ...string[]]);
+export const slotTypeEnum = pgEnum("slot_type_enum", Object.values(SLOT_TYPE) as [string, ...string[]]);
+
 export const slotType = pgTable("slot_type", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  type: text("type").notNull().unique(), // 'online', 'onsite', etc.
+  type: slotTypeEnum("type").notNull().unique(), // 'online', 'onsite', etc.
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -42,7 +50,9 @@ export const slotType = pgTable("slot_type", {
 export const slotTypeJunction = pgTable("slot_type_junction", {
   slotId: varchar("slot_id").notNull().references(() => slots.id, { onDelete: "cascade" }),
   slotTypeId: varchar("slot_type_id").notNull().references(() => slotType.id, { onDelete: "restrict" }),
-});
+}, t => [
+  primaryKey({ columns: [t.slotId, t.slotTypeId]})
+]);
 
 export const slotPrice = pgTable("slot_price", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

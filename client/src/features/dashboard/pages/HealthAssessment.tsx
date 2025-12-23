@@ -2,16 +2,28 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Droplet, Activity, Heart } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
-import { useAggregatedStatistics } from "@/hooks/mutations/useHealth";
+import { useAggregatedStatistics, useHealthInsights } from "@/hooks/mutations/useHealth";
 import { CircularGauge } from "../components/CircularGauge";
+import { InsightSummaryCard } from "../components/InsightSummaryCard";
+import { OverallHealthSummary } from "../components/OverallHealthSummary";
+import { WhatToDoNext } from "../components/WhatToDoNext";
+import { EXERCISE_TYPE_ENUM, MetricType } from "@shared/schema";
 
 export function HealthAssessment() {
   const user = useAuthStore((state) => state.user);
   const isPaidUser = user?.paymentType !== 'free' && user?.paymentType;
   const { data: statistics } = useAggregatedStatistics();
+  const { data: healthAssessment, isLoading: insightsLoading } = useHealthInsights();
+  const insights = healthAssessment?.insights || []
 
+  const waterIntakeInsight = insights.find(i => i.name === EXERCISE_TYPE_ENUM.WATER_INTAKE)?.insight || ''
+  const glucoseInsight = insights.find(i => i.name === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)?.insight || ''
+  const stepsInsight = insights.find(i => i.name === EXERCISE_TYPE_ENUM.STEPS)?.insight || ''
+  const heartRateInsight = insights.find(i => i.name === EXERCISE_TYPE_ENUM.HEART_RATE)?.insight || ''
+  const overallHealthSummary = healthAssessment?.overallHealthSummary || ''
+  const whatToDoNext = healthAssessment?.whatToDoNext || []
   // Helper to get target for a metric type
-  const getTarget = (metricType: 'glucose' | 'steps' | 'water_intake' | 'heart_rate') => {
+  const getTarget = (metricType: MetricType) => {
     const userTarget = statistics?.targets?.user.find(t => t.metricType === metricType);
     const recommendedTarget = statistics?.targets?.recommended.find(t => t.metricType === metricType);
     return {
@@ -24,23 +36,23 @@ export function HealthAssessment() {
   const glucoseDaily = statistics?.glucose.daily ?? 0;
   const glucoseWeekly = statistics?.glucose.weekly ?? 0;
   const glucoseMonthly = statistics?.glucose.monthly ?? 0;
-  const glucoseTargets = getTarget('glucose');
+  const glucoseTargets = getTarget(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
 
   // Water is in liters already from the API, convert to string with 1 decimal
   const waterDaily = (statistics?.water.daily ?? 0).toFixed(1);
   const waterWeekly = (statistics?.water.weekly ?? 0).toFixed(1);
   const waterMonthly = (statistics?.water.monthly ?? 0).toFixed(1);
-  const waterTargets = getTarget('water_intake');
+  const waterTargets = getTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE);
 
   const stepsDaily = statistics?.steps.daily ?? 0;
   const stepsWeekly = statistics?.steps.weekly ?? 0;
   const stepsMonthly = statistics?.steps.monthly ?? 0;
-  const stepsTargets = getTarget('steps');
+  const stepsTargets = getTarget(EXERCISE_TYPE_ENUM.STEPS);
 
   const heartRateDaily = statistics?.heartRate.daily ?? 0;
   const heartRateWeekly = statistics?.heartRate.weekly ?? 0;
   const heartRateMonthly = statistics?.heartRate.monthly ?? 0;
-  const heartRateTargets = getTarget('heart_rate');
+  const heartRateTargets = getTarget(EXERCISE_TYPE_ENUM.HEART_RATE);
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
@@ -128,7 +140,7 @@ export function HealthAssessment() {
                   value={glucoseDaily}
                   label="Daily Average"
                   unit="mg/dL"
-                  metricType="glucose"
+                  metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
                   size={200}
                   recommendedTarget={glucoseTargets.recommended}
                   userTarget={glucoseTargets.user}
@@ -139,7 +151,7 @@ export function HealthAssessment() {
                   value={glucoseWeekly}
                   label="Weekly Average"
                   unit="mg/dL"
-                  metricType="glucose"
+                  metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
                   size={200}
                   recommendedTarget={glucoseTargets.recommended}
                   userTarget={glucoseTargets.user}
@@ -150,7 +162,7 @@ export function HealthAssessment() {
                   value={glucoseMonthly}
                   label="Monthly Average"
                   unit="mg/dL"
-                  metricType="glucose"
+                  metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
                   size={200}
                   recommendedTarget={glucoseTargets.recommended}
                   userTarget={glucoseTargets.user}
@@ -200,7 +212,7 @@ export function HealthAssessment() {
                     label="Daily"
                     unit="L"
                     size={180}
-                    metricType="hydration"
+                    metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
                     recommendedTarget={waterTargets.recommended}
                     userTarget={waterTargets.user}
                   />
@@ -211,7 +223,7 @@ export function HealthAssessment() {
                     label="Weekly"
                     unit="L"
                     size={180}
-                    metricType="hydration"
+                    metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
                     recommendedTarget={waterTargets.recommended}
                     userTarget={waterTargets.user}
                   />
@@ -222,7 +234,7 @@ export function HealthAssessment() {
                     label="Monthly"
                     unit="L"
                     size={180}
-                    metricType="hydration"
+                    metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
                     recommendedTarget={waterTargets.recommended}
                     userTarget={waterTargets.user}
                   />
@@ -267,9 +279,9 @@ export function HealthAssessment() {
                   <CircularGauge
                     value={stepsDaily}
                     label="Daily"
-                    unit=" steps"
+                    unit="steps"
                     size={180}
-                    metricType="activity"
+                    metricType={EXERCISE_TYPE_ENUM.STEPS}
                     recommendedTarget={stepsTargets.recommended}
                     userTarget={stepsTargets.user}
                   />
@@ -280,7 +292,7 @@ export function HealthAssessment() {
                     label="Weekly"
                     unit=" steps"
                     size={180}
-                    metricType="activity"
+                    metricType={EXERCISE_TYPE_ENUM.STEPS}
                     recommendedTarget={stepsTargets.recommended}
                     userTarget={stepsTargets.user}
                   />
@@ -289,9 +301,9 @@ export function HealthAssessment() {
                   <CircularGauge
                     value={stepsMonthly}
                     label="Monthly"
-                    unit=" steps"
+                    unit="steps"
                     size={180}
-                    metricType="activity"
+                    metricType={EXERCISE_TYPE_ENUM.STEPS}
                     recommendedTarget={stepsTargets.recommended}
                     userTarget={stepsTargets.user}
                   />
@@ -339,7 +351,7 @@ export function HealthAssessment() {
                       label="Daily"
                       unit=" BPM"
                       size={180}
-                      metricType="heartRate"
+                      metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
                       recommendedTarget={heartRateTargets.recommended}
                       userTarget={heartRateTargets.user}
                     />
@@ -350,7 +362,7 @@ export function HealthAssessment() {
                       label="Weekly"
                       unit=" BPM"
                       size={180}
-                      metricType="heartRate"
+                      metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
                       recommendedTarget={heartRateTargets.recommended}
                       userTarget={heartRateTargets.user}
                     />
@@ -361,7 +373,7 @@ export function HealthAssessment() {
                       label="Monthly"
                       unit=" BPM"
                       size={180}
-                      metricType="heartRate"
+                      metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
                       recommendedTarget={heartRateTargets.recommended}
                       userTarget={heartRateTargets.user}
                     />
@@ -373,243 +385,84 @@ export function HealthAssessment() {
 
           {/* Summary Cards */}
           <div className={`grid grid-cols-1 md:grid-cols-2 ${isPaidUser ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-6 mb-8`}>
-            {/* Hydration Summary */}
-            <Card
-              className="p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-              style={{
-                background: "linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
-                border: "1px solid rgba(0, 133, 111, 0.2)",
-                borderRadius: "16px",
-                boxShadow: "0 2px 8px rgba(0, 133, 111, 0.1)",
+            <InsightSummaryCard
+              title="Hydration Summary"
+              icon={Droplet}
+              iconColor="#00856F"
+              gradientColors={{
+                from: "#E0F2F1",
+                to: "#B2DFDB",
               }}
-              data-testid="card-hydration-summary"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="flex items-center justify-center rounded-xl"
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    background: "#00856F",
-                    boxShadow: "0 4px 8px rgba(0, 133, 111, 0.3)",
-                  }}
-                >
-                  <Droplet
-                    style={{ width: "26px", height: "26px", color: "#FFFFFF" }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3
-                    className="mb-2"
-                    style={{
-                      fontSize: "17px",
-                      fontWeight: 700,
-                      color: "#00453A",
-                    }}
-                  >
-                    Hydration Summary
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#546E7A",
-                      lineHeight: "22px",
-                    }}
-                  >
-                    Your all time average is good! Please drink often to hydrate
-                    more.
-                  </p>
-                </div>
-              </div>
-            </Card>
+              borderColor="rgba(0, 133, 111, 0.2)"
+              shadowColor="rgba(0, 133, 111, 0.1)"
+              iconBgColor="#00856F"
+              isLoading={insightsLoading}
+              insight={waterIntakeInsight}
+              testId="card-hydration-summary"
+            />
 
-            {/* Glucose Summary */}
-            <Card
-              className="p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-              style={{
-                background: "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)",
-                border: "1px solid rgba(76, 175, 80, 0.2)",
-                borderRadius: "16px",
-                boxShadow: "0 2px 8px rgba(76, 175, 80, 0.1)",
+            <InsightSummaryCard
+              title="Glucose Summary"
+              icon={Activity}
+              iconColor="#4CAF50"
+              gradientColors={{
+                from: "#E8F5E9",
+                to: "#C8E6C9",
               }}
-              data-testid="card-glucose-summary"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="flex items-center justify-center rounded-xl"
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    background: "#4CAF50",
-                    boxShadow: "0 4px 8px rgba(76, 175, 80, 0.3)",
-                  }}
-                >
-                  <Activity
-                    style={{ width: "26px", height: "26px", color: "#FFFFFF" }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3
-                    className="mb-2"
-                    style={{
-                      fontSize: "17px",
-                      fontWeight: 700,
-                      color: "#00453A",
-                    }}
-                  >
-                    Glucose Summary
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#546E7A",
-                      lineHeight: "22px",
-                    }}
-                  >
-                    Your all time average is good! Please maintain your glucose
-                    levels.
-                  </p>
-                </div>
-              </div>
-            </Card>
+              borderColor="rgba(76, 175, 80, 0.2)"
+              shadowColor="rgba(76, 175, 80, 0.1)"
+              iconBgColor="#4CAF50"
+              isLoading={insightsLoading}
+              insight={glucoseInsight}
+              testId="card-glucose-summary"
+            />
 
-            {/* Activity Summary */}
-            <Card
-              className="p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-              style={{
-                background: "linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%)",
-                border: "1px solid rgba(33, 150, 243, 0.2)",
-                borderRadius: "16px",
-                boxShadow: "0 2px 8px rgba(33, 150, 243, 0.1)",
+            <InsightSummaryCard
+              title="Activity Summary"
+              icon={Activity}
+              iconColor="#2196F3"
+              gradientColors={{
+                from: "#E3F2FD",
+                to: "#BBDEFB",
               }}
-              data-testid="card-activity-summary"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="flex items-center justify-center rounded-xl"
-                  style={{
-                    width: "52px",
-                    height: "52px",
-                    background: "#2196F3",
-                    boxShadow: "0 4px 8px rgba(33, 150, 243, 0.3)",
-                  }}
-                >
-                  <Activity
-                    style={{ width: "26px", height: "26px", color: "#FFFFFF" }}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3
-                    className="mb-2"
-                    style={{
-                      fontSize: "17px",
-                      fontWeight: 700,
-                      color: "#00453A",
-                    }}
-                  >
-                    Activity Summary
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#546E7A",
-                      lineHeight: "22px",
-                    }}
-                  >
-                    Your all time average is good! Please try and be active as
-                    much as you can!
-                  </p>
-                </div>
-              </div>
-            </Card>
+              borderColor="rgba(33, 150, 243, 0.2)"
+              shadowColor="rgba(33, 150, 243, 0.1)"
+              iconBgColor="#2196F3"
+              isLoading={insightsLoading}
+              insight={stepsInsight}
+              testId="card-activity-summary"
+            />
 
-            {/* Heart Rate Summary - Only for paid users */}
             {isPaidUser && (
-              <Card
-                className="p-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                style={{
-                  background: "linear-gradient(135deg, #FCE4EC 0%, #F8BBD0 100%)",
-                  border: "1px solid rgba(233, 30, 99, 0.2)",
-                  borderRadius: "16px",
-                  boxShadow: "0 2px 8px rgba(233, 30, 99, 0.1)",
+              <InsightSummaryCard
+                title="Heart Rate Summary"
+                icon={Heart}
+                iconColor="#E91E63"
+                gradientColors={{
+                  from: "#FCE4EC",
+                  to: "#F8BBD0",
                 }}
-                data-testid="card-heart-rate-summary"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className="flex items-center justify-center rounded-xl"
-                    style={{
-                      width: "52px",
-                      height: "52px",
-                      background: "#E91E63",
-                      boxShadow: "0 4px 8px rgba(233, 30, 99, 0.3)",
-                    }}
-                  >
-                    <Heart
-                      style={{ width: "26px", height: "26px", color: "#FFFFFF" }}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <h3
-                      className="mb-2"
-                      style={{
-                        fontSize: "17px",
-                        fontWeight: 700,
-                        color: "#00453A",
-                      }}
-                    >
-                      Heart Rate Summary
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: "14px",
-                        color: "#546E7A",
-                        lineHeight: "22px",
-                      }}
-                    >
-                      Your heart rate averages are within normal range! Keep monitoring your cardiovascular health.
-                    </p>
-                  </div>
-                </div>
-              </Card>
+                borderColor="rgba(233, 30, 99, 0.2)"
+                shadowColor="rgba(233, 30, 99, 0.1)"
+                iconBgColor="#E91E63"
+                isLoading={insightsLoading}
+                insight={heartRateInsight}
+                testId="card-heart-rate-summary"
+              />
             )}
           </div>
 
+          {/* Overall Health Summary Section */}
+          <OverallHealthSummary
+            summary={overallHealthSummary}
+            isLoading={insightsLoading}
+          />
+
           {/* What to Do Next Section */}
-          <Card
-            className="p-8 transition-all duration-300 hover:shadow-xl"
-            style={{
-              background: "linear-gradient(135deg, #FFFFFF 0%, #F7F9F9 100%)",
-              border: "1px solid rgba(0, 133, 111, 0.12)",
-              borderRadius: "16px",
-              boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
-            }}
-            data-testid="section-what-to-do-next"
-          >
-            <h2
-              className="mb-4"
-              style={{
-                fontSize: "28px",
-                fontWeight: 700,
-                color: "#00453A",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              What to Do Next
-            </h2>
-            <p
-              style={{
-                fontSize: "16px",
-                color: "#546E7A",
-                lineHeight: "26px",
-              }}
-            >
-              Continue tracking your health metrics regularly. Maintain a
-              balanced diet, stay hydrated, and keep up with your physical
-              activity. Consult with your healthcare provider if you notice any
-              significant changes in your readings.
-            </p>
-          </Card>
+          <WhatToDoNext
+            tips={whatToDoNext}
+            isLoading={insightsLoading}
+          />
         </div>
       </main>
     </div>

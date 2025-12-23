@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { PhysicianController } from "../controllers/physician.controller";
-import { authenticateToken,  requirePhysicianOrAdmin } from "../../../shared/middleware/auth";
-import { createMulterConfig } from "../../../shared/config/multer.config";
+import { authenticateToken } from "../../../shared/middleware/auth";
+import { uploadPhysicianImage } from "server/src/shared/config/multer.config";
 
 const router = Router();
 
@@ -9,10 +9,6 @@ router.use(authenticateToken);
 
 const physicianController = new PhysicianController();
 
-const uploadPhysicianImage = createMulterConfig({
-  destination: 'public/uploads/physicians',
-  fieldName: 'image',
-});
 
 /**
  * @swagger

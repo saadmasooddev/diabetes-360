@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { FoodController } from '../controllers/food.controller';
 import { authenticateToken, requirePermission, requireRole } from '../../../shared/middleware/auth';
 import { memoryUpload } from '../../../shared/config/multer.config';
+import { USER_ROLES } from '../../auth/models/user.schema';
 
 const router = Router();
 const foodController= new FoodController();
 
 /**
  * @swagger
- * /api/food-scanner/scan:
+ * /api/food/scan:
  *   post:
  *     summary: Scan a food image using AI
  *     tags: [Food Scanner]
@@ -66,14 +67,14 @@ const foodController= new FoodController();
 router.post(
   '/scan',
   authenticateToken,
-  requirePermission('scan:food'),
+  // requirePermission('scan:food'),
   memoryUpload.single('food_image'),
   (req, res) => foodController.scanFood(req, res)
 );
 
 /**
  * @swagger
- * /api/food-scanner/nutrition/requirements:
+ * /api/food/nutrition/requirements:
  *   get:
  *     summary: Get daily nutrition requirements for the user
  *     tags: [Food Scanner]
@@ -129,7 +130,7 @@ router.get(
 
 /**
  * @swagger
- * /api/food-scanner/nutrition/consumed:
+ * /api/food/nutrition/consumed:
  *   get:
  *     summary: Get consumed nutrients for today
  *     tags: [Food Scanner]
@@ -178,7 +179,95 @@ router.get(
   (req, res) => foodController.getConsumedNutrients(req, res)
 );
 
+/**
+ * @swagger
+ * /api/food/details:
+ *   post:
+ *     summary: Generate or fetch recipe details for a meal
+ *     tags: [Food Scanner]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - mealType
+ *               - nutrition_info
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Meal name exactly as present in the meal plan
+ *               mealType:
+ *                 type: string
+ *                 enum: [Breakfast, Lunch, Dinner]
+ *                 description: Meal type to match against the meal plan
+ *               nutrition_info:
+ *                 type: object
+ *                 properties:
+ *                   carbs:
+ *                     type: number
+ *                   proteins:
+ *                     type: number
+ *                   calories:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Recipe generated or returned from cache
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         ingredients:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               main_ingredients:
+ *                                 type: object
+ *                                 properties:
+ *                                   heading:
+ *                                     type: string
+ *                                   items:
+ *                                     type: array
+ *                                     items:
+ *                                       type: string
+ *                               sub_ingredients:
+ *                                 type: object
+ *                                 properties:
+ *                                   heading:
+ *                                     type: string
+ *                                   items:
+ *                                     type: array
+ *                                     items:
+ *                                       type: string
+ *                         making_steps:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *       400:
+ *         description: Meal not found or validation error
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  '/details',
+  authenticateToken,
+  (req, res) => foodController.generateRecipe(req, res)
+);
 
 
 export { router as foodRoutes };
-

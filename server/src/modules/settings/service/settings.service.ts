@@ -9,6 +9,7 @@ import type {
   ExtendedLimits,
 } from "../models/settings.schema";
 import { BadRequestError } from "server/src/shared/errors";
+import { EXERCISE_TYPE_ENUM, MetricType } from "../../health/models/health.schema";
 
 export class SettingsService {
   private readonly settingsRepository: SettingsRepository;
@@ -27,8 +28,8 @@ export class SettingsService {
   constructor() {
     this.settingsRepository = new SettingsRepository();
   }
-  async getFreeTierLimits(): Promise<ExtendedLimits> {
-    const limits = await this.settingsRepository.getFreeTierLimits();
+  async getLogLimits(): Promise<ExtendedLimits> {
+    const limits = await this.settingsRepository.getLogLimits();
     const foodScanLimits = await this.getFoodScanLimits();
 
     // If still no limits found, return default limits (this shouldn't happen in production)
@@ -57,16 +58,16 @@ export class SettingsService {
   }
 
   async getLimitForMetricType(
-    metricType: "glucose" | "steps" | "water"
+    metricType: MetricType
   ): Promise<number> {
-    const limits = await this.getFreeTierLimits();
+    const limits = await this.getLogLimits();
 
     switch (metricType) {
-      case "glucose":
+      case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
         return limits.glucoseLimit;
-      case "steps":
+      case EXERCISE_TYPE_ENUM.STEPS:
         return limits.stepsLimit;
-      case "water":
+      case EXERCISE_TYPE_ENUM.WATER_INTAKE:
         return limits.waterLimit;
       default:
         throw new BadRequestError("Invalid metric type");

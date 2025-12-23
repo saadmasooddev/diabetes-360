@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, numeric, date, text, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, numeric, date, text, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "../../auth/models/user.schema";
 
-const mealTypeEnum = pgEnum("meal_type", ["Breakfast", "Lunch", "Dinner"]); 
+export const mealTypeEnum = pgEnum("meal_type_enum", ["Breakfast", "Lunch", "Dinner"]); 
 export const MEAL_TYPE_ENUM = {
   Breakfast: "Breakfast",
   Lunch: "Lunch",
@@ -105,6 +105,17 @@ export const dailyPersonalizedInsights = pgTable("daily_personalized_insights", 
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Recipes Table - stores AI generated recipes linked to a specific meal
+export const recipes = pgTable("recipes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  mealId: varchar("meal_id").notNull().references(() => mealPlanMeals.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  ingredients: jsonb("ingredients").notNull().default(sql`'[]'::jsonb`),
+  makingSteps: jsonb("making_steps").notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertDailyMealPlanSchema = createInsertSchema(dailyMealPlans).omit({
   id: true,
   createdAt: true,
@@ -145,4 +156,5 @@ export type MealPlanMeal = typeof mealPlanMeals.$inferSelect;
 export type InsertMealPlanMeal = z.infer<typeof insertMealPlanMealSchema>;
 export type DailyPersonalizedInsight = typeof dailyPersonalizedInsights.$inferSelect;
 export type InsertDailyPersonalizedInsight = z.infer<typeof insertDailyPersonalizedInsightSchema>;
+export type Recipe = typeof recipes.$inferSelect;
 

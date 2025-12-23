@@ -18,7 +18,11 @@ export const ROLE_PERMISSIONS = {
     'delete:own_health_metrics',
     'read:health_targets',
     'write:own_health_targets',
-    'scan:food'
+    'scan:food',
+    'read:own_medical_records',
+    'create:own_medical_records',
+    'update:own_medical_records',
+    'delete:own_medical_records',
   ],
   [USER_ROLES.PHYSICIAN]: [
     'read:own_profile',
@@ -31,6 +35,8 @@ export const ROLE_PERMISSIONS = {
     'read:patient_health_metrics',
     'create:patient_health_metrics',
     'update:patient_health_metrics',
+    'read:patient_medical_records',
+    'create:patient_medical_records',
   ],
   [USER_ROLES.ADMIN]: [
     'read:own_profile',
@@ -54,6 +60,10 @@ export const ROLE_PERMISSIONS = {
     'read:health_targets',
     'write:health_targets',
     'write:own_health_targets',
+    'read:all_medical_records',
+    'create:all_medical_records',
+    'update:all_medical_records',
+    'delete:all_medical_records',
   ],
 } as const;
 

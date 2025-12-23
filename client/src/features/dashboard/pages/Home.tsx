@@ -34,19 +34,28 @@ export function Home() {
     return Math.floor(Math.random() * array.length);
   }
 
-  function getCurrentMealBasedOnTimeOfDay(fs: FoodSuggestion[]): MealDetails | undefined {
+  type MealTypeValue = (typeof MEAL_TYPE_ENUM)[keyof typeof MEAL_TYPE_ENUM];
+
+  function getCurrentMealBasedOnTimeOfDay(fs: FoodSuggestion[]): { meal: MealDetails; mealType: MealTypeValue } | undefined {
     const currentTime = new Date().getHours();
     let array: MealDetails[] | undefined = []
+    let mealType: MealTypeValue | undefined;
     if (currentTime >= 6 && currentTime < 11) {
+      mealType = MEAL_TYPE_ENUM.Breakfast;
       array = fs.find(meal => meal.mealType === MEAL_TYPE_ENUM.Breakfast)?.meals;
     } else if (currentTime >= 11 && currentTime < 17) {
+      mealType = MEAL_TYPE_ENUM.Lunch;
       array = fs.find(meal => meal.mealType === MEAL_TYPE_ENUM.Lunch)?.meals;
     } else {
+      mealType = MEAL_TYPE_ENUM.Dinner;
       array = fs.find(meal => meal.mealType === MEAL_TYPE_ENUM.Dinner)?.meals;
     }
 
     if (!array) return undefined
-    return array[randomIndex(array)]
+    return {
+      meal: array[randomIndex(array)],
+      mealType: mealType as MealTypeValue,
+    }
   }
 
   const currentMeal = getCurrentMealBasedOnTimeOfDay(foodSuggestions);
@@ -177,7 +186,7 @@ export function Home() {
                       <div className="relative h-48 md:h-auto md:w-48 flex-shrink-0">
                         <Image
                           src={healthyFoodImg}
-                          alt={currentMeal.name}
+                          alt={currentMeal.meal.name}
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -187,13 +196,13 @@ export function Home() {
                             className="mb-2 text-sm"
                             style={{ color: "#546E7A" }}
                           >
-                            {currentMeal.name}
+                            {currentMeal.mealType}
                           </p>
                           <h3
                             className="mb-4 text-lg font-bold md:text-xl"
                             style={{ color: "#00856F" }}
                           >
-                            {currentMeal.name}
+                            {currentMeal.meal.name}
                           </h3>
                           <div className="flex flex-wrap gap-2 mb-4">
                             <span
@@ -203,7 +212,7 @@ export function Home() {
                                 color: "#00856F",
                               }}
                             >
-                              Carbs: {parseFloat(currentMeal.nutrition_info.carbs.toString()).toFixed(0)}g
+                              Carbs: {parseFloat(currentMeal.meal.nutrition_info.carbs.toString()).toFixed(0)}g
                             </span>
                             <span
                               className="px-3 py-1 rounded-md text-xs font-medium"
@@ -212,7 +221,7 @@ export function Home() {
                                 color: "#00856F",
                               }}
                             >
-                              Calories: {parseFloat(currentMeal.nutrition_info.calories.toString()).toFixed(0)}
+                              Calories: {parseFloat(currentMeal.meal.nutrition_info.calories.toString()).toFixed(0)}
                             </span>
                             <span
                               className="px-3 py-1 rounded-md text-xs font-medium"
@@ -221,7 +230,7 @@ export function Home() {
                                 color: "#00856F",
                               }}
                             >
-                              Proteins: {parseFloat(currentMeal.nutrition_info.proteins.toString()).toFixed(0)}g
+                              Proteins: {parseFloat(currentMeal.meal.nutrition_info.proteins.toString()).toFixed(0)}g
                             </span>
                           </div>
                         </div>
@@ -236,11 +245,14 @@ export function Home() {
                             fontWeight: 600,
                           }}
                           onClick={() => {
-                            toast({
-                              title: "Recipe",
-                              description: "Recipe details will be available soon.",
-                              variant: "default",
-                            });
+                            if (currentMeal) {
+                              setLocation(ROUTES.RECIPE_DETAIL, {
+                                state: {
+                                  meal: currentMeal.meal,
+                                  mealType: currentMeal.mealType,
+                                },
+                              });
+                            }
                           }}
                           data-testid="button-view-recipe"
                         >

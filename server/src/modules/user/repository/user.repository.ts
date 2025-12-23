@@ -1,6 +1,6 @@
 import { db } from "server/src/app/config/db";
 import {  customerData, physicianData, physicianSpecialties, users, type CustomerData, type PhysicianData, User } from "../../auth/models/user.schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { NotFoundError } from "server/src/shared/errors";
 
 export class UserRepository {
@@ -32,5 +32,10 @@ export class UserRepository {
       throw new NotFoundError("User not found");
     }
     return user
+  }
+
+  async getAllUsersByIds(userIds: string[]){
+    const usersData = await db.select().from(users).where(inArray(users.id, userIds))
+    return usersData
   }
 }

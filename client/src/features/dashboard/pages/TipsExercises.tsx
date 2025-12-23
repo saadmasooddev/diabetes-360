@@ -12,10 +12,12 @@ import {
 import { Lock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { healthTips, exercisePlans, weeklyChallenges, type ExercisePlan } from '@/mocks/tipsExercises';
 import { ROUTES } from '@/config/routes';
-import { useAddActivityLog } from '@/hooks/mutations/useHealth';
+import { useAddActivityLogsBatch } from '@/hooks/mutations/useHealth';
+import { useGetCustomerData } from '@/hooks/mutations/useCustomer';
 import { useAuthStore } from '@/stores/authStore';
-import { handleNumberInput } from '@/lib/utils';
+import { calorieUtils, handleNumberInput } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
+import { ACTIVITY_TYPE_ENUM, ActivityType } from '@shared/schema';
 
 interface TipsExercisesProps {
   isPremium?: boolean;
@@ -26,7 +28,8 @@ type ModalType = 'time' | 'exercises';
 export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
   const [, setLocation] = useLocation();
   const { user } = useAuthStore();
-  const addActivityLog = useAddActivityLog();
+  const addActivityLogsBatch = useAddActivityLogsBatch();
+  const { data: customerData } = useGetCustomerData();
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [modalType, setModalType] = useState<ModalType>('time');
@@ -72,29 +75,65 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
   const handleLogExercise = async () => {
     if (modalType === 'time' && selectedExercise) {
       // Determine activity type based on exercise plan title
-      let activityType: 'walking' | 'yoga' = 'walking';
+      let activityName: 'walking' | 'yoga' = 'walking';
+      let activityType: ActivityType = "" as ActivityType
+      let exerciseType = 'Morning Walk';
+
       if (selectedExercise.title.toLowerCase().includes('yoga')) {
-        activityType = 'yoga';
+        activityName = 'yoga';
+        activityType = ACTIVITY_TYPE_ENUM.STRETCHING;
+        exerciseType = 'Yoga';
       } else if (selectedExercise.title.toLowerCase().includes('walk')) {
-        activityType = 'walking';
+        activityName = 'walking';
+        activityType = ACTIVITY_TYPE_ENUM.CARDIO;
+        exerciseType = 'Morning Walk';
       }
 
-      // Log the activity
-      try {
-        await addActivityLog.mutateAsync({
-          activityType,
-          hours,
-          minutes,
-        });
-        // Close modal and reset all state
-        setIsExerciseModalOpen(false);
-        setHours(0);
-        setMinutes(30);
-        setSelectedExercise(null);
-        setModalType('time');
-      } catch (error) {
-        // Error is handled by the mutation hook (toast notification)
+      // Calculate duration in seconds
+      const durationSeconds = (hours * 3600) + (minutes * 60);
+
+      // Get user info for calorie calculation
+      if (!customerData?.customerData) {
+        // Error will be shown via toast in the mutation hook
+        // But we can add a more specific message here if needed
+        console.error('Customer data not available for calorie calculation');
+        return;
       }
+
+      const userInfo = {
+        weight: customerData.customerData.weight,
+        height: customerData.customerData.height,
+        birthday: customerData.customerData.birthday,
+        gender: customerData.customerData.gender as 'male' | 'female',
+      };
+
+      // Calculate calories burned
+      const calories = calorieUtils.calculateCaloriesBurned(userInfo, activityName, durationSeconds);
+
+      addActivityLogsBatch.mutate({
+        exercises: [{
+          exerciseType,
+          calories,
+          activityType,
+          duration: durationSeconds, // in seconds
+          ...(activityName === 'walking' && {
+            steps: Math.round((durationSeconds / 60) * 100),
+            pace: 'moderate',
+          }),
+
+          ...(activityName === 'yoga' && {
+            duration: Math.round((durationSeconds / 60) * 100),
+            pace: 'moderate',
+          }),
+        }]
+      });
+      // Close modal and reset all state
+      setIsExerciseModalOpen(false);
+      setHours(0);
+      setMinutes(30);
+      setSelectedExercise(null);
+      setModalType('time');
+
     } else {
       // This is for strength training exercises - handled in StrengthTrainingProgress page
       setIsExerciseModalOpen(false);
@@ -711,7 +750,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
               <Button
                 onClick={handleLogExercise}
                 className="w-full"
-                disabled={addActivityLog.isPending}
+                disabled={addActivityLogsBatch.isPending || !customerData?.customerData}
                 style={{
                   background: '#00856F',
                   color: '#FFFFFF',
@@ -723,7 +762,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                 }}
                 data-testid="button-log-exercise"
               >
-                {addActivityLog.isPending ? (
+                {addActivityLogsBatch.isPending ? (
                   <>
                     <ButtonSpinner className="mr-2" />
                     Logging...
@@ -897,7 +936,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
               <Button
                 onClick={handleLogExercise}
                 className="w-full"
-                disabled={addActivityLog.isPending}
+                disabled={addActivityLogsBatch.isPending}
                 style={{
                   background: '#00856F',
                   color: '#FFFFFF',
@@ -909,7 +948,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
                 }}
                 data-testid="button-log-exercise"
               >
-                {addActivityLog.isPending ? (
+                {addActivityLogsBatch.isPending ? (
                   <>
                     <ButtonSpinner className="mr-2" />
                     Logging...

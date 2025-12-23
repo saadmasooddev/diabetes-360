@@ -10,10 +10,11 @@ export function handleError(res: Response, error: any, data: any = null): void {
     return;
   }
   if (error instanceof ZodError) {
-    const zodMessage = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+    const zodMessage = error.message 
     sendError(res, zodMessage, 400, data);
     return;
   }
+
   const statusCode = error.status || error.statusCode || 500;
   const message = error.message || "Internal Server Error";
   sendError(res, message, statusCode, data);

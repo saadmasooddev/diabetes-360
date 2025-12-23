@@ -2,10 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import type { MetricType } from '../pages/Dashboard';
 import { handleNumberInput } from '@/lib/utils';
 import { Activity, Footprints, Droplet, Heart } from 'lucide-react';
 import { ButtonSpinner } from '@/components/ui/spinner';
+import { EXERCISE_TYPE_ENUM, MetricType } from '@shared/schema';
 
 interface AddMetricDialogProps {
   open: boolean;
@@ -27,7 +27,7 @@ export function AddMetricDialog({
   isSubmitting,
 }: AddMetricDialogProps) {
   const config = {
-    glucose: {
+    [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: {
       title: 'Log Blood Glucose',
       placeholder: 'Enter glucose level (mg/dL)',
       icon: Activity,
@@ -35,7 +35,7 @@ export function AddMetricDialog({
       iconColor: '#4CAF50',
       description: 'Record your current blood glucose reading',
     },
-    steps: {
+    [EXERCISE_TYPE_ENUM.STEPS]: {
       title: 'Log Steps',
       placeholder: 'Enter steps count',
       icon: Footprints,
@@ -43,7 +43,7 @@ export function AddMetricDialog({
       iconColor: '#2196F3',
       description: 'Track your daily physical activity',
     },
-    water: {
+    [EXERCISE_TYPE_ENUM.WATER_INTAKE]: {
       title: 'Log Water Intake',
       placeholder: 'Enter water intake (L)',
       icon: Droplet,
@@ -51,7 +51,7 @@ export function AddMetricDialog({
       iconColor: '#00856F',
       description: 'Record your daily hydration',
     },
-    heartbeat: {
+    [EXERCISE_TYPE_ENUM.HEART_RATE]: {
       title: 'Log Heart Rate',
       placeholder: 'Enter heart rate (bpm)',
       icon: Heart,

@@ -9,7 +9,7 @@ import {
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
-import { JWTService, type TokenPair } from "../../../shared/utils/jwt";
+import { JWTPayload, JWTService, type TokenPair } from "../../../shared/utils/jwt";
 import {
   ConflictError,
   UnauthorizedError,
@@ -61,16 +61,13 @@ export class AuthService {
       user.email
     );
 
-    // Generate tokens
-    const tokens = JWTService.generateTokenPair({
+    const tokens = await this.createTokens({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role as UserRole,
     });
-
-    await this.createRefreshToken(user.id, tokens.refreshToken);
 
     // Send welcome email with credentials
     try {
@@ -132,7 +129,7 @@ export class AuthService {
       return {
         user: {
           ...userWithoutPassword,
-          profileData: user.profileData as CustomerData | PhysicianData,
+          profileData: profileData as CustomerData | PhysicianData,
         },
         tokens: {
           accessToken: "",
@@ -142,25 +139,23 @@ export class AuthService {
       };
     }
 
-    // Generate tokens
-    const tokens = JWTService.generateTokenPair({
+
+    const tokens = await this.createTokens({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role as UserRole,
     });
-
-    const refreshToken = await this.authRepository.getValidRefreshToken(
-      user.id
-    );
-    try {
-      if (!refreshToken) throw new Error();
-      JWTService.verifyRefreshToken(refreshToken.token);
-      tokens.refreshToken = refreshToken.token;
-    } catch {
-      await this.createRefreshToken(user.id, tokens.refreshToken);
-    }
+    // const refreshToken = await this.authRepository.getValidRefreshToken(
+    //   user.id
+    // );
+    // try {
+    //   if (!refreshToken) throw new Error();
+    //   JWTService.verifyRefreshToken(refreshToken.token);
+    //   tokens.refreshToken = refreshToken.token;
+    // } catch {
+    // }
 
     const {
       password: __,
@@ -194,15 +189,14 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = JWTService.generateTokenPair({
-      userId: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role as UserRole,
+    const tokens = await this.createTokens({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role as UserRole,
+      
     });
-
-    await this.createRefreshToken(user.id, tokens.refreshToken);
 
     const { password: _, profileData, ...userWithoutPassword } = user;
     return {
@@ -218,9 +212,11 @@ export class AuthService {
   async refreshTokens(refreshToken: string): Promise<TokenPair> {
     // Verify refresh token
     const payload = JWTService.verifyRefreshToken(refreshToken);
-
-    // Check if token exists in database and is not revoked
-    const storedToken = await this.authRepository.getRefreshToken(refreshToken);
+    if(!payload.tokenId) {
+      throw new BadRequestError("Invalid refresh token provided")
+    }
+    
+    const storedToken = await this.authRepository.getRefreshToken(payload.tokenId);
     if (!storedToken) {
       throw new UnauthorizedError("Invalid refresh token");
     }
@@ -231,25 +227,25 @@ export class AuthService {
       throw new UnauthorizedError("User not found");
     }
 
-    // Generate new tokens
-    const newTokens = JWTService.generateTokenPair({
+
+    const tokens = await this.createTokens({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role as UserRole,
+      tokenId: payload.tokenId
     });
 
-    // Revoke old refresh token
-    // await this.authRepository.revokeRefreshToken(refreshToken);
-
-    await this.createRefreshToken(user.id, newTokens.refreshToken);
-
-    return newTokens;
+    return tokens;
   }
 
   async logout(refreshToken: string): Promise<void> {
-    await this.authRepository.revokeRefreshToken(refreshToken);
+    const payload = JWTService.verifyAccessToken(refreshToken)
+    if(!payload.tokenId) {
+      throw new BadRequestError("invalid refresh token")
+    }
+    await this.authRepository.revokeRefreshToken(payload.tokenId);
   }
 
   async logoutAll(userId: string): Promise<void> {
@@ -376,22 +372,22 @@ export class AuthService {
     await this.authRepository.deleteUser(id);
   }
 
-  private async createRefreshToken(
-    userId: string,
-    token: string
-  ): Promise<RefreshToken> {
+  private async createTokens(
+    payload:Omit<JWTPayload, 'iat' | 'exp'>,
+  ): Promise<TokenPair> {
     try {
       const expiresAt = new Date();
       expiresAt.setTime(
         expiresAt.getTime() + config.refreshTokenExpiresIn * 1000
       );
 
-      await this.authRepository.removeRefreshToken(userId);
-      return this.authRepository.createRefreshToken({
-        userId,
-        token,
+      const {tokenId, ...tokens }= JWTService.generateTokenPair(payload);
+      await this.authRepository.createRefreshToken({
+        userId: payload.userId,
+        tokenId,
         expiresAt,
       });
+      return tokens
     } catch (error) {
       throw error;
     }

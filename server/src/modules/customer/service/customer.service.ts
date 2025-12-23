@@ -21,19 +21,16 @@ export class CustomerService {
   }
 
   async createCustomerData(userId: string, data: InsertCustomerData) {
-    // Check if customer data already exists
     const existing = await this.customerRepository.getCustomerDataByUserId(userId);
     if (existing) {
       throw new ConflictError("Customer data already exists for this user");
     }
 
-    // Create customer data
     const customerData = await this.customerRepository.createCustomerData({
       ...data,
       userId,
     });
 
-    // Mark user profile as complete
     await db
       .update(users)
       .set({ 

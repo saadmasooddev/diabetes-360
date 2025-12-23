@@ -4,6 +4,17 @@ import type { ApiResponse } from "@/types/auth.types";
 import type { ScanResult } from "@/mocks/scanResults";
 import { DailyPersonalizedInsight } from "@shared/schema";
 
+export interface RecipeIngredients {
+  "main_ingredients": {
+    "heading": string;
+    "items": string[];
+  },
+  "sub_ingredients": {
+    "heading": string;
+    "items": string[];
+  }
+}
+
 export interface NutritionProfile { 
   carbs: number;
   fiber: number;
@@ -72,6 +83,29 @@ class FoodScannerService {
     }
 
     return response.data || null;
+  }
+
+  async getRecipeDetails(payload: {
+    name: string;
+    mealType: string;
+    nutrition_info: {
+      carbs: number;
+      proteins: number;
+      calories: number;
+    };
+  }) {
+    const response = await httpClient.post<ApiResponse<{
+      title: string;
+      description: string;
+      ingredients: RecipeIngredients[];
+      making_steps: string[];
+    }>>(API_ENDPOINTS.FOOD_SCANNER.RECIPE_DETAILS, payload);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to get recipe details');
+    }
+
+    return response.data;
   }
 
 }

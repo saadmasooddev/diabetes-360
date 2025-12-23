@@ -67,7 +67,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const handleLogout = () => {
     logout();
-    setLocation(ROUTES.LOGIN);
+    setLocation(ROUTES.LOGIN, { replace: true });
   };
 
   return (

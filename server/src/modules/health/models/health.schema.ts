@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable,  varchar, timestamp, numeric, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable,  varchar, timestamp, numeric, integer, pgEnum, jsonb, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "../../auth/models/user.schema";
@@ -8,7 +8,6 @@ export const healthMetrics = pgTable("health_metrics", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   bloodSugar: numeric("blood_sugar"),
-  steps: integer("steps"),
   waterIntake: numeric("water_intake"),
   heartRate: integer("heart_rate"),
   recordedAt: timestamp("recorded_at", { withTimezone: true}).notNull().defaultNow(),
@@ -20,7 +19,6 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).omit({
   userId: z.string().min(1),
   bloodSugar: z.number().nullable().optional(),
   waterIntake: z.number().nullable().optional(),
-  steps: z.number().int().nullable().optional(),
   heartRate: z.number().int().nullable().optional(),
   recordedAt: z.coerce.date().nullable().optional()
 });
@@ -28,37 +26,30 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics).omit({
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
 export type HealthMetric = typeof healthMetrics.$inferSelect;
 export type MertricRecord = { id: string, userId: string, value: number | null, recordedAt: Date };
+export type ExtendedHealthMetric = HealthMetric & { steps?: number };
 
-export const activityTypeEnum = pgEnum("activity_type", ["walking", "yoga"]);
-// Activity Logs Table - for time-based activities (walking, yoga) stored in minutes
-export const activityLogs = pgTable("activity_logs", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  activityType: activityTypeEnum("activity_type").notNull(), // 'walking' or 'yoga'
-  durationMinutes: integer("duration_minutes").notNull(), // Normalized to minutes
-  recordedAt: timestamp("recorded_at").notNull().defaultNow(),
-});
-
-export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
-  id: true,
-}).extend({
-  userId: z.string().min(1),
-  activityType: z.enum(["walking", "yoga"]),
-  durationMinutes: z.number().int().min(0),
-  recordedAt: z.coerce.date().nullable().optional()
-});
-
-export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
-export type ActivityLog = typeof activityLogs.$inferSelect;
-
-// Exercise Logs Table - for count-based strength training exercises
-export const exerciseTypeEnum = pgEnum("exercise_type", ["pushups", "squats", "chinups", "situps"]);
+export enum ACTIVITY_TYPE_ENUM {
+  CARDIO = "cardio",
+  STRENGTH_TRAINING = "strength_training",
+  STRETCHING = "stretching"
+}
+export type ActivityType = typeof ACTIVITY_TYPE_ENUM[keyof typeof ACTIVITY_TYPE_ENUM] 
+export const activityTypeEnum = pgEnum("activity_type_enum", Object.values(ACTIVITY_TYPE_ENUM) as [string, ...string[]]);
+export const activityTypeSchema = z.enum(Object.values(ACTIVITY_TYPE_ENUM));
 
 export const exerciseLogs = pgTable("exercise_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  exerciseType: exerciseTypeEnum("exercise_type").notNull(), // 'pushups', 'squats', 'chinups', 'situps'
-  count: integer("count").notNull(),
+  exerciseType: varchar("exercise_type").notNull(), 
+  calories: integer("calories").notNull(),
+  activityType: activityTypeEnum("activity_type").notNull(),
+  pace: varchar("pace"),
+  sets: varchar("sets"),
+  weight: varchar("weight"),
+  steps: varchar("steps"),
+  muscle: varchar("muscle"),
+  duration: integer("duration"),
+  repitition: varchar("repitition"),
   recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -66,8 +57,16 @@ export const insertExerciseLogSchema = createInsertSchema(exerciseLogs).omit({
   id: true,
 }).extend({
   userId: z.string().min(1),
-  exerciseType: z.enum(["pushups", "squats", "chinups", "situps"]),
-  count: z.number().int().min(0),
+  exerciseType: z.string().min(1),
+  calories: z.number().int().min(0),
+  activityType: activityTypeSchema,
+  pace: z.string().nullable().optional(),
+  sets: z.string().nullable().optional(),
+  weight: z.string().nullable().optional(),
+  steps: z.coerce.number().nullable().optional(),
+  muscle: z.string().nullable().optional(),
+  duration: z.string().nullable().optional(),
+  repitition: z.string().nullable().optional(),
   recordedAt: z.coerce.date().nullable().optional()
 });
 
@@ -75,7 +74,16 @@ export type InsertExerciseLog = z.infer<typeof insertExerciseLogSchema>;
 export type ExerciseLog = typeof exerciseLogs.$inferSelect;
 
 // Health Metric Targets Table - for storing admin recommended values and user-specific targets
-export const metricTypeEnum = pgEnum("metric_type", ["glucose", "steps", "water_intake", "heart_rate"]);
+export enum EXERCISE_TYPE_ENUM {
+  BLOOD_GLUCOSE = "blood_glucose",
+  STEPS = "steps",
+  WATER_INTAKE = "water_intake",
+  HEART_RATE = "heart_rate"
+}
+
+export const metricTypes = Object.values(EXERCISE_TYPE_ENUM)
+export type MetricType = typeof EXERCISE_TYPE_ENUM[keyof typeof EXERCISE_TYPE_ENUM] 
+export const metricTypeEnum = pgEnum("metric_type_enum", metricTypes as [string, ...string[]] );
 
 export const healthMetricTargets = pgTable("health_metric_targets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -114,12 +122,12 @@ export const insertHealthMetricTargetSchema = createInsertSchema(healthMetricTar
   updatedAt: true,
 }).extend({
   userId: z.string().nullable().optional(),
-  metricType: z.enum(["glucose", "steps", "water_intake", "heart_rate"]),
+  metricType: z.enum(metricTypes),
   targetValue: z.number().min(0),
 }).superRefine((data, ctx) => {
   if (!validateTargetValue(data.metricType, data.targetValue)) {
     switch (data.metricType) {
-      case "glucose":
+      case "blood_glucose":
         ctx.addIssue({
           code: "custom", 
           message: "Blood glucose target must be between 70-200 mg/dL",
@@ -135,7 +143,7 @@ export const insertHealthMetricTargetSchema = createInsertSchema(healthMetricTar
         break;
       case "water_intake":
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: "Water intake target must be between 0-5 liters per day",
           path: ["targetValue"],
         });
@@ -162,4 +170,17 @@ export const batchUpsertHealthMetricTargetsSchema = z.object({
 export type InsertHealthMetricTarget = z.infer<typeof insertHealthMetricTargetSchema>;
 export type UpdateHealthMetricTarget = z.infer<typeof updateHealthMetricTargetSchema>;
 export type HealthMetricTarget = typeof healthMetricTargets.$inferSelect;
+
+// Health Insights Table - stores AI-generated health insights, tips, and summary
+export const healthInsights = pgTable("health_insights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  insights: jsonb("insights").notNull(), // Array of insight objects
+  overallHealthSummary: text("overall_health_summary").notNull(),
+  whatToDoNext: jsonb("what_to_do_next").notNull(), // Array of tip objects
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type HealthInsight = typeof healthInsights.$inferSelect;
 

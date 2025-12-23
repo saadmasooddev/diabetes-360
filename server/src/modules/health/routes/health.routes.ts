@@ -10,84 +10,6 @@ const healthController = new HealthController();
 
 const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
 
-/**
- * @swagger
- * /api/health/metrics/add:
- *   post:
- *     summary: Add a new health metric entry
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: userId is automatically extracted from the authenticated user's token
- *             properties:
- *               recordedAt:
- *                 type: string
- *                 format: date-time
- *                 example: "2024-01-15T10:30:00Z"
- *                 description: The date and time the metric was recorded
- *               bloodSugar:
- *                 type: number
- *                 nullable: true
- *                 example: 120
- *                 description: Blood sugar level in mg/dL
- *               steps:
- *                 type: integer
- *                 nullable: true
- *                 example: 5000
- *                 description: Number of steps walked
- *               waterIntake:
- *                 type: number
- *                 nullable: true
- *                 example: 2.5
- *                 description: Water intake in liters
- *               heartRate:
- *                 type: integer
- *                 nullable: true
- *                 example: 72
- *                 description: Heart rate in beats per minute (BPM). Only available for paid users.
- *     responses:
- *       200:
- *         description: Metric added successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/HealthMetric'
- *       400:
- *         description: Bad request - validation error, limit exceeded, or heart rate feature requires paid tier
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - insufficient permissions
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.post(
-  "/metrics/add",
-  authenticateToken,
-  requirePermission("create:own_health_metrics"),
-  (req, res) => healthController.addMetric(req, res)
-);
 
 /**
  * @swagger
@@ -208,180 +130,11 @@ router.get(
   "/metrics/latest",
   authenticateToken,
   readOwnHealthMetrics,
-  (req, res, next) => healthController.getLatestMetric(req, res, next)
+  (req, res, next) => healthController.getLatestMetric(req, res)
 );
 
-/**
- * @swagger
- * /api/health/metrics:
- *   get:
- *     summary: Get paginated health metrics for the current user
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 30
- *           minimum: 1
- *           maximum: 100
- *         description: Maximum number of metrics to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *           minimum: 0
- *         description: Number of metrics to skip
- *     responses:
- *       200:
- *         description: Metrics retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/HealthMetric'
- *                       description: Array of health metrics, empty array returned on error
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - insufficient permissions
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get("/metrics", authenticateToken, readOwnHealthMetrics, (req, res) =>
-  healthController.getMetrics(req, res)
-);
 
-/**
- * @swagger
- * /api/health/metrics/chart:
- *   get:
- *     summary: Get health metrics for chart visualization
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: days
- *         schema:
- *           type: integer
- *           default: 7
- *           minimum: 1
- *           maximum: 30
- *         description: Number of days of data to retrieve
- *     responses:
- *       200:
- *         description: Chart data retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/HealthMetric'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - insufficient permissions
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get(
-  "/metrics/chart",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getChartData(req, res)
-);
 
-/**
- * @swagger
- * /api/health/metrics/today-count:
- *   get:
- *     summary: Get today's metric count(s) for the current user
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: metricType
- *         schema:
- *           type: string
- *           enum: [glucose, steps, water]
- *         description: Optional - Get count for specific metric type. If omitted, returns counts for all types.
- *     responses:
- *       200:
- *         description: Today's count(s) retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       oneOf:
- *                         - type: object
- *                           properties:
- *                             count:
- *                               type: integer
- *                               example: 2
- *                           description: When metricType query param is provided
- *                         - type: object
- *                           properties:
- *                             glucose:
- *                               type: integer
- *                               example: 2
- *                             steps:
- *                               type: integer
- *                               example: 1
- *                             water:
- *                               type: integer
- *                               example: 2
- *                           description: When metricType query param is omitted
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       403:
- *         description: Forbidden - insufficient permissions
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get(
-  "/metrics/today-count",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTodaysCount(req, res)
-);
 
 /**
  * @swagger
@@ -727,173 +480,9 @@ router.get(
 
 /**
  * @swagger
- * /api/health/activities/add:
- *   post:
- *     summary: Log a time-based activity (walking or yoga)
- *     tags: [Health Activities]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             description: userId is automatically extracted from the authenticated user's token
- *             required:
- *               - activityType
- *             properties:
- *               activityType:
- *                 type: string
- *                 enum: [walking, yoga]
- *                 example: "walking"
- *                 description: Type of activity
- *               hours:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 23
- *                 example: 1
- *                 description: Hours spent (will be converted to minutes)
- *               minutes:
- *                 type: integer
- *                 minimum: 0
- *                 maximum: 59
- *                 example: 30
- *                 description: Minutes spent
- *     responses:
- *       200:
- *         description: Activity logged successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       $ref: '#/components/schemas/ActivityLog'
- *       400:
- *         description: Bad request - validation error
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - insufficient permissions
- */
-router.post(
-  "/activities/add",
-  authenticateToken,
-  requirePermission("create:own_health_metrics"),
-  (req, res) => healthController.addActivityLog(req, res)
-);
-
-/**
- * @swagger
- * /api/health/activities:
- *   get:
- *     summary: Get activity logs for the current user
- *     tags: [Health Activities]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: activityType
- *         schema:
- *           type: string
- *           enum: [walking, yoga]
- *         description: Filter by activity type
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 30
- *         description: Maximum number of logs to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of logs to skip
- *     responses:
- *       200:
- *         description: Activity logs retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/activities",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getActivityLogs(req, res)
-);
-
-/**
- * @swagger
- * /api/health/activities/today:
- *   get:
- *     summary: Get today's activity logs
- *     tags: [Health Activities]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: activityType
- *         schema:
- *           type: string
- *           enum: [walking, yoga]
- *         description: Filter by activity type
- *     responses:
- *       200:
- *         description: Today's activity logs retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/activities/today",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTodayActivityLogs(req, res)
-);
-
-/**
- * @swagger
- * /api/health/activities/today/total:
- *   get:
- *     summary: Get total activity minutes for today
- *     tags: [Health Activities]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: activityType
- *         schema:
- *           type: string
- *           enum: [walking, yoga]
- *         description: Filter by activity type
- *     responses:
- *       200:
- *         description: Total activity minutes retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/activities/today/total",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTotalActivityMinutesToday(req, res)
-);
-
-
-/**
- * @swagger
  * /api/health/exercises/add/batch:
  *   post:
- *     summary: Log multiple exercises at once
+ *     summary: Log multiple exercises at once (including steps and activities)
  *     tags: [Health Exercises]
  *     security:
  *       - bearerAuth: []
@@ -912,15 +501,57 @@ router.get(
  *                   type: object
  *                   required:
  *                     - exerciseType
- *                     - count
+ *                     - calories
+ *                     - activityType
  *                   properties:
  *                     exerciseType:
  *                       type: string
- *                       enum: [pushups, squats, chinups, situps]
- *                     count:
+ *                       example: "walking"
+ *                       description: Type of exercise or activity
+ *                     calories:
  *                       type: integer
  *                       minimum: 0
- *                 example: [{"exerciseType": "pushups", "count": 20}, {"exerciseType": "squats", "count": 15}]
+ *                       example: 150
+ *                       description: Calories burned
+ *                     activityType:
+ *                       type: string
+ *                       example: "walking"
+ *                       description: Type of activity (walking, yoga, etc.)
+ *                     steps:
+ *                       type: number
+ *                       nullable: true
+ *                       example: 5000
+ *                       description: Number of steps (optional, for walking activities)
+ *                     pace:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "moderate"
+ *                     sets:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "3"
+ *                     weight:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "10kg"
+ *                     muscle:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "legs"
+ *                     duration:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "30 minutes"
+ *                     repitition:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "10"
+ *                     recordedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       nullable: true
+ *                       description: Optional timestamp, defaults to now
+ *                 example: [{"exerciseType": "walking", "calories": 150, "activityType": "walking", "steps": 5000}, {"exerciseType": "yoga", "calories": 100, "activityType": "yoga", "duration": "30 minutes"}]
  *     responses:
  *       200:
  *         description: Exercises logged successfully
@@ -938,115 +569,8 @@ router.post(
   (req, res) => healthController.addExerciseLogsBatch(req, res)
 );
 
-/**
- * @swagger
- * /api/health/exercises:
- *   get:
- *     summary: Get exercise logs for the current user
- *     tags: [Health Exercises]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: exerciseType
- *         schema:
- *           type: string
- *           enum: [pushups, squats, chinups, situps]
- *         description: Filter by exercise type
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 30
- *         description: Maximum number of logs to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           default: 0
- *         description: Number of logs to skip
- *     responses:
- *       200:
- *         description: Exercise logs retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/exercises",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getExerciseLogs(req, res)
-);
 
-/**
- * @swagger
- * /api/health/exercises/today:
- *   get:
- *     summary: Get today's exercise logs
- *     tags: [Health Exercises]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Today's exercise logs retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/exercises/today",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTodayExerciseLogs(req, res)
-);
 
-/**
- * @swagger
- * /api/health/exercises/today/totals:
- *   get:
- *     summary: Get today's exercise totals by type
- *     tags: [Health Exercises]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Today's exercise totals retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         pushups:
- *                           type: integer
- *                           example: 20
- *                         squats:
- *                           type: integer
- *                           example: 15
- *                         chinups:
- *                           type: integer
- *                           example: 7
- *                         situps:
- *                           type: integer
- *                           example: 5
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/exercises/today/totals",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTodayExerciseTotals(req, res)
-);
 
 /**
  * @swagger
@@ -1174,50 +698,6 @@ router.get(
   (req, res) => healthController.getRecommendedTargets(req, res)
 );
 
-/**
- * @swagger
- * /api/health/targets/user:
- *   get:
- *     summary: Get user-specific targets for all metric types
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User targets retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           id:
- *                             type: string
- *                           userId:
- *                             type: string
- *                           metricType:
- *                             type: string
- *                             enum: [glucose, steps, water_intake, heart_rate]
- *                           targetValue:
- *                             type: string
- *                             format: numeric
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- */
-router.get(
-  "/targets/user",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getUserTargets(req, res)
-);
 
 /**
  * @swagger
@@ -1260,52 +740,12 @@ router.get(
   (req, res) => healthController.getTargetsForUser(req, res)
 );
 
-/**
- * @swagger
- * /api/health/targets/recommended:
- *   post:
- *     summary: Create or update admin recommended target (admin only)
- *     tags: [Health Metrics]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - metricType
- *               - targetValue
- *             properties:
- *               metricType:
- *                 type: string
- *                 enum: [glucose, steps, water_intake, heart_rate]
- *               targetValue:
- *                 type: number
- *                 minimum: 0
- *     responses:
- *       200:
- *         description: Recommended target updated successfully
- *       400:
- *         description: Bad request
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - admin only
- */
-router.post(
-  "/targets/recommended",
-  authenticateToken,
-  requirePermission("write:health_targets"),
-  (req, res) => healthController.upsertRecommendedTarget(req, res)
-);
 
 /**
  * @swagger
- * /api/health/targets/user:
+ * /api/health/targets/user/batch:
  *   post:
- *     summary: Create or update user-specific target
+ *     summary: Create or update multiple user-specific targets
  *     tags: [Health Metrics]
  *     security:
  *       - bearerAuth: []
@@ -1316,18 +756,26 @@ router.post(
  *           schema:
  *             type: object
  *             required:
- *               - metricType
- *               - targetValue
+ *               - targets
  *             properties:
- *               metricType:
- *                 type: string
- *                 enum: [glucose, steps, water_intake, heart_rate]
- *               targetValue:
- *                 type: number
- *                 minimum: 0
+ *               targets:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - metricType
+ *                     - targetValue
+ *                   properties:
+ *                     metricType:
+ *                       type: string
+ *                       enum: [glucose, steps, water_intake, heart_rate]
+ *                     targetValue:
+ *                       type: number
+ *                       minimum: 0
  *     responses:
  *       200:
- *         description: User target updated successfully
+ *         description: User targets updated successfully
  *       400:
  *         description: Bad request
  *       401:
@@ -1336,12 +784,11 @@ router.post(
  *         description: Forbidden
  */
 router.post(
-  "/targets/user",
+  "/targets/user/batch",
   authenticateToken,
   readOwnHealthMetrics,
-  (req, res) => healthController.upsertUserTarget(req, res)
+  (req, res) => healthController.upsertUserTargetsBatch(req, res)
 );
-
 /**
  * @swagger
  * /api/health/targets/user/{metricType}:
@@ -1539,5 +986,208 @@ router.post(
  */
 router.get("/remaining-limits", authenticateToken, (req, res, next) => 
   healthController.getUserRemainingLimits(req, res, next)
-)
+);
+
+/**
+ * @swagger
+ * /api/health/insights:
+ *   get:
+ *     summary: Get AI-generated health insights and recommendations
+ *     description: Returns personalized health insights, overall health summary, and actionable tips. This endpoint is rate-limited to 3 requests per day per user. Results are cached for 8 hours.
+ *     tags: [Health Metrics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Health insights retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         insights:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                                 example: "glucose"
+ *                                 description: Metric name (glucose, water, steps, heart_rate)
+ *                               insight:
+ *                                 type: string
+ *                                 example: "Blood sugar averaging 120 mg/dL daily, slightly above target but showing weekly improvement."
+ *                         overallHealthSummary:
+ *                           type: string
+ *                           example: "You're doing excellent with water intake and maintaining a healthy heart rate..."
+ *                         whatToDoNext:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                                 example: "Diet Tip"
+ *                               tip:
+ *                                 type: string
+ *                                 example: "Eat smaller meals every three hours to stabilize blood sugar closer to target."
+ *       400:
+ *         description: Bad request - rate limit exceeded, customer data not found, or AI service error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  "/insights",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res, next) => healthController.getHealthInsights(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/health/exercises/calories-by-activity:
+ *   get:
+ *     summary: Get calories burned grouped by activity type for a date range
+ *     description: Returns total calories for each activity type (cardio, strength_training, stretching) and chart data with date/time breakdown. If the date range is today only, shows time-based data.
+ *     tags: [Health Exercises]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-01"
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-31"
+ *     responses:
+ *       200:
+ *         description: Calories data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         totals:
+ *                           type: object
+ *                           properties:
+ *                             cardio:
+ *                               type: integer
+ *                               example: 1500
+ *                               description: Total calories from cardio activities
+ *                             strength_training:
+ *                               type: integer
+ *                               example: 800
+ *                               description: Total calories from strength training activities
+ *                             stretching:
+ *                               type: integer
+ *                               example: 200
+ *                               description: Total calories from stretching activities
+ *                             total:
+ *                               type: integer
+ *                               example: 2500
+ *                               description: Total calories from all activities
+ *                         chartData:
+ *                           type: object
+ *                           properties:
+ *                             cardio:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                                 properties:
+ *                                   date:
+ *                                     type: string
+ *                                     format: date
+ *                                     example: "2024-01-15"
+ *                                   time:
+ *                                     type: string
+ *                                     nullable: true
+ *                                     example: "14:30"
+ *                                     description: Time in HH:MM format (only present if date range is today)
+ *                                   calories:
+ *                                     type: integer
+ *                                     example: 150
+ *                                   recordedAt:
+ *                                     type: string
+ *                                     format: date-time
+ *                                     example: "2024-01-15T14:30:00Z"
+ *                             strength_training:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                                 properties:
+ *                                   date:
+ *                                     type: string
+ *                                     format: date
+ *                                   time:
+ *                                     type: string
+ *                                     nullable: true
+ *                                   calories:
+ *                                     type: integer
+ *                                   recordedAt:
+ *                                     type: string
+ *                                     format: date-time
+ *                             stretching:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                                 properties:
+ *                                   date:
+ *                                     type: string
+ *                                     format: date
+ *                                   time:
+ *                                     type: string
+ *                                     nullable: true
+ *                                   calories:
+ *                                     type: integer
+ *                                   recordedAt:
+ *                                     type: string
+ *                                     format: date-time
+ *       400:
+ *         description: Bad request - invalid date parameters
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ */
+router.get(
+  "/exercises/calories-by-activity",
+  authenticateToken,
+  readOwnHealthMetrics,
+  (req, res) => healthController.getCaloriesByActivityType(req, res)
+);
+
 export { router as healthRoutes };

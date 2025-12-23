@@ -8,6 +8,7 @@ import { Target } from 'lucide-react';
 import { handleNumberInput } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
+import { EXERCISE_TYPE_ENUM, MetricType } from '@shared/schema';
 
 export function HealthMetricTargetsManagement() {
   const { data: recommendedTargets, isLoading } = useRecommendedTargets();
@@ -21,10 +22,10 @@ export function HealthMetricTargetsManagement() {
 
   useEffect(() => {
     if (recommendedTargets) {
-      const glucose = recommendedTargets.find(t => t.metricType === 'glucose');
-      const steps = recommendedTargets.find(t => t.metricType === 'steps');
-      const water = recommendedTargets.find(t => t.metricType === 'water_intake');
-      const heartRate = recommendedTargets.find(t => t.metricType === 'heart_rate');
+      const glucose = recommendedTargets.find(t => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
+      const steps = recommendedTargets.find(t => t.metricType === EXERCISE_TYPE_ENUM.STEPS);
+      const water = recommendedTargets.find(t => t.metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE);
+      const heartRate = recommendedTargets.find(t => t.metricType === EXERCISE_TYPE_ENUM.HEART_RATE);
 
       setGlucoseTarget(glucose ? parseFloat(glucose.targetValue).toString() : '');
       setStepsTarget(steps ? parseFloat(steps.targetValue).toString() : '');
@@ -33,24 +34,24 @@ export function HealthMetricTargetsManagement() {
     }
   }, [recommendedTargets]);
 
-  const validateTarget = (metricType: string, value: number): string | null => {
+  const validateTarget = (metricType: MetricType, value: number): string | null => {
     switch (metricType) {
-      case 'glucose':
+      case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
         if (value < 70 || value > 200) {
           return 'Blood glucose target must be between 70-200 mg/dL';
         }
         break;
-      case 'steps':
+      case EXERCISE_TYPE_ENUM.STEPS:
         if (value < 0 || value > 50000) {
           return 'Steps target must be between 0-50,000 steps per day';
         }
         break;
-      case 'water_intake':
+      case EXERCISE_TYPE_ENUM.WATER_INTAKE:
         if (value < 0 || value > 5) {
           return 'Water intake target must be between 0-5 liters per day';
         }
         break;
-      case 'heart_rate':
+      case EXERCISE_TYPE_ENUM.HEART_RATE:
         if (value < 40 || value > 200) {
           return 'Heart rate target must be between 40-200 bpm';
         }
@@ -60,17 +61,17 @@ export function HealthMetricTargetsManagement() {
   };
 
   const handleSaveAll = async () => {
-    const targets: Array<{ metricType: string; targetValue: number }> = [];
+    const targets: Array<{ metricType: MetricType; targetValue: number }> = [];
     const errors: string[] = [];
 
     if (glucoseTarget) {
       const numValue = parseFloat(glucoseTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('glucose', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targets.push({ metricType: 'glucose', targetValue: numValue });
+          targets.push({ metricType: EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, targetValue: numValue });
         }
       }
     }
@@ -78,11 +79,11 @@ export function HealthMetricTargetsManagement() {
     if (stepsTarget) {
       const numValue = parseFloat(stepsTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('steps', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.STEPS, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targets.push({ metricType: 'steps', targetValue: numValue });
+          targets.push({ metricType: EXERCISE_TYPE_ENUM.STEPS, targetValue: numValue });
         }
       }
     }
@@ -90,11 +91,11 @@ export function HealthMetricTargetsManagement() {
     if (waterTarget) {
       const numValue = parseFloat(waterTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('water_intake', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targets.push({ metricType: 'water_intake', targetValue: numValue });
+          targets.push({ metricType: EXERCISE_TYPE_ENUM.WATER_INTAKE, targetValue: numValue });
         }
       }
     }
@@ -102,11 +103,11 @@ export function HealthMetricTargetsManagement() {
     if (heartRateTarget) {
       const numValue = parseFloat(heartRateTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('heart_rate', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.HEART_RATE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targets.push({ metricType: 'heart_rate', targetValue: numValue });
+          targets.push({ metricType: EXERCISE_TYPE_ENUM.HEART_RATE, targetValue: numValue });
         }
       }
     }

@@ -1,7 +1,9 @@
 import multer from 'multer';
-import path from 'path';
+import path, { join } from 'path';
 import fs from 'fs';
-import { BadRequestError } from '../errors';
+import { BadRequestError, UnauthorizedError } from '../errors';
+import { AuthenticatedRequest } from '../middleware/auth';
+import { MedicalService } from 'server/src/modules/medical/service/medical.service';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -13,19 +15,33 @@ interface MulterConfigOptions {
   allowedMimeTypes?: string[]; 
 }
 
-export function createMulterConfig(options: MulterConfigOptions) {
+export const MULTER_CONSTANTS = {
+  MAX_FILE_SIZE,
+  ALLOWED_IMAGE_TYPES,
+};
+
+export function createMulterConfig(options: MulterConfigOptions & { validateUser?: boolean, appendUserId?: boolean}) {
   const {
     destination,
     fieldName = 'image',
     maxFileSize = MAX_FILE_SIZE,
     allowedMimeTypes = ALLOWED_IMAGE_TYPES,
+    appendUserId = false
   } = options;
 
   // Storage configuration
   const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      const uploadPath = path.join(process.cwd(), destination);
+    destination: (req: AuthenticatedRequest, _file, cb) => {
+      let uploadPath = path.join(process.cwd(), destination);
       
+      if(appendUserId && !req.user) {
+        return cb(new UnauthorizedError("User must be logged in to upload a file"), uploadPath)
+      }
+
+      if(appendUserId && req.user) {
+        uploadPath = path.join(uploadPath, req.user.userId)
+      }
+
       try {
         // Check if directory exists, create if not
         if (!fs.existsSync(uploadPath)) {
@@ -58,7 +74,6 @@ export function createMulterConfig(options: MulterConfigOptions) {
     }
   };
 
-  // Configure multer
   const upload = multer({
     storage,
     fileFilter,
@@ -131,10 +146,6 @@ export function createMulterConfigMultiple(
   return upload.array(fieldName, maxCount);
 }
 
-export const MULTER_CONSTANTS = {
-  MAX_FILE_SIZE,
-  ALLOWED_IMAGE_TYPES,
-};
 
 
 export const  memoryUpload = multer({
@@ -151,3 +162,18 @@ export const  memoryUpload = multer({
     }
   },
 });
+
+
+
+
+export const uploadPhysicianImage = createMulterConfig({
+  destination: join('public', 'uploads', 'physicians'),
+  fieldName: 'image',
+});
+
+export const pdfUpload = createMulterConfig({
+  destination: MedicalService.LAB_REPORT_PATH,
+  fieldName: "file",
+  allowedMimeTypes: ['application/pdf'],
+  appendUserId: true
+})

@@ -17,10 +17,12 @@ export const ROUTES = {
   FOOD_SCANNER: "/dashboard/food-scanner",
   TIPS_EXERCISES: "/dashboard/tips",
   MEDICAL_RECORDS: "/dashboard/records",
+  MEDICATIONS: "/dashboard/medications",
   DIABOT: "/dashboard/diabot",
   HEALTH_PLANS: "/dashboard/plans",
   PAYMENTS: "/dashboard/payments",
   STRENGTH_TRAINING_PROGRESS: "/dashboard/strength-training",
+  RECIPE_DETAIL: "/dashboard/recipe",
 
   // Feature Routes
   METRICS_HISTORY: "/metrics",

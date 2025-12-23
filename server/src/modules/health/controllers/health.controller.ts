@@ -3,67 +3,17 @@ import { type AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { HealthService } from "../service/health.service";
 import { BadRequestError } from "../../../shared/errors";
-import { insertHealthMetricSchema, insertActivityLogSchema, insertExerciseLogSchema, insertHealthMetricTargetSchema, batchUpsertHealthMetricTargetsSchema } from "../models/health.schema";
-import { UserService } from "../../user/service/user.service";
+import { insertHealthMetricSchema, insertExerciseLogSchema, batchUpsertHealthMetricTargetsSchema, metricTypes, MetricType } from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { parseLocalDate } from "server/src/shared/utils/utils";
+import { formatDate, parseLocalDate, validateLimitAndOffset } from "server/src/shared/utils/utils";
 
 export class HealthController {
   private healthService: HealthService;
-  private userService: UserService;
 
   constructor() {
     this.healthService = new HealthService();
-    this.userService = new UserService();
   }
 
-  async addMetric(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const validationResult = insertHealthMetricSchema.safeParse({
-        ...req.body,
-        userId: userId,
-      });
-
-      if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid metric data"
-        );
-      }
-
-      // Get user payment type for limit checking
-      const user = await this.userService.getProfile(userId);
-      const paymentType = user.paymentType || "free";
-
-    // Heart rate is only available for paid users
-      const data = validationResult.data;
-      if (data.heartRate && paymentType === "free") {
-        throw new BadRequestError("Heart rate tracking is only available for paid users. Please upgrade to access this feature.");
-      }
-
-      // Validate negative values
-      if (data.bloodSugar !== null && data.bloodSugar !== undefined && parseFloat(data.bloodSugar.toString()) < 0) {
-        throw new BadRequestError("Blood sugar value cannot be negative.");
-      }
-      if (data.steps !== null && data.steps !== undefined && data.steps < 0) {
-        throw new BadRequestError("Steps value cannot be negative.");
-      }
-      if (data.waterIntake !== null && data.waterIntake !== undefined && parseFloat(data.waterIntake.toString()) < 0) {
-        throw new BadRequestError("Water intake value cannot be negative.");
-      }
-      if (data.heartRate !== null && data.heartRate !== undefined && data.heartRate < 0) {
-        throw new BadRequestError("Heart rate value cannot be negative.");
-      }
-
-      const metric = await this.healthService.createMetric(
-        validationResult.data,
-        paymentType
-      );
-      sendSuccess(res, metric, "Metric logged successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
 
   async getLatestMetric(
     req: AuthenticatedRequest,
@@ -79,69 +29,9 @@ export class HealthController {
     }
   }
 
-  async getMetrics(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const limit = parseInt(req.query.limit as string) || 30;
-      const offset = parseInt(req.query.offset as string) || 0;
 
-      const metrics = await this.healthService.getMetricsByUser(
-        userId,
-        limit,
-        offset
-      );
-      sendSuccess(res, metrics, "Metrics retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error, { metrics: [] });
-    }
-  }
 
-  async getChartData(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const days = parseInt(req.query.days as string) || 7;
 
-      const metrics = await this.healthService.getMetricsForChart(userId, days);
-      sendSuccess(res, metrics, "Chart data retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-  async getTodaysCount(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const metricType = req.query.metricType as
-        | "glucose"
-        | "steps"
-        | "water"
-        | undefined;
-
-      if (metricType) {
-        const count = await this.healthService.getTodaysMetricCount(
-          userId,
-          metricType
-        );
-        sendSuccess(
-          res,
-          { count },
-          "Today's metric count retrieved successfully"
-        );
-      } else {
-        const counts = await this.healthService.getTodaysMetricCounts(userId);
-        sendSuccess(
-          res,
-          counts,
-          "Today's metric counts retrieved successfully"
-        );
-      }
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
 
   async getAggregatedStatistics(
     req: AuthenticatedRequest,
@@ -150,8 +40,10 @@ export class HealthController {
   ): Promise<void> {
     try {
       const userId = req.user?.userId || "";
+      const total = req.query.total === "true";
       const statistics = await this.healthService.getAggregatedStatistics(
-        userId
+        userId,
+        total
       );
       sendSuccess(
         res,
@@ -182,13 +74,8 @@ export class HealthController {
         throw new BadRequestError("startDate and endDate are required");
       }
 
+      validateLimitAndOffset(limit, offset)
       // Validate pagination parameters
-      if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
-        throw new BadRequestError("limit must be between 1 and 100");
-      }
-      if (offset !== undefined && (isNaN(offset) || offset < 0)) {
-        throw new BadRequestError("offset must be a non-negative integer");
-      }
 
       const startDate = parseLocalDate(startDateStr);
       const endDate = parseLocalDate(endDateStr);
@@ -215,13 +102,12 @@ export class HealthController {
       }
 
       // Validate types
-      const validTypes = ["blood_sugar", "water_intake", "steps", "heart_beat"];
-      const invalidTypes = types.filter((t) => !validTypes.includes(t));
+      const invalidTypes = types.filter((t) => !metricTypes.includes(t as MetricType));
       if (invalidTypes.length > 0) {
         throw new BadRequestError(
           `Invalid metric types: ${invalidTypes.join(
             ", "
-          )}. Valid types are: ${validTypes.join(", ")}`
+          )}. Valid types are: ${metricTypes.join(", ")}`
         );
       }
 
@@ -239,110 +125,28 @@ export class HealthController {
     }
   }
 
-  // Activity Logs Controllers
-  async addActivityLog(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const { activityType, hours = 0, minutes = 0 } = req.body;
-
-      // Validate activity type
-      if (!activityType || !['walking', 'yoga'].includes(activityType)) {
-        throw new BadRequestError("activityType must be 'walking' or 'yoga'");
-      }
-
-      // Convert hours and minutes to total minutes
-      const totalMinutes = (parseInt(hours) || 0) * 60 + (parseInt(minutes) || 0);
-      
-      if (totalMinutes <= 0) {
-        throw new BadRequestError("Total duration must be greater than 0 minutes");
-      }
-
-      // Validate the complete data
-      const validationResult = insertActivityLogSchema.safeParse({
-        userId,
-        activityType,
-        durationMinutes: totalMinutes,
-      });
-
-      if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid activity log data"
-        );
-      }
-      
-      const log = await this.healthService.createActivityLog(validationResult.data);
-      
-      sendSuccess(res, log, "Activity logged successfully");
-    } catch (error: any) {
-      console.log(error)
-      handleError(res, error);
-    }
-  }
-
-  async getActivityLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const activityType = req.query.activityType as "walking" | "yoga" | undefined;
-      const limit = parseInt(req.query.limit as string) || 30;
-      const offset = parseInt(req.query.offset as string) || 0;
-
-      const logs = await this.healthService.getActivityLogs(
-        userId,
-        activityType,
-        limit,
-        offset
-      );
-      sendSuccess(res, logs, "Activity logs retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-  async getTodayActivityLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const activityType = req.query.activityType as "walking" | "yoga" | undefined;
-
-      const logs = await this.healthService.getTodayActivityLogs(userId, activityType);
-      sendSuccess(res, logs, "Today's activity logs retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-  async getTotalActivityMinutesToday(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const activityType = req.query.activityType as "walking" | "yoga" | undefined;
-
-      const totalMinutes = await this.healthService.getTotalActivityMinutesToday(userId, activityType);
-      sendSuccess(res, { totalMinutes }, "Total activity minutes retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-
   async addExerciseLogsBatch(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
-      const { exercises } = req.body; // Array of { exerciseType, count }
+      const { exercises } = req.body; // Array of exercise log objects
+      const healthMetrics = req.body.healthMetrics
 
-      if (!Array.isArray(exercises) || exercises.length === 0) {
+      if(healthMetrics && typeof healthMetrics === "object") {
+        const validatedHealthMetic = this.validateHealthMetric({ ...healthMetrics, userId})
+        if(validatedHealthMetic) {
+          console.log("The valide", validatedHealthMetic)
+          await this.healthService.createMetric(validatedHealthMetic, userId)
+        }
+      }
+
+      if (!Array.isArray(exercises)) {
         throw new BadRequestError("Exercises array is required and must not be empty");
       }
 
-      const logsToInsert = exercises
-        .filter(ex => ex.count && parseInt(ex.count) > 0)
-        .map(ex => ({
-          userId,
-          exerciseType: ex.exerciseType,
-          count: parseInt(ex.count),
-        }));
-
-      if (logsToInsert.length === 0) {
-        throw new BadRequestError("At least one exercise with count > 0 is required");
-      }
+      const logsToInsert = exercises.map(ex => ({
+        userId,
+        ...ex,
+      }));
 
       // Validate each exercise log
       for (const log of logsToInsert) {
@@ -361,46 +165,8 @@ export class HealthController {
     }
   }
 
-  async getExerciseLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const exerciseType = req.query.exerciseType as "pushups" | "squats" | "chinups" | "situps" | undefined;
-      const limit = parseInt(req.query.limit as string) || 30;
-      const offset = parseInt(req.query.offset as string) || 0;
 
-      const logs = await this.healthService.getExerciseLogs(
-        userId,
-        exerciseType,
-        limit,
-        offset
-      );
-      sendSuccess(res, logs, "Exercise logs retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
 
-  async getTodayExerciseLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-
-      const logs = await this.healthService.getTodayExerciseLogs(userId);
-      sendSuccess(res, logs, "Today's exercise logs retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-  async getTodayExerciseTotals(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-
-      const totals = await this.healthService.getTodayExerciseTotals(userId);
-      sendSuccess(res, totals, "Today's exercise totals retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
 
   async getStrengthProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
@@ -464,51 +230,10 @@ export class HealthController {
     }
   }
 
-  async upsertRecommendedTarget(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const validationResult = insertHealthMetricTargetSchema.safeParse({
-        ...req.body,
-        userId: null, // Admin targets have null userId
-      });
-
-      if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid target data"
-        );
-      }
-
-      const target = await this.healthService.upsertRecommendedTarget(validationResult.data);
-      sendSuccess(res, target, "Recommended target updated successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
-  async upsertUserTarget(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const validationResult = insertHealthMetricTargetSchema.safeParse({
-        ...req.body,
-        userId: userId,
-      });
-
-      if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid target data"
-        );
-      }
-
-      const target = await this.healthService.upsertUserTarget(userId, validationResult.data);
-      sendSuccess(res, target, "User target updated successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
-
   async deleteUserTarget(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.userId || "";
-      const metricType = req.params.metricType as "glucose" | "steps" | "water_intake" | "heart_rate";
+      const metricType = req.params.metricType as MetricType;
 
       if (!["glucose", "steps", "water_intake", "heart_rate"].includes(metricType)) {
         throw new BadRequestError("Invalid metric type");
@@ -571,4 +296,61 @@ export class HealthController {
       handleError(res, error);
     }
   }
+
+  async getHealthInsights(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId || "";
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const insights = await this.healthService.getHealthInsights(userId);
+      sendSuccess(res, insights, "Health insights retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  private validateHealthMetric(data: object) {
+    const validationResult = insertHealthMetricSchema.safeParse(data);
+
+    if (!validationResult.success) {
+      return null
+    }
+
+    return validationResult.data
+  }
+
+  async getCaloriesByActivityType(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId || "";
+      const startDateStr = req.query.startDate as string;
+      const endDateStr = req.query.endDate as string;
+
+      if (!startDateStr || !endDateStr) {
+        throw new BadRequestError("startDate and endDate query parameters are required");
+      }
+
+      const startDate = parseLocalDate(startDateStr);
+      const endDate = parseLocalDate(endDateStr);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new BadRequestError("Invalid date format. Use ISO 8601 format (YYYY-MM-DD)");
+      }
+
+      if (startDate > endDate) {
+        throw new BadRequestError("startDate must be before or equal to endDate");
+      }
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      const sameDates = formatDate(startDateStr) === formatDate(endDateStr)
+      const result = await this.healthService.getCaloriesByActivityType(userId, startDate, endDate, sameDates);
+      sendSuccess(res, result, "Calories data retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
 }

@@ -24,7 +24,6 @@ interface HealthTrendChartProps {
   onIntervalChange?: (interval: IntervalType) => void;
   recommendedTarget?: number;
   userTarget?: number;
-  metricType?: 'glucose' | 'steps' | 'water_intake' | 'heart_rate';
 }
 
 export function HealthTrendChart({
@@ -38,9 +37,8 @@ export function HealthTrendChart({
   onIntervalChange,
   recommendedTarget,
   userTarget,
-  metricType,
 }: HealthTrendChartProps) {
-  // Calculate dynamic domain based on data values and targets
+
   const calculateDomain = (): [number, number | string] => {
     if (!yAxisConfig?.domain) {
       // If no domain specified, use auto
@@ -48,26 +46,26 @@ export function HealthTrendChart({
     }
 
     const [min, max] = yAxisConfig.domain;
-    
+
     // Find the maximum value in the data
-    const maxDataValue = data.length > 0 
+    const maxDataValue = data.length > 0
       ? Math.max(...data.map(d => d.value || 0))
       : 0;
-    
+
     // Consider targets in the max calculation
     const maxTarget = Math.max(
       recommendedTarget || 0,
       userTarget || 0
     );
-    
+
     // Calculate the actual max needed
     const actualMax = Math.max(maxDataValue, maxTarget, max);
-    
+
     // If actualMax exceeds the configured max, use actualMax with 10% padding
     if (actualMax > max) {
       return [min, Math.ceil(actualMax * 1.1)];
     }
-    
+
     // Otherwise use the configured domain
     return [min, max];
   };

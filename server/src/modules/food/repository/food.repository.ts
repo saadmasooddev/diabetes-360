@@ -6,13 +6,26 @@ import {
   dailyMealPlans,
   mealPlanMeals,
   dailyPersonalizedInsights,
+  recipes,
   type DailyNutrientRecommendation,
   type InsertDailyNutrientRecommendation,
   type FoodScanNutrients,
-  type DailyMealPlan,
   type MealPlanMeal,
   type DailyPersonalizedInsight,
+  type Recipe,
 } from "../models/food.schema";
+import { sql as rawSql } from "drizzle-orm";
+
+export interface RecipeIngredients {
+  "main_ingredients": {
+    "heading": string;
+    "items": string[];
+  },
+  "sub_ingredients": {
+    "heading": string;
+    "items": string[];
+  }
+}
 
 export interface MealDetails {
   name: string
@@ -195,7 +208,6 @@ export class FoodRepository {
         )
       )
     
-      console.log("The meal plan repo is", mealPlan, "the date", dateStr)
     if (!mealPlan) {
       return { mealPlans: []};
     }
@@ -318,6 +330,53 @@ export class FoodRepository {
     }
 
     return [];
+  }
+
+  async findMealByTypeAndName(
+    userId: string,
+    mealType: string,
+    mealName: string
+  ): Promise<MealPlanMeal | null> {
+    const [meal] = await db
+      .select({ meal: mealPlanMeals })
+      .from(mealPlanMeals)
+      .innerJoin(dailyMealPlans, eq(mealPlanMeals.mealPlanId, dailyMealPlans.id))
+      .where(
+        and(
+          eq(dailyMealPlans.userId, userId),
+          eq(mealPlanMeals.mealType, mealType as any),
+          rawSql`LOWER(${mealPlanMeals.name}) = LOWER(${mealName})`
+        )
+      )
+      .limit(1);
+
+    return meal?.meal || null;
+  }
+
+  async getRecipeByMealId(mealId: string): Promise<Recipe | null> {
+    const [recipe] = await db.select().from(recipes).where(eq(recipes.mealId, mealId)).limit(1);
+    return recipe || null;
+  }
+
+  async createRecipe(data: {
+    mealId: string;
+    title: string;
+    description: string;
+    ingredients: RecipeIngredients[];
+    makingSteps: string[];
+  }): Promise<Recipe> {
+    const [recipe] = await db
+      .insert(recipes)
+      .values({
+        mealId: data.mealId,
+        title: data.title,
+        description: data.description,
+        ingredients: data.ingredients,
+        makingSteps: data.makingSteps,
+      })
+      .returning();
+
+    return recipe;
   }
 }
 

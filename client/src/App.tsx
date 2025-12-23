@@ -20,6 +20,7 @@ import { Consultations } from "@/features/dashboard/pages/Consultations";
 import { FoodScanner } from "@/features/dashboard/pages/FoodScanner";
 import { TipsExercises } from "@/features/dashboard/pages/TipsExercises";
 import { MedicalRecords } from "@/features/dashboard/pages/MedicalRecords";
+import { Medications } from "@/features/dashboard/pages/Medications";
 import { HealthPlans } from "@/features/dashboard/pages/HealthPlans";
 import { Payments } from "@/features/dashboard/pages/Payments";
 import { ProfileData } from "@/features/dashboard/pages/ProfileData";
@@ -28,6 +29,7 @@ import DiaBot from "@/features/dashboard/pages/DiaBot";
 import { Settings } from "@/pages/Settings";
 import { ROUTES } from "@/config/routes";
 import { StrengthTrainingProgress } from "./features/dashboard/pages/StrengthTrainingProgress";
+import { RecipeDetail } from "./features/dashboard/pages/RecipeDetail";
 
 function Router() {
   useAuthInit();
@@ -88,7 +90,12 @@ function Router() {
       </Route>
       <Route path={ROUTES.MEDICAL_RECORDS}>
         <ProtectedRoute>
-          <MedicalRecords isPremium={false} />
+          <MedicalRecords />
+        </ProtectedRoute>
+      </Route>
+      <Route path={ROUTES.MEDICATIONS}>
+        <ProtectedRoute>
+          <Medications />
         </ProtectedRoute>
       </Route>
       <Route path={ROUTES.DIABOT}>
@@ -119,6 +126,11 @@ function Router() {
       <Route path={ROUTES.STRENGTH_TRAINING_PROGRESS}>
         <ProtectedRoute>
           <StrengthTrainingProgress />
+        </ProtectedRoute>
+      </Route>
+      <Route path={ROUTES.RECIPE_DETAIL}>
+        <ProtectedRoute>
+          <RecipeDetail />
         </ProtectedRoute>
       </Route>
 

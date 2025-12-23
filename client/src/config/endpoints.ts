@@ -1,3 +1,5 @@
+import { MetricType } from "@shared/schema";
+
 export const API_ENDPOINTS = {
   BASE: '',
   AUTH: {
@@ -15,33 +17,26 @@ export const API_ENDPOINTS = {
     UPDATE: '/api/user/update',
   },
   HEALTH: {
-    METRICS: '/api/health/metrics',
     LATEST: '/api/health/metrics/latest',
-    ADD: '/api/health/metrics/add',
-    CHART: '/api/health/metrics/chart',
-    TODAY_COUNT: '/api/health/metrics/today-count',
     STATISTICS: '/api/health/metrics/statistics',
     FILTERED: '/api/health/metrics/filtered',
+    INSIGHTS: '/api/health/insights',
     TARGETS: {
       BASE: '/api/health/targets',
       RECOMMENDED: '/api/health/targets/recommended',
-      RECOMMENDED_BATCH: '/api/health/targets/recommended/batch',
+ RECOMMENDED_BATCH: '/api/health/targets/recommended/batch',
       USER: '/api/health/targets/user',
       USER_BATCH: '/api/health/targets/user/batch',
-      DELETE_USER: (metricType: string) => `/api/health/targets/user/${metricType}`,
+      DELETE_USER: (metricType: MetricType) => `/api/health/targets/user/${metricType}`,
     },
     ACTIVITIES: {
       ADD: '/api/health/activities/add',
-      LIST: '/api/health/activities',
-      TODAY: '/api/health/activities/today',
-      TODAY_TOTAL: '/api/health/activities/today/total',
     },
     EXERCISES: {
       ADD_BATCH: '/api/health/exercises/add/batch',
-      LIST: '/api/health/exercises',
-      TODAY: '/api/health/exercises/today',
       TODAY_TOTALS: '/api/health/exercises/today/totals',
       STRENGTH_PROGRESS: '/api/health/exercises/strength-progress',
+      CALORIES_BY_ACTIVITY: '/api/health/exercises/calories-by-activity',
     },
   },
   ADMIN: {
@@ -98,5 +93,14 @@ export const API_ENDPOINTS = {
     SCAN: '/api/food/scan',
     DAILY_DATA: '/api/food/daily-data',
     NUTRITION_CONSUMED: '/api/food/nutrition/consumed',
+    RECIPE_DETAILS: '/api/food/details',
+  },
+  MEDICAL: {
+    MEDICATIONS: '/api/medical/medications',
+    MEDICATIONS_BY_PHYSICIAN: '/api/medical/medications/by-physician',
+    LAB_REPORTS: '/api/medical/lab-reports',
+    LAB_REPORT_DOWNLOAD: (id: string) => `/api/medical/lab-reports/${id}/download`,
+    LAB_REPORT_UPDATE: (id: string) => `/api/medical/lab-reports/${id}`,
+    LAB_REPORT_DELETE: (id: string) => `/api/medical/lab-reports/${id}`,
   },
 } as const;

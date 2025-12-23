@@ -9,6 +9,7 @@ import { customerRoutes } from "../modules/customer/routes/customer.routes";
 import { bookingRoutes } from "../modules/booking/routes/booking.routes";
 import { foodRoutes } from "../modules/food/routes/food.routes";
 import { twoFactorRoutes } from "../modules/twoFactor/routes/twoFactor.routes";
+import { medicalRoutes } from "../modules/medical/routes/medical.routes";
 
 export function registerRoutes(app: Express): Express {
 
@@ -22,6 +23,7 @@ export function registerRoutes(app: Express): Express {
   app.use("/api/booking", bookingRoutes);
   app.use("/api/food", foodRoutes);
   app.use("/api/two-factor", twoFactorRoutes);
+  app.use("/api/medical", medicalRoutes);
 
   return app;
 }

@@ -9,6 +9,7 @@ import { handleNumberInput } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
+import { EXERCISE_TYPE_ENUM, MetricType } from '@shared/schema';
 
 export function UserHealthTargets() {
   const { user } = useAuthStore();
@@ -24,17 +25,17 @@ export function UserHealthTargets() {
   const [heartRateTarget, setHeartRateTarget] = useState<string>('');
 
   // Get recommended targets as fallback
-  const recommendedGlucose = targets?.recommended.find(t => t.metricType === 'glucose');
-  const recommendedSteps = targets?.recommended.find(t => t.metricType === 'steps');
-  const recommendedWater = targets?.recommended.find(t => t.metricType === 'water_intake');
-  const recommendedHeartRate = targets?.recommended.find(t => t.metricType === 'heart_rate');
+  const recommendedGlucose = targets?.recommended.find(t => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
+  const recommendedSteps = targets?.recommended.find(t => t.metricType === EXERCISE_TYPE_ENUM.STEPS);
+  const recommendedWater = targets?.recommended.find(t => t.metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE);
+  const recommendedHeartRate = targets?.recommended.find(t => t.metricType === EXERCISE_TYPE_ENUM.HEART_RATE);
 
   useEffect(() => {
     if (targets) {
-      const userGlucose = targets.user.find(t => t.metricType === 'glucose');
-      const userSteps = targets.user.find(t => t.metricType === 'steps');
-      const userWater = targets.user.find(t => t.metricType === 'water_intake');
-      const userHeartRate = targets.user.find(t => t.metricType === 'heart_rate');
+      const userGlucose = targets.user.find(t => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
+      const userSteps = targets.user.find(t => t.metricType === EXERCISE_TYPE_ENUM.STEPS);
+      const userWater = targets.user.find(t => t.metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE);
+      const userHeartRate = targets.user.find(t => t.metricType === EXERCISE_TYPE_ENUM.HEART_RATE);
 
       // Always show user target if exists, otherwise show recommended
       setGlucoseTarget(userGlucose ? parseFloat(userGlucose.targetValue).toString() : (recommendedGlucose ? parseFloat(recommendedGlucose.targetValue).toString() : ''));
@@ -44,24 +45,24 @@ export function UserHealthTargets() {
     }
   }, [targets, recommendedGlucose, recommendedSteps, recommendedWater, recommendedHeartRate]);
 
-  const validateTarget = (metricType: string, value: number): string | null => {
+  const validateTarget = (metricType: MetricType, value: number): string | null => {
     switch (metricType) {
-      case 'glucose':
+      case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
         if (value < 70 || value > 200) {
           return 'Blood glucose target must be between 70-200 mg/dL';
         }
         break;
-      case 'steps':
+      case EXERCISE_TYPE_ENUM.STEPS:
         if (value < 0 || value > 50000) {
           return 'Steps target must be between 0-50,000 steps per day';
         }
         break;
-      case 'water_intake':
+      case EXERCISE_TYPE_ENUM.WATER_INTAKE:
         if (value < 0 || value > 5) {
           return 'Water intake target must be between 0-5 liters per day';
         }
         break;
-      case 'heart_rate':
+      case EXERCISE_TYPE_ENUM.HEART_RATE:
         if (value < 40 || value > 200) {
           return 'Heart rate target must be between 40-200 bpm';
         }
@@ -71,17 +72,17 @@ export function UserHealthTargets() {
   };
 
   const handleSaveAll = async () => {
-    const targetsToSave: Array<{ metricType: string; targetValue: number }> = [];
+    const targetsToSave: Array<{ metricType: MetricType; targetValue: number }> = [];
     const errors: string[] = [];
 
     if (glucoseTarget) {
       const numValue = parseFloat(glucoseTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('glucose', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targetsToSave.push({ metricType: 'glucose', targetValue: numValue });
+          targetsToSave.push({ metricType: EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, targetValue: numValue });
         }
       }
     }
@@ -89,11 +90,11 @@ export function UserHealthTargets() {
     if (stepsTarget) {
       const numValue = parseFloat(stepsTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('steps', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.STEPS, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targetsToSave.push({ metricType: 'steps', targetValue: numValue });
+          targetsToSave.push({ metricType: EXERCISE_TYPE_ENUM.STEPS, targetValue: numValue });
         }
       }
     }
@@ -101,11 +102,11 @@ export function UserHealthTargets() {
     if (waterTarget) {
       const numValue = parseFloat(waterTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('water_intake', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targetsToSave.push({ metricType: 'water_intake', targetValue: numValue });
+          targetsToSave.push({ metricType: EXERCISE_TYPE_ENUM.WATER_INTAKE, targetValue: numValue });
         }
       }
     }
@@ -113,11 +114,11 @@ export function UserHealthTargets() {
     if (heartRateTarget) {
       const numValue = parseFloat(heartRateTarget);
       if (!isNaN(numValue)) {
-        const error = validateTarget('heart_rate', numValue);
+        const error = validateTarget(EXERCISE_TYPE_ENUM.HEART_RATE, numValue);
         if (error) {
           errors.push(error);
         } else {
-          targetsToSave.push({ metricType: 'heart_rate', targetValue: numValue });
+          targetsToSave.push({ metricType: EXERCISE_TYPE_ENUM.HEART_RATE, targetValue: numValue });
         }
       }
     }
@@ -149,26 +150,26 @@ export function UserHealthTargets() {
     }
   };
 
-  const handleDelete = async (metricType: string) => {
+  const handleDelete = async (metricType: MetricType) => {
     await deleteMutation.mutateAsync(metricType);
     // Reset to recommended value if available
-    if (metricType === 'glucose' && recommendedGlucose) {
+    if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE && recommendedGlucose) {
       setGlucoseTarget(parseFloat(recommendedGlucose.targetValue).toString());
-    } else if (metricType === 'steps' && recommendedSteps) {
+    } else if (metricType === EXERCISE_TYPE_ENUM.STEPS && recommendedSteps) {
       setStepsTarget(parseFloat(recommendedSteps.targetValue).toString());
-    } else if (metricType === 'water_intake' && recommendedWater) {
+    } else if (metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE && recommendedWater) {
       setWaterTarget(parseFloat(recommendedWater.targetValue).toString());
-    } else if (metricType === 'heart_rate' && recommendedHeartRate) {
+    } else if (metricType === EXERCISE_TYPE_ENUM.HEART_RATE && recommendedHeartRate) {
       setHeartRateTarget(parseFloat(recommendedHeartRate.targetValue).toString());
     } else {
-      if (metricType === 'glucose') setGlucoseTarget('');
-      else if (metricType === 'steps') setStepsTarget('');
-      else if (metricType === 'water_intake') setWaterTarget('');
-      else if (metricType === 'heart_rate') setHeartRateTarget('');
+      if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) setGlucoseTarget('');
+      else if (metricType === EXERCISE_TYPE_ENUM.STEPS) setStepsTarget('');
+      else if (metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) setWaterTarget('');
+      else if (metricType === EXERCISE_TYPE_ENUM.HEART_RATE) setHeartRateTarget('');
     }
   };
 
-  const hasUserTarget = (metricType: string) => {
+  const hasUserTarget = (metricType: MetricType) => {
     return targets?.user.some(t => t.metricType === metricType) || false;
   };
 
@@ -245,7 +246,7 @@ export function UserHealthTargets() {
               <div className="space-y-2">
                 <Label htmlFor="steps-target" className="text-sm font-medium text-gray-700">
                   Steps Target (per day)
-                  {hasUserTarget('steps') && (
+                  {hasUserTarget(EXERCISE_TYPE_ENUM.STEPS) && (
                     <span className="ml-2 text-xs text-teal-600">(Custom)</span>
                   )}
                 </Label>
@@ -267,9 +268,9 @@ export function UserHealthTargets() {
                       border: '1px solid rgba(0, 0, 0, 0.2)',
                     }}
                   />
-                  {hasUserTarget('steps') && (
+                  {hasUserTarget(EXERCISE_TYPE_ENUM.STEPS) && (
                     <Button
-                      onClick={() => handleDelete('steps')}
+                      onClick={() => handleDelete(EXERCISE_TYPE_ENUM.STEPS)}
                       disabled={isSubmitting}
                       variant="outline"
                       size="icon"
@@ -279,7 +280,7 @@ export function UserHealthTargets() {
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {recommendedSteps && !hasUserTarget('steps') && `Recommended: ${parseFloat(recommendedSteps.targetValue)} steps/day`}
+                  {recommendedSteps && !hasUserTarget(EXERCISE_TYPE_ENUM.STEPS) && `Recommended: ${parseFloat(recommendedSteps.targetValue)} steps/day`}
                   {!recommendedSteps && 'Set your target for daily steps'}
                 </p>
               </div>
@@ -287,7 +288,7 @@ export function UserHealthTargets() {
               <div className="space-y-2">
                 <Label htmlFor="water-target" className="text-sm font-medium text-gray-700">
                   Water Intake Target (liters)
-                  {hasUserTarget('water_intake') && (
+                  {hasUserTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE) && (
                     <span className="ml-2 text-xs text-teal-600">(Custom)</span>
                   )}
                 </Label>
@@ -309,9 +310,9 @@ export function UserHealthTargets() {
                       border: '1px solid rgba(0, 0, 0, 0.2)',
                     }}
                   />
-                  {hasUserTarget('water_intake') && (
+                  {hasUserTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE) && (
                     <Button
-                      onClick={() => handleDelete('water_intake')}
+                      onClick={() => handleDelete(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
                       disabled={isSubmitting}
                       variant="outline"
                       size="icon"
@@ -321,7 +322,7 @@ export function UserHealthTargets() {
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {recommendedWater && !hasUserTarget('water_intake') && `Recommended: ${parseFloat(recommendedWater.targetValue)} liters/day`}
+                  {recommendedWater && !hasUserTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE) && `Recommended: ${parseFloat(recommendedWater.targetValue)} liters/day`}
                   {!recommendedWater && 'Set your target for daily water intake'}
                 </p>
               </div>
@@ -330,7 +331,7 @@ export function UserHealthTargets() {
                 <div className="space-y-2">
                   <Label htmlFor="heart-rate-target" className="text-sm font-medium text-gray-700">
                     Heart Rate Target (bpm)
-                    {hasUserTarget('heart_rate') && (
+                    {hasUserTarget(EXERCISE_TYPE_ENUM.HEART_RATE) && (
                       <span className="ml-2 text-xs text-teal-600">(Custom)</span>
                     )}
                   </Label>
@@ -352,9 +353,9 @@ export function UserHealthTargets() {
                         border: '1px solid rgba(0, 0, 0, 0.2)',
                       }}
                     />
-                    {hasUserTarget('heart_rate') && (
+                    {hasUserTarget(EXERCISE_TYPE_ENUM.HEART_RATE) && (
                       <Button
-                        onClick={() => handleDelete('heart_rate')}
+                        onClick={() => handleDelete(EXERCISE_TYPE_ENUM.HEART_RATE)}
                         disabled={isSubmitting}
                         variant="outline"
                         size="icon"
@@ -364,7 +365,7 @@ export function UserHealthTargets() {
                     )}
                   </div>
                   <p className="text-xs text-gray-500">
-                    {recommendedHeartRate && !hasUserTarget('heart_rate') && `Recommended: ${parseFloat(recommendedHeartRate.targetValue)} bpm`}
+                    {recommendedHeartRate && !hasUserTarget(EXERCISE_TYPE_ENUM.HEART_RATE) && `Recommended: ${parseFloat(recommendedHeartRate.targetValue)} bpm`}
                     {!recommendedHeartRate && 'Set your target for heart rate'}
                   </p>
                 </div>

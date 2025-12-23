@@ -55,11 +55,10 @@ export class AuthRepository {
       .insert(refreshTokens)
       .values(tokenData)
       .onConflictDoUpdate({
-        target: refreshTokens.token,
+        target: refreshTokens.tokenId,
         set: {
-          token: tokenData.token,
+          tokenId: tokenData.tokenId,
           expiresAt: tokenData.expiresAt,
-          revoked: false,
         },
       })
       .returning();
@@ -70,12 +69,12 @@ export class AuthRepository {
     await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
   }
 
-  async getRefreshToken(token: string): Promise<RefreshToken | undefined> {
+  async getRefreshToken(id: string): Promise<RefreshToken | undefined> {
     const refreshToken = await db
       .select()
       .from(refreshTokens)
       .where(
-        and(eq(refreshTokens.token, token), eq(refreshTokens.revoked, false))
+        and(eq(refreshTokens.tokenId, id))
       )
       .limit(1);
     const tokenData = refreshToken[0];
@@ -87,17 +86,15 @@ export class AuthRepository {
     return tokenData;
   }
 
-  async revokeRefreshToken(token: string): Promise<void> {
+  async revokeRefreshToken(id: string): Promise<void> {
     await db
-      .update(refreshTokens)
-      .set({ revoked: true })
-      .where(eq(refreshTokens.token, token));
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.tokenId, id));
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
     await db
-      .update(refreshTokens)
-      .set({ revoked: true })
+      .delete(refreshTokens)
       .where(eq(refreshTokens.userId, userId));
   }
 
@@ -176,20 +173,4 @@ export class AuthRepository {
     await db.delete(users).where(eq(users.id, id));
   }
 
-  async getValidRefreshToken(
-    userId: string
-  ): Promise<RefreshToken | undefined> {
-    const refreshToken = await db
-      .select()
-      .from(refreshTokens)
-      .where(
-        and(
-          eq(refreshTokens.userId, userId),
-          eq(refreshTokens.revoked, false),
-          gt(refreshTokens.expiresAt, new Date())
-        )
-      )
-      .limit(1);
-    return refreshToken[0];
-  }
 }

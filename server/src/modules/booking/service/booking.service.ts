@@ -454,7 +454,7 @@ export class BookingService {
     const quota = await this.consultationService.getOrCreateUserConsultationQuota(customerId);
     
     // Get system-wide quota limits
-    const systemLimits = await this.settingsService.getFreeTierLimits();
+    const systemLimits = await this.settingsService.getLogLimits();
     const discountedQuotaLimit = systemLimits.discountedConsultationQuota || 0;
     const freeQuotaLimit = systemLimits.freeConsultationQuota || 0;
 
