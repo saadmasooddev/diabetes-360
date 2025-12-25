@@ -1,4 +1,4 @@
-import { HealthInsightsData, HealthPagination, HealthRepository } from "../repository/health.repository";
+import { ChartData, HealthInsightsData, HealthPagination, HealthRepository } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
 import { type InsertHealthMetric, type HealthMetric, type MertricRecord, type InsertExerciseLog, type ExerciseLog, type InsertHealthMetricTarget, type HealthMetricTarget,  type ExtendedHealthMetric, type MetricType, EXERCISE_TYPE_ENUM } from "../models/health.schema";
 import { BadRequestError } from "../../../shared/errors";
@@ -465,9 +465,9 @@ async upsertUserTargetsBatch(userId: string, targets: InsertHealthMetricTarget[]
       total: number;
     };
     chartData: {
-      cardio: Array<ExerciseLog>;
-      strength_training: Array<ExerciseLog>;
-      stretching: Array<ExerciseLog>;
+      cardio: Array<ChartData>;
+      strength_training: Array<ChartData>;
+      stretching: Array<ChartData>;
     };
   }> {
     return await this.healthRepository.getCaloriesByActivityType(userId, startDate, endDate, sameDates);

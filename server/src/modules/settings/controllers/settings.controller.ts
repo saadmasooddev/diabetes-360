@@ -51,7 +51,7 @@ export class SettingsController {
       if (Object.keys(freeTierData).length > 0) {
         const validationResult = insertFreeTierLimitsSchema.safeParse(freeTierData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid limits data");
+          throw validationResult.error;
         }
         await this.settingsService.createFreeTierLimits(validationResult.data);
       }
@@ -60,7 +60,7 @@ export class SettingsController {
       if (Object.keys(foodScanData).length > 0) {
         const validationResult = insertFoodScanLimitsSchema.safeParse(foodScanData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid food scan limits data");
+          throw validationResult.error;
         }
         await this.settingsService.createFoodScanLimits(validationResult.data);
       }
@@ -102,7 +102,7 @@ export class SettingsController {
       if (Object.keys(freeTierData).length > 0) {
         const validationResult = updateFreeTierLimitsSchema.safeParse(freeTierData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid limits data");
+          throw validationResult.error;
         }
         results.freeTierLimits = await this.settingsService.updateFreeTierLimits(validationResult.data);
       } else {
@@ -114,7 +114,7 @@ export class SettingsController {
       if (Object.keys(foodScanData).length > 0) {
         const validationResult = updateFoodScanLimitsSchema.safeParse(foodScanData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid food scan limits data");
+          throw validationResult.error;
         }
         results.foodScanLimits = await this.settingsService.updateFoodScanLimits(validationResult.data);
       } else {
@@ -160,7 +160,7 @@ export class SettingsController {
       if (Object.keys(freeTierData).length > 0) {
         const validationResult = insertFreeTierLimitsSchema.safeParse(freeTierData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid limits data");
+          throw validationResult.error;
         }
         await this.settingsService.upsertFreeTierLimits(validationResult.data);
       }
@@ -169,7 +169,7 @@ export class SettingsController {
       if (Object.keys(foodScanData).length > 0) {
         const validationResult = insertFoodScanLimitsSchema.safeParse(foodScanData);
         if (!validationResult.success) {
-          throw new BadRequestError(validationResult.error.message || "Invalid food scan limits data");
+          throw validationResult.error;
         }
         await this.settingsService.upsertFoodScanLimits(validationResult.data);
       }

@@ -1,6 +1,6 @@
 import { db } from "../../../app/config/db";
 import { medications, labReports } from "../models/medical.schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql } from "drizzle-orm";
 import type { InsertMedication, Medication, InsertLabReport, LabReport } from "../models/medical.schema";
 
 export interface MedicineDosage {
@@ -56,12 +56,9 @@ export class MedicalRepository {
   async getMedicationsByPhysicianAndDate(
     userId: string,
     physicianId: string,
-    prescriptionDate: Date
+    prescriptionDate: string
   ): Promise<Medication[]> {
-    const startOfDay = new Date(prescriptionDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(prescriptionDate);
-    endOfDay.setHours(23, 59, 59, 999);
+  
 
     const results = await db
       .select()
@@ -70,8 +67,7 @@ export class MedicalRepository {
         and(
           eq(medications.userId, userId),
           eq(medications.physicianId, physicianId),
-          gte(medications.prescriptionDate, startOfDay),
-          lte(medications.prescriptionDate, endOfDay),
+          gte(sql<Date>`DATE(${medications.prescriptionDate})`,prescriptionDate),
         )
       )
       .orderBy(desc(medications.prescriptionDate));

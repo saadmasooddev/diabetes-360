@@ -5,6 +5,10 @@ import type { InsertHealthMetric, HealthMetric, MertricRecord, InsertExerciseLog
 import { PgTable } from "drizzle-orm/pg-core";
 import { formatDate } from "server/src/shared/utils/utils";
 
+export type ChartData = {
+ value: number, recordedAt: Date
+}
+
 export type HealthPagination = {
   total: number; limit: number; offset: number
 }
@@ -843,21 +847,23 @@ export class HealthRepository {
         total: number;
       };
       chartData: {
-        cardio: Array<ExerciseLog>;
-        strength_training: Array<ExerciseLog>;
-        stretching: Array<ExerciseLog>;
+        cardio: Array<ChartData>;
+        strength_training: Array<ChartData>;
+        stretching: Array<ChartData>;
       };
   }> {
 
     const caloriesSum =sql<number>`CAST(SUM(${exerciseLogs.calories}) AS INTEGER)` 
-    const recordedAtCast = sql<Date>`CAST(${exerciseLogs.recordedAt} AS DATE)`.as('rec')
+    const recordedAtCast = sql<Date>`CAST(${exerciseLogs.recordedAt} AS DATE)`.as('rec') 
 
-    const columns = !sameDates ? {
-      calories: caloriesSum ,
-      recordedAt: recordedAtCast
-    }: {
-      ...getTableColumns(exerciseLogs),
-    }
+    const groupBy = [
+      recordedAtCast,
+    ]
+
+    const columns =  {
+      value: sameDates ? exerciseLogs.calories : caloriesSum,
+      recordedAt: sameDates ? exerciseLogs.recordedAt : recordedAtCast
+    } 
 
     const condition = [and(
       eq(exerciseLogs.userId, userId),
@@ -869,6 +875,8 @@ export class HealthRepository {
         lte(exerciseLogs.recordedAt, endDate),
       )
      }
+
+    const promises = []
 
     const cardioPromise = db
       .select(columns)
@@ -894,27 +902,21 @@ export class HealthRepository {
         eq(exerciseLogs.activityType, ACTIVITY_TYPE_ENUM.STRETCHING
       )))
     
+    promises.push(cardioPromise, strengthTrainingPromise, stretchingPromise)
+    
     if(!sameDates) {
-      cardioPromise
-        .groupBy(recordedAtCast)
-        .orderBy(recordedAtCast)
-      strengthTrainingPromise
-        .groupBy(recordedAtCast)
-        .orderBy(recordedAtCast)
-      stretchingPromise
-        .groupBy(recordedAtCast)
-        .orderBy(recordedAtCast)
+      for (const promise of promises) {
+        promise.groupBy(...groupBy).orderBy(recordedAtCast)
+      }
     }
 
 
-    const [cardio, strengthTraining, stretching] = await Promise.all(
-      [cardioPromise, strengthTrainingPromise, stretchingPromise]
-    )
+    const [cardio, strengthTraining, stretching] = await Promise.all(promises)
 
 
-    const cardioCaloriesBurnt = cardio.reduce((acc, curr) => acc + curr.calories, 0)
-    const strengthTrainingCaloriesBurnt = strengthTraining.reduce((acc, curr) => acc + curr.calories, 0)
-    const stretchingCaloriesBurnt = stretching.reduce((acc, curr) => acc + curr.calories, 0)
+    const cardioCaloriesBurnt = cardio.reduce((acc, curr) => acc + curr.value , 0)
+    const strengthTrainingCaloriesBurnt = strengthTraining.reduce((acc, curr) => acc + curr.value , 0)
+    const stretchingCaloriesBurnt = stretching.reduce((acc, curr) => acc + curr.value, 0)
 
     const totalCaloriesBurnt = cardioCaloriesBurnt + strengthTrainingCaloriesBurnt + stretchingCaloriesBurnt
 

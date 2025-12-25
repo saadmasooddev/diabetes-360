@@ -24,6 +24,7 @@ interface HealthTrendChartProps {
   onIntervalChange?: (interval: IntervalType) => void;
   recommendedTarget?: number;
   userTarget?: number;
+  color?: string;
 }
 
 export function HealthTrendChart({
@@ -37,6 +38,7 @@ export function HealthTrendChart({
   onIntervalChange,
   recommendedTarget,
   userTarget,
+  color = '#00856F',
 }: HealthTrendChartProps) {
 
   const calculateDomain = (): [number, number | string] => {
@@ -123,64 +125,70 @@ export function HealthTrendChart({
           </Select>
         )}
       </div>
-      <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={chartData}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00856F" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#00856F" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
-          <XAxis
-            dataKey="time"
-            tick={{ fill: '#546E7A', fontSize: 12 }}
-            axisLine={{ stroke: '#E0E0E0' }}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fill: '#546E7A', fontSize: 12 }}
-            axisLine={false}
-            tickLine={false}
-            domain={dynamicDomain}
-            ticks={yAxisConfig?.ticks}
-            label={yAxisConfig?.label ? { value: yAxisConfig.label, position: 'insideLeft', fill: '#546E7A', fontSize: 11 } : undefined}
-          />
-          <Tooltip
-            contentStyle={{
-              background: '#FFFFFF',
-              border: '1px solid #E0E0E0',
-              borderRadius: '8px',
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#00856F"
-            strokeWidth={2}
-            fill={`url(#${gradientId})`}
-            name="Current Value"
-          />
-          {recommendedTarget !== undefined && recommendedTarget !== null && (
-            <ReferenceLine
-              y={recommendedTarget}
-              stroke="#FF9800"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              label={{ value: "Recommended", position: "right", fill: "#FF9800", fontSize: 11 }}
+      {data.length === 0 ? (
+        <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
+          <p className="text-gray-500">No data available for the selected period</p>
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={height}>
+          <AreaChart data={chartData}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" vertical={false} />
+            <XAxis
+              dataKey="time"
+              tick={{ fill: '#546E7A', fontSize: 12 }}
+              axisLine={{ stroke: '#E0E0E0' }}
+              tickLine={false}
             />
-          )}
-          {userTarget !== undefined && userTarget !== null && (
-            <ReferenceLine
-              y={userTarget}
-              stroke="#2196F3"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              label={{ value: "Your Target", position: "right", fill: "#2196F3", fontSize: 11 }}
+            <YAxis
+              tick={{ fill: '#546E7A', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              domain={dynamicDomain}
+              ticks={yAxisConfig?.ticks}
+              label={yAxisConfig?.label ? { value: yAxisConfig.label, position: 'insideLeft', fill: '#546E7A', fontSize: 11 } : undefined}
             />
-          )}
-        </AreaChart>
-      </ResponsiveContainer>
+            <Tooltip
+              contentStyle={{
+                background: '#FFFFFF',
+                border: '1px solid #E0E0E0',
+                borderRadius: '8px',
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={color}
+              strokeWidth={2}
+              fill={`url(#${gradientId})`}
+              name="Current Value"
+            />
+            {recommendedTarget !== undefined && recommendedTarget !== null && (
+              <ReferenceLine
+                y={recommendedTarget}
+                stroke="#FF9800"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                label={{ value: "Recommended", position: "right", fill: "#FF9800", fontSize: 11 }}
+              />
+            )}
+            {userTarget !== undefined && userTarget !== null && (
+              <ReferenceLine
+                y={userTarget}
+                stroke="#2196F3"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                label={{ value: "Your Target", position: "right", fill: "#2196F3", fontSize: 11 }}
+              />
+            )}
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
 
       {/* Custom Legend */}
       {(recommendedTarget !== undefined || userTarget !== undefined) && (
@@ -193,7 +201,7 @@ export function HealthTrendChart({
           <div className="flex items-center gap-2.5">
             <div
               className="w-5 h-1 rounded-full"
-              style={{ background: '#00856F' }}
+              style={{ background: color }}
             ></div>
             <span className="text-sm font-medium" style={{ color: '#546E7A' }}>
               Current Progress

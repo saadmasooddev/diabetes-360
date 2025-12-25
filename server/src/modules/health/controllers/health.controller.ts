@@ -2,10 +2,11 @@ import { Response, NextFunction } from "express";
 import { type AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { HealthService } from "../service/health.service";
-import { BadRequestError } from "../../../shared/errors";
-import { insertHealthMetricSchema, insertExerciseLogSchema, batchUpsertHealthMetricTargetsSchema, metricTypes, MetricType } from "../models/health.schema";
+import { BadRequestError, ValidationError } from "../../../shared/errors";
+import { insertHealthMetricSchema, insertExerciseLogSchema, batchUpsertHealthMetricTargetsSchema, metricTypes, MetricType, InsertExerciseLog } from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import { formatDate, parseLocalDate, validateLimitAndOffset } from "server/src/shared/utils/utils";
+import { ZodError } from "zod";
 
 export class HealthController {
   private healthService: HealthService;
@@ -134,7 +135,6 @@ export class HealthController {
       if(healthMetrics && typeof healthMetrics === "object") {
         const validatedHealthMetic = this.validateHealthMetric({ ...healthMetrics, userId})
         if(validatedHealthMetic) {
-          console.log("The valide", validatedHealthMetic)
           await this.healthService.createMetric(validatedHealthMetic, userId)
         }
       }
@@ -148,17 +148,17 @@ export class HealthController {
         ...ex,
       }));
 
+      const parsedData: InsertExerciseLog[] = []
       // Validate each exercise log
       for (const log of logsToInsert) {
         const validationResult = insertExerciseLogSchema.safeParse(log);
         if (!validationResult.success) {
-          throw new BadRequestError(
-            validationResult.error.message || "Invalid exercise log data"
-          );
+          throw validationResult.error;
         }
+        parsedData.push(validationResult.data)
       }
 
-      const logs = await this.healthService.createExerciseLogsBatch(logsToInsert);
+      const logs = await this.healthService.createExerciseLogsBatch(parsedData);
       sendSuccess(res, logs, "Exercises logged successfully");
     } catch (error: any) {
       handleError(res, error);
@@ -251,9 +251,7 @@ export class HealthController {
       const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(req.body);
 
       if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid target data"
-        );
+        throw validationResult.error;
       }
 
       // Ensure all targets have userId set to null
@@ -272,9 +270,7 @@ export class HealthController {
       const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(req.body);
 
       if (!validationResult.success) {
-        throw new BadRequestError(
-          validationResult.error.message || "Invalid target data"
-        );
+        throw validationResult.error;
       }
 
       // Ensure all targets have matching userId

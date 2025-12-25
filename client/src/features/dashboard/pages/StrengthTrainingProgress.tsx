@@ -4,10 +4,10 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ROUTES } from '@/config/routes';
 import { useCaloriesByActivityType } from '@/hooks/mutations/useHealth';
-import { ExerciseLog } from '@shared/schema';
+import { ChartData } from 'server/src/modules/health/repository/health.repository';
+import { HealthTrendChart } from '../components/HealthTrendChart';
 
 type FilterType = 'day' | 'week' | 'month' | 'custom';
 
@@ -57,8 +57,8 @@ export function StrengthTrainingProgress() {
     setLocation(ROUTES.TIPS_EXERCISES);
   };
 
-  // Format chart data based on whether it's today (show time) or date range (show date)
-  const formatChartData = (data: Array<ExerciseLog>) => {
+  // Format chart data for HealthTrendChart (expects { time: string, value: number })
+  const formatChartData = (data: Array<ChartData>) => {
     if (!data || data.length === 0) return [];
 
     const isToday = filterType === 'day' && startDate === new Date().toISOString().split('T')[0];
@@ -69,26 +69,23 @@ export function StrengthTrainingProgress() {
         ? item.recordedAt
         : new Date(item.recordedAt);
 
-      let label: string;
+      let time: string;
 
       if (isToday) {
         // Show time for today
-        label = recordedAtDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        time = recordedAtDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       } else {
         // Show date for date ranges
         if (filterType === 'week' || filterType === 'month' || filterType === 'custom') {
-          label = recordedAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          time = recordedAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         } else {
-          label = recordedAtDate.toLocaleDateString('en-US', { weekday: 'short' });
+          time = recordedAtDate.toLocaleDateString('en-US', { weekday: 'short' });
         }
       }
 
       return {
-        label,
-        calories: item.calories,
-        date: recordedAtDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        time: recordedAtDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        recordedAt: recordedAtDate,
+        time,
+        value: item.value,
       };
     });
   };
@@ -104,10 +101,10 @@ export function StrengthTrainingProgress() {
     total: 0,
   };
 
-  // Get max value for Y-axis
+  // Get max value for Y-axis domain
   const getMaxValue = (data: typeof cardioChartData) => {
     if (data.length === 0) return 100;
-    const max = Math.max(...data.map(d => d.calories));
+    const max = Math.max(...data.map(d => d.value));
     return Math.ceil(max * 1.1);
   };
 
@@ -350,231 +347,93 @@ export function StrengthTrainingProgress() {
           </Card>
 
           {/* Charts */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Cardio Chart */}
-            <Card
-              className="p-8"
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-              }}
-              data-testid="card-chart-cardio"
-            >
-              <h2
-                className="mb-6"
+            {isLoading ? (
+              <Card
+                className="p-8"
                 style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: '#00856F',
+                  background: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 133, 111, 0.12)',
                 }}
+                data-testid="card-chart-cardio"
               >
-                Cardio
-              </h2>
-              {isLoading ? (
                 <div className="flex items-center justify-center h-[300px] text-gray-500">
                   Loading chart data...
                 </div>
-              ) : cardioChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
-                  No data available for the selected period
-                </div>
-              ) : (
-                <div style={{ height: '300px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={cardioChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                      <XAxis
-                        dataKey="label"
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        domain={[0, maxCardio]}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: '#FFFFFF',
-                          border: '1px solid rgba(0, 0, 0, 0.1)',
-                          borderRadius: '8px',
-                        }}
-                        formatter={(value: number) => [value, 'Calories']}
-                        labelFormatter={(label) => {
-                          const item = cardioChartData.find(d => d.label === label);
-                          if (item?.recordedAt) {
-                            return `${item.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${item.recordedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-                          }
-                          return item?.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || label;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="calories"
-                        stroke="#EF5350"
-                        strokeWidth={2}
-                        dot={{ r: 4, fill: '#EF5350' }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
+              </Card>
+            ) : (
+              <HealthTrendChart
+                title="Cardio"
+                data={cardioChartData}
+                gradientId="cardioGradient"
+                testId="card-chart-cardio"
+                height={300}
+                yAxisConfig={{
+                  domain: [0, maxCardio],
+                }}
+                color="#EF5350"
+              />
+            )}
 
             {/* Strength Training Chart */}
-            <Card
-              className="p-8"
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-              }}
-              data-testid="card-chart-strength"
-            >
-              <h2
-                className="mb-6"
+            {isLoading ? (
+              <Card
+                className="p-8"
                 style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: '#00856F',
+                  background: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 133, 111, 0.12)',
                 }}
+                data-testid="card-chart-strength"
               >
-                Strength Training
-              </h2>
-              {isLoading ? (
                 <div className="flex items-center justify-center h-[300px] text-gray-500">
                   Loading chart data...
                 </div>
-              ) : strengthChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
-                  No data available for the selected period
-                </div>
-              ) : (
-                <div style={{ height: '300px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={strengthChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                      <XAxis
-                        dataKey="label"
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        domain={[0, maxStrength]}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: '#FFFFFF',
-                          border: '1px solid rgba(0, 0, 0, 0.1)',
-                          borderRadius: '8px',
-                        }}
-                        formatter={(value: number) => [value, 'Calories']}
-                        labelFormatter={(label) => {
-                          const item = strengthChartData.find(d => d.label === label);
-                          if (item?.recordedAt) {
-                            return `${item.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${item.recordedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-                          }
-                          return item?.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || label;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="calories"
-                        stroke="#00856F"
-                        strokeWidth={2}
-                        dot={{ r: 4, fill: '#00856F' }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
+              </Card>
+            ) : (
+              <HealthTrendChart
+                title="Strength Training"
+                data={strengthChartData}
+                gradientId="strengthGradient"
+                testId="card-chart-strength"
+                height={300}
+                yAxisConfig={{
+                  domain: [0, maxStrength],
+                }}
+                color="#00856F"
+              />
+            )}
 
             {/* Stretching Chart */}
-            <Card
-              className="p-8"
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '12px',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-              }}
-              data-testid="card-chart-stretching"
-            >
-              <h2
-                className="mb-6"
+            {isLoading ? (
+              <Card
+                className="p-8"
                 style={{
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: '#00856F',
+                  background: '#FFFFFF',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(0, 133, 111, 0.12)',
                 }}
+                data-testid="card-chart-stretching"
               >
-                Stretching
-              </h2>
-              {isLoading ? (
                 <div className="flex items-center justify-center h-[300px] text-gray-500">
                   Loading chart data...
                 </div>
-              ) : stretchingChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px] text-gray-500">
-                  No data available for the selected period
-                </div>
-              ) : (
-                <div style={{ height: '300px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={stretchingChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E0E0E0" />
-                      <XAxis
-                        dataKey="label"
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis
-                        stroke="#546E7A"
-                        style={{ fontSize: '12px' }}
-                        domain={[0, maxStretching]}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: '#FFFFFF',
-                          border: '1px solid rgba(0, 0, 0, 0.1)',
-                          borderRadius: '8px',
-                        }}
-                        formatter={(value: number) => [value, 'Calories']}
-                        labelFormatter={(label) => {
-                          const item = stretchingChartData.find(d => d.label === label);
-                          if (item?.recordedAt) {
-                            return `${item.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${item.recordedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-                          }
-                          return item?.recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || label;
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="calories"
-                        stroke="#9C27B0"
-                        strokeWidth={2}
-                        dot={{ r: 4, fill: '#9C27B0' }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </Card>
+              </Card>
+            ) : (
+              <HealthTrendChart
+                title="Stretching"
+                data={stretchingChartData}
+                gradientId="stretchingGradient"
+                testId="card-chart-stretching"
+                height={300}
+                yAxisConfig={{
+                  domain: [0, maxStretching],
+                }}
+                color="#9C27B0"
+              />
+            )}
           </div>
         </div>
       </main>

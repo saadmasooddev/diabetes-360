@@ -144,6 +144,15 @@ router.get(
  *     tags: [Health Metrics]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: total
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *         description: If "true", returns total values instead of averages. Defaults to false.
+ *         example: "false"
  *     responses:
  *       200:
  *         description: Aggregated statistics and targets retrieved successfully
@@ -495,6 +504,32 @@ router.get(
  *             required:
  *               - exercises
  *             properties:
+ *               healthMetrics:
+ *                 type: object
+ *                 nullable: true
+ *                 description: Optional health metrics to log alongside exercises. If provided and valid, a health metric entry will be created.
+ *                 properties:
+ *                   bloodSugar:
+ *                     type: number
+ *                     nullable: true
+ *                     example: 120
+ *                     description: Blood sugar level in mg/dL
+ *                   waterIntake:
+ *                     type: number
+ *                     nullable: true
+ *                     example: 2.5
+ *                     description: Water intake in liters
+ *                   heartRate:
+ *                     type: integer
+ *                     nullable: true
+ *                     example: 72
+ *                     description: Heart rate in beats per minute (BPM). Only available for paid users.
+ *                   recordedAt:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                     description: Optional timestamp for the health metric, defaults to now
+ *                     example: "2024-01-15T10:30:00Z"
  *               exercises:
  *                 type: array
  *                 items:

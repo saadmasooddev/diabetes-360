@@ -3,6 +3,6 @@ import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
 import { config } from '.';
 
 
-const db: NodePgDatabase<typeof schema> = drizzle(config.databaseUrl, { schema , logger: true});
+const db: NodePgDatabase<typeof schema> = drizzle(config.databaseUrl, { schema });
 
 export { db };

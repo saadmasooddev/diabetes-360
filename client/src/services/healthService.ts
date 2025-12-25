@@ -3,6 +3,7 @@ import { httpClient } from '@/utils/httpClient';
 import type { HealthMetric, MertricRecord, ExerciseLog, ExtendedHealthMetric, MetricType, ActivityType, InsertHealthMetric } from '@shared/schema';
 import type { ApiResponse } from '@/types/auth.types';
 import { ExtendedLimits } from './settingsService';
+import { ChartData } from 'server/src/modules/health/repository/health.repository';
 
 export type Statistics = {
   daily: number; weekly: number; monthly: number
@@ -270,9 +271,9 @@ class HealthService {
       total: number;
     };
     chartData: {
-      cardio: Array<ExerciseLog>;
-      strength_training: Array<ExerciseLog>;
-      stretching: Array<ExerciseLog>;
+      cardio: Array<ChartData>;
+      strength_training: Array<ChartData>;
+      stretching: Array<ChartData>;
     };
   }> {
     const response = await httpClient.get<ApiResponse<{
@@ -283,9 +284,9 @@ class HealthService {
         total: number;
       };
       chartData: {
-        cardio: Array<ExerciseLog>;
-        strength_training: Array<ExerciseLog>;
-        stretching: Array<ExerciseLog>;
+        cardio: Array<ChartData>;
+        strength_training: Array<ChartData>;
+        stretching: Array<ChartData>;
       };
     }>>(
       `${API_ENDPOINTS.HEALTH.EXERCISES.CALORIES_BY_ACTIVITY}?startDate=${startDate}&endDate=${endDate}`

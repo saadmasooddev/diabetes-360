@@ -55,7 +55,7 @@ export class CustomerController {
 
       const validationResult = insertCustomerDataSchema.safeParse(customerDataInput);
       if (!validationResult.success) {
-        throw new BadRequestError(validationResult.error.message || "Invalid customer data");
+        throw validationResult.error;
       }
 
       const data = await this.customerService.createCustomerData(userId, validationResult.data);
@@ -83,7 +83,7 @@ export class CustomerController {
       
       const validationResult = updateCustomerDataSchema.safeParse(customerDataInput);
       if (!validationResult.success) {
-        throw new BadRequestError(validationResult.error.message || "Invalid customer data");
+        throw validationResult.error;
       }
 
       const data = await this.customerService.updateCustomerData(userId, validationResult.data);
