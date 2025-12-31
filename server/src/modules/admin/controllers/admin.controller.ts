@@ -1,14 +1,14 @@
-import { type Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser, insertPhysicianDataSchema, updatePhysicianDataSchema, insertCustomerDataAdminSchema, updateCustomerDataSchema } from "../../auth/models/user.schema";
+import {  Response, NextFunction } from "express";
+import { insertUserSchema,  insertPhysicianDataSchema, updatePhysicianDataSchema, insertCustomerDataAdminSchema, updateCustomerDataSchema } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
 import { PhysicianService } from "../../physician/service/physician.service";
 import { CustomerService } from "../../customer/service/customer.service";
-import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
+import {  SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import { AuthenticatedRequest } from "../../../shared/middleware/auth";
-import { USER_ROLES } from "../../../shared/constants/roles";
 import { handleError } from "../../../shared/middleware/errorHandler";
+import { USER_ROLES } from "@shared/schema";
 
 export class AdminController {
   private authService: AuthService;

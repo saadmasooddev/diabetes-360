@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useAuthStore } from '@/stores/authStore';
 import { TokenManager } from '@/utils/tokenManager';
-import { ROUTES } from '@/config/routes';
+import { DOCTOR_DASHBOARD_PREFIX, ROUTES } from '@/config/routes';
+import { USER_ROLES, UserRole } from '@shared/schema';
+import { utils } from '@/lib/utils';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,32 +25,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       return;
     }
 
-    // Check if customer profile is complete
-    // Only enforce for customer role and if not already on profile data page
-    if (
-      user.role === 'customer' &&
-      !user.profileComplete &&
-      location !== ROUTES.PROFILE_DATA
-    ) {
-      navigate(ROUTES.PROFILE_DATA);
-      return;
-    }
+    const role = user.role
+    utils.roleAfterAuthNavigationMap[role]?.({ user, tokens: TokenManager.getTokens()! }, navigate, location)
 
-    // Block access to ProfileData page if profile is already complete
-    if (
-      user.role === 'customer' &&
-      user.profileComplete &&
-      location === ROUTES.PROFILE_DATA
-    ) {
-      navigate(ROUTES.SETTINGS);
-      return;
-    }
-
-    // If user is authenticated and trying to access an invalid route, redirect to dashboard
-    const validRoutes = Object.values(ROUTES);
-    if (!validRoutes.includes(location as any)) {
-      navigate(ROUTES.DASHBOARD);
-    }
   }, [isAuthenticated, user, navigate, location]);
 
   // Show loading or nothing while checking authentication

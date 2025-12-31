@@ -87,7 +87,7 @@ export function createMulterConfig(options: MulterConfigOptions & { validateUser
   return upload.single(fieldName);
 }
 
-export function createMulterConfigMultiple(
+function createMulterConfigMultiple(
   options: MulterConfigOptions,
   maxCount: number = 5
 ) {

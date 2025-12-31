@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InsertExerciseLog, healthService } from '@/services/healthService';
 import { API_ENDPOINTS } from '@/config/endpoints';
 import type {  ActivityType, InsertHealthMetric, MertricRecord, MetricType } from '@shared/schema';
+import { type } from 'os';
 
 
 
@@ -25,11 +26,9 @@ export const useAggregatedStatistics = () => {
   });
 };
 
-export const useFilteredMetrics = (
-  startDate: string | null,
-  endDate: string | null,
-  types: MetricType[] = []
-) => {
+export type FilteredMetricsKey = { endpoint: string, startDate: string, endDate: string, types: MetricType[] }
+export const useFilteredMetrics = (key: FilteredMetricsKey) => {
+  const { endpoint, startDate, endDate, types } = key
   return useQuery<{
     bloodSugarRecords: MertricRecord[];
     waterIntakeRecords: MertricRecord[];
@@ -42,7 +41,7 @@ export const useFilteredMetrics = (
       heartBeat: { total: number; limit: number; offset: number };
     };
   }>({
-    queryKey: [API_ENDPOINTS.HEALTH.FILTERED, startDate, endDate, types],
+    queryKey:[key],
     queryFn: () => healthService.getFilteredMetrics(startDate!, endDate!, types),
     enabled: !!startDate && !!endDate,
     refetchOnMount: 'always',
@@ -112,14 +111,12 @@ export const useAddActivityLogsBatch = () => {
     mutationFn: async ({exercises, healthMetrics}: {exercises: Array<InsertExerciseLog>, healthMetrics?: InsertHealthMetric}) => {
       return await healthService.addActivityLogsBatch({exercises, healthMetrics});
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate calories by activity queries (all date ranges)
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.HEALTH.EXERCISES.CALORIES_BY_ACTIVITY],
       });
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.HEALTH.LATEST],
-      });
+      queryClient.setQueryData([API_ENDPOINTS.HEALTH.LATEST], data.latestMetrics)
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.HEALTH.STATISTICS],
       });

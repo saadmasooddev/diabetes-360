@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../../app/config';
-import { type UserRole } from '../constants/roles';
 import { BadRequestError, UnauthorizedError } from '../errors';
+import { UserRole } from '@shared/schema';
 
 export interface JWTPayload {
   userId: string;
@@ -10,6 +10,7 @@ export interface JWTPayload {
   lastName: string;
   role: UserRole;
   tokenId?: string;
+  permissions: string[];
   iat?: number;
   exp?: number;
 }

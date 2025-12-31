@@ -15,7 +15,7 @@ import { Image } from '@/components/ui/image';
 import { ReusablePagination } from '@/components/ui/ReusablePagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Physician } from '@/services/physicianService';
-import { PastConsultationsList } from '../components/PastConsultationsList';
+import { PastConsultationsList } from '../../components/PastConsultationsList';
 
 interface Consultation {
   id: string;

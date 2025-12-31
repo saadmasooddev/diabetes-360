@@ -19,15 +19,13 @@ import { calorieUtils, handleNumberInput } from '@/lib/utils';
 import { ButtonSpinner } from '@/components/ui/spinner';
 import { ACTIVITY_TYPE_ENUM, ActivityType } from '@shared/schema';
 
-interface TipsExercisesProps {
-  isPremium?: boolean;
-}
 
 type ModalType = 'time' | 'exercises';
 
-export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
+export function TipsExercises() {
   const [, setLocation] = useLocation();
   const { user } = useAuthStore();
+  const isPremium = user?.paymentType !== 'free'
   const addActivityLogsBatch = useAddActivityLogsBatch();
   const { data: customerData } = useGetCustomerData();
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
@@ -77,16 +75,16 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
       // Determine activity type based on exercise plan title
       let activityName: 'walking' | 'yoga' = 'walking';
       let activityType: ActivityType = "" as ActivityType
-      let exerciseType = 'Morning Walk';
+      let exerciseName = 'Walk';
 
       if (selectedExercise.title.toLowerCase().includes('yoga')) {
         activityName = 'yoga';
         activityType = ACTIVITY_TYPE_ENUM.STRETCHING;
-        exerciseType = 'Yoga';
+        exerciseName = 'Yoga';
       } else if (selectedExercise.title.toLowerCase().includes('walk')) {
         activityName = 'walking';
         activityType = ACTIVITY_TYPE_ENUM.CARDIO;
-        exerciseType = 'Morning Walk';
+        exerciseName = 'Morning Walk';
       }
 
       // Calculate duration in seconds
@@ -112,7 +110,7 @@ export function TipsExercises({ isPremium = false }: TipsExercisesProps) {
 
       addActivityLogsBatch.mutate({
         exercises: [{
-          exerciseType,
+          exerciseName,
           calories,
           activityType,
           duration: durationSeconds, // in seconds

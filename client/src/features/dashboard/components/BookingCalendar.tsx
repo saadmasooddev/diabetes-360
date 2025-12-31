@@ -1,6 +1,6 @@
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2 } from 'lucide-react';
 
 interface BookingCalendarProps {
   selectedDate: Date;
@@ -29,12 +29,12 @@ export function BookingCalendar({
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
       }}
     >
-      {isLoading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-4 w-48" />
-        </div>
-      ) : (
+      <div className="w-full relative">
+        {isLoading && (
+          <div className="absolute top-2 right-2 z-10">
+            <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
+          </div>
+        )}
         <div className="w-full">
           <div className="w-full [&_.rdp]:w-full [&_.rdp-table]:w-full [&_.rdp-cell]:flex-1 [&_.rdp-day]:w-full [&_.rdp-day]:h-12 [&_.rdp-head_cell]:flex-1">
             <Calendar
@@ -78,7 +78,7 @@ export function BookingCalendar({
             <span>Dates with available slots</span>
           </div>
         </div>
-      )}
+      </div>
     </Card>
   );
 }

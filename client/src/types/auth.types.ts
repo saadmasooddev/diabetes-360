@@ -39,6 +39,7 @@ export interface User {
   isActive: boolean;
   profileComplete: boolean;
   profileData?: CustomerData | PhysicianData | null;
+  permissions?: string[];
   createdAt: string;
   updatedAt: string;
 }

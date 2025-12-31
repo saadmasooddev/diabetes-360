@@ -1,7 +1,9 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { Slot } from '@/services/bookingService';
-import { CustomerData, User } from "@/types/auth.types";
+import { AuthData, CustomerData, User } from "@/types/auth.types";
+import { USER_ROLES, UserRole } from "@shared/schema";
+import { ADMIN_DASHBOARD_PREFIX, AUTH_PREFIX, COMMON_PREFIX, DOCTOR_DASHBOARD_PREFIX, ROUTES, USER_DASHBOARD_PREFIX } from "@/config/routes";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -137,6 +139,75 @@ export function groupSlotsByPeriod(slots: Slot[]): Map<string, Slot[]> {
   return grouped;
 }
 
+class Utils {
+
+  readonly adminRoutes = Object.values(ROUTES).filter(r => r.startsWith(ADMIN_DASHBOARD_PREFIX))
+  readonly doctorRoutes = Object.values(ROUTES).filter(r => r.startsWith(DOCTOR_DASHBOARD_PREFIX))
+  readonly userRoutes = Object.values(ROUTES).filter(r => r.startsWith(USER_DASHBOARD_PREFIX))
+  readonly commonRoutes = Object.values(ROUTES).filter(r => r.startsWith(COMMON_PREFIX))
+  readonly authRoutes = Object.values(ROUTES).filter(r => r.startsWith(AUTH_PREFIX))
+
+  readonly roleAfterAuthNavigationMap: Record<UserRole, (data: AuthData, navigate:(p: string) => void, location?: string) => void> = {
+
+    [USER_ROLES.CUSTOMER] : (data, navigate, location) => {
+
+      if(this.adminRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if(this.doctorRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if([...this.commonRoutes, ...this.userRoutes].includes(location as any)){
+        navigate(location as string)
+        return
+      }
+      const profileComplete = data.user.profileComplete
+      if(!profileComplete && location !== ROUTES.PROFILE_DATA) {
+        navigate(ROUTES.PROFILE_DATA)
+        return
+      } 
+      if(profileComplete && location === ROUTES.PROFILE_DATA) {
+        navigate(ROUTES.SETTINGS)
+        return
+      } 
+      navigate(ROUTES.HOME)
+      return
+    },
+    [USER_ROLES.PHYSICIAN]: (data, navigate, location) => {
+      if(this.adminRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if(this.userRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if([...this.commonRoutes, ...this.doctorRoutes].includes(location as any)){
+        navigate(location as string)
+        return
+      }
+      navigate(ROUTES.DOCTOR_HOME)
+    },
+    [USER_ROLES.ADMIN]: (data, navigate, location) => {
+      if(this.userRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if(this.doctorRoutes.includes(location as any)){
+        navigate(ROUTES.LOGIN)
+        return
+      }
+      if([...this.commonRoutes, ...this.adminRoutes].includes(location as any)){
+        navigate(location as string)
+        return
+      }
+      navigate(ROUTES.ADMIN_HOME)
+    }
+  }
+
+}
 export function sortLocationByDistance(locations: {id: string, locationName: string}[], locationDistances: Record<string, number>){
   return locations.sort((a, b) => {
     const distA = locationDistances[a.id];
@@ -499,3 +570,4 @@ calculateAccuratePace  (
 }
 
 export const calorieUtils = new CalorieUtils()
+export const utils = new Utils()

@@ -389,14 +389,14 @@ export class HealthRepository {
     if(total){
       const totalGlucose = await db
         .select({
-          total: sql<number>`COALESCE(SUM(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
+          total: sql<number>`COALESCE(AVG(CAST(${healthMetrics.bloodSugar} AS DECIMAL)), 0)`,
         })
         .from(healthMetrics)
         .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.bloodSugar)));
       
       const totalWater = await db
         .select({
-          total: sql<number>`COALESCE(SUM(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
+          total: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
         })
         .from(healthMetrics)
         .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.waterIntake)));
@@ -404,14 +404,14 @@ export class HealthRepository {
       // Steps are in exercise_logs
       const totalSteps = await db
         .select({
-          total: sql<number>`COALESCE(SUM(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
+          total: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
         })
         .from(exerciseLogs)
         .where(and(eq(exerciseLogs.userId, userId), isNotNull(exerciseLogs.steps)));
 
       const totalHeartRate = await db
         .select({
-          total: sql<number>`COALESCE(SUM(${healthMetrics.heartRate}::DECIMAL), 0)`,
+          total: sql<number>`COALESCE(AVG(${healthMetrics.heartRate}::DECIMAL), 0)`,
         })
         .from(healthMetrics)
         .where(and(eq(healthMetrics.userId, userId), isNotNull(healthMetrics.heartRate)));
@@ -637,6 +637,7 @@ export class HealthRepository {
       data.map(d => ({
         userId: d.userId,
         exerciseType: d.exerciseType,
+        exerciseName: d.exerciseName,
         calories: d.calories,
         activityType: d.activityType,
         pace: d.pace || null,

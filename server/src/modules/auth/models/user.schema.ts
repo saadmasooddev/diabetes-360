@@ -9,6 +9,8 @@ export const USER_ROLES = {
   PHYSICIAN: "physician",
 } as const;
 
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+
 export const PROVIDERS = {
   MANUAL: "manual",
   GOOGLE: "google",
@@ -311,3 +313,83 @@ export const updatePhysicianLocationSchema = createInsertSchema(physicianLocatio
 export type PhysicianLocation = typeof physicianLocations.$inferSelect;
 export type InsertPhysicianLocation = z.infer<typeof insertPhysicianLocationSchema>;
 export type UpdatePhysicianLocation = z.infer<typeof updatePhysicianLocationSchema>;
+
+export const PERMISSIONS = {
+  // Profile permissions
+  READ_OWN_PROFILE: 'read:own_profile',
+  UPDATE_OWN_PROFILE: 'update:own_profile',
+  
+  // Health metrics permissions
+  READ_OWN_HEALTH_METRICS: 'read:own_health_metrics',
+  CREATE_OWN_HEALTH_METRICS: 'create:own_health_metrics',
+  UPDATE_OWN_HEALTH_METRICS: 'update:own_health_metrics',
+  DELETE_OWN_HEALTH_METRICS: 'delete:own_health_metrics',
+  READ_ALL_HEALTH_METRICS: 'read:all_health_metrics',
+  CREATE_ALL_HEALTH_METRICS: 'create:all_health_metrics',
+  UPDATE_ALL_HEALTH_METRICS: 'update:all_health_metrics',
+  DELETE_ALL_HEALTH_METRICS: 'delete:all_health_metrics',
+  
+  // Health targets permissions
+  READ_HEALTH_TARGETS: 'read:health_targets',
+  WRITE_OWN_HEALTH_TARGETS: 'write:own_health_targets',
+  WRITE_HEALTH_TARGETS: 'write:health_targets',
+  
+  // Food scanner permissions
+  SCAN_FOOD: 'scan:food',
+  
+  // Medical records permissions
+  READ_OWN_MEDICAL_RECORDS: 'read:own_medical_records',
+  CREATE_OWN_MEDICAL_RECORDS: 'create:own_medical_records',
+  UPDATE_OWN_MEDICAL_RECORDS: 'update:own_medical_records',
+  DELETE_OWN_MEDICAL_RECORDS: 'delete:own_medical_records',
+  READ_ALL_MEDICAL_RECORDS: 'read:all_medical_records',
+  CREATE_ALL_MEDICAL_RECORDS: 'create:all_medical_records',
+  UPDATE_ALL_MEDICAL_RECORDS: 'update:all_medical_records',
+  DELETE_ALL_MEDICAL_RECORDS: 'delete:all_medical_records',
+  
+  // Patient permissions (for physicians)
+  READ_PATIENT_PROFILES: 'read:patient_profiles',
+  READ_PATIENT_HEALTH_METRICS: 'read:patient_health_metrics',
+  CREATE_PATIENT_HEALTH_METRICS: 'create:patient_health_metrics',
+  UPDATE_PATIENT_HEALTH_METRICS: 'update:patient_health_metrics',
+  READ_PATIENT_MEDICAL_RECORDS: 'read:patient_medical_records',
+  CREATE_PATIENT_MEDICAL_RECORDS: 'create:patient_medical_records',
+  READ_PATIENT_ALERTS: 'read:patient_alerts',
+  
+  // Booking permissions
+  READ_OWN_BOOKINGS: 'read:own_bookings',
+  CREATE_BOOKINGS: 'create:bookings',
+  CANCEL_OWN_BOOKINGS: 'cancel:own_bookings',
+  READ_ALL_BOOKINGS: 'read:all_bookings',
+  
+  // Consultation permissions
+  READ_OWN_CONSULTATIONS: 'read:own_consultations',
+  READ_CONSULTATION_QUOTAS: 'read:consultation_quotas',
+  
+  // Physician permissions
+  READ_PHYSICIANS: 'read:physicians',
+  READ_OWN_APPOINTMENTS: 'read:own_appointments',
+  UPDATE_OWN_APPOINTMENTS: 'update:own_appointments',
+  MANAGE_OWN_SLOTS: 'manage:own_slots',
+  READ_ALL_APPOINTMENTS: 'read:all_appointments',
+  MANAGE_PHYSICIAN_SLOTS: 'manage:physician_slots',
+  MANAGE_AVAILABILITY: 'manage:availability',
+  MANAGE_LOCATIONS: 'manage:locations',
+  READ_ALL_PATIENTS: 'read:all_patients',
+  
+  // User management permissions (for admins)
+  READ_ALL_USERS: 'read:all_users',
+  CREATE_USERS: 'create:users',
+  UPDATE_USERS: 'update:users',
+  DELETE_USERS: 'delete:users',
+  
+  // Settings permissions
+  CREATE_SETTINGS: 'create:settings',
+  READ_SETTINGS: 'read:settings',
+  UPDATE_SETTINGS: 'update:settings',
+  DELETE_SETTINGS: 'delete:settings',
+
+  USE_DIABOT: "use:diabot",
+  SUBSCRIBE_HEALTH_PLANS:"subscribe:health_plans"
+  
+} as const;

@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { HTTP_STATUS } from "server/src/app/constants";
 
 export function handleError(res: Response, error: any, data: any = null): void {
+  console.log(error)
   if (error instanceof AppError) {
     sendError(res, error.message, error.statusCode, data);
     return;

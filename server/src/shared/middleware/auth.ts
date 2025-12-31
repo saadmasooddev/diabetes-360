@@ -1,7 +1,7 @@
 import { type Request, Response, NextFunction } from "express";
 import { JWTService } from "../utils/jwt";
 import { UnauthorizedError, ForbiddenError } from "../errors";
-import { USER_ROLES, type UserRole, hasPermission } from "../constants/roles";
+import { USER_ROLES, UserRole } from "@shared/schema";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -10,6 +10,7 @@ export interface AuthenticatedRequest extends Request {
     firstName: string;
     lastName: string;
     role: UserRole;
+    permissions: string[]
   };
 }
 
@@ -25,6 +26,7 @@ export function authenticateToken(req: AuthenticatedRequest, _res: Response, nex
       firstName: payload.firstName,
       lastName: payload.lastName,
       role: payload.role || USER_ROLES.CUSTOMER, // Default to customer if role not in token
+      permissions: payload.permissions || []
     };
     
     next();
@@ -33,27 +35,13 @@ export function authenticateToken(req: AuthenticatedRequest, _res: Response, nex
   }
 }
 
-export function requireRole(allowedRoles: UserRole[]) {
-  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      return next(new UnauthorizedError("Authentication required"));
-    }
-
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(new ForbiddenError(`Access denied. Required roles: ${allowedRoles.join(', ')}`));
-    }
-
-    next();
-  };
-}
-
 export function requirePermission(permission: string) {
   return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
     if (!req.user) {
       return next(new UnauthorizedError("Authentication required"));
     }
 
-    if (!hasPermission(req.user.role, permission)) {
+    if (!req.user.permissions.includes(permission)) {
       return next(new ForbiddenError(`Access denied. Required permission: ${permission}`));
     }
 
@@ -61,39 +49,15 @@ export function requirePermission(permission: string) {
   };
 }
 
-export function requireAdmin(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
-  if (!req.user) {
-    return next(new UnauthorizedError("Authentication required"));
+export function requireAnyPermission(permissions: string[]){
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      return next(new UnauthorizedError("Authentication required"));
+    }
+
+    if (!req.user.permissions.some(p => permissions.includes(p))) {
+      return next(new ForbiddenError(`Access denied. Required permission: ${permissions.join(", ")}`));
+    }
+    next();
   }
-
-  if (req.user.role !== USER_ROLES.ADMIN) {
-    return next(new ForbiddenError("Admin access required"));
-  }
-
-  next();
-}
-
-
-export function requirePhysician(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
-  if (!req.user) {
-    return next(new UnauthorizedError("Authentication required"));
-  }
-
-  if (req.user.role !== USER_ROLES.PHYSICIAN) {
-    return next(new ForbiddenError("Physician access required"));
-  }
-
-  next();
-}
-
-export function requirePhysicianOrAdmin(req: AuthenticatedRequest, _res: Response, next: NextFunction): void {
-  if (!req.user) {
-    return next(new UnauthorizedError("Authentication required"));
-  }
-
-  if (![USER_ROLES.PHYSICIAN, USER_ROLES.ADMIN].includes(req.user.role as any)) {
-    return next(new ForbiddenError("Physician or Admin access required"));
-  }
-
-  next();
 }

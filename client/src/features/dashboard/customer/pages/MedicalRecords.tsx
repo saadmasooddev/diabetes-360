@@ -2,10 +2,10 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Card } from '@/components/ui/card';
 import { Lock } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { GlucoseChartSection } from '../components/GlucoseChartSection';
-import { PastConsultationsList } from '../components/PastConsultationsList';
-import { MedicationsTable } from '../components/MedicationsTable';
-import { LabReportsSection } from '../components/LabReportsSection';
+import { GlucoseChartSection } from '../../components/GlucoseChartSection';
+import { PastConsultationsList } from '../../components/PastConsultationsList';
+import { MedicationsTable } from '../../components/MedicationsTable';
+import { LabReportsSection } from '../../components/LabReportsSection';
 
 export function MedicalRecords() {
   const user = useAuthStore((state) => state.user);

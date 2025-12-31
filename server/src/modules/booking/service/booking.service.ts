@@ -3,7 +3,7 @@ import { SettingsService } from "../../settings/service/settings.service";
 import { UserRepository } from "../../user/repository/user.repository";
 import { BadRequestError, ConflictError, NotFoundError, ForbiddenError } from "../../../shared/errors";
 import { db } from "../../../app/config/db";
-import { users, physicianData } from "../../auth/models/user.schema";
+import {  physicianData } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
 import type {
   InsertSlot,
@@ -31,7 +31,7 @@ export class BookingService {
     return await this.bookingRepository.getAllSlotTypes();
   }
 
-  async createAvailabilityDate(physicianId: string, date: Date) {
+  async createAvailabilityDate(physicianId: string, date:string) {
     // Check if date is in the future
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -53,7 +53,7 @@ export class BookingService {
 
     return await this.bookingRepository.createAvailabilityDate({
       physicianId,
-      date,
+      date: dateOnly,
     });
   }
 
@@ -65,17 +65,17 @@ export class BookingService {
     return await this.bookingRepository.getDatesWithAvailability(physicianId);
   }
 
-  async getSlotsForDate(physicianId: string, date: Date) {
+  async getSlotsForDate(physicianId: string, date:string) {
     return await this.getSlotDetailsForDate(physicianId, date);
   }
 
-  async getAvailableSlotsForDate(physicianId: string, date: Date) {
+  async getAvailableSlotsForDate(physicianId: string, date:string) {
     return await this.bookingRepository.getAvailableSlotsForDate(physicianId, date);
   }
 
   async createSlots(
     physicianId: string,
-    date: Date,
+    date:string,
     slotSizeId: string,
     startTime: string,
     endTime: string,
@@ -101,7 +101,7 @@ export class BookingService {
     if (!availability) {
       availability = await this.bookingRepository.createAvailabilityDate({
         physicianId,
-        date,
+        date: dateOnly,
       });
     }
 
@@ -253,7 +253,7 @@ export class BookingService {
     return await this.bookingRepository.getSlotWithDetails(slotId);
   }
 
-  async getSlotDetailsForDate(physicianId: string, date: Date) {
+  async getSlotDetailsForDate(physicianId: string, date:string) {
     const availability = await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
       physicianId,
       date
@@ -378,7 +378,7 @@ export class BookingService {
     month: number,
     year: number,
     isCount: boolean,
-    selectedDate: Date
+    selectedDate: string
   ) {
 
     const currentDate = new Date();
@@ -541,6 +541,169 @@ export class BookingService {
    */
   async updateConsultationSummary(bookingId: string, summary: string, physicianId: string) {
     return await this.bookingRepository.updateConsultationSummary(bookingId, summary, physicianId);
+  }
+
+  /**
+   * Get appointments for physicians/admins
+   */
+  async getAppointments(
+    physicianId: string | null,
+    hasReadAllAppointments: boolean,
+    options: {
+      page?: number;
+      limit?: number;
+      skip?:number;
+      search?: string;
+      startDate?: Date;
+      endDate?: Date;
+      onlyToday?: boolean;
+    } = {}
+  ) {
+
+    return await this.bookingRepository.getAppointments(physicianId, hasReadAllAppointments, options);
+  }
+
+  /**
+   * Get dates with bookings for calendar view
+   */
+  async getDatesWithBookings(
+    physicianId: string | null,
+    hasReadAllAppointments: boolean,
+    month: number,
+    year: number
+  ) {
+    return await this.bookingRepository.getDatesWithBookings(
+      physicianId,
+      hasReadAllAppointments,
+      month,
+      year
+    );
+  }
+
+  /**
+   * Generate slots for whole day with conflict detection
+   */
+  async generateSlotsForDay(
+    physicianId: string,
+    date: string,
+    slotSizeId: string
+  ) {
+    // Validate date is in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateOnly = new Date(date);
+    dateOnly.setHours(0, 0, 0, 0);
+
+    if (dateOnly < today) {
+      throw new BadRequestError("Cannot generate slots for past dates");
+    }
+
+    return await this.bookingRepository.generateSlotsForDay(
+      physicianId,
+      date,
+      slotSizeId
+    );
+  }
+
+  /**
+   * Create slots for whole day (only available slots)
+   */
+  async createSlotsForDay(
+    physicianId: string,
+    date: string,
+    slotSizeId: string,
+    slotTypeIds: string[],
+    locationIds?: string[]
+  ) {
+    // Get available slots (without conflicts)
+    const { availableSlots, existingSlots } = await this.generateSlotsForDay(
+      physicianId,
+      date,
+      slotSizeId
+    );
+
+    if (availableSlots.length === 0) {
+      throw new BadRequestError("No available slots for this date. All time slots conflict with existing slots.");
+    }
+
+    // Get or create availability
+    let availability = await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
+      physicianId,
+      date
+    );
+
+    if (!availability) {
+      const dateObj = new Date(date);
+      dateObj.setHours(0, 0, 0, 0);
+      availability = await this.bookingRepository.createAvailabilityDate({
+        physicianId,
+        date: dateObj,
+      });
+    }
+
+    // Validate slot types exist
+    for (const typeId of slotTypeIds) {
+      const type = await this.bookingRepository.getSlotTypeById(typeId);
+      if (!type) {
+        throw new NotFoundError(`Slot type ${typeId} not found`);
+      }
+    }
+
+    // Create slots
+    const slotData: InsertSlot[] = availableSlots.map((slot) => ({
+      availabilityId: availability!.id,
+      startTime: slot.start,
+      endTime: slot.end,
+      slotSizeId,
+    }));
+
+    const createdSlots = await this.bookingRepository.createMultipleSlots(slotData);
+
+    // Create slot type junctions
+    const junctionData: InsertSlotTypeJunction[] = [];
+    createdSlots.forEach((slot) => {
+      slotTypeIds.forEach((typeId) => {
+        junctionData.push({
+          slotId: slot.id,
+          slotTypeId: typeId,
+        });
+      });
+    });
+
+    await this.bookingRepository.createMultipleSlotTypeJunctions(junctionData);
+
+    // Create slot locations if provided (for offline consultations)
+    if (locationIds && locationIds.length > 0) {
+      const slotTypes = await Promise.all(
+        slotTypeIds.map((id) => this.bookingRepository.getSlotTypeById(id))
+      );
+
+      const hasOfflineType = slotTypes.some(
+        (type) => type && (type.type.toLowerCase() === "onsite" || type.type.toLowerCase() === "offline")
+      );
+
+      if (hasOfflineType) {
+        const locationData: Array<{ slotId: string; locationId: string }> = [];
+        createdSlots.forEach((slot) => {
+          locationIds.forEach((locationId) => {
+            locationData.push({
+              slotId: slot.id,
+              locationId,
+            });
+          });
+        });
+        await this.bookingRepository.createMultipleSlotLocations(locationData);
+      }
+    }
+
+    return createdSlots;
+  }
+
+  /**
+   * Bulk delete slots (only unbooked ones)
+   */
+  async bulkDeleteSlots(slotIds: string[], physicianId: string) {
+    return await this.bookingRepository.bulkDeleteSlots(slotIds, physicianId);
   }
 }
 

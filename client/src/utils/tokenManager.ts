@@ -17,6 +17,16 @@ class TokenManager {
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
+  static getTokens(): TokenPair | null{
+    const accessToken = this.getAccessToken()
+    const refreshToken = this.getRefreshToken()
+    if(!accessToken || !refreshToken) return null
+    return {
+      accessToken,
+      refreshToken,
+    }
+  }
+
   static clearTokens(): void {
     localStorage.removeItem(this.ACCESS_TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);

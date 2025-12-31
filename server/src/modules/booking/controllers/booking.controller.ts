@@ -1,11 +1,12 @@
-import { type Request, Response, NextFunction } from "express";
+import {  Response, } from "express";
 import { BookingService } from "../service/booking.service";
 import { sendSuccess } from "../../../app/utils/response";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import { AuthenticatedRequest } from "../../../shared/middleware/auth";
-import { BadRequestError } from "../../../shared/errors";
-import { USER_ROLES } from "../../../shared/constants/roles";
+import { BadRequestError, ForbiddenError } from "../../../shared/errors";
+import { USER_ROLES } from "@shared/schema";
 import { parseLocalDate } from "server/src/shared/utils/utils";
+import { PERMISSIONS } from "@shared/schema";
 
 export class BookingController {
   private bookingService: BookingService;
@@ -54,7 +55,7 @@ export class BookingController {
 
       const availability = await this.bookingService.createAvailabilityDate(
         physicianId,
-        dateObj
+        date
       );
       sendSuccess(res, { availability }, "Availability date created successfully");
     } catch (error: any) {
@@ -119,7 +120,7 @@ export class BookingController {
 
       const slots = await this.bookingService.createSlots(
         physicianId,
-        dateObj,
+        date,
         slotSizeId,
         startTime,
         endTime,
@@ -150,7 +151,7 @@ export class BookingController {
         throw new BadRequestError("Invalid date format");
       }
 
-      const slots = await this.bookingService.getSlotDetailsForDate(physicianId, dateObj);
+      const slots = await this.bookingService.getSlotDetailsForDate(physicianId, date);
       sendSuccess(res, { slots }, "Slots retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
@@ -177,7 +178,7 @@ export class BookingController {
         throw new BadRequestError("Invalid date format");
       }
 
-      const slots = await this.bookingService.getAvailableSlotsForDate(physicianId, dateObj);
+      const slots = await this.bookingService.getAvailableSlotsForDate(physicianId, date);
       sendSuccess(res, { slots }, "Available slots retrieved successfully");
     } catch (error: any) {
       handleError(res, error);
@@ -345,7 +346,7 @@ export class BookingController {
         monthNum,
         yearNum,
         isCountBool,
-        selectedDateObj
+        selectedDate as string
       );
 
       sendSuccess(res, result, "Physician dates retrieved successfully");
@@ -416,6 +417,267 @@ export class BookingController {
 
       await this.bookingService.markConsultationAttended(bookingId, customerId);
       sendSuccess(res, {}, "Consultation marked as attended");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getAppointments(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userRole = req.user?.role;
+      const userPermissions = req.user?.permissions || [];
+
+      if (!userId || !userRole) {
+        throw new BadRequestError("User information not found");
+      }
+
+      const { page, limit, search, startDate, endDate, skip } = req.query;
+
+      const options: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        startDate?: Date;
+        endDate?: Date;
+        skip?:number
+      } = {};
+
+      if (page) {
+        const pageNum = parseInt(page as string, 10);
+        if (isNaN(pageNum) || pageNum < 1) {
+          throw new BadRequestError("Invalid page number");
+        }
+        options.page = pageNum;
+      }
+
+      if (limit) {
+        const limitNum = parseInt(limit as string, 10);
+        if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
+          throw new BadRequestError("Invalid limit. Must be between 1 and 100");
+        }
+        options.limit = limitNum;
+      }
+
+      if(skip){
+        const skipNum = parseInt(skip as string, 10);
+        if (isNaN(skipNum) || skipNum < 0) {
+          throw new BadRequestError("Invalid skip number");
+        }
+        options.skip = skipNum;
+      }
+
+      if (search) {
+        options.search = search as string;
+      }
+
+      if (startDate) {
+        const start = new Date(startDate as string);
+        if (isNaN(start.getTime())) {
+          throw new BadRequestError("Invalid start date format");
+        }
+        options.startDate = start;
+      }
+
+      if (endDate) {
+        const end = new Date(endDate as string);
+        if (isNaN(end.getTime())) {
+          throw new BadRequestError("Invalid end date format");
+        }
+        options.endDate = end;
+      }
+
+      const hasReadAllAppointments = userPermissions.includes(PERMISSIONS.READ_ALL_APPOINTMENTS);
+      const hasReadOwnAppointments = userPermissions.includes(PERMISSIONS.READ_OWN_APPOINTMENTS);
+
+      if (!hasReadAllAppointments && !hasReadOwnAppointments) {
+        throw new ForbiddenError("You do not have permission to view appointments");
+      }
+
+    const physicianId = hasReadAllAppointments ? null : userId;
+      const result = await this.bookingService.getAppointments(
+        physicianId,
+        hasReadAllAppointments,
+        options
+      );
+
+      sendSuccess(res, result, "Appointments retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async getDatesWithBookings(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userPermissions = req.user?.permissions || [];
+
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const hasReadAllAppointments = userPermissions.includes(PERMISSIONS.READ_ALL_APPOINTMENTS);
+      const hasReadOwnAppointments = userPermissions.includes(PERMISSIONS.READ_OWN_APPOINTMENTS);
+
+      if (!hasReadAllAppointments && !hasReadOwnAppointments) {
+        throw new ForbiddenError("You do not have permission to view appointments");
+      }
+
+      const physicianId = hasReadAllAppointments ? null : userId;
+
+      const { month, year } = req.query;
+      if (!month || !year) {
+        throw new BadRequestError("Month and year are required");
+      }
+
+      const monthNum = parseInt(month as string, 10);
+      const yearNum = parseInt(year as string, 10);
+
+      if (isNaN(monthNum) || isNaN(yearNum) || monthNum < 1 || monthNum > 12) {
+        throw new BadRequestError("Invalid month or year");
+      }
+
+      const dates = await this.bookingService.getDatesWithBookings(
+        physicianId,
+        hasReadAllAppointments,
+        monthNum,
+        yearNum
+      );
+
+      sendSuccess(res, dates, "Dates with bookings retrieved successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async generateSlotsForDay(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userPermissions = req.user?.permissions || [];
+
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const hasManageAllSlots = userPermissions.includes(PERMISSIONS.MANAGE_PHYSICIAN_SLOTS);
+      const hasManageOwnSlots = userPermissions.includes(PERMISSIONS.MANAGE_OWN_SLOTS);
+
+      if (!hasManageAllSlots && !hasManageOwnSlots) {
+        throw new ForbiddenError("You do not have permission to manage slots");
+      }
+
+      const { physicianId: paramPhysicianId, date, slotSizeId } = req.body;
+
+      // For admin, require physicianId; for physician, use their own ID
+      const physicianId = hasManageAllSlots
+        ? (paramPhysicianId || userId)
+        : userId;
+
+      if (!date || !slotSizeId) {
+        throw new BadRequestError("Date and slotSizeId are required");
+      }
+
+      const dateObj = parseLocalDate(date);
+      if (isNaN(dateObj.getTime())) {
+        throw new BadRequestError("Invalid date format");
+      }
+
+      const result = await this.bookingService.generateSlotsForDay(
+        physicianId,
+        date,
+        slotSizeId
+      );
+
+      sendSuccess(res, result, "Slots generated successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async createSlotsForDay(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userPermissions = req.user?.permissions || [];
+
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const hasManageAllSlots = userPermissions.includes(PERMISSIONS.MANAGE_PHYSICIAN_SLOTS);
+      const hasManageOwnSlots = userPermissions.includes(PERMISSIONS.MANAGE_OWN_SLOTS);
+
+      if (!hasManageAllSlots && !hasManageOwnSlots) {
+        throw new ForbiddenError("You do not have permission to manage slots");
+      }
+
+      const { physicianId: paramPhysicianId, date, slotSizeId, slotTypeIds, locationIds } = req.body;
+
+      if(hasManageAllSlots && !paramPhysicianId) {
+        throw new BadRequestError("Physician ID is required");
+      }
+
+      // For admin, require physicianId; for physician, use their own ID
+      const physicianId = hasManageAllSlots
+        ? (paramPhysicianId)
+        : userId;
+
+      if (!date || !slotSizeId || !slotTypeIds || !Array.isArray(slotTypeIds) || slotTypeIds.length === 0) {
+        throw new BadRequestError("Date, slotSizeId, and slotTypeIds are required");
+      }
+
+      const dateObj = parseLocalDate(date);
+      if (isNaN(dateObj.getTime())) {
+        throw new BadRequestError("Invalid date format");
+      }
+
+      const slots = await this.bookingService.createSlotsForDay(
+        physicianId,
+        date,
+        slotSizeId,
+        slotTypeIds,
+        locationIds
+      );
+
+      sendSuccess(res, { slots }, "Slots created successfully");
+    } catch (error: any) {
+      handleError(res, error);
+    }
+  }
+
+  async bulkDeleteSlots(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userPermissions = req.user?.permissions || [];
+
+      if (!userId) {
+        throw new BadRequestError("User ID not found");
+      }
+
+      const hasManageAllSlots = userPermissions.includes(PERMISSIONS.MANAGE_PHYSICIAN_SLOTS);
+      const hasManageOwnSlots = userPermissions.includes(PERMISSIONS.MANAGE_OWN_SLOTS);
+
+      if (!hasManageAllSlots && !hasManageOwnSlots) {
+        throw new ForbiddenError("You do not have permission to manage slots");
+      }
+
+      const { slotIds, physicianId: paramPhysicianId } = req.body;
+
+      if (!slotIds || !Array.isArray(slotIds) || slotIds.length === 0) {
+        throw new BadRequestError("slotIds array is required");
+      }
+
+      if(hasManageAllSlots && !paramPhysicianId){
+        throw new BadRequestError("Physician ID is required");
+      }
+
+      // For admin, require physicianId; for physician, use their own ID
+      const physicianId = hasManageAllSlots
+        ? paramPhysicianId 
+        : userId;
+
+      const result = await this.bookingService.bulkDeleteSlots(slotIds, physicianId);
+
+      sendSuccess(res, result, "Slots deleted successfully");
     } catch (error: any) {
       handleError(res, error);
     }

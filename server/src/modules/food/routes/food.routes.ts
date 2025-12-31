@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { FoodController } from '../controllers/food.controller';
-import { authenticateToken, requirePermission, requireRole } from '../../../shared/middleware/auth';
+import { authenticateToken, requirePermission } from '../../../shared/middleware/auth';
 import { memoryUpload } from '../../../shared/config/multer.config';
 import { USER_ROLES } from '../../auth/models/user.schema';
 

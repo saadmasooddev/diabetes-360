@@ -4,8 +4,10 @@ import type { LoginRequest, AuthData } from '@/types/auth.types';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';
-import { ROUTES } from '@/config/routes';
 import { userService } from '@/services/userService';
+import { utils } from '@/lib/utils';
+import { UserRole } from '@shared/schema';
+
 
 export const useLogin = () => {
   const { toast } = useToast();
@@ -27,12 +29,8 @@ export const useLogin = () => {
         variant: 'default',
       });
       
-      // Redirect based on profile completion
-      if (!data.user.profileComplete && data.user.role === 'customer') {
-        navigate(ROUTES.PROFILE_DATA);
-      } else {
-        navigate(ROUTES.HOME);
-      }
+      const role = data.user.role
+      utils.roleAfterAuthNavigationMap[role]?.(data, navigate)
     },
     onError: (error) => {
       toast({
@@ -59,12 +57,8 @@ export const useVerify2FALogin = () => {
         variant: 'default',
       });
       
-      // Redirect based on profile completion
-      if (!data.user.profileComplete && data.user.role === 'customer') {
-        navigate(ROUTES.PROFILE_DATA);
-      } else {
-        navigate(ROUTES.HOME);
-      }
+      const role: UserRole = data.user.role
+      utils.roleAfterAuthNavigationMap[role]?.(data, navigate)
     },
     onError: (error) => {
       toast({

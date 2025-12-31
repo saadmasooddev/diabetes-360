@@ -40,7 +40,8 @@ export const activityTypeSchema = z.enum(Object.values(ACTIVITY_TYPE_ENUM));
 export const exerciseLogs = pgTable("exercise_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  exerciseType: varchar("exercise_type").notNull(), 
+  exerciseType: varchar("exercise_type"), 
+  exerciseName: varchar("exercise_name").notNull(),
   calories: integer("calories").notNull(),
   activityType: activityTypeEnum("activity_type").notNull(),
   pace: varchar("pace"),
@@ -57,8 +58,9 @@ export const insertExerciseLogSchema = createInsertSchema(exerciseLogs).omit({
   id: true,
 }).extend({
   userId: z.string().min(1),
-  exerciseType: z.string().min(1),
-  calories: z.int().transform(v => Math.round(v)),
+  exerciseType: z.string().optional(),
+  exerciseName: z.string().min(1),
+  calories: z.coerce.number().transform(v => Math.round(v)),
   activityType: activityTypeSchema,
   pace: z.string().nullable().optional(),
   sets: z.string().nullable().optional(),

@@ -14,7 +14,10 @@ import {
   ChevronRight,
   ChevronDown,
   DollarSign,
-  Calendar
+  Calendar,
+  Users,
+  CalendarCheck,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,27 +27,19 @@ import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/utils/permissions';
 
 interface NavItem {
   label: string;
   icon: React.ReactNode;
-  path: string;
+  path: () => string;
   testId: string;
-  roles?: ('customer' | 'admin' | 'physician')[];
+  permissions?: string[];
   paymentTypes?: ('free' | 'monthly' | 'annual')[];
+  jsx?: React.JSX.Element
 }
 
-const mainNavItems: NavItem[] = [
-  { label: 'Home', icon: <Home className="h-5 w-5" />, path: ROUTES.HOME, testId: 'nav-home' },
-  { label: 'Instant Consultation', icon: <Video className="h-5 w-5" />, path: ROUTES.INSTANT_CONSULTATION, testId: 'nav-consultation' },
-  { label: 'Find a Doctor', icon: <UserSearch className="h-5 w-5" />, path: ROUTES.FIND_DOCTOR, testId: 'nav-doctors' },
-  { label: 'Consultations', icon: <Calendar className="h-5 w-5" />, path: ROUTES.CONSULTATIONS, testId: 'nav-consultations', roles: ['customer'], paymentTypes: ['monthly', 'annual'] },
-  { label: 'Food Scanner', icon: <Scan className="h-5 w-5" />, path: ROUTES.FOOD_SCANNER, testId: 'nav-food-scanner' },
-  { label: 'Tips & Exercises', icon: <Dumbbell className="h-5 w-5" />, path: ROUTES.TIPS_EXERCISES, testId: 'nav-tips' },
-  { label: 'Medical Records', icon: <FileText className="h-5 w-5" />, path: ROUTES.MEDICAL_RECORDS, testId: 'nav-records' },
-  { label: 'DiaBot (AI Chatbot)', icon: <Bot className="h-5 w-5" />, path: ROUTES.DIABOT, testId: 'nav-diabot' },
-  { label: 'Health Plans', icon: <DollarSign className='h-5 w-5' />, path: ROUTES.HEALTH_PLANS, testId: 'nav-payments' },
-];
 
 interface SidebarProps {
   className?: string;
@@ -54,11 +49,132 @@ export function Sidebar({ className }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { hasAnyPermission } = usePermissions();
   const [isOpen, setIsOpen] = useState(false);
   const [isDashboardExpanded, setIsDashboardExpanded] = useState(false);
-
+  const hasReadAllAppointments = hasAnyPermission([PERMISSIONS.READ_ALL_APPOINTMENTS]);
+  const hasReadAllPatients = hasAnyPermission([PERMISSIONS.READ_ALL_PATIENTS]);
   const isDashboardRoute = location === ROUTES.DASHBOARD || location === ROUTES.HEALTH_ASSESSMENT || location === ROUTES.HEALTH_METRICS_HISTORY;
 
+  const myDashbard = () => {
+    return (
+      <div>
+        <div
+          className={cn(
+            "flex w-full items-center justify-between rounded-lg text-sm font-medium transition-colors",
+            isDashboardRoute
+              ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          )}
+        >
+          <Link
+            href={ROUTES.DASHBOARD}
+            className="flex flex-1 cursor-pointer items-center gap-3 px-3 py-2.5"
+            data-testid="nav-dashboard"
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            <span>My Dashboard</span>
+          </Link>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDashboardExpanded(!isDashboardExpanded);
+            }}
+            className="px-3 py-2.5 hover:opacity-70 transition-opacity"
+            data-testid="button-dashboard-expand"
+            aria-label="Toggle dashboard submenu"
+          >
+            {isDashboardExpanded ? (
+              <ChevronDown className="h-4 w-4 text-gray-400" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Dashboard sub-menu */}
+        {isDashboardExpanded && (
+          <div className="mt-1 space-y-1 pl-4">
+            <Link
+              href={ROUTES.HEALTH_ASSESSMENT}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                location === ROUTES.HEALTH_ASSESSMENT
+                  ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              )}
+              data-testid="nav-health-assessment"
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span>Health Assessment</span>
+            </Link>
+            <Link
+              href={ROUTES.HEALTH_METRICS_HISTORY}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                location === ROUTES.HEALTH_METRICS_HISTORY
+                  ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
+                  : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              )}
+              data-testid="nav-health-metrics-history"
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span>Metrics History</span>
+            </Link>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const mainNavItems: NavItem[] = [
+    { label: 'Home', icon: <Home className="h-5 w-5" />, path: () => ROUTES.HOME, testId: 'nav-home', permissions: [PERMISSIONS.READ_OWN_PROFILE] },
+    { label: "My Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: () => ROUTES.DASHBOARD, jsx: myDashbard(), testId: "nav-my-dashboard", permissions: [PERMISSIONS.READ_OWN_HEALTH_METRICS] },
+    { label: 'Instant Consultation', icon: <Video className="h-5 w-5" />, path: () => ROUTES.INSTANT_CONSULTATION, testId: 'nav-consultation', permissions: [PERMISSIONS.CREATE_BOOKINGS] },
+    { label: 'Find a Doctor', icon: <UserSearch className="h-5 w-5" />, path: () => ROUTES.FIND_DOCTOR, testId: 'nav-doctors', permissions: [PERMISSIONS.READ_PHYSICIANS] },
+    { label: 'Consultations', icon: <Calendar className="h-5 w-5" />, path: () => ROUTES.CONSULTATIONS, testId: 'nav-consultations', permissions: [PERMISSIONS.READ_OWN_CONSULTATIONS], paymentTypes: ['monthly', 'annual'] },
+    { label: 'Food Scanner', icon: <Scan className="h-5 w-5" />, path: () => ROUTES.FOOD_SCANNER, testId: 'nav-food-scanner', permissions: [PERMISSIONS.SCAN_FOOD] },
+    { label: 'Tips & Exercises', icon: <Dumbbell className="h-5 w-5" />, path: () => ROUTES.TIPS_EXERCISES, testId: 'nav-tips', permissions: [PERMISSIONS.READ_OWN_HEALTH_METRICS] },
+    { label: 'Medical Records', icon: <FileText className="h-5 w-5" />, path: () => ROUTES.MEDICAL_RECORDS, testId: 'nav-records', permissions: [PERMISSIONS.READ_OWN_MEDICAL_RECORDS] },
+    { label: 'DiaBot (AI Chatbot)', icon: <Bot className="h-5 w-5" />, path: () => ROUTES.DIABOT, testId: 'nav-diabot', permissions: [PERMISSIONS.USE_DIABOT] },
+    { label: 'Health Plans', icon: <DollarSign className='h-5 w-5' />, path: () => ROUTES.HEALTH_PLANS, testId: 'nav-payments', permissions: [PERMISSIONS.SUBSCRIBE_HEALTH_PLANS] },
+    {
+      label: "Home",
+      icon: <Home className="h-5 w-5" />,
+      path: () => {
+        return hasReadAllAppointments ? ROUTES.ADMIN_HOME : ROUTES.DOCTOR_HOME
+      },
+      testId: "nav-doctor-home",
+      permissions: [PERMISSIONS.READ_OWN_APPOINTMENTS, PERMISSIONS.READ_ALL_APPOINTMENTS]
+    },
+    {
+      label: "Patients",
+      icon: <Users className="h-5 w-5" />,
+      path: () => {
+        return hasReadAllPatients ? ROUTES.ADMIN_PATIENTS : ROUTES.DOCTOR_PATIENTS
+      },
+      testId: "nav-doctor-patients",
+      permissions: [PERMISSIONS.READ_PATIENT_PROFILES]
+    },
+    {
+      label: "Appointments",
+      icon: <CalendarCheck className="h-5 w-5" />,
+      path: () => {
+        return hasReadAllAppointments ? ROUTES.ADMIN_APPOINTMENTS : ROUTES.DOCTOR_APPOINTMENTS
+      },
+      testId: "nav-doctor-appointments",
+      permissions: [PERMISSIONS.READ_OWN_APPOINTMENTS, PERMISSIONS.READ_ALL_APPOINTMENTS]
+    },
+    {
+      label: "Alerts",
+      icon: <Bell className="h-5 w-5" />,
+      path: () => {
+        return hasReadAllPatients ? ROUTES.ADMIN_PATIENTS_ALERTS : ROUTES.DOCTOR_PATIENTS_ALERTS
+      },
+      testId: "nav-doctor-alerts",
+      permissions: [PERMISSIONS.READ_PATIENT_ALERTS]
+    }
+  ];
   useEffect(() => {
     if (isDashboardRoute) {
       setIsDashboardExpanded(true);
@@ -126,77 +242,12 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
           <nav className="space-y-1 px-2">
             {/* My Dashboard with sub-menu */}
-            <div>
-              <div
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg text-sm font-medium transition-colors",
-                  isDashboardRoute
-                    ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                )}
-              >
-                <Link
-                  href={ROUTES.DASHBOARD}
-                  className="flex flex-1 cursor-pointer items-center gap-3 px-3 py-2.5"
-                  data-testid="nav-dashboard"
-                >
-                  <LayoutDashboard className="h-5 w-5" />
-                  <span>My Dashboard</span>
-                </Link>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDashboardExpanded(!isDashboardExpanded);
-                  }}
-                  className="px-3 py-2.5 hover:opacity-70 transition-opacity"
-                  data-testid="button-dashboard-expand"
-                  aria-label="Toggle dashboard submenu"
-                >
-                  {isDashboardExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
 
-              {/* Dashboard sub-menu */}
-              {isDashboardExpanded && (
-                <div className="mt-1 space-y-1 pl-4">
-                  <Link
-                    href={ROUTES.HEALTH_ASSESSMENT}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      location === ROUTES.HEALTH_ASSESSMENT
-                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                    )}
-                    data-testid="nav-health-assessment"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                    <span>Health Assessment</span>
-                  </Link>
-                  <Link
-                    href={ROUTES.HEALTH_METRICS_HISTORY}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                      location === ROUTES.HEALTH_METRICS_HISTORY
-                        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                    )}
-                    data-testid="nav-health-metrics-history"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                    <span>Metrics History</span>
-                  </Link>
-                </div>
-              )}
-            </div>
 
             {/* Other nav items */}
             {mainNavItems.map((item) => {
-              // Filter by role
-              if (item.roles && !item.roles.includes(user?.role as any)) {
+              // Filter by permissions
+              if (item.permissions && !hasAnyPermission(item.permissions)) {
                 return null;
               }
 
@@ -205,11 +256,19 @@ export function Sidebar({ className }: SidebarProps) {
                 return null;
               }
 
-              const isActive = location === item.path;
+              const href = item.path()
+              const isActive = location === href
+              if (item.jsx) {
+                return (
+                  <div key={href}>
+                    {item.jsx}
+                  </div>
+                )
+              }
               return (
                 <Link
-                  key={item.path}
-                  href={item.path}
+                  key={href}
+                  href={href}
                   className={cn(
                     "flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive

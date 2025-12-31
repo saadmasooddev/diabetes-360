@@ -19,7 +19,7 @@ import type {
   UpdatePhysicianLocation,
   PhysicianLocation,
 } from "../../auth/models/user.schema";
-import { USER_ROLES } from "../../../shared/constants/roles";
+import { USER_ROLES } from "@shared/schema";
 
 export class PhysicianRepository {
   // Specialty CRUD operations

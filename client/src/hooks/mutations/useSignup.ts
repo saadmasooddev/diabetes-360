@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from 'wouter';
 import { ROUTES } from '@/config/routes';
+import { utils } from '@/lib/utils';
 
 export const useSignup = () => {
   const { toast } = useToast();
@@ -21,12 +22,10 @@ export const useSignup = () => {
         variant: 'default',
       });
       
-      // Redirect to profile completion if user is a customer with incomplete profile
-      if (!data.user.profileComplete && data.user.role === 'customer') {
-        navigate(ROUTES.PROFILE_DATA);
-      } else {
-        navigate(ROUTES.HOME);
-      }
+     
+      const role = data.user.role
+      utils.roleAfterAuthNavigationMap[role]?.(data, navigate)
+
     },
     onError: (error) => {
       toast({

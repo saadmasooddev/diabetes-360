@@ -4,8 +4,14 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users, physicianLocations } from "../../auth/models/user.schema";
 
-export const bookedSlotsStatusEnum = pgEnum("booking_status_enum", ["pending", "confirmed", "cancelled", "completed"]);
-export const BOOKED_SLOTS_STATUS = z.enum(["pending", "confirmed", "cancelled", "completed"]);
+export enum BOOKING_STATUS_ENUM {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+  COMPLETED = "completed",
+}
+export const bookedSlotsStatusEnum = pgEnum("booking_status_enum", Object.values(BOOKING_STATUS_ENUM) as [string, ...string[]]);
+export const BOOKED_SLOTS_STATUS = z.enum(Object.values(BOOKING_STATUS_ENUM));
 // Booking System Tables
 export const slotSize = pgTable("slot_size", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

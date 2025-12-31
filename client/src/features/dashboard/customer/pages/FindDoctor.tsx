@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { formatTime12 } from '@/lib/utils';
-import { ConfirmationScreen } from '../components/ConfirmationScreen';
-import { DoctorSearchStep } from '../components/DoctorSearchStep';
-import { BookingStep } from '../components/BookingStep';
-import { BookingConfirmationDialog } from '../components/BookingConfirmationDialog';
+import { ConfirmationScreen } from '../../components/ConfirmationScreen';
+import { DoctorSearchStep } from '../../components/DoctorSearchStep';
+import { BookingStep } from '../../components/BookingStep';
+import { BookingConfirmationDialog } from '../../components/BookingConfirmationDialog';
 import { useSpecialties, usePhysiciansPaginated } from '@/hooks/mutations/usePhysician';
 import { useToast } from '@/hooks/use-toast';
-import { usePhysicianDatesWithSlots, useBookSlot, useCalculateBookingPrice } from '@/hooks/mutations/useBooking';
+import { usePhysicianDatesWithSlots, useBookSlot, useCalculateBookingPrice, PhysicianDatesWithSlots } from '@/hooks/mutations/useBooking';
 import type { Physician } from '@/services/physicianService';
 import type { Slot } from '@/services/bookingService';
 import { calculateDistance, getCurrentLocation } from '@/utils/distance';
 import { useDebounce } from '@/hooks/useDebounce';
+import { queryClient } from '@/lib/queryClient';
 
 const formatDate = (date: Date, formatStr: string): string => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -107,16 +108,22 @@ export function FindDoctor() {
   const currentMonth = calendarMonth.getMonth() + 1; // getMonth() returns 0-11
   const currentYear = calendarMonth.getFullYear();
 
+  const getPhysicianDatesWithSlotsQueryKey = (): PhysicianDatesWithSlots => {
+    const params = {
+      physicianId: selectedPhysician?.id || null,
+      month: currentMonth,
+      year: currentYear,
+      isCount: true, // Always get dates with counts for calendar
+      selectedDate: formatDate(selectedDate, 'yyyy-MM-dd'),
+    }
+    const key = ['booking', 'physician-dates', params.physicianId, params.month, params.year, params.isCount, params.selectedDate]
+    return { key, params }
+  }
+
   const {
     data: datesWithSlotsData,
     isLoading: isLoadingDatesAndSlots
-  } = usePhysicianDatesWithSlots({
-    physicianId: selectedPhysician?.id || null,
-    month: currentMonth,
-    year: currentYear,
-    isCount: true, // Always get dates with counts for calendar
-    selectedDate: formatDate(selectedDate, 'yyyy-MM-dd'),
-  });
+  } = usePhysicianDatesWithSlots(getPhysicianDatesWithSlotsQueryKey());
 
   const datesWithAvailability = datesWithSlotsData?.dates || [];
   const availableSlots = datesWithSlotsData?.slots || [];
@@ -228,6 +235,10 @@ export function FindDoctor() {
       await bookSlotMutation.mutateAsync({
         slotId: selectedSlot.id,
         slotTypeId: selectedSlotTypeId
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getPhysicianDatesWithSlotsQueryKey().key })
+        }
       });
       setIsConsultationTypeDialogOpen(false);
       setCurrentStep(3);

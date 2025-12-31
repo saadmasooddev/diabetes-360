@@ -30,10 +30,6 @@ export class HealthController {
     }
   }
 
-
-
-
-
   async getAggregatedStatistics(
     req: AuthenticatedRequest,
     res: Response,
@@ -159,7 +155,8 @@ export class HealthController {
       }
 
       const logs = await this.healthService.createExerciseLogsBatch(parsedData);
-      sendSuccess(res, logs, "Exercises logged successfully");
+      const latestMetrics = await this.healthService.getLatestMetricsWithLimit(userId)
+      sendSuccess(res, { logs, latestMetrics }, "Exercises logged successfully");
     } catch (error: any) {
       handleError(res, error);
     }

@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { BookingController } from "../controllers/booking.controller";
-import { authenticateToken, requireAdmin, requirePhysician } from "../../../shared/middleware/auth";
+import { authenticateToken, requirePermission, AuthenticatedRequest, requireAnyPermission } from "../../../shared/middleware/auth";
+import { PERMISSIONS } from "@shared/schema";
+import { Response, NextFunction } from "express";
+import { ForbiddenError, UnauthorizedError } from "../../../shared/errors";
 
 const router = Router();
 const bookingController = new BookingController();
@@ -103,7 +106,7 @@ router.get("/slot-types", authenticateToken, (req, res) =>
  *                           items:
  *                             type: object
  */
-router.get("/availability-dates", authenticateToken, requirePhysician, (req, res) =>
+router.get("/availability-dates", authenticateToken, requirePermission(PERMISSIONS.MANAGE_AVAILABILITY), (req, res) =>
   bookingController.getAvailabilityDates(req, res)
 );
 
@@ -132,7 +135,7 @@ router.get("/availability-dates", authenticateToken, requirePhysician, (req, res
  *       200:
  *         description: Availability date created successfully
  */
-router.post("/availability-dates", authenticateToken, requirePhysician, (req, res) =>
+router.post("/availability-dates", authenticateToken, requirePermission(PERMISSIONS.MANAGE_AVAILABILITY), (req, res) =>
   bookingController.createAvailabilityDate(req, res)
 );
 
@@ -215,7 +218,7 @@ router.get("/physicians/:physicianId/dates-with-availability", authenticateToken
  *       200:
  *         description: Slots created successfully
  */
-router.post("/slots", authenticateToken, requirePhysician, (req, res) =>
+router.post("/slots", authenticateToken, requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS), (req, res) =>
   bookingController.createSlots(req, res)
 );
 
@@ -293,7 +296,7 @@ router.get("/physicians/:physicianId/available-slots", authenticateToken, (req, 
  *       200:
  *         description: Slot deleted successfully
  */
-router.delete("/slots/:slotId", authenticateToken, requirePhysician, (req, res) =>
+router.delete("/slots/:slotId", authenticateToken, requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS), (req, res) =>
   bookingController.deleteSlot(req, res)
 );
 
@@ -738,6 +741,329 @@ router.get("/my-consultations", authenticateToken, (req, res) =>
  */
 router.patch("/consultations/:bookingId/attend", authenticateToken, (req, res) =>
   bookingController.markConsultationAttended(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/appointments:
+ *   get:
+ *     summary: Get appointments for physicians/admins
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by patient name (and physician name if user has read_all_appointments permission)
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for filtering appointments (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for filtering appointments (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Appointments retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         appointments:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                                 description: Appointment ID
+ *                               time:
+ *                                 type: string
+ *                                 description: Appointment time (HH:MM AM/PM)
+ *                                 example: "09:00 AM"
+ *                               date:
+ *                                 type: string
+ *                                 description: Appointment date (MM/DD/YYYY)
+ *                                 example: "12/25/2024"
+ *                               patientName:
+ *                                 type: string
+ *                                 description: Patient full name
+ *                               type:
+ *                                 type: string
+ *                                 enum: [Video Call, In Person]
+ *                                 description: Appointment type
+ *                               doctorName:
+ *                                 type: string
+ *                                 description: Physician full name (always included in response)
+ *                               status:
+ *                                 type: string
+ *                                 enum: [pending, confirmed, cancelled, completed]
+ *                                 description: Appointment status
+ *                         total:
+ *                           type: integer
+ *                           description: Total number of appointments
+ *                         page:
+ *                           type: integer
+ *                           description: Current page number
+ *                         limit:
+ *                           type: integer
+ *                           description: Number of items per page
+ *       400:
+ *         description: Bad request (invalid parameters)
+ *       403:
+ *         description: Forbidden (insufficient permissions)
+ */
+// Middleware to check for either appointment permission
+
+router.get(
+  "/appointments",
+  authenticateToken,
+  requireAnyPermission([PERMISSIONS.READ_ALL_APPOINTMENTS, PERMISSIONS.READ_OWN_APPOINTMENTS]),
+  (req, res) => bookingController.getAppointments(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/dates-with-bookings:
+ *   get:
+ *     summary: Get dates with bookings for calendar view
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *         description: Month (1-12)
+ *       - in: query
+ *         name: year
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 2020
+ *           maximum: 2100
+ *         description: Year
+ *     responses:
+ *       200:
+ *         description: Dates with bookings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         dates:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                             format: date
+ */
+router.get(
+  "/dates-with-bookings",
+  authenticateToken,
+  requireAnyPermission([PERMISSIONS.READ_ALL_APPOINTMENTS, PERMISSIONS.READ_OWN_APPOINTMENTS]),
+  (req, res) => bookingController.getDatesWithBookings(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/generate-slots-for-day:
+ *   post:
+ *     summary: Generate available slots for a whole day with conflict detection
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - date
+ *               - slotSizeId
+ *             properties:
+ *               physicianId:
+ *                 type: string
+ *                 description: Physician ID (required for admin, optional for physician)
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               slotSizeId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Slots generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         availableSlots:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               start:
+ *                                 type: string
+ *                               end:
+ *                                 type: string
+ *                         existingSlots:
+ *                           type: array
+ *                         conflicts:
+ *                           type: array
+ */
+router.post(
+  "/generate-slots-for-day",
+  authenticateToken,
+  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
+  (req, res) => bookingController.generateSlotsForDay(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/create-slots-for-day:
+ *   post:
+ *     summary: Create slots for a whole day (only available slots without conflicts)
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - date
+ *               - slotSizeId
+ *               - slotTypeIds
+ *             properties:
+ *               physicianId:
+ *                 type: string
+ *                 description: Physician ID (required for admin, optional for physician)
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               slotSizeId:
+ *                 type: string
+ *               slotTypeIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               locationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Required if slotTypeIds includes onsite/offline
+ *     responses:
+ *       200:
+ *         description: Slots created successfully
+ */
+router.post(
+  "/create-slots-for-day",
+  authenticateToken,
+  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
+  (req, res) => bookingController.createSlotsForDay(req, res)
+);
+
+/**
+ * @swagger
+ * /api/booking/bulk-delete-slots:
+ *   post:
+ *     summary: Bulk delete slots (only unbooked ones)
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slotIds
+ *             properties:
+ *               physicianId:
+ *                 type: string
+ *                 description: Physician ID (required for admin, optional for physician)
+ *               slotIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Slots deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         deleted:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *                         failed:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               slotId:
+ *                                 type: string
+ *                               reason:
+ *                                 type: string
+ */
+router.post(
+  "/bulk-delete-slots",
+  authenticateToken,
+  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
+  (req, res) => bookingController.bulkDeleteSlots(req, res)
 );
 
 export { router as bookingRoutes };

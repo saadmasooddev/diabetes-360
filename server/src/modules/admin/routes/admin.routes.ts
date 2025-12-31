@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { AdminController } from "../controllers/admin.controller";
-import { authenticateToken, requireAdmin } from "../../../shared/middleware/auth";
+import { authenticateToken, requirePermission } from "../../../shared/middleware/auth";
+import { PERMISSIONS } from "@shared/schema";
 
 const router = Router();
 const adminController = new AdminController();
 
-// All admin routes require authentication and admin role
+// All admin routes require authentication and admin permissions
 router.use(authenticateToken);
-router.use(requireAdmin);
+router.use(requirePermission(PERMISSIONS.READ_ALL_USERS));
 
 /**
  * @swagger
@@ -274,7 +275,7 @@ router.get("/users/:id", (req, res) => adminController.getUserById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/users", (req, res, next) => adminController.createUser(req, res, next));
+router.post("/users", requirePermission(PERMISSIONS.CREATE_USERS), (req, res, next) => adminController.createUser(req, res, next));
 
 /**
  * @swagger
@@ -392,7 +393,7 @@ router.post("/users", (req, res, next) => adminController.createUser(req, res, n
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put("/users/:id", (req, res, next) => adminController.updateUser(req, res ));
+router.put("/users/:id", requirePermission(PERMISSIONS.UPDATE_USERS), (req, res, next) => adminController.updateUser(req, res ));
 
 /**
  * @swagger
@@ -435,7 +436,7 @@ router.put("/users/:id", (req, res, next) => adminController.updateUser(req, res
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete("/users/:id", (req, res, next) => adminController.deleteUser(req, res ));
+router.delete("/users/:id", requirePermission(PERMISSIONS.DELETE_USERS), (req, res, next) => adminController.deleteUser(req, res ));
 
 /**
  * @swagger
@@ -493,6 +494,6 @@ router.delete("/users/:id", (req, res, next) => adminController.deleteUser(req, 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch("/users/:id/status", (req, res, next) => adminController.toggleUserStatus(req, res ));
+router.patch("/users/:id/status", requirePermission(PERMISSIONS.UPDATE_USERS), (req, res, next) => adminController.toggleUserStatus(req, res ));
 
 export { router as adminRoutes };

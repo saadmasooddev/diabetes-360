@@ -3,9 +3,9 @@ import crypto from "crypto";
 import {
   type User,
   type InsertUser,
-  RefreshToken,
   PhysicianData,
   CustomerData,
+  UserRole,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
@@ -16,14 +16,14 @@ import {
   BadRequestError,
 } from "../../../shared/errors";
 import { emailService } from "../../../shared/services/email.service";
-import { UserRole } from "server/src/shared/constants/roles";
+import {  ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
 
 export interface AuthResponse {
   user: Omit<
     User & { profileData?: CustomerData | PhysicianData | null },
     "password"
-  >;
+  > & { permissions?: string[] };
   tokens: TokenPair;
   requiresTwoFactor?: boolean;
 }
@@ -66,7 +66,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role as UserRole,
+      role: user.role,
     });
 
     // Send welcome email with credentials
@@ -91,12 +91,14 @@ export class AuthService {
       profileData,
       ...userWithoutPassword
     } = userWithProfile;
+    const userRole = user.role
     return {
       user: {
         ...userWithoutPassword,
         profileData:
           (profileData as CustomerData | PhysicianData | null | undefined) ||
           null,
+        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
       },
       tokens,
     };
@@ -126,10 +128,12 @@ export class AuthService {
     if (twoFactorStatus.enabled && twoFactorStatus.verified) {
       // Return response indicating 2FA is required (no tokens yet)
       const { password: _, profileData, ...userWithoutPassword } = user;
+      const userRole = user.role
       return {
         user: {
           ...userWithoutPassword,
           profileData: profileData as CustomerData | PhysicianData,
+          permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
         },
         tokens: {
           accessToken: "",
@@ -145,7 +149,7 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role as UserRole,
+      role: user.role,
     });
     // const refreshToken = await this.authRepository.getValidRefreshToken(
     //   user.id
@@ -162,10 +166,12 @@ export class AuthService {
       profileData: profileData2,
       ...userWithoutPassword2
     } = user;
+    const userRole = user.role 
     return {
       user: {
         ...userWithoutPassword2,
         profileData: user.profileData as CustomerData | PhysicianData,
+        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
       },
       tokens,
       requiresTwoFactor: false,
@@ -194,15 +200,17 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role as UserRole,
+        role: user.role ,
       
     });
 
     const { password: _, profileData, ...userWithoutPassword } = user;
+    const userRole = user.role
     return {
       user: {
         ...userWithoutPassword,
         profileData: user.profileData as CustomerData | PhysicianData,
+        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
       },
       tokens,
       requiresTwoFactor: false,
@@ -233,8 +241,8 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role as UserRole,
-      tokenId: payload.tokenId
+      role: user.role,
+      tokenId: payload.tokenId,
     });
 
     return tokens;
@@ -373,15 +381,16 @@ export class AuthService {
   }
 
   private async createTokens(
-    payload:Omit<JWTPayload, 'iat' | 'exp'>,
+    payload:Omit<JWTPayload, 'iat' | 'exp' | 'permissions'>,
   ): Promise<TokenPair> {
     try {
+      const permissions = [...(ROLE_PERMISSIONS[payload.role] || [])]
       const expiresAt = new Date();
       expiresAt.setTime(
         expiresAt.getTime() + config.refreshTokenExpiresIn * 1000
       );
 
-      const {tokenId, ...tokens }= JWTService.generateTokenPair(payload);
+      const {tokenId, ...tokens }= JWTService.generateTokenPair({...payload, permissions});
       await this.authRepository.createRefreshToken({
         userId: payload.userId,
         tokenId,

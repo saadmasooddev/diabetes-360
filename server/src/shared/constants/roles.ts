@@ -1,89 +1,72 @@
-// User roles
-export const USER_ROLES = {
-  CUSTOMER: 'customer',
-  ADMIN: 'admin',
-  PHYSICIAN: 'physician',
-} as const;
+import { PERMISSIONS, USER_ROLES } from "@shared/schema";
 
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 
-// Role permissions
 export const ROLE_PERMISSIONS = {
   [USER_ROLES.CUSTOMER]: [
-    'read:own_profile',
-    'update:own_profile',
-    'read:own_health_metrics',
-    'create:own_health_metrics',
-    'update:own_health_metrics',
-    'delete:own_health_metrics',
-    'read:health_targets',
-    'write:own_health_targets',
-    'scan:food',
-    'read:own_medical_records',
-    'create:own_medical_records',
-    'update:own_medical_records',
-    'delete:own_medical_records',
+    PERMISSIONS.READ_OWN_PROFILE,
+    PERMISSIONS.UPDATE_OWN_PROFILE,
+    PERMISSIONS.READ_OWN_HEALTH_METRICS,
+    PERMISSIONS.CREATE_OWN_HEALTH_METRICS,
+    PERMISSIONS.UPDATE_OWN_HEALTH_METRICS,
+    PERMISSIONS.DELETE_OWN_HEALTH_METRICS,
+    PERMISSIONS.READ_HEALTH_TARGETS,
+    PERMISSIONS.WRITE_OWN_HEALTH_TARGETS,
+    PERMISSIONS.SCAN_FOOD,
+    PERMISSIONS.READ_OWN_MEDICAL_RECORDS,
+    PERMISSIONS.CREATE_OWN_MEDICAL_RECORDS,
+    PERMISSIONS.UPDATE_OWN_MEDICAL_RECORDS,
+    PERMISSIONS.DELETE_OWN_MEDICAL_RECORDS,
+    PERMISSIONS.READ_OWN_BOOKINGS,
+    PERMISSIONS.CREATE_BOOKINGS,
+    PERMISSIONS.CANCEL_OWN_BOOKINGS,
+    PERMISSIONS.READ_PHYSICIANS,
+    PERMISSIONS.READ_OWN_CONSULTATIONS,
+    PERMISSIONS.READ_CONSULTATION_QUOTAS,
+    PERMISSIONS.USE_DIABOT,
+    PERMISSIONS.SUBSCRIBE_HEALTH_PLANS
   ],
   [USER_ROLES.PHYSICIAN]: [
-    'read:own_profile',
-    'update:own_profile',
-    'read:own_health_metrics',
-    'create:own_health_metrics',
-    'update:own_health_metrics',
-    'delete:own_health_metrics',
-    'read:patient_profiles',
-    'read:patient_health_metrics',
-    'create:patient_health_metrics',
-    'update:patient_health_metrics',
-    'read:patient_medical_records',
-    'create:patient_medical_records',
+    PERMISSIONS.READ_OWN_PROFILE,
+    PERMISSIONS.UPDATE_OWN_PROFILE,
+    PERMISSIONS.READ_PATIENT_PROFILES,
+    PERMISSIONS.READ_PATIENT_HEALTH_METRICS,
+    PERMISSIONS.CREATE_PATIENT_HEALTH_METRICS,
+    PERMISSIONS.UPDATE_PATIENT_HEALTH_METRICS,
+    PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+    PERMISSIONS.CREATE_PATIENT_MEDICAL_RECORDS,
+    PERMISSIONS.READ_OWN_APPOINTMENTS,
+    PERMISSIONS.UPDATE_OWN_APPOINTMENTS,
+    PERMISSIONS.MANAGE_OWN_SLOTS,
+    PERMISSIONS.READ_PATIENT_ALERTS,
+    PERMISSIONS.MANAGE_AVAILABILITY,
+    PERMISSIONS.MANAGE_LOCATIONS,
   ],
   [USER_ROLES.ADMIN]: [
-    'read:own_profile',
-    'update:own_profile',
-    'read:own_health_metrics',
-    'create:own_health_metrics',
-    'update:own_health_metrics',
-    'delete:own_health_metrics',
-    'read:all_users',
-    'create:users',
-    'update:users',
-    'delete:users',
-    'read:all_health_metrics',
-    'create:all_health_metrics',
-    'update:all_health_metrics',
-    'delete:all_health_metrics',
-    'create:settings',
-    'read:settings',
-    'update:settings',
-    'delete:settings',
-    'read:health_targets',
-    'write:health_targets',
-    'write:own_health_targets',
-    'read:all_medical_records',
-    'create:all_medical_records',
-    'update:all_medical_records',
-    'delete:all_medical_records',
+    PERMISSIONS.UPDATE_OWN_PROFILE,
+    PERMISSIONS.READ_ALL_USERS,
+    PERMISSIONS.CREATE_USERS,
+    PERMISSIONS.UPDATE_USERS,
+    PERMISSIONS.DELETE_USERS,
+    PERMISSIONS.READ_ALL_HEALTH_METRICS,
+    PERMISSIONS.CREATE_ALL_HEALTH_METRICS,
+    PERMISSIONS.UPDATE_ALL_HEALTH_METRICS,
+    PERMISSIONS.DELETE_ALL_HEALTH_METRICS,
+    PERMISSIONS.CREATE_SETTINGS,
+    PERMISSIONS.READ_SETTINGS,
+    PERMISSIONS.UPDATE_SETTINGS,
+    PERMISSIONS.DELETE_SETTINGS,
+    PERMISSIONS.READ_HEALTH_TARGETS,
+    PERMISSIONS.WRITE_HEALTH_TARGETS,
+    PERMISSIONS.WRITE_OWN_HEALTH_TARGETS,
+    PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
+    PERMISSIONS.CREATE_ALL_MEDICAL_RECORDS,
+    PERMISSIONS.UPDATE_ALL_MEDICAL_RECORDS,
+    PERMISSIONS.DELETE_ALL_MEDICAL_RECORDS,
+    PERMISSIONS.READ_ALL_BOOKINGS,
+    PERMISSIONS.READ_ALL_APPOINTMENTS,
+    PERMISSIONS.READ_PATIENT_PROFILES,
+    PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+    PERMISSIONS.READ_PATIENT_ALERTS,
+    PERMISSIONS.READ_ALL_PATIENTS
   ],
 } as const;
-
-export type Permission = typeof ROLE_PERMISSIONS[keyof typeof ROLE_PERMISSIONS][number];
-
-// Helper function to check if a role has a specific permission
-export function hasPermission(role: UserRole, permission: string): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission as any);
-}
-
-// Helper function to check if a role can access another role's resources
-export function canAccessRole(currentRole: UserRole, targetRole: UserRole): boolean {
-  switch (currentRole) {
-    case USER_ROLES.ADMIN:
-      return true; // Admin can access all roles
-    case USER_ROLES.PHYSICIAN:
-      return targetRole === USER_ROLES.CUSTOMER; // Physician can access customer data
-    case USER_ROLES.CUSTOMER:
-      return targetRole === USER_ROLES.CUSTOMER; // Customer can only access their own data
-    default:
-      return false;
-  }
-}

@@ -314,6 +314,126 @@ class BookingService {
       throw new Error(response.message || 'Failed to mark consultation as attended');
     }
   }
+
+  async getAppointments(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}): Promise<{
+    appointments: Array<{
+      id: string;
+      time: string;
+      date: string;
+      patientName: string;
+      type: string;
+      doctorName: string;
+      status: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.startDate) queryParams.append('startDate', params.startDate );
+    if (params.endDate) queryParams.append('endDate', params.endDate );
+
+    const response = await httpClient.get<ApiResponse<{
+      appointments: Array<{
+        id: string;
+        time: string;
+        date: string;
+        patientName: string;
+        type: string;
+        doctorName: string;
+        status: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+    }>>(`${API_ENDPOINTS.BOOKING.APPOINTMENTS}?${queryParams.toString()}`);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch appointments');
+    }
+    return response.data;
+  }
+
+  async getDatesWithBookings(month: number, year: number): Promise<string[]> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('month', month.toString());
+    queryParams.append('year', year.toString());
+
+    const response = await httpClient.get<ApiResponse<{ dates: string[] }>>(
+      `${API_ENDPOINTS.BOOKING.DATES_WITH_BOOKINGS}?${queryParams.toString()}`
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to fetch dates with bookings');
+    }
+    return response.data.dates;
+  }
+
+  async generateSlotsForDay(data: {
+    physicianId?: string;
+    date: string;
+    slotSizeId: string;
+  }): Promise<{
+    availableSlots: Array<{ start: string; end: string }>;
+    existingSlots: Slot[];
+    conflicts: Array<{ start: string; end: string }>;
+  }> {
+    const response = await httpClient.post<ApiResponse<{
+      availableSlots: Array<{ start: string; end: string }>;
+      existingSlots: Slot[];
+      conflicts: Array<{ start: string; end: string }>;
+    }>>(API_ENDPOINTS.BOOKING.GENERATE_SLOTS_FOR_DAY, data);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to generate slots');
+    }
+    return response.data;
+  }
+
+  async createSlotsForDay(data: {
+    physicianId?: string;
+    date: string;
+    slotSizeId: string;
+    slotTypeIds: string[];
+    locationIds?: string[];
+  }): Promise<Slot[]> {
+    const response = await httpClient.post<ApiResponse<{ slots: Slot[] }>>(
+      API_ENDPOINTS.BOOKING.CREATE_SLOTS_FOR_DAY,
+      data
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to create slots');
+    }
+    return response.data.slots;
+  }
+
+  async bulkDeleteSlots(data: {
+    physicianId?: string;
+    slotIds: string[];
+  }): Promise<{
+    deleted: string[];
+    failed: Array<{ slotId: string; reason: string }>;
+  }> {
+    const response = await httpClient.post<ApiResponse<{
+      deleted: string[];
+      failed: Array<{ slotId: string; reason: string }>;
+    }>>(API_ENDPOINTS.BOOKING.BULK_DELETE_SLOTS, data);
+
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Failed to delete slots');
+    }
+    return response.data;
+  }
 }
 
 export const bookingService = new BookingService();

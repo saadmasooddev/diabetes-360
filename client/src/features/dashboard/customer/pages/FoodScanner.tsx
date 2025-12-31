@@ -5,21 +5,18 @@ import { useScanFood, useUserDailyData, useConsumedNutrients } from '@/hooks/mut
 import { useFoodScanStatus } from '@/hooks/mutations/useSettings';
 import { useAuthStore } from '@/stores/authStore';
 import type { ScanResult } from '@/mocks/scanResults';
-import { UploadArea } from '../components/FoodScanner/UploadArea';
-import { ScanningAnimation } from '../components/FoodScanner/ScanningAnimation';
-import { FoodOverview } from '../components/FoodScanner/FoodOverview';
-import { PersonalizedInsight } from '../components/FoodScanner/PersonalizedInsight';
-import { BreakdownSection } from '../components/FoodScanner/BreakdownSection';
-import { NutritionalHighlight } from '../components/FoodScanner/NutritionalHighlight';
+import { UploadArea } from '../../components/FoodScanner/UploadArea';
+import { ScanningAnimation } from '../../components/FoodScanner/ScanningAnimation';
+import { FoodOverview } from '../../components/FoodScanner/FoodOverview';
+import { PersonalizedInsight } from '../../components/FoodScanner/PersonalizedInsight';
+import { BreakdownSection } from '../../components/FoodScanner/BreakdownSection';
+import { NutritionalHighlight } from '../../components/FoodScanner/NutritionalHighlight';
 import { toast } from '@/hooks/use-toast';
 
 type ScanStep = 'upload' | 'scanning' | 'results';
 
-interface FoodScannerProps {
-  isPremium?: boolean;
-}
 
-export function FoodScanner({ isPremium: isPremiumProp }: FoodScannerProps) {
+export function FoodScanner() {
   const [currentStep, setCurrentStep] = useState<ScanStep>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

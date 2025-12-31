@@ -88,6 +88,11 @@ export const API_ENDPOINTS = {
     CALCULATE_BOOKING_PRICE: (physicianId: string) => `/api/booking/physicians/${physicianId}/calculate-price`,
     MY_CONSULTATIONS: '/api/booking/my-consultations',
     MARK_ATTENDED: (bookingId: string) => `/api/booking/consultations/${bookingId}/attend`,
+    APPOINTMENTS: '/api/booking/appointments',
+    DATES_WITH_BOOKINGS: '/api/booking/dates-with-bookings',
+    GENERATE_SLOTS_FOR_DAY: '/api/booking/generate-slots-for-day',
+    CREATE_SLOTS_FOR_DAY: '/api/booking/create-slots-for-day',
+    BULK_DELETE_SLOTS: '/api/booking/bulk-delete-slots',
   },
   FOOD_SCANNER: {
     SCAN: '/api/food/scan',

@@ -36,7 +36,8 @@ name: MetricType; insight: string
 
 export interface InsertExerciseLog {
 
-    exerciseType: string;
+    exerciseType?: string;
+    exerciseName: string;
     calories: number;
     activityType: ActivityType 
     duration: number; // in seconds
@@ -48,10 +49,14 @@ export interface InsertExerciseLog {
 export interface HealthTips {
 name: string; tip: string
 }
+
+export interface LatestMetrics {
+ current: Partial<ExtendedHealthMetric>; previous: Partial<ExtendedHealthMetric>; limits: ExtendedLimits, remainingLimits: ExtendedLimits 
+}
 class HealthService {
 
-  async getLatestMetric(): Promise<{ current: Partial<ExtendedHealthMetric>; previous: Partial<ExtendedHealthMetric>; limits: ExtendedLimits, remainingLimits: ExtendedLimits }> {
-    const response = await httpClient.get<ApiResponse<{ current: Partial<HealthMetric>; previous: Partial<HealthMetric>;  limits: ExtendedLimits, remainingLimits : ExtendedLimits  }>>(
+  async getLatestMetric(): Promise<LatestMetrics> {
+    const response = await httpClient.get<ApiResponse<LatestMetrics>>(
       `${API_ENDPOINTS.HEALTH.LATEST}`
     );
     if (!response.success) {
@@ -174,8 +179,8 @@ class HealthService {
 
 
 
-  async addActivityLogsBatch({exercises, healthMetrics}: {exercises: Array<InsertExerciseLog>, healthMetrics?: InsertHealthMetric}): Promise<ExerciseLog[]> {
-    const response = await httpClient.post<ApiResponse<ExerciseLog[]>>(
+  async addActivityLogsBatch({exercises, healthMetrics}: {exercises: Array<InsertExerciseLog>, healthMetrics?: InsertHealthMetric}): Promise<{logs: ExerciseLog[], latestMetrics: LatestMetrics}> {
+    const response = await httpClient.post<ApiResponse<{logs: ExerciseLog[], latestMetrics: LatestMetrics}>>(
       API_ENDPOINTS.HEALTH.EXERCISES.ADD_BATCH,
       { 
         exercises: exercises.map(ex => ({ 

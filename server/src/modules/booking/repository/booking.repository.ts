@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, gte, lte, sql, inArray, or } from "drizzle-orm";
+import { eq, and, gte, lte, sql, inArray, or, like, ilike, SQL, count } from "drizzle-orm";
 import {
   slotSize,
   availabilityDate,
@@ -9,6 +9,7 @@ import {
   slotPrice,
   bookedSlots,
   slotLocations,
+  BOOKING_STATUS_ENUM,
 } from "../models/booking.schema";
 import { physicianLocations, users, physicianData, physicianRatings, physicianSpecialties } from "../../auth/models/user.schema";
 import type {
@@ -28,6 +29,7 @@ import type {
   InsertSlotLocation,
   SlotLocation,
 } from "../models/booking.schema";
+import { alias } from "drizzle-orm/pg-core";
 
 export type SlotWithDetails = {
   id: string;
@@ -83,16 +85,15 @@ export class BookingRepository {
 
   async getAvailabilityDateByPhysicianAndDate(
     physicianId: string,
-    date: Date
+    date:string
   ): Promise<AvailabilityDate | null> {
-    const dateStr = date.toISOString().split("T")[0];
     const [availability] = await db
       .select()
       .from(availabilityDate)
       .where(
         and(
           eq(availabilityDate.physicianId, physicianId),
-          sql`DATE(${availabilityDate.date}) = DATE(${sql.raw(`'${dateStr}'`)})`
+          sql`DATE(${availabilityDate.date}) = DATE(${date})`
         )
       )
       .limit(1);
@@ -341,7 +342,7 @@ export class BookingRepository {
   // Get available slots for a physician on a date
   async getAvailableSlotsForDate(
     physicianId: string,
-    date: Date
+    date: string
   ): Promise<
     Array<
       Slot & {
@@ -522,6 +523,12 @@ export class BookingRepository {
     return hours * 60 + minutes;
   }
 
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
+  }
+
   // Slot Location operations
   async createSlotLocation(data: InsertSlotLocation): Promise<SlotLocation> {
     const [slotLocation] = await db
@@ -674,7 +681,7 @@ export class BookingRepository {
   // Get organized slots for a specific date (without unnecessary fields)
   async getOrganizedSlotsForDate(
     physicianId: string,
-    date: Date
+    date: string
   ): Promise<
     SlotWithDetails[]
   > {
@@ -1050,7 +1057,7 @@ export class BookingRepository {
   async markConsultationAttended(bookingId: string, customerId: string): Promise<BookedSlot> {
     const [updated] = await db
       .update(bookedSlots)
-      .set({ isAttended: true, updatedAt: new Date() })
+      .set({ status:"completed", updatedAt: new Date() })
       .where(
         and(
           eq(bookedSlots.id, bookingId),
@@ -1092,6 +1099,279 @@ export class BookingRepository {
       throw new Error("Failed to update summary");
     }
     return updated;
+  }
+
+  // Get dates with bookings for calendar view
+  async getDatesWithBookings(
+    physicianId: string | null,
+    hasReadAllAppointments: boolean,
+    month: number,
+    year: number
+  ): Promise<{ dates: string[] }> {
+    const startDate = new Date(year, month - 1, 1);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+
+    const statusCondition = or(
+      eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+      eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED)
+    );
+
+    const conditions: SQL<unknown>[] = [
+      sql`DATE(${availabilityDate.date}) >= DATE(${startDate})`,
+      sql`DATE(${availabilityDate.date}) <= DATE(${endDate})`,
+    ];
+
+    if (statusCondition) {
+      conditions.push(statusCondition);
+    }
+
+    if (physicianId && !hasReadAllAppointments) {
+      conditions.push(eq(availabilityDate.physicianId, physicianId));
+    }
+
+    const bookings = await db
+      .select({
+        date: sql<string>`DATE(${availabilityDate.date})`,
+      })
+      .from(bookedSlots)
+      .innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+      .innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+      .where(and(...conditions))
+      .groupBy(availabilityDate.date);
+
+
+    return { dates: bookings.map(b => b.date) || [] } 
+  }
+
+  async generateSlotsForDay(
+    physicianId: string,
+    date: string,
+    slotSizeId: string
+  ): Promise<{
+    availableSlots: Array<{ start: string; end: string }>;
+    existingSlots: Slot[];
+    conflicts: Array<{ start: string; end: string }>;
+  }> {
+    const slotSize = await this.getSlotSizeById(slotSizeId);
+    if (!slotSize) {
+      throw new Error("Slot size not found");
+    }
+
+    let availability = await this.getAvailabilityDateByPhysicianAndDate(physicianId, date);
+    if (!availability) {
+      const dateObj = new Date(date);
+      dateObj.setHours(0, 0, 0, 0);
+      availability = await this.createAvailabilityDate({
+        physicianId,
+        date: dateObj,
+      });
+    }
+
+    // Get existing slots for this date
+    const existingSlots = await this.getSlotsByAvailabilityId(availability.id);
+
+    // Generate all possible slots for the day (12:00 AM to 11:59 PM)
+    const allSlots: Array<{ start: string; end: string }> = [];
+    const startMinutes = 0; // 12:00 AM
+    const endMinutes = 24 * 60; // 11:59 PM
+
+    let currentStart = startMinutes;
+    while (currentStart + slotSize.size <= endMinutes) {
+      const currentEnd = currentStart + slotSize.size;
+      allSlots.push({
+        start: this.minutesToTime(currentStart),
+        end: this.minutesToTime(currentEnd),
+      });
+      currentStart = currentEnd;
+    }
+
+    // Check for conflicts with existing slots
+    const conflicts: Array<{ start: string; end: string }> = [];
+    const availableSlots: Array<{ start: string; end: string }> = [];
+
+    for (const slot of allSlots) {
+      let hasConflict = false;
+      for (const existingSlot of existingSlots) {
+        const slotStart = this.timeToMinutes(slot.start);
+        const slotEnd = this.timeToMinutes(slot.end);
+        const existingStart = this.timeToMinutes(existingSlot.startTime);
+        const existingEnd = this.timeToMinutes(existingSlot.endTime);
+
+        // Check if time ranges overlap
+        if (
+          (slotStart < existingEnd && slotEnd > existingStart) ||
+          (existingStart < slotEnd && existingEnd > slotStart)
+        ) {
+          hasConflict = true;
+          break;
+        }
+      }
+
+      if (hasConflict) {
+        conflicts.push(slot);
+      } else {
+        availableSlots.push(slot);
+      }
+    }
+
+    return {
+      availableSlots,
+      existingSlots,
+      conflicts,
+    };
+  }
+
+  // Bulk delete slots (only unbooked ones)
+  async bulkDeleteSlots(
+    slotIds: string[],
+    physicianId: string
+  ): Promise<{
+    deleted: string[];
+    failed: Array<{ slotId: string; reason: string }>;
+  }> {
+    const deleted: string[] = [];
+    const failed: Array<{ slotId: string; reason: string }> = [];
+
+    const promises = slotIds.map(async(slotId) => {
+      try {
+        const slot = await this.getSlotById(slotId);
+        if (!slot) {
+          failed.push({ slotId, reason: "Slot not found" });
+          return
+        }
+
+        const availability = await this.getAvailabilityDateById(slot.availabilityId);
+        if (!availability || availability.physicianId !== physicianId) {
+          failed.push({ slotId, reason: "Unauthorized" });
+          return
+        }
+
+        const isBooked = await this.isSlotBooked(slotId);
+        if (isBooked) {
+          failed.push({ slotId, reason: "Slot is booked" });
+          return;
+        }
+
+        await this.deleteSlot(slotId);
+        deleted.push(slotId);
+      } catch (error: any) {
+        failed.push({ slotId, reason: error.message || "Unknown error" });
+      }
+
+    })
+
+    await Promise.all(promises)
+    return { deleted, failed };
+  }
+
+  // Get appointments for physicians/admins
+  async getAppointments(
+    physicianId: string | null,
+hasReadAllAppointments: boolean,
+    options: {
+      page?: number;
+      limit?: number;
+      skip?: number
+      search?: string;
+      startDate?: Date;
+      endDate?: Date;
+    } = {}
+  ): Promise<{
+    appointments: Array<{
+      id: string;
+      time: string;
+      date: string;
+      patientName: string;
+      type: string;
+      doctorName: string;
+      status: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const patientsAlias = alias(users, 'patients')
+    const physiciansAlias = alias(users, 'physicians')
+
+    const { page = 1, limit = 10, search, startDate, endDate, skip } = options;
+    const offset = skip ? skip : (page - 1) * limit;
+
+
+    const conditions: SQL<unknown>[] = [
+      eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING)
+    ];
+    // Filter by physician if provided (for read_own_appointments)
+    if (physicianId) {
+      conditions.push(eq(availabilityDate.physicianId, physicianId));
+    }
+
+    // Filter by date range or today
+    if (startDate) {
+      conditions.push(
+        sql`DATE(${availabilityDate.date}) >= DATE(${startDate})`
+      );
+    }
+    if (endDate) {
+      conditions.push(
+        sql`DATE(${availabilityDate.date}) <= DATE(${endDate})`
+      );
+    }
+
+    if(search) {
+      conditions.push(
+        ilike(patientsAlias.firstName, `%${search}%`),
+        ilike(patientsAlias.lastName, `%${search}%`),
+      )
+      if(hasReadAllAppointments){
+        conditions.push(
+          ilike(physiciansAlias.firstName, `%${search}%`),
+          ilike(physiciansAlias.lastName, `%${search}%`),
+        )
+      }
+    }
+    
+
+
+    const totalCountPromise = db
+       .select({count: count()})
+      .from(bookedSlots)
+      .innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+      .innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+      .innerJoin(patientsAlias, eq(bookedSlots.customerId, patientsAlias.id))
+      .innerJoin(physiciansAlias, eq(availabilityDate.physicianId, physiciansAlias.id))
+      .innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
+      .where(and(...conditions));
+
+    const allBookingsPromise = db
+      .select({
+        id: bookedSlots.id,
+        status: bookedSlots.status,
+        patientName: sql<string>`CONCAT(${patientsAlias.firstName}, ' ', ${patientsAlias.lastName})`,
+        doctorName: sql<string>`CONCAT(${physiciansAlias.firstName}, ' ', ${physiciansAlias.lastName})`,
+        time: sql<string>`TO_CHAR(TO_TIMESTAMP(${slots.startTime}, 'HH24:MI:SS'), 'HH12:MI AM')`,
+        date: sql<string>`DATE(${availabilityDate.date})`,
+        type: slotType.type,
+      })
+      .from(bookedSlots)
+      .innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+      .innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+      .innerJoin(patientsAlias, eq(bookedSlots.customerId, patientsAlias.id))
+      .innerJoin(physiciansAlias, eq(availabilityDate.physicianId, physiciansAlias.id))
+      .innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
+      .where(and(...conditions))
+      .limit(limit)
+      .offset(offset);
+
+
+    const [totalCount, allBookings] = await Promise.all([totalCountPromise, allBookingsPromise]);
+
+    return {
+      appointments: allBookings,
+      total: totalCount[0].count,
+      page: page,
+      limit: limit
+    };
   }
 }
 

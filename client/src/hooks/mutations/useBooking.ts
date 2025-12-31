@@ -47,15 +47,19 @@ export const useAvailableSlotsForDate = (physicianId: string | null, date: strin
   });
 };
 
-export const usePhysicianDatesWithSlots = (params: {
-  physicianId: string | null;
-  month: number;
-  year: number;
-  isCount: boolean;
-  selectedDate: string; 
-}) => {
+export type PhysicianDatesWithSlots = {
+    key: (string | number | boolean | null)[];
+    params: {
+        physicianId: string | null;
+        month: number;
+        year: number;
+        isCount: boolean;
+        selectedDate: string;
+    };
+}
+export const usePhysicianDatesWithSlots = ({ key, params }: PhysicianDatesWithSlots) => {
   return useQuery({
-    queryKey: ['booking', 'physician-dates', params.physicianId, params.month, params.year, params.isCount, params.selectedDate],
+    queryKey: key,
     queryFn: () => bookingService.getPhysicianDatesWithSlots({
       physicianId: params.physicianId!,
       month: params.month,
@@ -234,6 +238,106 @@ export const useMarkConsultationAttended = () => {
       toast({
         title: 'Failed',
         description: error.message || 'Failed to mark consultation as attended.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useDatesWithBookings = (month: number, year: number) => {
+  return useQuery({
+    queryKey: ['booking', 'dates-with-bookings', month, year],
+    queryFn: () => bookingService.getDatesWithBookings(month, year),
+  });
+};
+
+export const useGenerateSlotsForDay = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      physicianId?: string;
+      date: string;
+      slotSizeId: string;
+    }) => bookingService.generateSlotsForDay(data),
+    onError: (error: any) => {
+      toast({
+        title: 'Generation Failed',
+        description: error.message || 'Failed to generate slots.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useCreateSlotsForDay = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      physicianId?: string;
+      date: string;
+      slotSizeId: string;
+      slotTypeIds: string[];
+      locationIds?: string[];
+    }) => bookingService.createSlotsForDay(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['booking', 'slots'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'dates-with-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'dates-with-bookings'] });
+      toast({
+        title: 'Slots Created',
+        description: 'Time slots have been created successfully.',
+        variant: 'default',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Creation Failed',
+        description: error.message || 'Failed to create slots.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useBulkDeleteSlots = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      physicianId?: string;
+      slotIds: string[];
+    }) => bookingService.bulkDeleteSlots(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['booking', 'slots'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'dates-with-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', 'dates-with-bookings'] });
+      
+      const deletedCount = data.deleted.length;
+      const failedCount = data.failed.length;
+      
+      if (failedCount > 0) {
+        toast({
+          title: 'Partial Success',
+          description: `${deletedCount} slot(s) deleted. ${failedCount} slot(s) could not be deleted (may be booked).`,
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Slots Deleted',
+          description: `${deletedCount} slot(s) deleted successfully.`,
+          variant: 'default',
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Deletion Failed',
+        description: error.message || 'Failed to delete slots.',
         variant: 'destructive',
       });
     },

@@ -6,10 +6,11 @@ import { ROUTES } from '@/config/routes';
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowUp, ArrowDown } from 'lucide-react';
-import { HealthMetricCard } from '../components/HealthMetricCard';
-import { HealthTrendChart } from '../components/HealthTrendChart';
-import { AddMetricDialog } from '../components/AddMetricDialog';
+import { HealthMetricCard } from '../../components/HealthMetricCard';
+import { HealthTrendChart } from '../../components/HealthTrendChart';
+import { AddMetricDialog } from '../../components/AddMetricDialog';
 import {
+  FilteredMetricsKey,
   useAddActivityLogsBatch,
   useFilteredMetrics,
   useLatestHealthMetric,
@@ -18,6 +19,8 @@ import {
 import { calorieUtils, formatDate } from '@/lib/utils';
 import { ACTIVITY_TYPE_ENUM, EXERCISE_TYPE_ENUM, InsertHealthMetric, MetricType } from '@shared/schema';
 import { InsertExerciseLog } from '@/services/healthService';
+import { API_ENDPOINTS } from '@/config/endpoints';
+import { queryClient } from '@/lib/queryClient';
 
 type IntervalType = 'daily' | 'weekly' | 'monthly';
 
@@ -78,32 +81,35 @@ export function Dashboard() {
   const previousHeartRate = latestMetric?.previous?.heartRate ?? 0;
 
   const glucoseDateRange = getDateRange(glucoseInterval);
-  const { data: glucoseMetrics } = useFilteredMetrics(
-    glucoseDateRange.startDate,
-    glucoseDateRange.endDate,
-    [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]
-  );
-
   const stepsDateRange = getDateRange(stepsInterval);
-  const { data: stepsMetrics } = useFilteredMetrics(
-    stepsDateRange.startDate,
-    stepsDateRange.endDate,
-    [EXERCISE_TYPE_ENUM.STEPS]
-  );
-
   const waterDateRange = getDateRange(waterInterval);
-  const { data: waterMetrics } = useFilteredMetrics(
-    waterDateRange.startDate,
-    waterDateRange.endDate,
-    [EXERCISE_TYPE_ENUM.WATER_INTAKE]
-  );
-
   const heartbeatDateRange = getDateRange(heartbeatInterval);
-  const { data: heartbeatMetrics } = useFilteredMetrics(
-    heartbeatDateRange.startDate,
-    heartbeatDateRange.endDate,
-    [EXERCISE_TYPE_ENUM.HEART_RATE]
-  );
+
+  const getFilteredMetricsQueryKeys = (metricType: MetricType): FilteredMetricsKey => {
+    switch (metricType) {
+      case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+        return { endpoint: API_ENDPOINTS.HEALTH.FILTERED, startDate: glucoseDateRange.startDate, endDate: glucoseDateRange.endDate, types: [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE] }
+      case EXERCISE_TYPE_ENUM.STEPS:
+        return { endpoint: API_ENDPOINTS.HEALTH.FILTERED, startDate: stepsDateRange.startDate, endDate: stepsDateRange.endDate, types: [EXERCISE_TYPE_ENUM.STEPS] }
+      case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+        return { endpoint: API_ENDPOINTS.HEALTH.FILTERED, startDate: waterDateRange.startDate, endDate: waterDateRange.endDate, types: [EXERCISE_TYPE_ENUM.WATER_INTAKE] }
+      case EXERCISE_TYPE_ENUM.HEART_RATE:
+        return { endpoint: API_ENDPOINTS.HEALTH.FILTERED, startDate: heartbeatDateRange.startDate, endDate: heartbeatDateRange.endDate, types: [EXERCISE_TYPE_ENUM.HEART_RATE] }
+    }
+  }
+
+  const bloodGlucoseQueryKey = getFilteredMetricsQueryKeys(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)
+  const stepsQueryKey = getFilteredMetricsQueryKeys(EXERCISE_TYPE_ENUM.STEPS)
+  const waterQueryKey = getFilteredMetricsQueryKeys(EXERCISE_TYPE_ENUM.WATER_INTAKE)
+  const heartBeatQueryKey = getFilteredMetricsQueryKeys(EXERCISE_TYPE_ENUM.HEART_RATE)
+
+  const { data: glucoseMetrics } = useFilteredMetrics(bloodGlucoseQueryKey);
+
+  const { data: stepsMetrics } = useFilteredMetrics(stepsQueryKey);
+
+  const { data: waterMetrics } = useFilteredMetrics(waterQueryKey);
+
+  const { data: heartbeatMetrics } = useFilteredMetrics(heartBeatQueryKey);
 
   const getHasReachedLimit = (metricType: MetricType): boolean => {
     if (!freeTierLimits) return false;
@@ -184,24 +190,28 @@ export function Dashboard() {
       waterIntake: null,
     };
     const exercises: InsertExerciseLog[] = []
+    let queriesToInvalidate: FilteredMetricsKey[] = []
 
     if (selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
       metricData.bloodSugar = numericValue;
+      queriesToInvalidate.push(bloodGlucoseQueryKey)
     } else if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
       const calories = calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue)
       const duration = calorieUtils.getEstimatedDurationForSteps(numericValue)
       exercises.push({
-        exerciseType: 'Morning Walk',
+        exerciseName: 'Walk',
         calories,
         activityType: ACTIVITY_TYPE_ENUM.CARDIO,
         duration,
         steps: numericValue,
-        pace: 'moderate',
       })
+      queriesToInvalidate.push(stepsQueryKey)
     } else if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
       metricData.waterIntake = numericValue;
+      queriesToInvalidate.push(waterQueryKey)
     } else if (selectedMetricType === EXERCISE_TYPE_ENUM.HEART_RATE) {
       metricData.heartRate = numericValue;
+      queriesToInvalidate.push(heartBeatQueryKey)
     }
 
     addActivityLogsBatch.mutate({ exercises, healthMetrics: metricData },
@@ -210,6 +220,9 @@ export function Dashboard() {
           setDialogOpen(false);
           setMetricValue('');
           setSelectedMetricType(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE); // Reset to default
+          queriesToInvalidate.forEach(q => {
+            queryClient.invalidateQueries({ queryKey: [q] })
+          })
         }
       }
     )

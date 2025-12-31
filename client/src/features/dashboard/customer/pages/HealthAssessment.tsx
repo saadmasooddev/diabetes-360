@@ -3,10 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Droplet, Activity, Heart } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAggregatedStatistics, useHealthInsights } from "@/hooks/mutations/useHealth";
-import { CircularGauge } from "../components/CircularGauge";
-import { InsightSummaryCard } from "../components/InsightSummaryCard";
-import { OverallHealthSummary } from "../components/OverallHealthSummary";
-import { WhatToDoNext } from "../components/WhatToDoNext";
+import { CircularGauge } from "../../components/CircularGauge";
+import { InsightSummaryCard } from "../../components/InsightSummaryCard";
+import { OverallHealthSummary } from "../../components/OverallHealthSummary";
+import { WhatToDoNext } from "../../components/WhatToDoNext";
 import { EXERCISE_TYPE_ENUM, MetricType } from "@shared/schema";
 
 export function HealthAssessment() {

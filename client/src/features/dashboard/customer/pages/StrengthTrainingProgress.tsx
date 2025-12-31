@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { ROUTES } from '@/config/routes';
 import { useCaloriesByActivityType } from '@/hooks/mutations/useHealth';
 import { ChartData } from 'server/src/modules/health/repository/health.repository';
-import { HealthTrendChart } from '../components/HealthTrendChart';
+import { HealthTrendChart } from '../../components/HealthTrendChart';
 
 type FilterType = 'day' | 'week' | 'month' | 'custom';
 
