@@ -41,7 +41,7 @@ const twoFactorController = new TwoFactorController();
  *               $ref: '#/components/schemas/Error'
  */
 router.get("/status", authenticateToken, (req, res, next) =>
-  twoFactorController.get2FAStatus(req, res)
+	twoFactorController.get2FAStatus(req, res),
 );
 
 /**
@@ -95,7 +95,7 @@ router.get("/status", authenticateToken, (req, res, next) =>
  *               $ref: '#/components/schemas/Error'
  */
 router.post("/setup", authenticateToken, (req, res, next) =>
-  twoFactorController.setup2FA(req, res)
+	twoFactorController.setup2FA(req, res),
 );
 
 /**
@@ -152,7 +152,7 @@ router.post("/setup", authenticateToken, (req, res, next) =>
  *               $ref: '#/components/schemas/Error'
  */
 router.post("/verify", authenticateToken, (req, res, next) =>
-  twoFactorController.verifyAndEnable2FA(req, res)
+	twoFactorController.verifyAndEnable2FA(req, res),
 );
 
 /**
@@ -184,8 +184,8 @@ router.post("/verify", authenticateToken, (req, res, next) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/disable", authenticateToken, (req, res, ) =>
-  twoFactorController.disable2FA(req, res)
+router.post("/disable", authenticateToken, (req, res) =>
+	twoFactorController.disable2FA(req, res),
 );
 
 /**
@@ -230,8 +230,7 @@ router.post("/disable", authenticateToken, (req, res, ) =>
  *               $ref: '#/components/schemas/Error'
  */
 router.post("/regenerate-backup-codes", authenticateToken, (req, res) =>
-  twoFactorController.regenerateBackupCodes(req, res)
+	twoFactorController.regenerateBackupCodes(req, res),
 );
 
 export { router as twoFactorRoutes };
-

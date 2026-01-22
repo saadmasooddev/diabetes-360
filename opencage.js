@@ -56,32 +56,35 @@
 import axios from "axios";
 
 async function getCoordinates(location) {
-  try {
-    const response = await axios.get("https://nominatim.openstreetmap.org/search", {
-      params: {
-        q: location,
-        format: "json",
-        addressdetails: 1,
-        limit: 1
-      },
-      headers: {
-        "User-Agent": "MyNodeApp/1.0" // Required by Nominatim’s usage policy
-      }
-    });
+	try {
+		const response = await axios.get(
+			"https://nominatim.openstreetmap.org/search",
+			{
+				params: {
+					q: location,
+					format: "json",
+					addressdetails: 1,
+					limit: 1,
+				},
+				headers: {
+					"User-Agent": "MyNodeApp/1.0", // Required by Nominatim’s usage policy
+				},
+			},
+		);
 
-    if (response.data.length === 0) {
-      console.log("Location not found");
-      return null;
-    }
+		if (response.data.length === 0) {
+			console.log("Location not found");
+			return null;
+		}
 
-    const place = response.data[0];
-    console.log(`📍 ${place.display_name}`);
-    console.log(`Latitude: ${place.lat}`);
-    console.log(`Longitude: ${place.lon}`);
-    return { lat: place.lat, lon: place.lon };
-  } catch (err) {
-    console.error("Error fetching location:", err.message);
-  }
+		const place = response.data[0];
+		console.log(`📍 ${place.display_name}`);
+		console.log(`Latitude: ${place.lat}`);
+		console.log(`Longitude: ${place.lon}`);
+		return { lat: place.lat, lon: place.lon };
+	} catch (err) {
+		console.error("Error fetching location:", err.message);
+	}
 }
 
 // Example usage

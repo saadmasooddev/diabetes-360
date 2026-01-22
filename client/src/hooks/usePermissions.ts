@@ -1,13 +1,13 @@
-import { useAuthStore } from '@/stores/authStore';
-import {  hasAnyPermission,  type Permission } from '@/utils/permissions';
+import { useAuthStore } from "@/stores/authStore";
+import { hasAnyPermission } from "@/utils/permissions";
 
 export function usePermissions() {
-  const user = useAuthStore((state) => state.user);
-  const permissions = user?.permissions || [];
+	const user = useAuthStore((state) => state.user);
+	const permissions = user?.permissions || [];
 
-  return {
-    permissions,
-    hasAnyPermission: (permissionList: Permission[]) => hasAnyPermission(permissions, permissionList),
-  };
+	return {
+		permissions,
+		hasAnyPermission: (permissionList: string[]) =>
+			hasAnyPermission(permissions, permissionList),
+	};
 }
-

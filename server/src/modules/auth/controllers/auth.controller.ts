@@ -1,178 +1,209 @@
-import { type Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { insertUserSchema, type InsertUser } from "../models/user.schema";
 import { AuthService } from "../services/auth.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
-import {  BadRequestError } from "../../../shared/errors";
+import { BadRequestError } from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { AuthenticatedRequest } from "server/src/shared/middleware/auth";
+import type { AuthenticatedRequest } from "server/src/shared/middleware/auth";
 
 export class AuthController {
-  private authService: AuthService;
+	private authService: AuthService;
 
-  constructor() {
-    this.authService = new AuthService();
-  }
+	constructor() {
+		this.authService = new AuthService();
+	}
 
-  async signup(req: Request, res: Response): Promise<void> {
-    try {
-      // Validate request body
-      const validatedData = insertUserSchema.parse({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        password: req.body.password,
-        email: req.body.email,
-        provider: "manual",
-      });
+	async signup(req: Request, res: Response): Promise<void> {
+		try {
+			// Validate request body
+			const validatedData = insertUserSchema.parse({
+				firstName: req.body.firstName,
+				lastName: req.body.lastName,
+				password: req.body.password,
+				email: req.body.email,
+				provider: "manual",
+			});
 
-      const authResponse = await this.authService.signup(validatedData);
+			const authResponse = await this.authService.signup(validatedData);
 
-      sendSuccess(res, {
-        user: authResponse.user,
-        tokens: authResponse.tokens,
-      }, SUCCESS_MESSAGES.ACCOUNT_CREATED) 
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			sendSuccess(
+				res,
+				{
+					user: authResponse.user,
+					tokens: authResponse.tokens,
+				},
+				SUCCESS_MESSAGES.ACCOUNT_CREATED,
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-  async login(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        throw new BadRequestError("Email and password are required");
-      }
+	async login(req: Request, res: Response): Promise<void> {
+		try {
+			const { email, password } = req.body;
 
-      const authResponse = await this.authService.login(email, password);
+			if (!email || !password) {
+				throw new BadRequestError("Email and password are required");
+			}
 
-      // If 2FA is required, return response without tokens
-      if (authResponse.requiresTwoFactor) {
-        sendSuccess(res, {
-          user: authResponse.user,
-          requiresTwoFactor: true,
-        }, "Two-factor authentication required");
-        return;
-      }
+			const authResponse = await this.authService.login(email, password);
 
-      sendSuccess(res, {
-        user: authResponse.user,
-        tokens: authResponse.tokens,
-        requiresTwoFactor: false,
-      }, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL);
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			// If 2FA is required, return response without tokens
+			if (authResponse.requiresTwoFactor) {
+				sendSuccess(
+					res,
+					{
+						user: authResponse.user,
+						requiresTwoFactor: true,
+					},
+					"Two-factor authentication required",
+				);
+				return;
+			}
 
-  async verify2FALogin(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, token } = req.body;
-      
-      if (!email || !token) {
-        throw new BadRequestError("Email and verification token are required");
-      }
+			sendSuccess(
+				res,
+				{
+					user: authResponse.user,
+					tokens: authResponse.tokens,
+					requiresTwoFactor: false,
+				},
+				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (token.length !== 6) {
-        throw new BadRequestError("Verification token must be 6 digits");
-      }
+	async verify2FALogin(req: Request, res: Response): Promise<void> {
+		try {
+			const { email, token } = req.body;
 
-      const authResponse = await this.authService.verify2FALogin(email, token);
+			if (!email || !token) {
+				throw new BadRequestError("Email and verification token are required");
+			}
 
-      sendSuccess(res, {
-        user: authResponse.user,
-        tokens: authResponse.tokens,
-      }, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL);
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			if (token.length !== 6) {
+				throw new BadRequestError("Verification token must be 6 digits");
+			}
 
-  async refreshTokens(req: Request, res: Response): Promise<void> {
-    try {
-      const { refreshToken } = req.body;
-      
-      if (!refreshToken) {
-        throw new BadRequestError("Refresh token is required");
-      }
+			const authResponse = await this.authService.verify2FALogin(email, token);
 
-      const tokens = await this.authService.refreshTokens(refreshToken);
+			sendSuccess(
+				res,
+				{
+					user: authResponse.user,
+					tokens: authResponse.tokens,
+				},
+				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      sendSuccess(res, { tokens }, "Tokens refreshed successfully");
-    } catch (error: any) {
-      handleError(res, error, { error: error.message});
-    }
-  }
+	async refreshTokens(req: Request, res: Response): Promise<void> {
+		try {
+			const { refreshToken } = req.body;
 
-  async logout(req: Request, res: Response): Promise<void> {
-    try {
-      const { refreshToken } = req.body;
-      
-      if (!refreshToken) {
-        throw new BadRequestError("Refresh token is required");
-      }
+			if (!refreshToken) {
+				throw new BadRequestError("Refresh token is required");
+			}
 
-      await this.authService.logout(refreshToken);
+			const tokens = await this.authService.refreshTokens(refreshToken);
 
-      sendSuccess(res, null, "Logged out successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			sendSuccess(res, { tokens }, "Tokens refreshed successfully");
+		} catch (error: any) {
+			handleError(res, error, { error: error.message });
+		}
+	}
 
-  async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { email } = req.body;
-      
-      if (!email) {
-        throw new BadRequestError("Email is required");
-      }
+	async logout(req: Request, res: Response): Promise<void> {
+		try {
+			const { refreshToken } = req.body;
 
-      await this.authService.forgotPassword(email);
+			if (!refreshToken) {
+				throw new BadRequestError("Refresh token is required");
+			}
 
-      sendSuccess(res, null, SUCCESS_MESSAGES.PASSWORD_RESET_SENT);
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			await this.authService.logout(refreshToken);
 
-  async resetPassword(req: Request, res: Response ): Promise<void> {
-    try {
-      const { token, password } = req.body;
-      
-      if (!token || !password) {
-        throw new BadRequestError("Token and password are required");
-      }
+			sendSuccess(res, null, "Logged out successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (password.length < 6) {
-        throw new BadRequestError("Password must be at least 6 characters long");
-      }
+	async forgotPassword(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const { email } = req.body;
 
-      await this.authService.resetPassword(token, password);
+			if (!email) {
+				throw new BadRequestError("Email is required");
+			}
 
-      sendSuccess(res, null, "Password reset successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			await this.authService.forgotPassword(email);
 
-  async changeUserPassword(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const { oldPassword, newPassword } = req.body;
-      
-      if (!oldPassword || !newPassword) {
-        throw new BadRequestError("Old password and new password are required");
-      }
+			sendSuccess(res, null, SUCCESS_MESSAGES.PASSWORD_RESET_SENT);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if(oldPassword === newPassword) {
-        throw new BadRequestError("Old password and new password cannot be the same")
-      }
+	async resetPassword(req: Request, res: Response): Promise<void> {
+		try {
+			const { token, password } = req.body;
 
-      await this.authService.changeUserPassword(req.user?.userId || '', oldPassword, newPassword)
+			if (!token || !password) {
+				throw new BadRequestError("Token and password are required");
+			}
 
-      sendSuccess(res, null, "Password changed successfully")
-    } catch(error){
-      handleError(res, error)
-    }
+			if (password.length < 6) {
+				throw new BadRequestError(
+					"Password must be at least 6 characters long",
+				);
+			}
 
-  }}
+			await this.authService.resetPassword(token, password);
+
+			sendSuccess(res, null, "Password reset successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
+	async changeUserPassword(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const { oldPassword, newPassword } = req.body;
+
+			if (!oldPassword || !newPassword) {
+				throw new BadRequestError("Old password and new password are required");
+			}
+
+			if (oldPassword === newPassword) {
+				throw new BadRequestError(
+					"Old password and new password cannot be the same",
+				);
+			}
+
+			await this.authService.changeUserPassword(
+				req.user?.userId || "",
+				oldPassword,
+				newPassword,
+			);
+
+			sendSuccess(res, null, "Password changed successfully");
+		} catch (error) {
+			handleError(res, error);
+		}
+	}
+}

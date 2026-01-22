@@ -1,207 +1,217 @@
 import { PhysicianRepository } from "../repository/physician.repository";
-import type { 
-  InsertPhysicianSpecialty, 
-  UpdatePhysicianSpecialty,
-  InsertPhysicianData,
-  UpdatePhysicianData,
-  InsertPhysicianRating,
-  InsertPhysicianLocation,
-  UpdatePhysicianLocation,
+import type {
+	InsertPhysicianSpecialty,
+	UpdatePhysicianSpecialty,
+	InsertPhysicianData,
+	UpdatePhysicianData,
+	InsertPhysicianRating,
+	InsertPhysicianLocation,
+	UpdatePhysicianLocation,
 } from "../../auth/models/user.schema";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import path from "path";
 
 export class PhysicianService {
-  private physicianRepository: PhysicianRepository;
+	private physicianRepository: PhysicianRepository;
 
-  constructor() {
-    this.physicianRepository = new PhysicianRepository();
-  }
+	constructor() {
+		this.physicianRepository = new PhysicianRepository();
+	}
 
-  // Specialty operations
-  async getAllSpecialties() {
-    return await this.physicianRepository.getAllSpecialties();
-  }
+	// Specialty operations
+	async getAllSpecialties() {
+		return await this.physicianRepository.getAllSpecialties();
+	}
 
-  async getSpecialtyById(id: string) {
-    const specialty = await this.physicianRepository.getSpecialtyById(id);
-    if (!specialty) {
-      throw new NotFoundError("Specialty not found");
-    }
-    return specialty;
-  }
+	async getSpecialtyById(id: string) {
+		const specialty = await this.physicianRepository.getSpecialtyById(id);
+		if (!specialty) {
+			throw new NotFoundError("Specialty not found");
+		}
+		return specialty;
+	}
 
-  async createSpecialty(data: InsertPhysicianSpecialty) {
-    return await this.physicianRepository.createSpecialty(data);
-  }
+	async createSpecialty(data: InsertPhysicianSpecialty) {
+		return await this.physicianRepository.createSpecialty(data);
+	}
 
-  async updateSpecialty(id: string, data: UpdatePhysicianSpecialty) {
-    const existing = await this.physicianRepository.getSpecialtyById(id);
-    if (!existing) {
-      throw new NotFoundError("Specialty not found");
-    }
-    return await this.physicianRepository.updateSpecialty(id, data);
-  }
+	async updateSpecialty(id: string, data: UpdatePhysicianSpecialty) {
+		const existing = await this.physicianRepository.getSpecialtyById(id);
+		if (!existing) {
+			throw new NotFoundError("Specialty not found");
+		}
+		return await this.physicianRepository.updateSpecialty(id, data);
+	}
 
-  async deleteSpecialty(id: string) {
-    const existing = await this.physicianRepository.getSpecialtyById(id);
-    if (!existing) {
-      throw new NotFoundError("Specialty not found");
-    }
-    await this.physicianRepository.deleteSpecialty(id);
-  }
+	async deleteSpecialty(id: string) {
+		const existing = await this.physicianRepository.getSpecialtyById(id);
+		if (!existing) {
+			throw new NotFoundError("Specialty not found");
+		}
+		await this.physicianRepository.deleteSpecialty(id);
+	}
 
-  // Physician data operations
-  async getPhysicianDataByUserId(userId: string) {
-    const data = await this.physicianRepository.getPhysicianDataByUserId(userId);
-    if (!data) {
-      throw new NotFoundError("Physician data not found");
-    }
-    return data;
-  }
+	// Physician data operations
+	async getPhysicianDataByUserId(userId: string) {
+		const data =
+			await this.physicianRepository.getPhysicianDataByUserId(userId);
+		if (!data) {
+			throw new NotFoundError("Physician data not found");
+		}
+		return data;
+	}
 
-  async createPhysicianData(data: InsertPhysicianData) {
-    // Check if physician data already exists
-    const existing = await this.physicianRepository.getPhysicianDataByUserId(data.userId);
-    if (existing) {
-      throw new BadRequestError("Physician data already exists for this user");
-    }
-    
-    this.validatePracticeStartDate(data.practiceStartDate?.toString() || '');
-    
-    return await this.physicianRepository.createPhysicianData(data);
-  }
+	async createPhysicianData(data: InsertPhysicianData) {
+		// Check if physician data already exists
+		const existing = await this.physicianRepository.getPhysicianDataByUserId(
+			data.userId,
+		);
+		if (existing) {
+			throw new BadRequestError("Physician data already exists for this user");
+		}
 
+		this.validatePracticeStartDate(data.practiceStartDate?.toString() || "");
 
-  async updatePhysicianData(userId: string, data: UpdatePhysicianData) {
-    this.validatePracticeStartDate(data.practiceStartDate?.toString() || '');
-    
-    return await this.physicianRepository.updatePhysicianData(userId, data);
-  }
+		return await this.physicianRepository.createPhysicianData(data);
+	}
 
-  async deletePhysicianData(userId: string) {
-    await this.physicianRepository.deletePhysicianData(userId);
-  }
+	async updatePhysicianData(userId: string, data: UpdatePhysicianData) {
+		this.validatePracticeStartDate(data.practiceStartDate?.toString() || "");
 
-  // Consultation operations
-  async getSpecialtiesForConsultation() {
-    return await this.physicianRepository.getSpecialtiesForConsultation();
-  }
+		return await this.physicianRepository.updatePhysicianData(userId, data);
+	}
 
+	async deletePhysicianData(userId: string) {
+		await this.physicianRepository.deletePhysicianData(userId);
+	}
 
-  async getPhysiciansPaginated(params: {
-    page: number;
-    limit: number;
-    skip?: number;
-    search?: string;
-    specialtyId?: string;
-  }) {
-    // Validate page and limit
-    if (params.page < 1) {
-      throw new BadRequestError("Page must be greater than 0");
-    }
-    if (params.limit < 1 || params.limit > 100) {
-      throw new BadRequestError("Limit must be between 1 and 100");
-    }
+	// Consultation operations
+	async getSpecialtiesForConsultation() {
+		return await this.physicianRepository.getSpecialtiesForConsultation();
+	}
 
-    // Validate specialty if provided
-    if (params.specialtyId) {
-      const specialty = await this.physicianRepository.getSpecialtyById(params.specialtyId);
-      if (!specialty) {
-        throw new NotFoundError("Specialty not found");
-      }
-    }
+	async getPhysiciansPaginated(params: {
+		page: number;
+		limit: number;
+		skip?: number;
+		search?: string;
+		specialtyId?: string;
+	}) {
+		// Validate page and limit
+		if (params.page < 1) {
+			throw new BadRequestError("Page must be greater than 0");
+		}
+		if (params.limit < 1 || params.limit > 100) {
+			throw new BadRequestError("Limit must be between 1 and 100");
+		}
 
-    return await this.physicianRepository.getPhysiciansPaginated(params);
-  }
+		// Validate specialty if provided
+		if (params.specialtyId) {
+			const specialty = await this.physicianRepository.getSpecialtyById(
+				params.specialtyId,
+			);
+			if (!specialty) {
+				throw new NotFoundError("Specialty not found");
+			}
+		}
 
-  async getPhysiciansBySpecialty(specialtyId: string) {
-    const specialty = await this.physicianRepository.getSpecialtyById(specialtyId);
-    if (!specialty) {
-      throw new NotFoundError("Specialty not found");
-    }
-    return await this.physicianRepository.getPhysiciansBySpecialty(specialtyId);
-  }
+		return await this.physicianRepository.getPhysiciansPaginated(params);
+	}
 
-  // Rating operations
-  async createRating(data: InsertPhysicianRating) {
-    // Check if customer has already rated this physician
-    // For now, we'll allow multiple ratings (could be changed to one per customer)
-    await this.physicianRepository.createRating(data);
-  }
+	async getPhysiciansBySpecialty(specialtyId: string) {
+		const specialty =
+			await this.physicianRepository.getSpecialtyById(specialtyId);
+		if (!specialty) {
+			throw new NotFoundError("Specialty not found");
+		}
+		return await this.physicianRepository.getPhysiciansBySpecialty(specialtyId);
+	}
 
-  async getPhysicianAverageRating(physicianId: string) {
-    return await this.physicianRepository.getPhysicianAverageRating(physicianId);
-  }
+	// Rating operations
+	async createRating(data: InsertPhysicianRating) {
+		// Check if customer has already rated this physician
+		// For now, we'll allow multiple ratings (could be changed to one per customer)
+		await this.physicianRepository.createRating(data);
+	}
 
-  
-  async getImageUrlFromFile(file: Express.Multer.File): Promise<string> {
-    if (!file) {
-      throw new BadRequestError("File is required");
-    }
+	async getPhysicianAverageRating(physicianId: string) {
+		return await this.physicianRepository.getPhysicianAverageRating(
+			physicianId,
+		);
+	}
 
-    const relativePath = path.relative(
-      path.join(process.cwd(), "public"),
-      file.path
-    );
-    
-    return relativePath;
-  }
+	async getImageUrlFromFile(file: Express.Multer.File): Promise<string> {
+		if (!file) {
+			throw new BadRequestError("File is required");
+		}
 
-  async setImageUrlFromFile(path: string, userId: string){
-    return await this.physicianRepository.setImageUrlFromFile(path, userId);
-  }
+		const relativePath = path.relative(
+			path.join(process.cwd(), "public"),
+			file.path,
+		);
 
-  private validatePracticeStartDate(practiceStartDate: string) {
-    const practiceDate = new Date(practiceStartDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (practiceDate > today) {
-      throw new BadRequestError("Practice start date cannot be in the future");
-    }
-  }
+		return relativePath;
+	}
 
-  // Location operations
-  async getAllLocationsByPhysicianId(physicianId: string) {
-    return await this.physicianRepository.getAllLocationsByPhysicianId(physicianId);
-  }
+	async setImageUrlFromFile(path: string, userId: string) {
+		return await this.physicianRepository.setImageUrlFromFile(path, userId);
+	}
 
-  async getLocationById(id: string) {
-    const location = await this.physicianRepository.getLocationById(id);
-    if (!location) {
-      throw new NotFoundError("Location not found");
-    }
-    return location;
-  }
+	private validatePracticeStartDate(practiceStartDate: string) {
+		const practiceDate = new Date(practiceStartDate);
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
 
-  async createLocation(physicianId: string, data: InsertPhysicianLocation) {
-    return await this.physicianRepository.createLocation({
-      ...data,
-      physicianId,
-    });
-  }
+		if (practiceDate > today) {
+			throw new BadRequestError("Practice start date cannot be in the future");
+		}
+	}
 
-  async updateLocation(id: string, physicianId: string, data: UpdatePhysicianLocation) {
-    const location = await this.physicianRepository.getLocationById(id);
-    if (!location) {
-      throw new NotFoundError("Location not found");
-    }
-    if (location.physicianId !== physicianId) {
-      throw new BadRequestError("You can only update your own locations");
-    }
-    return await this.physicianRepository.updateLocation(id, data);
-  }
+	// Location operations
+	async getAllLocationsByPhysicianId(physicianId: string) {
+		return await this.physicianRepository.getAllLocationsByPhysicianId(
+			physicianId,
+		);
+	}
 
-  async deleteLocation(id: string, physicianId: string) {
-    const location = await this.physicianRepository.getLocationById(id);
-    if (!location) {
-      throw new NotFoundError("Location not found");
-    }
-    if (location.physicianId !== physicianId) {
-      throw new BadRequestError("You can only delete your own locations");
-    }
-    await this.physicianRepository.deleteLocation(id);
-  }
+	async getLocationById(id: string) {
+		const location = await this.physicianRepository.getLocationById(id);
+		if (!location) {
+			throw new NotFoundError("Location not found");
+		}
+		return location;
+	}
+
+	async createLocation(physicianId: string, data: InsertPhysicianLocation) {
+		return await this.physicianRepository.createLocation({
+			...data,
+			physicianId,
+		});
+	}
+
+	async updateLocation(
+		id: string,
+		physicianId: string,
+		data: UpdatePhysicianLocation,
+	) {
+		const location = await this.physicianRepository.getLocationById(id);
+		if (!location) {
+			throw new NotFoundError("Location not found");
+		}
+		if (location.physicianId !== physicianId) {
+			throw new BadRequestError("You can only update your own locations");
+		}
+		return await this.physicianRepository.updateLocation(id, data);
+	}
+
+	async deleteLocation(id: string, physicianId: string) {
+		const location = await this.physicianRepository.getLocationById(id);
+		if (!location) {
+			throw new NotFoundError("Location not found");
+		}
+		if (location.physicianId !== physicianId) {
+			throw new BadRequestError("You can only delete your own locations");
+		}
+		await this.physicianRepository.deleteLocation(id);
+	}
 }
-

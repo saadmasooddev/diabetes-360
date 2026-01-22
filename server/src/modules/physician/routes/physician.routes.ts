@@ -1,14 +1,18 @@
 import { Router } from "express";
 import { PhysicianController } from "../controllers/physician.controller";
-import { authenticateToken } from "../../../shared/middleware/auth";
+import {
+	authenticateToken,
+	requireAnyPermission,
+	requirePermission,
+} from "../../../shared/middleware/auth";
 import { uploadPhysicianImage } from "server/src/shared/config/multer.config";
+import { PERMISSIONS } from "../../auth/models/user.schema";
 
 const router = Router();
 
 router.use(authenticateToken);
 
 const physicianController = new PhysicianController();
-
 
 /**
  * @swagger
@@ -43,7 +47,9 @@ const physicianController = new PhysicianController();
  *                               icon:
  *                                 type: string
  */
-router.get("/specialties", (req, res, next) => physicianController.getSpecialtiesForConsultation(req, res, next));
+router.get("/specialties", (req, res, next) =>
+	physicianController.getSpecialtiesForConsultation(req, res, next),
+);
 
 /**
  * @swagger
@@ -143,7 +149,7 @@ router.get("/specialties", (req, res, next) => physicianController.getSpecialtie
  *         description: Bad request (invalid page, limit, or specialtyId)
  */
 router.get("/physicians", (req, res, next) =>
-  physicianController.getPhysiciansPaginated(req, res, next)
+	physicianController.getPhysiciansPaginated(req, res, next),
 );
 
 /**
@@ -192,8 +198,8 @@ router.get("/physicians", (req, res, next) =>
  *                               imageUrl:
  *                                 type: string
  */
-router.get("/specialties/:specialtyId/physicians", (req, res, next) => 
-  physicianController.getPhysiciansBySpecialty(req, res, next)
+router.get("/specialties/:specialtyId/physicians", (req, res, next) =>
+	physicianController.getPhysiciansBySpecialty(req, res, next),
 );
 
 /**
@@ -213,8 +219,8 @@ router.get("/specialties/:specialtyId/physicians", (req, res, next) =>
  *       200:
  *         description: Rating retrieved successfully
  */
-router.get("/ratings/:physicianId", (req, res, next) => 
-  physicianController.getPhysicianRating(req, res, next)
+router.get("/ratings/:physicianId", (req, res, next) =>
+	physicianController.getPhysicianRating(req, res, next),
 );
 
 /**
@@ -266,10 +272,9 @@ router.get("/ratings/:physicianId", (req, res, next) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/ratings",  (req, res, next) => 
-  physicianController.createRating(req, res, next)
+router.post("/ratings", (req, res, next) =>
+	physicianController.createRating(req, res, next),
 );
-
 
 /**
  * @swagger
@@ -283,8 +288,8 @@ router.post("/ratings",  (req, res, next) =>
  *       200:
  *         description: Specialties retrieved successfully
  */
-router.get("/admin/specialties", (req, res, next) => 
-  physicianController.getAllSpecialties(req, res, next)
+router.get("/admin/specialties", (req, res, next) =>
+	physicianController.getAllSpecialties(req, res, next),
 );
 
 /**
@@ -306,8 +311,8 @@ router.get("/admin/specialties", (req, res, next) =>
  *       200:
  *         description: Specialty retrieved successfully
  */
-router.get("/admin/specialties/:id", (req, res, next) => 
-  physicianController.getSpecialtyById(req, res, next)
+router.get("/admin/specialties/:id", (req, res, next) =>
+	physicianController.getSpecialtyById(req, res, next),
 );
 
 /**
@@ -341,8 +346,8 @@ router.get("/admin/specialties/:id", (req, res, next) =>
  *       200:
  *         description: Specialty created successfully
  */
-router.post("/admin/specialties", (req, res, next) => 
-  physicianController.createSpecialty(req, res, next)
+router.post("/admin/specialties", (req, res, next) =>
+	physicianController.createSpecialty(req, res, next),
 );
 
 /**
@@ -379,8 +384,8 @@ router.post("/admin/specialties", (req, res, next) =>
  *       200:
  *         description: Specialty updated successfully
  */
-router.put("/admin/specialties/:id", (req, res, next) => 
-  physicianController.updateSpecialty(req, res, next)
+router.put("/admin/specialties/:id", (req, res, next) =>
+	physicianController.updateSpecialty(req, res, next),
 );
 
 /**
@@ -402,8 +407,8 @@ router.put("/admin/specialties/:id", (req, res, next) =>
  *       200:
  *         description: Specialty deleted successfully
  */
-router.delete("/admin/specialties/:id", (req, res, next) => 
-  physicianController.deleteSpecialty(req, res, next)
+router.delete("/admin/specialties/:id", (req, res, next) =>
+	physicianController.deleteSpecialty(req, res, next),
 );
 
 // Physician data routes (for admin when creating/editing users)
@@ -426,8 +431,8 @@ router.delete("/admin/specialties/:id", (req, res, next) =>
  *       200:
  *         description: Physician data retrieved successfully
  */
-router.get("/admin/physician-data/:userId", (req, res, next) => 
-  physicianController.getPhysicianData(req, res, next)
+router.get("/admin/physician-data/:userId", (req, res, next) =>
+	physicianController.getPhysicianData(req, res, next),
 );
 
 /**
@@ -465,8 +470,8 @@ router.get("/admin/physician-data/:userId", (req, res, next) =>
  *       200:
  *         description: Physician data created successfully
  */
-router.post("/admin/physician-data", (req, res, next) => 
-  physicianController.createPhysicianData(req, res, next)
+router.post("/admin/physician-data", (req, res, next) =>
+	physicianController.createPhysicianData(req, res, next),
 );
 
 /**
@@ -504,8 +509,8 @@ router.post("/admin/physician-data", (req, res, next) =>
  *       200:
  *         description: Physician data updated successfully
  */
-router.put("/admin/physician-data/:userId", (req, res, next) => 
-  physicianController.updatePhysicianData(req, res, next)
+router.put("/admin/physician-data/:userId", (req, res, next) =>
+	physicianController.updatePhysicianData(req, res, next),
 );
 
 /**
@@ -547,8 +552,8 @@ router.put("/admin/physician-data/:userId", (req, res, next) =>
  *       400:
  *         description: Invalid file or file too large
  */
-router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) => 
-  physicianController.uploadPhysicianImage(req, res, next)
+router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) =>
+	physicianController.uploadPhysicianImage(req, res, next),
 );
 
 /**
@@ -586,8 +591,8 @@ router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) =>
  *       401:
  *         description: Unauthorized
  */
-router.get("/admin/locations/:physicianId", (req, res, next) => 
-  physicianController.getAllLocationsByPhysicianId(req, res, next)
+router.get("/admin/locations/:physicianId", (req, res, next) =>
+	physicianController.getAllLocationsByPhysicianId(req, res, next),
 );
 
 /**
@@ -618,8 +623,8 @@ router.get("/admin/locations/:physicianId", (req, res, next) =>
  *       401:
  *         description: Unauthorized
  */
-router.get("/locations",  (req, res, next) => 
-  physicianController.getAllLocations(req, res, next)
+router.get("/locations", (req, res, next) =>
+	physicianController.getAllLocations(req, res, next),
 );
 
 /**
@@ -689,8 +694,8 @@ router.get("/locations",  (req, res, next) =>
  *       401:
  *         description: Unauthorized
  */
-router.post("/locations",  (req, res, next) => 
-  physicianController.createLocation(req, res, next)
+router.post("/locations", (req, res, next) =>
+	physicianController.createLocation(req, res, next),
 );
 
 /**
@@ -756,8 +761,8 @@ router.post("/locations",  (req, res, next) =>
  *       404:
  *         description: Location not found
  */
-router.patch("/locations/:id",  (req, res, next) => 
-  physicianController.updateLocation(req, res, next)
+router.patch("/locations/:id", (req, res, next) =>
+	physicianController.updateLocation(req, res, next),
 );
 
 /**
@@ -789,9 +794,333 @@ router.patch("/locations/:id",  (req, res, next) =>
  *       404:
  *         description: Location not found
  */
-router.delete("/locations/:id",  (req, res, next) => 
-  physicianController.deleteLocation(req, res, next)
+router.delete("/locations/:id", (req, res, next) =>
+	physicianController.deleteLocation(req, res, next),
 );
 
-export { router as physicianRoutes };
+/**
+ * @swagger
+ * /api/physician/patients:
+ *   get:
+ *     summary: Get paginated list of patients
+ *     description: Returns patients where the authenticated physician is the latest consulting physician. For physicians, only shows patients where they are the most recent physician to have consulted with the patient. For admins, shows all patients.
+ *     tags: [Physician]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by patient name
+ *     responses:
+ *       200:
+ *         description: Patients retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         patients:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               age:
+ *                                 type: number
+ *                               condition:
+ *                                 type: string
+ *                               indication:
+ *                                 type: string
+ *                                 enum: [Needs Attention, Stable, High Risk]
+ *                               indicationColor:
+ *                                 type: string
+ *                                 description: Color code for the indication (hex format)
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ */
+router.get("/patients", (req, res, next) =>
+	physicianController.getPatients(req, res, next),
+);
 
+/**
+ * @swagger
+ * /api/physician/patients/stats:
+ *   get:
+ *     summary: Get patient statistics for pie charts
+ *     description: Returns patient statistics (disease distribution and indication distribution) for patients where the authenticated physician is the latest consulting physician. For physicians, only includes patients where they are the most recent physician to have consulted with the patient. For admins, includes all patients.
+ *     tags: [Physician]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         diseaseDistribution:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                               percentage:
+ *                                 type: number
+ *                               color:
+ *                                 type: string
+ *                         indicationDistribution:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               name:
+ *                                 type: string
+ *                               percentage:
+ *                                 type: number
+ *                               color:
+ *                                 type: string
+ */
+router.get("/patients/stats", (req, res, next) =>
+	physicianController.getPatientStats(req, res, next),
+);
+
+/**
+ * @swagger
+ * /api/physician/patients/{patientId}:
+ *   get:
+ *     summary: Get patient profile by ID
+ *     tags: [Physician]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: patientId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         patient:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             name:
+ *                               type: string
+ *                             age:
+ *                               type: number
+ *                             condition:
+ *                               type: string
+ *                             riskLevel:
+ *                               type: string
+ *                             riskLevelColor:
+ *                               type: string
+ *                               description: Color code for the risk level (hex format)
+ *                             indication:
+ *                               type: string
+ *                               enum: [Needs Attention, Stable, High Risk]
+ *                             indicationColor:
+ *                               type: string
+ *                               description: Color code for the indication (hex format)
+ *                             alerts:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                                 properties:
+ *                                   text:
+ *                                     type: string
+ *                                   color:
+ *                                     type: string
+ *                                     description: Color code for the alert (hex format)
+ *                             glucoseSummary:
+ *                               type: object
+ *                             recentNotes:
+ *                               type: array
+ *                               items:
+ *                                 type: string
+ *                             appointments:
+ *                               type: array
+ *                             glucoseTrend:
+ *                               type: array
+ */
+router.get("/patients/:patientId", (req, res, next) =>
+	physicianController.getPatientById(req, res, next),
+);
+
+/**
+ * @swagger
+ * /api/physician/patient-alerts:
+ *   get:
+ *     summary: Get patient alerts grouped by indication
+ *     description: Returns patient alerts grouped by indication (high-risk, stable, needs-attention). For physicians, only shows patients where they are the latest consulting physician. For admins, shows all patients. Returns maximum 4 patients per indication, randomly selected.
+ *     tags: [Physician]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient alerts retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         highRisk:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               age:
+ *                                 type: number
+ *                               diabetesType:
+ *                                 type: string
+ *                               tags:
+ *                                 type: array
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     text:
+ *                                       type: string
+ *                                     color:
+ *                                       type: string
+ *                                       description: Color code for the tag (hex format)
+ *                               status:
+ *                                 type: string
+ *                                 enum: [high-risk]
+ *                               statusColor:
+ *                                 type: string
+ *                                 description: Color code for the status (hex format)
+ *                         stable:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               age:
+ *                                 type: number
+ *                               diabetesType:
+ *                                 type: string
+ *                               tags:
+ *                                 type: array
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     text:
+ *                                       type: string
+ *                                     color:
+ *                                       type: string
+ *                                       description: Color code for the tag (hex format)
+ *                               status:
+ *                                 type: string
+ *                                 enum: [stable]
+ *                               statusColor:
+ *                                 type: string
+ *                                 description: Color code for the status (hex format)
+ *                         needsAttention:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                               age:
+ *                                 type: number
+ *                               diabetesType:
+ *                                 type: string
+ *                               tags:
+ *                                 type: array
+ *                                 items:
+ *                                   type: object
+ *                                   properties:
+ *                                     text:
+ *                                       type: string
+ *                                     color:
+ *                                       type: string
+ *                                       description: Color code for the tag (hex format)
+ *                               status:
+ *                                 type: string
+ *                                 enum: [needs-attention]
+ *                               statusColor:
+ *                                 type: string
+ *                                 description: Color code for the status (hex format)
+ */
+router.get(
+	"/patient-alerts",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.READ_PATIENT_ALERTS,
+		PERMISSIONS.READ_ALL_PATIENTS,
+	]),
+	(req, res, next) => physicianController.getPatientAlerts(req, res, next),
+);
+
+router.get("/home", 
+	requireAnyPermission([
+		PERMISSIONS.READ_PATIENT_ALERTS,
+		PERMISSIONS.READ_OWN_APPOINTMENTS
+	]),
+	(req, res) => physicianController.getPatientsHome(req, res)
+)
+
+export { router as physicianRoutes };

@@ -1,155 +1,173 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
-import { TokenManager } from './tokenManager';
-import { refreshService } from '@/services/refreshService';
-import type { TokenPair } from '@/types/auth.types';
-import { BASE_URL } from './env';
+import axios, {
+	type AxiosInstance,
+	type AxiosRequestConfig,
+	type AxiosResponse,
+} from "axios";
+import { TokenManager } from "./tokenManager";
+import { refreshService } from "@/services/refreshService";
+import type { TokenPair } from "@/types/auth.types";
+import { BASE_URL } from "./env";
 
 class HttpClient {
-  private readonly baseURL = BASE_URL;
-  private axiosInstance: AxiosInstance;
-  private isRefreshing = false;
-  private refreshPromise: Promise<TokenPair> | null = null;
+	private readonly baseURL = BASE_URL;
+	private axiosInstance: AxiosInstance;
+	private isRefreshing = false;
+	private refreshPromise: Promise<TokenPair> | null = null;
 
-  constructor() {
-    this.axiosInstance = axios.create({
-      baseURL: this.baseURL,
-      timeout: 45 * 1000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      validateStatus: status => {
-        if(status === 401){
-          return false
-        }
-        else if (status >= 200 && status < 500){
-          return true
-        }
-        else {
-          return false
-        }
-      } 
-    });
+	constructor() {
+		this.axiosInstance = axios.create({
+			baseURL: this.baseURL,
+			timeout: 45 * 1000,
+			headers: {
+				"Content-Type": "application/json",
+			},
+			validateStatus: (status) => {
+				if (status === 401) {
+					return false;
+				} else if (status >= 200 && status < 500) {
+					return true;
+				} else {
+					return false;
+				}
+			},
+		});
 
-    this.setupInterceptors();
-  }
+		this.setupInterceptors();
+	}
 
-  private setupInterceptors(): void {
-    // Request interceptor to add auth token
-    this.axiosInstance.interceptors.request.use(
-      (config) => {
-        const authHeader = TokenManager.getAuthHeader();
-        if (authHeader) {
-          config.headers.Authorization = authHeader;
-        }
-        // Don't set Content-Type for FormData - let axios handle it with boundary
-        if (config.data instanceof FormData) {
-          delete config.headers['Content-Type'];
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
+	private setupInterceptors(): void {
+		// Request interceptor to add auth token
+		this.axiosInstance.interceptors.request.use(
+			(config) => {
+				const authHeader = TokenManager.getAuthHeader();
+				if (authHeader) {
+					config.headers.Authorization = authHeader;
+				}
+				// Don't set Content-Type for FormData - let axios handle it with boundary
+				if (config.data instanceof FormData) {
+					delete config.headers["Content-Type"];
+				}
+				return config;
+			},
+			(error) => {
+				return Promise.reject(error);
+			},
+		);
 
-    // Response interceptor to handle token refresh
-    this.axiosInstance.interceptors.response.use(
-      (response: AxiosResponse) => {
-        return response;
-      },
-      async (error) => {
-        const originalRequest = error.config;
+		// Response interceptor to handle token refresh
+		this.axiosInstance.interceptors.response.use(
+			(response: AxiosResponse) => {
+				return response;
+			},
+			async (error) => {
+				const originalRequest = error.config;
 
-        // If we get a 401 and haven't already tried to refresh
-        if (error.response?.status === 401 && !originalRequest._retry && TokenManager.hasTokens()) {
-          originalRequest._retry = true;
+				// If we get a 401 and haven't already tried to refresh
+				if (
+					error.response?.status === 401 &&
+					!originalRequest._retry &&
+					TokenManager.hasTokens()
+				) {
+					originalRequest._retry = true;
 
-          try {
-            await this.refreshTokens();
-            
-            // Retry the original request with new token
-            const newAuthHeader = TokenManager.getAuthHeader();
-            if (newAuthHeader) {
-              originalRequest.headers.Authorization = newAuthHeader;
-            }
-            
-            return this.axiosInstance(originalRequest);
-          } catch (refreshError) {
-            TokenManager.clearTokens();
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
-          }
-        }
+					try {
+						await this.refreshTokens();
 
-        return Promise.reject(error);
-      }
-    );
-  }
+						// Retry the original request with new token
+						const newAuthHeader = TokenManager.getAuthHeader();
+						if (newAuthHeader) {
+							originalRequest.headers.Authorization = newAuthHeader;
+						}
 
-  private async refreshTokens(): Promise<TokenPair> {
-    if (this.isRefreshing && this.refreshPromise) {
-      return this.refreshPromise;
-    }
+						return this.axiosInstance(originalRequest);
+					} catch (refreshError) {
+						TokenManager.clearTokens();
+						window.location.href = "/login";
+						return Promise.reject(refreshError);
+					}
+				}
 
-    this.isRefreshing = true;
-    this.refreshPromise = this.performRefresh();
+				return Promise.reject(error);
+			},
+		);
+	}
 
-    try {
-      const tokens = await this.refreshPromise;
-      return tokens;
-    } finally {
-      this.isRefreshing = false;
-      this.refreshPromise = null;
-    }
-  }
+	private async refreshTokens(): Promise<TokenPair> {
+		if (this.isRefreshing && this.refreshPromise) {
+			return this.refreshPromise;
+		}
 
-  private async performRefresh(): Promise<TokenPair> {
-    const refreshToken = TokenManager.getRefreshToken();
-    
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
+		this.isRefreshing = true;
+		this.refreshPromise = this.performRefresh();
 
-    try {
-      const response = await refreshService.refreshTokens(refreshToken);
-      TokenManager.setTokens(response.tokens);
-      return response.tokens;
-    } catch (error) {
-      // If refresh fails, clear tokens and redirect to login
-      TokenManager.clearTokens();
-      throw error;
-    }
-  }
+		try {
+			const tokens = await this.refreshPromise;
+			return tokens;
+		} finally {
+			this.isRefreshing = false;
+			this.refreshPromise = null;
+		}
+	}
 
-  async request<T>(config: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.request<T>(config);
-    return response.data;
-  }
+	private async performRefresh(): Promise<TokenPair> {
+		const refreshToken = TokenManager.getRefreshToken();
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.get<T>(url, config);
-    return response.data;
-  }
+		if (!refreshToken) {
+			throw new Error("No refresh token available");
+		}
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.post<T>(url, data, config);
-    return response.data;
-  }
+		try {
+			const response = await refreshService.refreshTokens(refreshToken);
+			TokenManager.setTokens(response.tokens);
+			return response.tokens;
+		} catch (error) {
+			// If refresh fails, clear tokens and redirect to login
+			TokenManager.clearTokens();
+			throw error;
+		}
+	}
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.put<T>(url, data, config);
-    return response.data;
-  }
+	async request<T>(config: AxiosRequestConfig): Promise<T> {
+		const response = await this.axiosInstance.request<T>(config);
+		return response.data;
+	}
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.delete<T>(url, config);
-    return response.data;
-  }
+	async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+		const response = await this.axiosInstance.get<T>(url, config);
+		return response.data;
+	}
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.axiosInstance.patch<T>(url, data, config);
-    return response.data;
-  }
+	async post<T>(
+		url: string,
+		data?: any,
+		config?: AxiosRequestConfig,
+	): Promise<T> {
+		const response = await this.axiosInstance.post<T>(url, data, config);
+		return response.data;
+	}
+
+	async put<T>(
+		url: string,
+		data?: any,
+		config?: AxiosRequestConfig,
+	): Promise<T> {
+		const response = await this.axiosInstance.put<T>(url, data, config);
+		return response.data;
+	}
+
+	async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+		const response = await this.axiosInstance.delete<T>(url, config);
+		return response.data;
+	}
+
+	async patch<T>(
+		url: string,
+		data?: any,
+		config?: AxiosRequestConfig,
+	): Promise<T> {
+		const response = await this.axiosInstance.patch<T>(url, data, config);
+		return response.data;
+	}
 }
 
 export const httpClient = new HttpClient();

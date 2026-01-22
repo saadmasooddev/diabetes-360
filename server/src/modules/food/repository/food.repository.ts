@@ -1,382 +1,448 @@
 import { db } from "../../../app/config/db";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import {
-  dailyNutrientRecommendations,
-  foodScanNutrients,
-  dailyMealPlans,
-  mealPlanMeals,
-  dailyPersonalizedInsights,
-  recipes,
-  type DailyNutrientRecommendation,
-  type InsertDailyNutrientRecommendation,
-  type FoodScanNutrients,
-  type MealPlanMeal,
-  type DailyPersonalizedInsight,
-  type Recipe,
+	dailyNutrientRecommendations,
+	foodScanNutrients,
+	loggedMeals,
+	dailyMealPlans,
+	mealPlanMeals,
+	dailyPersonalizedInsights,
+	recipes,
+	type DailyNutrientRecommendation,
+	type InsertDailyNutrientRecommendation,
+	type FoodScanNutrients,
+	type LoggedMeal,
+	type InsertLoggedMeal,
+	type MealPlanMeal,
+	type DailyPersonalizedInsight,
+	type Recipe,
+	MEAL_TYPE_ENUM,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
 
 export interface RecipeIngredients {
-  "main_ingredients": {
-    "heading": string;
-    "items": string[];
-  },
-  "sub_ingredients": {
-    "heading": string;
-    "items": string[];
-  }
+	main_ingredients: {
+		heading: string;
+		items: string[];
+	};
+	sub_ingredients: {
+		heading: string;
+		items: string[];
+	};
 }
 
 export interface MealDetails {
-  name: string
-  nutrition_info: {
-    carbs: number;
-    proteins: number;
-    calories: number;
-  };
+	name: string;
+	nutrition_info: {
+		carbs: number;
+		proteins: number;
+		calories: number;
+	};
 }
 
 export interface MealPlan {
-  mealType: string;
-  name: string;
-  carbs: number;
-  proteins: number;
-  calories: number;
+	mealType: MEAL_TYPE_ENUM;
+	name: string;
+	carbs: number;
+	proteins: number;
+	calories: number;
 }
 
 export class FoodRepository {
-  // Get daily nutrient recommendation for a user on a specific date
-  async getDailyNutrientRecommendation(
-    userId: string,
-    date: Date = new Date()
-  ): Promise<DailyNutrientRecommendation | null> {
-    const dateStr = date.toISOString().split('T')[0];
-    const [recommendation] = await db
-      .select()
-      .from(dailyNutrientRecommendations)
-      .where(
-        and(
-          eq(dailyNutrientRecommendations.userId, userId),
-          eq(dailyNutrientRecommendations.recommendationDate, dateStr as any)
-        )
-      )
-      .limit(1);
-    
-    return recommendation || null;
-  }
+	// Get daily nutrient recommendation for a user on a specific date
+	async getDailyNutrientRecommendation(
+		userId: string,
+		date: Date = new Date(),
+	): Promise<DailyNutrientRecommendation | null> {
+		const dateStr = date.toISOString().split("T")[0];
+		const [recommendation] = await db
+			.select()
+			.from(dailyNutrientRecommendations)
+			.where(
+				and(
+					eq(dailyNutrientRecommendations.userId, userId),
+					eq(dailyNutrientRecommendations.recommendationDate, dateStr as any),
+				),
+			)
+			.limit(1);
 
-  // Create or update daily nutrient recommendation
-  async upsertDailyNutrientRecommendation(
-    data: InsertDailyNutrientRecommendation
-  ): Promise<DailyNutrientRecommendation> {
-    const dateStr = data.recommendationDate instanceof Date 
-      ? data.recommendationDate.toISOString().split('T')[0]
-      : data.recommendationDate;
+		return recommendation || null;
+	}
 
-    // Try to update existing record
-    const [updated] = await db
-      .update(dailyNutrientRecommendations)
-      .set({
-        carbs: data.carbs.toString(),
-        sugars: data.sugars.toString(),
-        fibres: data.fibres.toString(),
-        proteins: data.proteins.toString(),
-        fats: data.fats.toString(),
-        calories: data.calories.toString(),
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(dailyNutrientRecommendations.userId, data.userId),
-          eq(dailyNutrientRecommendations.recommendationDate, dateStr as any)
-        )
-      )
-      .returning();
+	// Create or update daily nutrient recommendation
+	async upsertDailyNutrientRecommendation(
+		data: InsertDailyNutrientRecommendation,
+	): Promise<DailyNutrientRecommendation> {
+		const dateStr =
+			data.recommendationDate instanceof Date
+				? data.recommendationDate.toISOString().split("T")[0]
+				: data.recommendationDate;
 
-    if (updated) {
-      return updated;
-    }
+		// Try to update existing record
+		const [updated] = await db
+			.update(dailyNutrientRecommendations)
+			.set({
+				carbs: data.carbs.toString(),
+				sugars: data.sugars.toString(),
+				fibres: data.fibres.toString(),
+				proteins: data.proteins.toString(),
+				fats: data.fats.toString(),
+				calories: data.calories.toString(),
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(dailyNutrientRecommendations.userId, data.userId),
+					eq(dailyNutrientRecommendations.recommendationDate, dateStr),
+				),
+			)
+			.returning();
 
-    // If no existing record, create a new one
-    const [newRecommendation] = await db
-      .insert(dailyNutrientRecommendations)
-      .values({
-        userId: data.userId,
-        recommendationDate: dateStr as any,
-        carbs: data.carbs.toString(),
-        sugars: data.sugars.toString(),
-        fibres: data.fibres.toString(),
-        proteins: data.proteins.toString(),
-        fats: data.fats.toString(),
-        calories: data.calories.toString(),
-      })
-      .returning();
+		if (updated) {
+			return updated;
+		}
 
-    return newRecommendation;
-  }
+		// If no existing record, create a new one
+		const [newRecommendation] = await db
+			.insert(dailyNutrientRecommendations)
+			.values({
+				userId: data.userId,
+				recommendationDate: dateStr as any,
+				carbs: data.carbs.toString(),
+				sugars: data.sugars.toString(),
+				fibres: data.fibres.toString(),
+				proteins: data.proteins.toString(),
+				fats: data.fats.toString(),
+				calories: data.calories.toString(),
+			})
+			.returning();
 
-  // Get consumed nutrients for a user on a specific date
-  async getConsumedNutrients(
-    userId: string,
-    date: Date = new Date()
-  ): Promise<FoodScanNutrients | null> {
-    const dateStr = date.toISOString().split('T')[0];
-    const [consumed] = await db
-      .select()
-      .from(foodScanNutrients)
-      .where(
-        and(
-          eq(foodScanNutrients.userId, userId),
-          eq(foodScanNutrients.scanDate, dateStr as any)
-        )
-      )
-      .limit(1);
-    
-    return consumed || null;
-  }
+		return newRecommendation;
+	}
 
-  // Add nutrients from a food scan (increment existing or create new)
-  async addFoodScanNutrients(
-    userId: string,
-    nutrients: {
-      carbs: number;
-      sugars: number;
-      fibres: number;
-      proteins: number;
-      fats: number;
-      calories: number;
-    },
-    date: Date = new Date()
-  ): Promise<FoodScanNutrients> {
-    const dateStr = date.toISOString().split('T')[0];
+	// Get consumed nutrients for a user on a specific date (from logged meals only)
+	async getConsumedNutrients(
+		userId: string,
+		date: Date = new Date(),
+	): Promise<FoodScanNutrients | null> {
+		const dateStr = date.toISOString().split("T")[0];
+		
+		// Aggregate nutrients from all logged meals for the date
+		const [aggregated] = await db
+			.select({
+				carbs: sql<string>`COALESCE(SUM(${loggedMeals.carbs})::text, '0')`,
+				sugars: sql<string>`COALESCE(SUM(${loggedMeals.sugars})::text, '0')`,
+				fibres: sql<string>`COALESCE(SUM(${loggedMeals.fibres})::text, '0')`,
+				proteins: sql<string>`COALESCE(SUM(${loggedMeals.proteins})::text, '0')`,
+				fats: sql<string>`COALESCE(SUM(${loggedMeals.fats})::text, '0')`,
+				calories: sql<string>`COALESCE(SUM(${loggedMeals.calories})::text, '0')`,
+			})
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					eq(loggedMeals.mealDate, dateStr as any),
+				),
+			);
 
-    // Try to update existing record by adding to current values
-    const [updated] = await db
-      .update(foodScanNutrients)
-      .set({
-        carbs: sql`${foodScanNutrients.carbs} + ${nutrients.carbs}`,
-        sugars: sql`${foodScanNutrients.sugars} + ${nutrients.sugars}`,
-        fibres: sql`${foodScanNutrients.fibres} + ${nutrients.fibres}`,
-        proteins: sql`${foodScanNutrients.proteins} + ${nutrients.proteins}`,
-        fats: sql`${foodScanNutrients.fats} + ${nutrients.fats}`,
-        calories: sql`${foodScanNutrients.calories} + ${nutrients.calories}`,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(foodScanNutrients.userId, userId),
-          eq(foodScanNutrients.scanDate, dateStr as any)
-        )
-      )
-      .returning();
+		if (!aggregated || 
+			(aggregated.carbs === "0" && aggregated.calories === "0")) {
+			return null;
+		}
 
-    if (updated) {
-      return updated;
-    }
+		// Return in the same format as FoodScanNutrients
+		return {
+			id: "",
+			userId,
+			scanDate: dateStr as any,
+			carbs: aggregated.carbs,
+			sugars: aggregated.sugars,
+			fibres: aggregated.fibres,
+			proteins: aggregated.proteins,
+			fats: aggregated.fats,
+			calories: aggregated.calories,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+	}
 
-    // If no existing record, create a new one
-    const [newConsumed] = await db
-      .insert(foodScanNutrients)
-      .values({
-        userId,
-        scanDate: dateStr as any,
-        carbs: nutrients.carbs.toString(),
-        sugars: nutrients.sugars.toString(),
-        fibres: nutrients.fibres.toString(),
-        proteins: nutrients.proteins.toString(),
-        fats: nutrients.fats.toString(),
-        calories: nutrients.calories.toString(),
-      })
-      .returning();
+	// Log a meal (explicitly logged by user after scanning)
+	async logMeal(
+		userId: string,
+		meal: Omit<InsertLoggedMeal, "userId" | "mealDate">,
+		date: Date = new Date(),
+	): Promise<LoggedMeal> {
+		const dateStr = date.toISOString().split("T")[0];
+		
+		const [logged] = await db
+			.insert(loggedMeals)
+			.values({
+				userId,
+				mealDate: dateStr as any,
+				foodName: meal.foodName,
+				carbs: meal.carbs.toString(),
+				sugars: meal.sugars.toString(),
+				fibres: meal.fibres.toString(),
+				proteins: meal.proteins.toString(),
+				fats: meal.fats.toString(),
+				calories: meal.calories.toString(),
+			})
+			.returning();
 
-    return newConsumed;
-  }
+		return logged;
+	}
 
-  // Get daily meal plan for a user on a specific date
-  async getDailyMealPlans(
-    userId: string,
-    date: Date = new Date()
-  ): Promise<{ mealPlans: MealPlanMeal[] }> {
-    const dateStr = date.toISOString().split('T')[0];
-    const [mealPlan]= await db
-      .select()
-      .from(dailyMealPlans)
-      .where(
-        and(
-          eq(dailyMealPlans.userId, userId),
-          eq(dailyMealPlans.planDate, dateStr as any)
-        )
-      )
-    
-    if (!mealPlan) {
-      return { mealPlans: []};
-    }
+	// Add nutrients from a food scan (increment existing or create new)
+	async addFoodScanNutrients(
+		userId: string,
+		nutrients: {
+			carbs: number;
+			sugars: number;
+			fibres: number;
+			proteins: number;
+			fats: number;
+			calories: number;
+		},
+		date: Date = new Date(),
+	): Promise<FoodScanNutrients> {
+		const dateStr = date.toISOString().split("T")[0];
 
-    const meals = await db
-      .select()
-      .from(mealPlanMeals)
-      .where(eq(mealPlanMeals.mealPlanId, mealPlan.id));
+		// Try to update existing record by adding to current values
+		const [updated] = await db
+			.update(foodScanNutrients)
+			.set({
+				carbs: sql`${foodScanNutrients.carbs} + ${nutrients.carbs}`,
+				sugars: sql`${foodScanNutrients.sugars} + ${nutrients.sugars}`,
+				fibres: sql`${foodScanNutrients.fibres} + ${nutrients.fibres}`,
+				proteins: sql`${foodScanNutrients.proteins} + ${nutrients.proteins}`,
+				fats: sql`${foodScanNutrients.fats} + ${nutrients.fats}`,
+				calories: sql`${foodScanNutrients.calories} + ${nutrients.calories}`,
+				updatedAt: new Date(),
+			})
+			.where(
+				and(
+					eq(foodScanNutrients.userId, userId),
+					eq(foodScanNutrients.scanDate, dateStr as any),
+				),
+			)
+			.returning();
 
-    return { mealPlans: meals };
-  }
+		if (updated) {
+			return updated;
+		}
 
-  // Create or update daily meal plan with meals
-  async upsertDailyMealPlan(
-    userId: string,
-    planDate: Date,
-    meals: Array<MealPlan>
-  ): Promise<{ meals: MealPlanMeal[] }> {
-    const dateStr = planDate instanceof Date 
-      ? planDate.toISOString().split('T')[0]
-      : planDate;
+		// If no existing record, create a new one
+		const [newConsumed] = await db
+			.insert(foodScanNutrients)
+			.values({
+				userId,
+				scanDate: dateStr as any,
+				carbs: nutrients.carbs.toString(),
+				sugars: nutrients.sugars.toString(),
+				fibres: nutrients.fibres.toString(),
+				proteins: nutrients.proteins.toString(),
+				fats: nutrients.fats.toString(),
+				calories: nutrients.calories.toString(),
+			})
+			.returning();
 
-    const existing = await this.getDailyMealPlans(userId, planDate);
-    if(existing.mealPlans.length > 0) {
+		return newConsumed;
+	}
 
+	// Get daily meal plan for a user on a specific date
+	async getDailyMealPlans(
+		userId: string,
+		date: Date = new Date(),
+	): Promise<{ mealPlans: MealPlanMeal[] }> {
+		const dateStr = date.toISOString().split("T")[0];
+		const [mealPlan] = await db
+			.select()
+			.from(dailyMealPlans)
+			.where(
+				and(
+					eq(dailyMealPlans.userId, userId),
+					eq(dailyMealPlans.planDate, dateStr),
+				),
+			);
 
-      await db.delete(mealPlanMeals).where(eq(mealPlanMeals.mealPlanId, existing.mealPlans[0].mealPlanId))
+		if (!mealPlan) {
+			return { mealPlans: [] };
+		}
 
-      const promises = meals.map(async(mp) => 
-       {
-        const [meal] = await db.insert(mealPlanMeals).values({
-          mealPlanId: existing.mealPlans[0].mealPlanId,
-          mealType: mp.mealType as any,
-          name: mp.name,
-          carbs: mp.carbs.toString(),
-          proteins:mp.proteins.toString(),
-          calories:mp.calories.toString(),
-        }).returning()
-        return meal
-       }
-       
-      )
+		const meals = await db
+			.select()
+			.from(mealPlanMeals)
+			.where(eq(mealPlanMeals.mealPlanId, mealPlan.id));
 
-      const insertedMeals = await Promise.all(promises)
-      return { meals: insertedMeals }
-    }
+		return { mealPlans: meals };
+	}
 
-    const [mealPlan] = await db.insert(dailyMealPlans).values({ userId, planDate: dateStr }).returning();
-    // Insert meals
-    const insertedMeals = await db
-      .insert(mealPlanMeals)
-      .values(
-        meals.map(meal => ({
-          mealPlanId: mealPlan.id,
-          mealType: meal.mealType as any,
-          name: meal.name,
-          carbs: meal.carbs.toString(),
-          proteins: meal.proteins.toString(),
-          calories: meal.calories.toString(),
-        }))
-      )
-      .returning();
+	// Create or update daily meal plan with meals
+	async upsertDailyMealPlan(
+		userId: string,
+		planDate: Date,
+		meals: Array<MealPlan>,
+	): Promise<{ meals: MealPlanMeal[] }> {
+		const dateStr =
+			planDate instanceof Date
+				? planDate.toISOString().split("T")[0]
+				: planDate;
 
-    return { meals: insertedMeals };
-  }
+		const existing = await this.getDailyMealPlans(userId, planDate);
+		if (existing.mealPlans.length > 0) {
+		const [_, insertedMeals] = 
+			await Promise.all([db.delete(mealPlanMeals)
+				.where(eq(mealPlanMeals.mealPlanId, existing.mealPlans[0].mealPlanId))
 
-  // Get daily personalized insights for a user on a specific date
-  async getDailyPersonalizedInsights(
-    userId: string,
-    date: Date = new Date()
-  ): Promise<DailyPersonalizedInsight[]> {
-    const dateStr = date.toISOString().split('T')[0];
-    const insights = await db
-      .select()
-      .from(dailyPersonalizedInsights)
-      .where(
-        and(
-          eq(dailyPersonalizedInsights.userId, userId),
-          eq(dailyPersonalizedInsights.insightDate, dateStr as any)
-        )
-      );
-    
-    return insights;
-  }
+		
+		,  db
+			.insert(mealPlanMeals)
+			.values(meals.map(mp=> ({
+				mealPlanId: existing.mealPlans[0].mealPlanId,
+				mealType: mp.mealType,
+				name: mp.name,
+				carbs: mp.carbs.toString(),
+				proteins: mp.proteins.toString(),
+				calories: mp.calories.toString(),
+			})))
+			.returning()
+		])	
 
-  // Create or replace daily personalized insights
-  async upsertDailyPersonalizedInsights(
-    userId: string,
-    insightDate: Date,
-    insights: string[]
-  ): Promise<DailyPersonalizedInsight[]> {
-    const dateStr = insightDate instanceof Date 
-      ? insightDate.toISOString().split('T')[0]
-      : insightDate;
+			return { meals: insertedMeals };
+		}
 
-    // Delete existing insights for this date
-    await db
-      .delete(dailyPersonalizedInsights)
-      .where(
-        and(
-          eq(dailyPersonalizedInsights.userId, userId),
-          eq(dailyPersonalizedInsights.insightDate, dateStr as any)
-        )
-      );
+		const [mealPlan] = await db
+			.insert(dailyMealPlans)
+			.values({ userId, planDate: dateStr })
+			.returning();
+		// Insert meals
+		const insertedMeals = await db
+			.insert(mealPlanMeals)
+			.values(
+				meals.map((meal) => ({
+					mealPlanId: mealPlan.id,
+					mealType: meal.mealType,
+					name: meal.name,
+					carbs: meal.carbs.toString(),
+					proteins: meal.proteins.toString(),
+					calories: meal.calories.toString(),
+				})),
+			)
+			.returning();
 
-    // Insert new insights
-    if (insights.length > 0) {
-      const inserted = await db
-        .insert(dailyPersonalizedInsights)
-        .values(
-          insights.map(insightText => ({
-            userId,
-            insightDate: dateStr as any,
-            insightText,
-          }))
-        )
-        .returning();
-      
-      return inserted;
-    }
+		return { meals: insertedMeals };
+	}
 
-    return [];
-  }
+	// Get daily personalized insights for a user on a specific date
+	async getDailyPersonalizedInsights(
+		userId: string,
+		date: Date = new Date(),
+	): Promise<DailyPersonalizedInsight[]> {
+		const dateStr = date.toISOString().split("T")[0];
+		const insights = await db
+			.select()
+			.from(dailyPersonalizedInsights)
+			.where(
+				and(
+					eq(dailyPersonalizedInsights.userId, userId),
+					eq(dailyPersonalizedInsights.insightDate, dateStr as any),
+				),
+			);
 
-  async findMealByTypeAndName(
-    userId: string,
-    mealType: string,
-    mealName: string
-  ): Promise<MealPlanMeal | null> {
-    const [meal] = await db
-      .select({ meal: mealPlanMeals })
-      .from(mealPlanMeals)
-      .innerJoin(dailyMealPlans, eq(mealPlanMeals.mealPlanId, dailyMealPlans.id))
-      .where(
-        and(
-          eq(dailyMealPlans.userId, userId),
-          eq(mealPlanMeals.mealType, mealType as any),
-          rawSql`LOWER(${mealPlanMeals.name}) = LOWER(${mealName})`
-        )
-      )
-      .limit(1);
+		return insights;
+	}
 
-    return meal?.meal || null;
-  }
+	// Create or replace daily personalized insights
+	async upsertDailyPersonalizedInsights(
+		userId: string,
+		insightDate: Date,
+		insights: string[],
+	): Promise<DailyPersonalizedInsight[]> {
+		const dateStr =
+			insightDate instanceof Date
+				? insightDate.toISOString().split("T")[0]
+				: insightDate;
 
-  async getRecipeByMealId(mealId: string): Promise<Recipe | null> {
-    const [recipe] = await db.select().from(recipes).where(eq(recipes.mealId, mealId)).limit(1);
-    return recipe || null;
-  }
+		// Delete existing insights for this date
+		await db
+			.delete(dailyPersonalizedInsights)
+			.where(
+				and(
+					eq(dailyPersonalizedInsights.userId, userId),
+					eq(dailyPersonalizedInsights.insightDate, dateStr),
+				),
+			);
 
-  async createRecipe(data: {
-    mealId: string;
-    title: string;
-    description: string;
-    ingredients: RecipeIngredients[];
-    makingSteps: string[];
-  }): Promise<Recipe> {
-    const [recipe] = await db
-      .insert(recipes)
-      .values({
-        mealId: data.mealId,
-        title: data.title,
-        description: data.description,
-        ingredients: data.ingredients,
-        makingSteps: data.makingSteps,
-      })
-      .returning();
+		// Insert new insights
+		if (insights.length > 0) {
+			const inserted = await db
+				.insert(dailyPersonalizedInsights)
+				.values(
+					insights.map((insightText) => ({
+						userId,
+						insightDate: dateStr,
+						insightText,
+					})),
+				)
+				.returning();
 
-    return recipe;
-  }
+			return inserted;
+		}
+
+		return [];
+	}
+
+	async findMealByTypeAndName(
+		userId: string,
+		mealType: string,
+		mealName: string,
+	): Promise<MealPlanMeal | null> {
+		const [meal] = await db
+			.select({ meal: mealPlanMeals })
+			.from(mealPlanMeals)
+			.innerJoin(
+				dailyMealPlans,
+				eq(mealPlanMeals.mealPlanId, dailyMealPlans.id),
+			)
+			.where(
+				and(
+					eq(dailyMealPlans.userId, userId),
+					eq(mealPlanMeals.mealType, mealType as any),
+					rawSql`LOWER(${mealPlanMeals.name}) = LOWER(${mealName})`,
+				),
+			)
+			.limit(1);
+
+		return meal?.meal || null;
+	}
+
+	async getRecipeByMealId(mealId: string): Promise<Recipe | null> {
+		const [recipe] = await db
+			.select()
+			.from(recipes)
+			.where(eq(recipes.mealId, mealId))
+			.limit(1);
+		return recipe || null;
+	}
+
+	async createRecipe(data: {
+		mealId: string;
+		title: string;
+		description: string;
+		ingredients: RecipeIngredients[];
+		makingSteps: string[];
+	}): Promise<Recipe> {
+		const [recipe] = await db
+			.insert(recipes)
+			.values({
+				mealId: data.mealId,
+				title: data.title,
+				description: data.description,
+				ingredients: data.ingredients,
+				makingSteps: data.makingSteps,
+			})
+			.returning();
+
+		return recipe;
+	}
 }
-

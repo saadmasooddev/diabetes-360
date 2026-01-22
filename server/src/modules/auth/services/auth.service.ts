@@ -1,404 +1,410 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import {
-  type User,
-  type InsertUser,
-  PhysicianData,
-  CustomerData,
-  UserRole,
+	type User,
+	type InsertUser,
+	type PhysicianData,
+	type CustomerData,
+	UserRole,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
-import { JWTPayload, JWTService, type TokenPair } from "../../../shared/utils/jwt";
 import {
-  ConflictError,
-  UnauthorizedError,
-  BadRequestError,
+	type JWTPayload,
+	JWTService,
+	type TokenPair,
+} from "../../../shared/utils/jwt";
+import {
+	ConflictError,
+	UnauthorizedError,
+	BadRequestError,
 } from "../../../shared/errors";
 import { emailService } from "../../../shared/services/email.service";
-import {  ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
+import { ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
 
 export interface AuthResponse {
-  user: Omit<
-    User & { profileData?: CustomerData | PhysicianData | null },
-    "password"
-  > & { permissions?: string[] };
-  tokens: TokenPair;
-  requiresTwoFactor?: boolean;
+	user: Omit<
+		User & { profileData?: CustomerData | PhysicianData | null },
+		"password"
+	> & { permissions?: string[] };
+	tokens: TokenPair;
+	requiresTwoFactor?: boolean;
 }
 
 export class AuthService {
-  private authRepository: AuthRepository;
-  private twoFactorService: TwoFactorService;
+	private authRepository: AuthRepository;
+	private twoFactorService: TwoFactorService;
 
-  constructor() {
-    this.authRepository = new AuthRepository();
-    this.twoFactorService = new TwoFactorService();
-  }
+	constructor() {
+		this.authRepository = new AuthRepository();
+		this.twoFactorService = new TwoFactorService();
+	}
 
-  async signup(userData: InsertUser): Promise<AuthResponse> {
-    const existingUserByEmail = await this.authRepository.getUserByEmail(
-      userData.email
-    );
-    if (existingUserByEmail) {
-      throw new ConflictError("An account with this email already exists");
-    }
+	async signup(userData: InsertUser): Promise<AuthResponse> {
+		const existingUserByEmail = await this.authRepository.getUserByEmail(
+			userData.email,
+		);
+		if (existingUserByEmail) {
+			throw new ConflictError("An account with this email already exists");
+		}
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(
-      userData.password!,
-      config.bcryptRounds
-    );
+		// Hash password
+		const hashedPassword = await bcrypt.hash(
+			userData.password!,
+			config.bcryptRounds,
+		);
 
-    // Create user with hashed password (profileComplete defaults to false in schema)
-    const user = await this.authRepository.createUser({
-      ...userData,
-      password: hashedPassword,
-    });
+		// Create user with hashed password (profileComplete defaults to false in schema)
+		const user = await this.authRepository.createUser({
+			...userData,
+			password: hashedPassword,
+		});
 
-    const userWithProfile = await this.authRepository.getUserByEmail(
-      user.email
-    );
+		const userWithProfile = await this.authRepository.getUserByEmail(
+			user.email,
+		);
 
-    const tokens = await this.createTokens({
-      userId: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-    });
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+		});
 
-    // Send welcome email with credentials
-    try {
-      await emailService.sendWelcomeEmail(
-        user.email,
-        `${user.firstName} ${user.lastName}`.trim(),
-        userData.password!
-      );
-    } catch (error) {
-      console.error("Failed to send welcome email:", error);
-      // Don't fail the signup if email fails
-    }
+		// Send welcome email with credentials
+		try {
+			await emailService.sendWelcomeEmail(
+				user.email,
+				`${user.firstName} ${user.lastName}`.trim(),
+				userData.password!,
+			);
+		} catch (error) {
+			console.error("Failed to send welcome email:", error);
+			// Don't fail the signup if email fails
+		}
 
-    // Return user without password, with profileData
-    if (!userWithProfile) {
-      throw new Error("Failed to retrieve user after creation");
-    }
+		// Return user without password, with profileData
+		if (!userWithProfile) {
+			throw new Error("Failed to retrieve user after creation");
+		}
 
-    const {
-      password: _,
-      profileData,
-      ...userWithoutPassword
-    } = userWithProfile;
-    const userRole = user.role
-    return {
-      user: {
-        ...userWithoutPassword,
-        profileData:
-          (profileData as CustomerData | PhysicianData | null | undefined) ||
-          null,
-        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-      },
-      tokens,
-    };
-  }
+		const {
+			password: _,
+			profileData,
+			...userWithoutPassword
+		} = userWithProfile;
+		const userRole = user.role;
+		return {
+			user: {
+				...userWithoutPassword,
+				profileData:
+					(profileData as CustomerData | PhysicianData | null | undefined) ||
+					null,
+				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+			},
+			tokens,
+		};
+	}
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const user = await this.authRepository.getUserByEmail(email);
+	async login(email: string, password: string): Promise<AuthResponse> {
+		const user = await this.authRepository.getUserByEmail(email);
 
-    if (!user) {
-      throw new UnauthorizedError("Invalid credentials");
-    }
+		if (!user) {
+			throw new UnauthorizedError("Invalid credentials");
+		}
 
-    // For OAuth users, password might be null
-    if (!user.password) {
-      throw new UnauthorizedError("Please use your social login method");
-    }
+		// For OAuth users, password might be null
+		if (!user.password) {
+			throw new UnauthorizedError("Please use your social login method");
+		}
 
-    // Compare hashed password
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      throw new UnauthorizedError("Password is incorrect");
-    }
+		// Compare hashed password
+		const passwordMatch = await bcrypt.compare(password, user.password);
+		if (!passwordMatch) {
+			throw new UnauthorizedError("Password is incorrect");
+		}
 
-    // Check if 2FA is enabled for this user
-    const twoFactorStatus = await this.twoFactorService.get2FAStatus(user.id);
+		// Check if 2FA is enabled for this user
+		const twoFactorStatus = await this.twoFactorService.get2FAStatus(user.id);
 
-    if (twoFactorStatus.enabled && twoFactorStatus.verified) {
-      // Return response indicating 2FA is required (no tokens yet)
-      const { password: _, profileData, ...userWithoutPassword } = user;
-      const userRole = user.role
-      return {
-        user: {
-          ...userWithoutPassword,
-          profileData: profileData as CustomerData | PhysicianData,
-          permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-        },
-        tokens: {
-          accessToken: "",
-          refreshToken: "",
-        } as TokenPair, // Empty tokens until 2FA is verified
-        requiresTwoFactor: true,
-      };
-    }
+		if (twoFactorStatus.enabled && twoFactorStatus.verified) {
+			// Return response indicating 2FA is required (no tokens yet)
+			const { password: _, profileData, ...userWithoutPassword } = user;
+			const userRole = user.role;
+			return {
+				user: {
+					...userWithoutPassword,
+					profileData: profileData as CustomerData | PhysicianData,
+					permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+				},
+				tokens: {
+					accessToken: "",
+					refreshToken: "",
+				} as TokenPair, // Empty tokens until 2FA is verified
+				requiresTwoFactor: true,
+			};
+		}
 
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+		});
+		// const refreshToken = await this.authRepository.getValidRefreshToken(
+		//   user.id
+		// );
+		// try {
+		//   if (!refreshToken) throw new Error();
+		//   JWTService.verifyRefreshToken(refreshToken.token);
+		//   tokens.refreshToken = refreshToken.token;
+		// } catch {
+		// }
 
-    const tokens = await this.createTokens({
-      userId: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-    });
-    // const refreshToken = await this.authRepository.getValidRefreshToken(
-    //   user.id
-    // );
-    // try {
-    //   if (!refreshToken) throw new Error();
-    //   JWTService.verifyRefreshToken(refreshToken.token);
-    //   tokens.refreshToken = refreshToken.token;
-    // } catch {
-    // }
+		const {
+			password: __,
+			profileData: profileData2,
+			...userWithoutPassword2
+		} = user;
+		const userRole = user.role;
+		return {
+			user: {
+				...userWithoutPassword2,
+				profileData: user.profileData as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+			},
+			tokens,
+			requiresTwoFactor: false,
+		};
+	}
 
-    const {
-      password: __,
-      profileData: profileData2,
-      ...userWithoutPassword2
-    } = user;
-    const userRole = user.role 
-    return {
-      user: {
-        ...userWithoutPassword2,
-        profileData: user.profileData as CustomerData | PhysicianData,
-        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-      },
-      tokens,
-      requiresTwoFactor: false,
-    };
-  }
+	/**
+	 * Verify 2FA token and complete login
+	 */
+	async verify2FALogin(email: string, token: string): Promise<AuthResponse> {
+		const user = await this.authRepository.getUserByEmail(email);
 
-  /**
-   * Verify 2FA token and complete login
-   */
-  async verify2FALogin(email: string, token: string): Promise<AuthResponse> {
-    const user = await this.authRepository.getUserByEmail(email);
+		if (!user) {
+			throw new UnauthorizedError("Invalid credentials");
+		}
 
-    if (!user) {
-      throw new UnauthorizedError("Invalid credentials");
-    }
+		// Verify 2FA token
+		const isValid = await this.twoFactorService.verifyToken(user.id, token);
+		if (!isValid) {
+			throw new UnauthorizedError("Invalid verification code");
+		}
 
-    // Verify 2FA token
-    const isValid = await this.twoFactorService.verifyToken(user.id, token);
-    if (!isValid) {
-      throw new UnauthorizedError("Invalid verification code");
-    }
+		// Generate tokens
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+		});
 
-    // Generate tokens
-    const tokens = await this.createTokens({
-        userId: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role ,
-      
-    });
+		const { password: _, profileData, ...userWithoutPassword } = user;
+		const userRole = user.role;
+		return {
+			user: {
+				...userWithoutPassword,
+				profileData: user.profileData as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+			},
+			tokens,
+			requiresTwoFactor: false,
+		};
+	}
 
-    const { password: _, profileData, ...userWithoutPassword } = user;
-    const userRole = user.role
-    return {
-      user: {
-        ...userWithoutPassword,
-        profileData: user.profileData as CustomerData | PhysicianData,
-        permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-      },
-      tokens,
-      requiresTwoFactor: false,
-    };
-  }
+	async refreshTokens(refreshToken: string): Promise<TokenPair> {
+		// Verify refresh token
+		const payload = JWTService.verifyRefreshToken(refreshToken);
+		if (!payload.tokenId) {
+			throw new BadRequestError("Invalid refresh token provided");
+		}
 
-  async refreshTokens(refreshToken: string): Promise<TokenPair> {
-    // Verify refresh token
-    const payload = JWTService.verifyRefreshToken(refreshToken);
-    if(!payload.tokenId) {
-      throw new BadRequestError("Invalid refresh token provided")
-    }
-    
-    const storedToken = await this.authRepository.getRefreshToken(payload.tokenId);
-    if (!storedToken) {
-      throw new UnauthorizedError("Invalid refresh token");
-    }
+		const storedToken = await this.authRepository.getRefreshToken(
+			payload.tokenId,
+		);
+		if (!storedToken) {
+			throw new UnauthorizedError("Invalid refresh token");
+		}
 
-    // Get user
-    const user = await this.authRepository.getUser(payload.userId);
-    if (!user) {
-      throw new UnauthorizedError("User not found");
-    }
+		// Get user
+		const user = await this.authRepository.getUser(payload.userId);
+		if (!user) {
+			throw new UnauthorizedError("User not found");
+		}
 
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+			tokenId: payload.tokenId,
+		});
 
-    const tokens = await this.createTokens({
-      userId: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      tokenId: payload.tokenId,
-    });
+		return tokens;
+	}
 
-    return tokens;
-  }
+	async logout(refreshToken: string): Promise<void> {
+		const payload = JWTService.verifyAccessToken(refreshToken);
+		if (!payload.tokenId) {
+			throw new BadRequestError("invalid refresh token");
+		}
+		await this.authRepository.revokeRefreshToken(payload.tokenId);
+	}
 
-  async logout(refreshToken: string): Promise<void> {
-    const payload = JWTService.verifyAccessToken(refreshToken)
-    if(!payload.tokenId) {
-      throw new BadRequestError("invalid refresh token")
-    }
-    await this.authRepository.revokeRefreshToken(payload.tokenId);
-  }
+	async logoutAll(userId: string): Promise<void> {
+		await this.authRepository.revokeAllUserTokens(userId);
+	}
 
-  async logoutAll(userId: string): Promise<void> {
-    await this.authRepository.revokeAllUserTokens(userId);
-  }
+	async forgotPassword(email: string): Promise<void> {
+		const user = await this.authRepository.getUserByEmail(email);
 
-  async forgotPassword(email: string): Promise<void> {
-    const user = await this.authRepository.getUserByEmail(email);
+		// Always return success to prevent email enumeration
+		if (!user) {
+			return;
+		}
 
-    // Always return success to prevent email enumeration
-    if (!user) {
-      return;
-    }
+		// Generate reset token
+		const resetToken = crypto.randomBytes(32).toString("hex");
+		const expiresAt = new Date();
+		expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+		// Revoke any existing reset tokens for this user
+		await this.authRepository.revokeAllPasswordResetTokens(user.id);
 
-    // Revoke any existing reset tokens for this user
-    await this.authRepository.revokeAllPasswordResetTokens(user.id);
+		// Store the new reset token
+		await this.authRepository.createPasswordResetToken({
+			userId: user.id,
+			token: resetToken,
+			expiresAt,
+		});
 
-    // Store the new reset token
-    await this.authRepository.createPasswordResetToken({
-      userId: user.id,
-      token: resetToken,
-      expiresAt,
-    });
+		// Send password reset email
+		try {
+			await emailService.sendPasswordResetEmail(
+				user.email,
+				resetToken,
+				`${user.firstName} ${user.lastName}`.trim(),
+			);
+		} catch (error) {
+			console.error("Failed to send password reset email:", error);
+			throw new Error("Failed to send password reset email");
+		}
+	}
 
-    // Send password reset email
-    try {
-      await emailService.sendPasswordResetEmail(
-        user.email,
-        resetToken,
-        `${user.firstName} ${user.lastName}`.trim()
-      );
-    } catch (error) {
-      console.error("Failed to send password reset email:", error);
-      throw new Error("Failed to send password reset email");
-    }
-  }
+	async resetPassword(token: string, newPassword: string): Promise<void> {
+		// Get the reset token
+		const resetToken = await this.authRepository.getPasswordResetToken(token);
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    // Get the reset token
-    const resetToken = await this.authRepository.getPasswordResetToken(token);
+		if (!resetToken) {
+			throw new BadRequestError("Invalid or expired reset token");
+		}
 
-    if (!resetToken) {
-      throw new BadRequestError("Invalid or expired reset token");
-    }
+		// Check if token is expired
+		if (resetToken.expiresAt < new Date()) {
+			throw new BadRequestError("Reset token has expired");
+		}
 
-    // Check if token is expired
-    if (resetToken.expiresAt < new Date()) {
-      throw new BadRequestError("Reset token has expired");
-    }
+		// Hash the new password
+		const hashedPassword = await bcrypt.hash(newPassword, config.bcryptRounds);
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, config.bcryptRounds);
+		// Update user password
+		await this.authRepository.updateUserPassword(
+			resetToken.userId,
+			hashedPassword,
+		);
 
-    // Update user password
-    await this.authRepository.updateUserPassword(
-      resetToken.userId,
-      hashedPassword
-    );
+		// Mark token as used
+		await this.authRepository.markPasswordResetTokenAsUsed(token);
 
-    // Mark token as used
-    await this.authRepository.markPasswordResetTokenAsUsed(token);
+		// Revoke all refresh tokens for security
+		await this.authRepository.revokeAllUserTokens(resetToken.userId);
+	}
 
-    // Revoke all refresh tokens for security
-    await this.authRepository.revokeAllUserTokens(resetToken.userId);
-  }
+	async changeUserPassword(
+		userId: string,
+		oldPassword: string,
+		newPassword: string,
+	) {
+		const user = await this.authRepository.getUserById(userId);
+		if (!user) {
+			throw new UnauthorizedError();
+		}
 
-  async changeUserPassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string
-  ) {
-    const user = await this.authRepository.getUserById(userId);
-    if (!user) {
-      throw new UnauthorizedError();
-    }
+		if (!user.password) {
+			throw new BadRequestError("Password not found");
+		}
 
-    if (!user.password) {
-      throw new BadRequestError("Password not found");
-    }
+		const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+		if (!passwordMatch) {
+			throw new BadRequestError("Invalid old password provided");
+		}
 
-    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!passwordMatch) {
-      throw new BadRequestError("Invalid old password provided");
-    }
+		const hashedPassword = await bcrypt.hash(newPassword, config.bcryptRounds);
+		await this.authRepository.updateUserPassword(userId, hashedPassword);
+	}
 
-    const hashedPassword = await bcrypt.hash(newPassword, config.bcryptRounds);
-    await this.authRepository.updateUserPassword(userId, hashedPassword);
-  }
+	async getAllUsers(): Promise<Omit<User, "password">[]> {
+		const users = await this.authRepository.getAllUsers();
+		return users;
+	}
 
-  async getAllUsers(): Promise<Omit<User, "password">[]> {
-    const users = await this.authRepository.getAllUsers();
-    return users;
-  }
+	async getUserById(id: string): Promise<Omit<User, "password"> | undefined> {
+		const user = await this.authRepository.getUserById(id);
+		if (!user) return undefined;
+		const { password, ...userWithoutPassword } = user;
+		return userWithoutPassword;
+	}
 
-  async getUserById(id: string): Promise<Omit<User, "password"> | undefined> {
-    const user = await this.authRepository.getUserById(id);
-    if (!user) return undefined;
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
+	async updateUser(
+		id: string,
+		updateData: Partial<InsertUser>,
+	): Promise<Omit<User, "password">> {
+		if (updateData.password) {
+			updateData.password = await bcrypt.hash(
+				updateData.password,
+				config.bcryptRounds,
+			);
+		}
 
-  async updateUser(
-    id: string,
-    updateData: Partial<InsertUser>
-  ): Promise<Omit<User, "password">> {
-    if (updateData.password) {
-      updateData.password = await bcrypt.hash(
-        updateData.password,
-        config.bcryptRounds
-      );
-    }
+		const user = await this.authRepository.updateUser(id, updateData);
+		const { password, ...userWithoutPassword } = user;
+		return userWithoutPassword;
+	}
 
-    const user = await this.authRepository.updateUser(id, updateData);
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
-  }
+	async deleteUser(id: string): Promise<void> {
+		await this.authRepository.deleteUser(id);
+	}
 
-  async deleteUser(id: string): Promise<void> {
-    await this.authRepository.deleteUser(id);
-  }
+	private async createTokens(
+		payload: Omit<JWTPayload, "iat" | "exp" | "permissions">,
+	): Promise<TokenPair> {
+		try {
+			const permissions = [...(ROLE_PERMISSIONS[payload.role] || [])];
+			const expiresAt = new Date();
+			expiresAt.setTime(
+				expiresAt.getTime() + config.refreshTokenExpiresIn * 1000,
+			);
 
-  private async createTokens(
-    payload:Omit<JWTPayload, 'iat' | 'exp' | 'permissions'>,
-  ): Promise<TokenPair> {
-    try {
-      const permissions = [...(ROLE_PERMISSIONS[payload.role] || [])]
-      const expiresAt = new Date();
-      expiresAt.setTime(
-        expiresAt.getTime() + config.refreshTokenExpiresIn * 1000
-      );
-
-      const {tokenId, ...tokens }= JWTService.generateTokenPair({...payload, permissions});
-      await this.authRepository.createRefreshToken({
-        userId: payload.userId,
-        tokenId,
-        expiresAt,
-      });
-      return tokens
-    } catch (error) {
-      throw error;
-    }
-  }
+			const { tokenId, ...tokens } = JWTService.generateTokenPair({
+				...payload,
+				permissions,
+			});
+			await this.authRepository.createRefreshToken({
+				userId: payload.userId,
+				tokenId,
+				expiresAt,
+			});
+			return tokens;
+		} catch (error) {
+			throw error;
+		}
+	}
 }

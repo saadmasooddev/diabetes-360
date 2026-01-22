@@ -1,14 +1,25 @@
 import { Card } from "@/components/ui/card";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-import { mockPatientProfile } from "@/mocks/doctorDashboard";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
 import { Sidebar } from "@/components/layout/Sidebar";
+import { usePatientById } from "@/hooks/mutations/usePatients";
+import { useRoute } from "wouter";
+import { ROUTES } from "@/config/routes";
+import { Loader2 } from "lucide-react";
+import {
+  HealthTrendChart,
+  type IntervalType,
+  formatTimeLabel,
+  getDateRange,
+} from "../components/HealthTrendChart";
+import { useMemo, useState } from "react";
+import { convertSlotTypeToLabel, formatDate, formatTime12 } from "@/lib/utils";
 
 function MoonIcon() {
   return (
@@ -31,43 +42,86 @@ function ToggleIcon() {
 function ClipboardIcon() {
   return (
     <svg width="24" height="28" viewBox="0 0 24 28" fill="none">
-      <rect
-        x="2"
-        y="4"
-        width="20"
-        height="22"
-        rx="3"
-        fill="#00856F"
-      />
+      <rect x="2" y="4" width="20" height="22" rx="3" fill="#00856F" />
       <rect x="6" y="2" width="12" height="4" rx="1" fill="#B2DFDB" />
     </svg>
   );
 }
 
-function getAlertStyle(alert: string) {
-  if (alert.includes("Glucose") || alert.includes("Spikes")) {
-    return {
-      background: "#FFEBEE",
-      color: "#E53935",
-      border: "1px solid #FFCDD2",
-    };
-  }
-  if (alert.includes("Activity")) {
-    return {
-      background: "#F5F5F5",
-      color: "#37474F",
-      border: "1px solid #E0E0E0",
-    };
-  }
+function getAlertStyle(alertColor: string) {
+  // Convert hex color to rgba for background
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   return {
-    background: "#E8F5E9",
-    color: "#43A047",
-    border: "1px solid #C8E6C9",
+    background: hexToRgba(alertColor, 0.1),
+    color: alertColor,
+    border: `1px solid ${hexToRgba(alertColor, 0.3)}`,
   };
 }
 
 export function PatientProfile() {
-  const patient = mockPatientProfile;
+  const [matchDoctor, paramsDoctor] = useRoute<{ profileId: string }>(
+    ROUTES.DOCTOR_PATIENT_PROFILE,
+  );
+  const [matchAdmin, paramsAdmin] = useRoute<{ profileId: string }>(
+    ROUTES.ADMIN_PATIENT_PROFILE,
+  );
+  const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("daily");
+  const [isAllSummariesDialogOpen, setIsAllSummariesDialogOpen] = useState(false);
+  const glucoseDateRange = getDateRange(glucoseInterval);
+  const isAdmin = !!matchAdmin;
+
+  const patientId =
+    (matchDoctor ? paramsDoctor?.profileId : paramsAdmin?.profileId) || null;
+  const {
+    data: patient,
+    isLoading,
+    error,
+  } = usePatientById(patientId, glucoseDateRange);
+
+  const glucoseData = useMemo(() => {
+    if (!patient?.glucoseTrend || patient.glucoseTrend.length === 0) return [];
+
+    // Reverse the array so oldest is on left, newest on right
+    return [...patient.glucoseTrend].reverse().map((m) => {
+      const date = new Date(m.recordedAt);
+      return {
+        time: formatTimeLabel(date, glucoseInterval),
+        value: typeof m.value === 'string' ? parseFloat(m.value) : (m.value || 0),
+      };
+    });
+  }, [patient?.glucoseTrend, glucoseInterval]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="max-w-5xl mx-auto flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#00856F]" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !patient) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="max-w-5xl mx-auto text-center py-12 text-red-500">
+            Failed to load patient profile. Please try again.
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -105,8 +159,7 @@ export function PatientProfile() {
                 <span
                   className="px-4 py-1.5 rounded-full"
                   style={{
-                    background:
-                      patient.riskLevel === "High Risk" ? "#E53935" : "#43A047",
+                    background: patient.riskLevelColor,
                     color: "#FFFFFF",
                     fontSize: "12px",
                     fontWeight: 500,
@@ -146,13 +199,13 @@ export function PatientProfile() {
                     key={index}
                     className="px-3 py-1.5 rounded-lg"
                     style={{
-                      ...getAlertStyle(alert),
+                      ...getAlertStyle(alert.color),
                       fontSize: "11px",
                       fontWeight: 500,
                     }}
                     data-testid={`badge-alert-${index}`}
                   >
-                    {alert}
+                    {alert.text}
                   </span>
                 ))}
               </div>
@@ -181,8 +234,8 @@ export function PatientProfile() {
                 <ToggleIcon />
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full" data-testid="table-appointments">
+              <div className="overflow-x-auto " >
+                <table className="w-full " data-testid="table-appointments">
                   <thead>
                     <tr>
                       <th
@@ -217,41 +270,46 @@ export function PatientProfile() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {patient.appointments.map((apt, index) => (
-                      <tr key={index} data-testid={`row-appointment-${index}`}>
-                        <td
-                          className="py-2"
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            color: "#00856F",
-                          }}
-                        >
-                          {apt.time}
-                        </td>
-                        <td
-                          className="py-2"
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: 500,
-                            color: "#37474F",
-                          }}
-                        >
-                          {apt.date}
-                        </td>
-                        <td
-                          className="py-2"
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            color: "#00856F",
-                          }}
-                        >
-                          {apt.type}
-                        </td>
-                      </tr>
-                    ))}
+                  <tbody >
+                    {patient.appointments.map((apt, index) => {
+                      const date = new Date(apt.slot.availability.date)
+                      const time = apt.slot.startTime
+                      const type = apt.slot.slotType.type
+                      return (
+                        <tr key={index} data-testid={`row-appointment-${index}`}>
+                          <td
+                            className="py-2"
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: 600,
+                              color: "#00856F",
+                            }}
+                          >
+                            {formatTime12(time)}
+                          </td>
+                          <td
+                            className="py-2"
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: 500,
+                              color: "#37474F",
+                            }}
+                          >
+                            {formatDate(date, "yyyy-MM-dd")}
+                          </td>
+                          <td
+                            className="py-2"
+                            style={{
+                              fontSize: "15px",
+                              fontWeight: 600,
+                              color: "#00856F",
+                            }}
+                          >
+                            {convertSlotTypeToLabel(type)}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -259,80 +317,23 @@ export function PatientProfile() {
           </div>
 
           {/* Glucose Trend Chart */}
-          <Card
-            className="p-6"
-            style={{
-              background: "#FFFFFF",
-              borderRadius: "16px",
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-            }}
-            data-testid="card-glucose-trend"
-          >
-            <h3
-              style={{
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#00453A",
-                marginBottom: "20px",
-              }}
-            >
-              Glucose Trend
-            </h3>
 
-            <div style={{ width: "100%", height: "256px" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={patient.glucoseTrend}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="glucoseGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="0%" stopColor="#F8BBD9" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#F8BBD9" stopOpacity={0.3} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#E8E8E8"
-                    horizontal={true}
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="time"
-                    axisLine={{ stroke: "#E0E0E0" }}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: "#78909C" }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    ticks={[0, 70, 80, 90, 100]}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fill: "#78909C" }}
-                    tickFormatter={(value) =>
-                      value === 0 ? "0" : `${value}mg/dL`
-                    }
-                    width={65}
-                  />
-                  <Area
-                    type="natural"
-                    dataKey="value"
-                    stroke="#F48FB1"
-                    strokeWidth={2.5}
-                    fill="url(#glucoseGradient)"
-                    isAnimationActive={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+          <HealthTrendChart
+            title="Glucose Trend"
+            data={glucoseData}
+            gradientId="glucoseGradient"
+            testId="card-glucose-trend"
+            height={250}
+            yAxisConfig={{
+              domain: [0, 120],
+              ticks: [0, 70, 80, 90, 100],
+              label: "100mg/dL",
+            }}
+            interval={glucoseInterval}
+            onIntervalChange={setGlucoseInterval}
+            recommendedTarget={undefined}
+            userTarget={undefined}
+          />
 
           {/* Bottom Row: Glucose Summary + Recent Notes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -346,7 +347,7 @@ export function PatientProfile() {
               }}
               data-testid="card-glucose-summary"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 lg:mb-0 ">
                 <h3
                   style={{
                     fontSize: "20px",
@@ -359,7 +360,7 @@ export function PatientProfile() {
                 <ToggleIcon />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 lg:w-full lg:h-full lg:place-items-center ">
                 <div className="text-center">
                   <p
                     style={{
@@ -439,46 +440,224 @@ export function PatientProfile() {
               }}
               data-testid="card-recent-notes"
             >
-              <div className="flex items-center gap-3 mb-5">
-                <ClipboardIcon />
-                <h3
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: 700,
-                    color: "#00453A",
-                  }}
-                >
-                  Recent Notes
-                </h3>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <ClipboardIcon />
+                  <h3
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 700,
+                      color: "#00453A",
+                    }}
+                  >
+                    Recent Notes
+                  </h3>
+                </div>
+                {patient.consultationSummaries && patient.consultationSummaries.length > 3 && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsAllSummariesDialogOpen(true)}
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      color: "#00856F",
+                      padding: "4px 8px",
+                    }}
+                  >
+                    See All
+                  </Button>
+                )}
               </div>
 
-              <ul className="space-y-3">
-                {patient.recentNotes.map((note, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3"
-                    data-testid={`note-item-${index}`}
-                  >
-                    <div
-                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                      style={{ background: "#00856F" }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 400,
-                        color: "#546E7A",
-                      }}
-                    >
-                      {note}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              {patient.recentNotes.length === 0 ? (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 400,
+                    color: "#78909C",
+                    textAlign: "center",
+                    padding: "20px 0",
+                  }}
+                >
+                  No consultation summaries available yet.
+                </div>
+              ) : (
+                <ul className="space-y-3 overflow-y-scroll " style={{ maxHeight: "200px", overflowY: "auto" }}>
+                  {patient.recentNotes.slice(0, 3).map((note, index) => {
+                    const summaryData = patient.consultationSummaries?.[index];
+                    return (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3"
+                        data-testid={`note-item-${index}`}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                          style={{ background: "#00856F" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              color: "#546E7A",
+                              display: "block",
+                            }}
+                          >
+                            {note}
+                          </span>
+                          {summaryData && (
+                            <div className="mt-1 flex items-center gap-2 flex-wrap">
+                              <span
+                                style={{
+                                  fontSize: "11px",
+                                  fontWeight: 400,
+                                  color: "#78909C",
+                                }}
+                              >
+                                {formatDate(new Date(summaryData.date), "MMM dd, yyyy")}
+                              </span>
+                              {isAdmin && summaryData.physicianName && (
+                                <>
+                                  <span
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "#78909C",
+                                    }}
+                                  >
+                                    •
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "11px",
+                                      fontWeight: 500,
+                                      color: "#00856F",
+                                    }}
+                                  >
+                                    Dr. {summaryData.physicianName}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </Card>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* All Summaries Dialog */}
+        <Dialog open={isAllSummariesDialogOpen} onOpenChange={setIsAllSummariesDialogOpen}>
+          <DialogContent
+            style={{
+              maxWidth: "600px",
+              maxHeight: "80vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  color: "#00453A",
+                }}
+              >
+                All Consultation Summaries
+              </DialogTitle>
+            </DialogHeader>
+            <div
+              style={{
+                overflowY: "auto",
+                flex: 1,
+                padding: "0 24px 24px 24px",
+              }}
+            >
+              {patient.consultationSummaries && patient.consultationSummaries.length > 0 ? (
+                <ul className="space-y-4">
+                  {patient.consultationSummaries.map((summary, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 pb-4 border-b last:border-b-0"
+                      style={{
+                        borderColor: "rgba(0, 0, 0, 0.08)",
+                      }}
+                    >
+                      <div
+                        className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                        style={{ background: "#00856F" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: 400,
+                            color: "#546E7A",
+                            marginBottom: "8px",
+                            lineHeight: "1.5",
+                          }}
+                        >
+                          {summary.summary}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 400,
+                              color: "#78909C",
+                            }}
+                          >
+                            {formatDate(new Date(summary.date), "MMM dd, yyyy")}
+                          </span>
+                          {isAdmin && summary.physicianName && (
+                            <>
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#78909C",
+                                }}
+                              >
+                                •
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  color: "#00856F",
+                                }}
+                              >
+                                Dr. {summary.physicianName}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 400,
+                    color: "#78909C",
+                    textAlign: "center",
+                    padding: "40px 0",
+                  }}
+                >
+                  No consultation summaries available yet.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </main >
+    </div >
   );
 }

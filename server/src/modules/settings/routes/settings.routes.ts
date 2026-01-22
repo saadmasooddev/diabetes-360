@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { SettingsController } from "../controllers/settings.controller";
-import { authenticateToken, requirePermission } from "../../../shared/middleware/auth";
+import {
+	authenticateToken,
+	requirePermission,
+} from "../../../shared/middleware/auth";
 
 const router = Router();
 const settingsController = new SettingsController();
@@ -57,8 +60,8 @@ const settingsController = new SettingsController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/limits", authenticateToken, (req, res, next) => 
-  settingsController.getLimits(req, res, next)
+router.get("/limits", authenticateToken, (req, res, next) =>
+	settingsController.getLimits(req, res, next),
 );
 
 /**
@@ -141,8 +144,11 @@ router.get("/limits", authenticateToken, (req, res, next) =>
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/limits", authenticateToken, requirePermission('create:settings'), (req, res, next) => 
-  settingsController.createLimits(req, res, next)
+router.post(
+	"/limits",
+	authenticateToken,
+	requirePermission("create:settings"),
+	(req, res, next) => settingsController.createLimits(req, res, next),
 );
 
 /**
@@ -225,8 +231,11 @@ router.post("/limits", authenticateToken, requirePermission('create:settings'), 
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put("/limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.upsertLimits(req, res, next)
+router.put(
+	"/limits",
+	authenticateToken,
+	requirePermission("update:settings"),
+	(req, res, next) => settingsController.upsertLimits(req, res, next),
 );
 
 /**
@@ -313,14 +322,12 @@ router.put("/limits", authenticateToken, requirePermission('update:settings'), (
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.patch("/limits", authenticateToken, requirePermission('update:settings'), (req, res, next) => 
-  settingsController.updateLimits(req, res, next)
+router.patch(
+	"/limits",
+	authenticateToken,
+	requirePermission("update:settings"),
+	(req, res, next) => settingsController.updateLimits(req, res, next),
 );
-
-
-
-
-
 
 /**
  * @swagger
@@ -356,9 +363,8 @@ router.patch("/limits", authenticateToken, requirePermission('update:settings'),
  *       401:
  *         description: Unauthorized
  */
-router.get("/food-scan-status", authenticateToken, (req, res, next) => 
-  settingsController.getUserScanStatus(req, res, next))
+router.get("/food-scan-status", authenticateToken, (req, res, next) =>
+	settingsController.getUserScanStatus(req, res, next),
+);
 
 export { router as settingsRoutes };
-
-

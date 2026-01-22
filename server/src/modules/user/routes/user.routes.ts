@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { UserController } from "../controllers/user.controller";
-import { authenticateToken, requirePermission } from "../../../shared/middleware/auth";
+import {
+	authenticateToken,
+	requirePermission,
+} from "../../../shared/middleware/auth";
 
 const router = Router();
 const userController = new UserController();
@@ -154,7 +157,10 @@ const userController = new UserController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get("/profile", authenticateToken, requirePermission('read:own_profile'), (req, res ) => userController.getProfile(req, res ));
-
+router.get(
+	"/profile",
+	authenticateToken,
+	(req, res) => userController.getProfile(req, res),
+);
 
 export { router as userRoutes };

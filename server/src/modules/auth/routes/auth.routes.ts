@@ -313,7 +313,9 @@ router.post("/login", (req, res) => authController.login(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/verify-2fa", (req, res) => authController.verify2FALogin(req, res));
+router.post("/verify-2fa", (req, res) =>
+	authController.verify2FALogin(req, res),
+);
 
 /**
  * @swagger
@@ -421,7 +423,9 @@ router.post("/logout", (req, res) => authController.logout(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/forgot-password", (req, res, next) => authController.forgotPassword(req, res, next));
+router.post("/forgot-password", (req, res, next) =>
+	authController.forgotPassword(req, res, next),
+);
 
 /**
  * @swagger
@@ -467,8 +471,9 @@ router.post("/forgot-password", (req, res, next) => authController.forgotPasswor
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/reset-password", (req, res) => authController.resetPassword(req, res));
-
+router.post("/reset-password", (req, res) =>
+	authController.resetPassword(req, res),
+);
 
 /**
  * @swagger
@@ -510,6 +515,8 @@ router.post("/reset-password", (req, res) => authController.resetPassword(req, r
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/change-password", authenticateToken, (req, res) => authController.changeUserPassword(req, res));
+router.post("/change-password", authenticateToken, (req, res) =>
+	authController.changeUserPassword(req, res),
+);
 
 export { router as authRoutes };

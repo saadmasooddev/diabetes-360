@@ -1,108 +1,109 @@
-export type PaymentType = 'free' | 'monthly' | 'annual';
+export type PaymentType = "free" | "monthly" | "annual";
 
 export interface CustomerData {
-  id: string;
-  userId: string;
-  gender: 'male' | 'female';
-  birthday: string;
-  diagnosisDate: string;
-  weight: string;
-  height: string;
-  diabetesType: 'type1' | 'type2' | 'gestational' | 'prediabetes';
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	userId: string;
+	gender: "male" | "female";
+	birthday: string;
+	diagnosisDate: string;
+	weight: string;
+	height: string;
+	diabetesType: "type1" | "type2" | "gestational" | "prediabetes";
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface PhysicianData {
-  id: string;
-  userId: string;
-  specialtyId: string;
-  specialty?: string | null;
-  practiceStartDate: string;
-  consultationFee: string;
-  imageUrl?: string | null;
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	userId: string;
+	specialtyId: string;
+	specialty?: string | null;
+	practiceStartDate: string;
+	consultationFee: string;
+	imageUrl?: string | null;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  emailVerified: boolean;
-  provider: string;
-  providerId?: string;
-  avatar?: string;
-  role: 'customer' | 'admin' | 'physician';
-  paymentType?: PaymentType;
-  isActive: boolean;
-  profileComplete: boolean;
-  profileData?: CustomerData | PhysicianData | null;
-  permissions?: string[];
-  createdAt: string;
-  updatedAt: string;
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	emailVerified: boolean;
+	provider: string;
+	providerId?: string;
+	avatar?: string;
+	role: "customer" | "admin" | "physician";
+	paymentType?: PaymentType;
+	isActive: boolean;
+	profileComplete: boolean;
+	profileData?: CustomerData | PhysicianData | null;
+	permissions?: string[];
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
+	accessToken: string;
+	refreshToken: string;
 }
 
 // Backend response structure
 export interface ApiResponse<T = any> {
-  status: number;
-  success: boolean;
-  data?: T;
-  message: string;
+	status: number;
+	success: boolean;
+	data?: T;
+	message: string;
 }
 
 // Auth-specific response data
 export interface AuthData {
-  user: User;
-  tokens: TokenPair;
-  requiresTwoFactor?: boolean;
+	user: User;
+	tokens: TokenPair;
+	requiresTwoFactor?: boolean;
 }
 
 export interface RefreshTokenData {
-  tokens: TokenPair;
+	tokens: TokenPair;
 }
 
 export interface LogoutData {
-  message: string;
+	message: string;
 }
 
 export interface ForgotPasswordData {
-  message: string;
+	message: string;
 }
 
 // Response types for each endpoint
 export interface AuthResponse extends ApiResponse<AuthData> {}
 export interface RefreshTokenResponse extends ApiResponse<RefreshTokenData> {}
 export interface LogoutResponse extends ApiResponse<LogoutData> {}
-export interface ForgotPasswordResponse extends ApiResponse<ForgotPasswordData> {}
+export interface ForgotPasswordResponse
+	extends ApiResponse<ForgotPasswordData> {}
 
 export interface SignupRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	password: string;
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+	email: string;
+	password: string;
 }
 
 export interface RefreshTokenRequest {
-  refreshToken: string;
+	refreshToken: string;
 }
 
 export interface LogoutRequest {
-  refreshToken: string;
+	refreshToken: string;
 }
 
 export interface AuthError {
-  message: string;
-  statusCode?: number;
+	message: string;
+	statusCode?: number;
 }

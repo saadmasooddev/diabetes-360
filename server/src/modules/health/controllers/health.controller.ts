@@ -1,349 +1,491 @@
-import { Response, NextFunction } from "express";
-import { type AuthenticatedRequest } from "../../../shared/middleware/auth";
+import type { Response, NextFunction } from "express";
+import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { HealthService } from "../service/health.service";
 import { BadRequestError, ValidationError } from "../../../shared/errors";
-import { insertHealthMetricSchema, insertExerciseLogSchema, batchUpsertHealthMetricTargetsSchema, metricTypes, MetricType, InsertExerciseLog } from "../models/health.schema";
+import {
+	insertHealthMetricSchema,
+	insertExerciseLogSchema,
+	batchUpsertHealthMetricTargetsSchema,
+	metricTypes,
+	type MetricType,
+	type InsertExerciseLog,
+} from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { formatDate, parseLocalDate, validateLimitAndOffset } from "server/src/shared/utils/utils";
+import {
+	DateManager,
+	validateLimitAndOffset,
+} from "server/src/shared/utils/utils";
 import { ZodError } from "zod";
 
 export class HealthController {
-  private healthService: HealthService;
+	private healthService: HealthService;
 
-  constructor() {
-    this.healthService = new HealthService();
-  }
+	constructor() {
+		this.healthService = new HealthService();
+	}
 
+	async getLatestMetric(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const date = req.query.date as string;
+			if (isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+			const metric = await this.healthService.getLatestMetricsWithLimit(
+				req.user?.userId || "",
+				date,
+			);
+			sendSuccess(res, metric, "Latest metric retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-  async getLatestMetric(
-    req: AuthenticatedRequest,
-    res: Response,
-  ): Promise<void> {
-    try {
-      const metric = await this.healthService.getLatestMetricsWithLimit(
-        req.user?.userId || ""
-      );
-      sendSuccess(res, metric, "Latest metric retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	async getAggregatedStatistics(
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const total = req.query.total === "true";
+			const date = req.query.date as string;
+			if (isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+			const statistics = await this.healthService.getAggregatedStatistics(
+				userId,
+				date,
+				total,
+			);
+			sendSuccess(
+				res,
+				statistics,
+				"Aggregated statistics retrieved successfully",
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-  async getAggregatedStatistics(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const total = req.query.total === "true";
-      const statistics = await this.healthService.getAggregatedStatistics(
-        userId,
-        total
-      );
-      sendSuccess(
-        res,
-        statistics,
-        "Aggregated statistics retrieved successfully"
-      );
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	async getFilteredMetrics(
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
 
-  async getFilteredMetrics(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
+			// Parse query parameters
+			const startDateStr = req.query.startDate as string;
+			const endDateStr = req.query.endDate as string;
+			const typesParam = req.query.type;
+			const limit = req.query.limit
+				? parseInt(req.query.limit as string)
+				: undefined;
+			const offset = req.query.offset
+				? parseInt(req.query.offset as string)
+				: undefined;
 
-      // Parse query parameters
-      const startDateStr = req.query.startDate as string;
-      const endDateStr = req.query.endDate as string;
-      const typesParam = req.query.type;
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+			if (!startDateStr || !endDateStr) {
+				throw new BadRequestError("startDate and endDate are required");
+			}
 
-      if (!startDateStr || !endDateStr) {
-        throw new BadRequestError("startDate and endDate are required");
-      }
+			validateLimitAndOffset(limit, offset);
+			// Validate pagination parameters
 
-      validateLimitAndOffset(limit, offset)
-      // Validate pagination parameters
+			const startDate = DateManager.parseLocalDate(startDateStr);
+			const endDate = DateManager.parseLocalDate(endDateStr);
 
-      const startDate = parseLocalDate(startDateStr);
-      const endDate = parseLocalDate(endDateStr);
+			// Set to start and end of day in local timezone
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
 
-      // Set to start and end of day in local timezone
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+				throw new BadRequestError(
+					"Invalid date format. Use ISO 8601 format (YYYY-MM-DD)",
+				);
+			}
 
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        throw new BadRequestError(
-          "Invalid date format. Use ISO 8601 format (YYYY-MM-DD)"
-        );
-      }
+			// Parse types array
+			let types: string[] = [];
+			if (typesParam) {
+				try {
+					const parsedTypes: string[] = JSON.parse(typesParam as string);
+					types = parsedTypes;
+				} catch (error) {
+					types = [typesParam as string];
+				}
+			}
 
-      // Parse types array
-      let types: string[] = [];
-      if (typesParam) {
-        try {
-          const parsedTypes: string[] = JSON.parse(typesParam as string);
-          types = parsedTypes;
-        } catch (error) {
-          types = [typesParam as string];
-        }
-      }
+			// Validate types
+			const invalidTypes = types.filter(
+				(t) => !metricTypes.includes(t as MetricType),
+			);
+			if (invalidTypes.length > 0) {
+				throw new BadRequestError(
+					`Invalid metric types: ${invalidTypes.join(
+						", ",
+					)}. Valid types are: ${metricTypes.join(", ")}`,
+				);
+			}
 
-      // Validate types
-      const invalidTypes = types.filter((t) => !metricTypes.includes(t as MetricType));
-      if (invalidTypes.length > 0) {
-        throw new BadRequestError(
-          `Invalid metric types: ${invalidTypes.join(
-            ", "
-          )}. Valid types are: ${metricTypes.join(", ")}`
-        );
-      }
+			const result = await this.healthService.getFilteredMetrics(
+				userId,
+				startDateStr,
+				endDateStr,
+				types as MetricType[],
+				limit,
+				offset,
+			);
+			sendSuccess(res, result, "Filtered metrics retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      const result = await this.healthService.getFilteredMetrics(
-        userId,
-        startDate,
-        endDate,
-        types,
-        limit,
-        offset
-      );
-      sendSuccess(res, result, "Filtered metrics retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	async addExerciseLogsBatch(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const { exercises } = req.body; // Array of exercise log objects
+			const healthMetrics = req.body.healthMetrics;
+			let date: string = "";
 
-  async addExerciseLogsBatch(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const { exercises } = req.body; // Array of exercise log objects
-      const healthMetrics = req.body.healthMetrics
+			if (healthMetrics && typeof healthMetrics === "object") {
+				const validatedHealthMetricData = this.validateHealthMetric({
+					...healthMetrics,
+					userId,
+				});
+				if (validatedHealthMetricData) {
+					await this.healthService.createMetric(
+						validatedHealthMetricData,
+						userId,
+					);
+					date = validatedHealthMetricData.recordedAt;
+				}
+			}
 
-      if(healthMetrics && typeof healthMetrics === "object") {
-        const validatedHealthMetic = this.validateHealthMetric({ ...healthMetrics, userId})
-        if(validatedHealthMetic) {
-          await this.healthService.createMetric(validatedHealthMetic, userId)
-        }
-      }
+			if (!Array.isArray(exercises)) {
+				throw new BadRequestError(
+					"Exercises array is required and must not be empty",
+				);
+			}
 
-      if (!Array.isArray(exercises)) {
-        throw new BadRequestError("Exercises array is required and must not be empty");
-      }
+			const logsToInsert = exercises.map((ex) => ({
+				userId,
+				...ex,
+			}));
 
-      const logsToInsert = exercises.map(ex => ({
-        userId,
-        ...ex,
-      }));
+			const parsedData: InsertExerciseLog[] = [];
+			// Validate each exercise log
+			for (const log of logsToInsert) {
+				const validationResult = insertExerciseLogSchema.safeParse(log);
+				if (!validationResult.success) {
+					throw validationResult.error;
+				}
 
-      const parsedData: InsertExerciseLog[] = []
-      // Validate each exercise log
-      for (const log of logsToInsert) {
-        const validationResult = insertExerciseLogSchema.safeParse(log);
-        if (!validationResult.success) {
-          throw validationResult.error;
-        }
-        parsedData.push(validationResult.data)
-      }
+				if (
+					validationResult.data.recordedAt &&
+					isNaN(new Date(validationResult.data.recordedAt).getTime())
+				)
+					throw new BadRequestError("Invalid date format");
+				parsedData.push(validationResult.data);
+			}
 
-      const logs = await this.healthService.createExerciseLogsBatch(parsedData);
-      const latestMetrics = await this.healthService.getLatestMetricsWithLimit(userId)
-      sendSuccess(res, { logs, latestMetrics }, "Exercises logged successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			date = date || parsedData[0]?.recordedAt;
+			if (!date) {
+				throw new BadRequestError("No valid exercises to log");
+			}
+			const logs = await this.healthService.createExerciseLogsBatch(parsedData);
+			const latestMetrics = await this.healthService.getLatestMetricsWithLimit(
+				userId,
+				date,
+			);
+			sendSuccess(
+				res,
+				{ logs, latestMetrics },
+				"Exercises logged successfully",
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
+	async getStrengthProgress(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const startDateStr = req.query.startDate as string;
+			const endDateStr = req.query.endDate as string;
 
+			if (!startDateStr || !endDateStr) {
+				throw new BadRequestError(
+					"startDate and endDate query parameters are required",
+				);
+			}
 
+			const startDate = new Date(startDateStr);
+			const endDate = new Date(endDateStr);
 
-  async getStrengthProgress(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const startDateStr = req.query.startDate as string;
-      const endDateStr = req.query.endDate as string;
+			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+				throw new BadRequestError(
+					"Invalid date format. Use ISO 8601 format (YYYY-MM-DD)",
+				);
+			}
 
-      if (!startDateStr || !endDateStr) {
-        throw new BadRequestError("startDate and endDate query parameters are required");
-      }
+			if (startDate > endDate) {
+				throw new BadRequestError(
+					"startDate must be before or equal to endDate",
+				);
+			}
 
-      const startDate = new Date(startDateStr);
-      const endDate = new Date(endDateStr);
+			// Set time to end of day for endDate to include the full day
+			endDate.setHours(23, 59, 59, 999);
+			startDate.setHours(0, 0, 0, 0);
 
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        throw new BadRequestError("Invalid date format. Use ISO 8601 format (YYYY-MM-DD)");
-      }
+			const result = await this.healthService.getStrengthProgress(
+				userId,
+				startDate,
+				endDate,
+			);
+			sendSuccess(res, result, "Strength progress retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (startDate > endDate) {
-        throw new BadRequestError("startDate must be before or equal to endDate");
-      }
+	// Health Metric Targets Controllers
+	async getRecommendedTargets(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const targets = await this.healthService.getRecommendedTargets();
+			sendSuccess(res, targets, "Recommended targets retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      // Set time to end of day for endDate to include the full day
-      endDate.setHours(23, 59, 59, 999);
-      startDate.setHours(0, 0, 0, 0);
+	async getUserTargets(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const targets = await this.healthService.getUserTargets(userId);
+			sendSuccess(res, targets, "User targets retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      const result = await this.healthService.getStrengthProgress(userId, startDate, endDate);
-      sendSuccess(res, result, "Strength progress retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	async getTargetsForUser(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const targets = await this.healthService.getTargetsForUser(userId);
+			sendSuccess(res, targets, "Targets retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-  // Health Metric Targets Controllers
-  async getRecommendedTargets(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const targets = await this.healthService.getRecommendedTargets();
-      sendSuccess(res, targets, "Recommended targets retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	async deleteUserTarget(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const metricType = req.params.metricType as MetricType;
 
-  async getUserTargets(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const targets = await this.healthService.getUserTargets(userId);
-      sendSuccess(res, targets, "User targets retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			if (
+				!["glucose", "steps", "water_intake", "heart_rate"].includes(metricType)
+			) {
+				throw new BadRequestError("Invalid metric type");
+			}
 
-  async getTargetsForUser(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const targets = await this.healthService.getTargetsForUser(userId);
-      sendSuccess(res, targets, "Targets retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			await this.healthService.deleteUserTarget(userId, metricType);
+			sendSuccess(res, null, "User target deleted successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-  async deleteUserTarget(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const metricType = req.params.metricType as MetricType;
+	async upsertRecommendedTargetsBatch(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(
+				req.body,
+			);
 
-      if (!["glucose", "steps", "water_intake", "heart_rate"].includes(metricType)) {
-        throw new BadRequestError("Invalid metric type");
-      }
+			if (!validationResult.success) {
+				throw validationResult.error;
+			}
 
-      await this.healthService.deleteUserTarget(userId, metricType);
-      sendSuccess(res, null, "User target deleted successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			// Ensure all targets have userId set to null
+			const targets = validationResult.data.targets.map((t) => ({
+				...t,
+				userId: null,
+			}));
 
-  async upsertRecommendedTargetsBatch(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(req.body);
+			const results =
+				await this.healthService.upsertRecommendedTargetsBatch(targets);
+			sendSuccess(res, results, "Recommended targets updated successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (!validationResult.success) {
-        throw validationResult.error;
-      }
+	async upsertUserTargetsBatch(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(
+				req.body,
+			);
 
-      // Ensure all targets have userId set to null
-      const targets = validationResult.data.targets.map(t => ({ ...t, userId: null }));
+			if (!validationResult.success) {
+				throw validationResult.error;
+			}
 
-      const results = await this.healthService.upsertRecommendedTargetsBatch(targets);
-      sendSuccess(res, results, "Recommended targets updated successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			// Ensure all targets have matching userId
+			const targets = validationResult.data.targets.map((t) => ({
+				...t,
+				userId,
+			}));
 
-  async upsertUserTargetsBatch(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const validationResult = batchUpsertHealthMetricTargetsSchema.safeParse(req.body);
+			const results = await this.healthService.upsertUserTargetsBatch(
+				userId,
+				targets,
+			);
+			sendSuccess(res, results, "User targets updated successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (!validationResult.success) {
-        throw validationResult.error;
-      }
+	async getHealthInsights(
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			if (!userId) {
+				throw new BadRequestError("User ID not found");
+			}
 
-      // Ensure all targets have matching userId
-      const targets = validationResult.data.targets.map(t => ({ ...t, userId }));
+			const date = req.query.date as string;
+			if (isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+			const insights = await this.healthService.getHealthInsights(userId, date);
+			sendSuccess(res, insights, "Health insights retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      const results = await this.healthService.upsertUserTargetsBatch(userId, targets);
-      sendSuccess(res, results, "User targets updated successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+	private validateHealthMetric(data: object) {
+		const validationResult = insertHealthMetricSchema.safeParse(data);
 
-  async getUserRemainingLimits(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user?.userId || '';
-      const limits = await this.healthService.getUserRemainingLimits(userId);
-      sendSuccess(res, limits, "User remaining limits retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+		if (!validationResult.success) {
+			return null;
+		}
 
-  async getHealthInsights(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      if (!userId) {
-        throw new BadRequestError("User ID not found");
-      }
+		if (
+			validationResult.data.recordedAt &&
+			isNaN(new Date(validationResult.data.recordedAt).getTime())
+		)
+			throw new BadRequestError("Invalid date format");
 
-      const insights = await this.healthService.getHealthInsights(userId);
-      sendSuccess(res, insights, "Health insights retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+		return validationResult.data;
+	}
 
-  private validateHealthMetric(data: object) {
-    const validationResult = insertHealthMetricSchema.safeParse(data);
+	async getCaloriesByActivityType(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const startDateStr = req.query.startDate as string;
+			const endDateStr = req.query.endDate as string;
 
-    if (!validationResult.success) {
-      return null
-    }
+			if (!startDateStr || !endDateStr) {
+				throw new BadRequestError(
+					"startDate and endDate query parameters are required",
+				);
+			}
 
-    return validationResult.data
-  }
+			const startDate = DateManager.parseLocalDate(startDateStr);
+			const endDate = DateManager.parseLocalDate(endDateStr);
 
-  async getCaloriesByActivityType(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.userId || "";
-      const startDateStr = req.query.startDate as string;
-      const endDateStr = req.query.endDate as string;
+			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+				throw new BadRequestError(
+					"Invalid date format. Use ISO 8601 format (YYYY-MM-DD)",
+				);
+			}
 
-      if (!startDateStr || !endDateStr) {
-        throw new BadRequestError("startDate and endDate query parameters are required");
-      }
+			if (startDate > endDate) {
+				throw new BadRequestError(
+					"startDate must be before or equal to endDate",
+				);
+			}
 
-      const startDate = parseLocalDate(startDateStr);
-      const endDate = parseLocalDate(endDateStr);
+			startDate.setHours(0, 0, 0, 0);
+			endDate.setHours(23, 59, 59, 999);
 
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        throw new BadRequestError("Invalid date format. Use ISO 8601 format (YYYY-MM-DD)");
-      }
+			const sameDates = DateManager.formatDate(startDateStr) === DateManager.formatDate(endDateStr);
+			const result = await this.healthService.getCaloriesByActivityType(
+				userId,
+				startDate,
+				endDate,
+				sameDates,
+			);
+			sendSuccess(res, result, "Calories data retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-      if (startDate > endDate) {
-        throw new BadRequestError("startDate must be before or equal to endDate");
-      }
+	async uploadGlucoseMeterImage(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			if (!req.file) {
+				throw new BadRequestError("Image file is required");
+			}
 
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(23, 59, 59, 999);
+			const imageBuffer = req.file.buffer;
+			const imageMimetype = req.file.mimetype;
 
-      const sameDates = formatDate(startDateStr) === formatDate(endDateStr)
-      const result = await this.healthService.getCaloriesByActivityType(userId, startDate, endDate, sameDates);
-      sendSuccess(res, result, "Calories data retrieved successfully");
-    } catch (error: any) {
-      handleError(res, error);
-    }
-  }
+			if (!imageBuffer) {
+				throw new BadRequestError("Failed to process image");
+			}
 
+			const result = await this.healthService.analyzeGlucoseMeterImage(
+				imageBuffer,
+				imageMimetype,
+			);
+			sendSuccess(res, result, "Glucose reading extracted successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 }

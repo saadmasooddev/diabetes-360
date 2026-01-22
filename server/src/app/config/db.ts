@@ -1,8 +1,9 @@
-import * as schema from '@shared/schema';
-import { NodePgDatabase, drizzle } from 'drizzle-orm/node-postgres';
-import { config } from '.';
+import * as schema from "@shared/schema";
+import { type NodePgDatabase, drizzle } from "drizzle-orm/node-postgres";
+import { config } from ".";
 
-
-const db: NodePgDatabase<typeof schema> = drizzle(config.databaseUrl, { schema });
+const db: NodePgDatabase<typeof schema> = drizzle(config.databaseUrl, {
+	schema,
+});
 
 export { db };

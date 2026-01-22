@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { HealthController } from "../controllers/health.controller";
 import {
-  authenticateToken,
-  requirePermission,
+	authenticateToken,
+	requirePermission,
 } from "../../../shared/middleware/auth";
+import { memoryUpload } from "../../../shared/config/multer.config";
+import { PERMISSIONS, USER_ROLES } from "@shared/schema";
 
 const router = Router();
 const healthController = new HealthController();
 
 const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
-
 
 /**
  * @swagger
@@ -20,6 +21,15 @@ const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
  *     tags: [Health Metrics]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-15"
  *     responses:
  *       200:
  *         description: Latest metric and tier limits retrieved successfully
@@ -127,14 +137,11 @@ const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  "/metrics/latest",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res, next) => healthController.getLatestMetric(req, res)
+	"/metrics/latest",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res, next) => healthController.getLatestMetric(req, res),
 );
-
-
-
 
 /**
  * @swagger
@@ -153,6 +160,14 @@ router.get(
  *           enum: ["true", "false"]
  *         description: If "true", returns total values instead of averages. Defaults to false.
  *         example: "false"
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in ISO 8601 format (YYYY-MM-DD)
+ *         example: "2024-01-15"
  *     responses:
  *       200:
  *         description: Aggregated statistics and targets retrieved successfully
@@ -276,10 +291,10 @@ router.get(
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  "/metrics/statistics",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res, next) => healthController.getAggregatedStatistics(req, res, next)
+	"/metrics/statistics",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res, next) => healthController.getAggregatedStatistics(req, res, next),
 );
 
 /**
@@ -481,10 +496,10 @@ router.get(
  *         description: Forbidden - insufficient permissions
  */
 router.get(
-  "/metrics/filtered",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res, next) => healthController.getFilteredMetrics(req, res, next)
+	"/metrics/filtered",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res, next) => healthController.getFilteredMetrics(req, res, next),
 );
 
 /**
@@ -527,8 +542,7 @@ router.get(
  *                   recordedAt:
  *                     type: string
  *                     format: date-time
- *                     nullable: true
- *                     description: Optional timestamp for the health metric, defaults to now
+ *                     description: timestamp for the health metric
  *                     example: "2024-01-15T10:30:00Z"
  *               exercises:
  *                 type: array
@@ -598,14 +612,11 @@ router.get(
  *         description: Forbidden
  */
 router.post(
-  "/exercises/add/batch",
-  authenticateToken,
-  requirePermission("create:own_health_metrics"),
-  (req, res) => healthController.addExerciseLogsBatch(req, res)
+	"/exercises/add/batch",
+	authenticateToken,
+	requirePermission("create:own_health_metrics"),
+	(req, res) => healthController.addExerciseLogsBatch(req, res),
 );
-
-
-
 
 /**
  * @swagger
@@ -682,10 +693,10 @@ router.post(
  *         description: Forbidden
  */
 router.get(
-  "/exercises/strength-progress",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getStrengthProgress(req, res)
+	"/exercises/strength-progress",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res) => healthController.getStrengthProgress(req, res),
 );
 
 /**
@@ -727,12 +738,9 @@ router.get(
  *       403:
  *         description: Forbidden
  */
-router.get(
-  "/targets/recommended",
-  authenticateToken,
-  (req, res) => healthController.getRecommendedTargets(req, res)
+router.get("/targets/recommended", authenticateToken, (req, res) =>
+	healthController.getRecommendedTargets(req, res),
 );
-
 
 /**
  * @swagger
@@ -768,13 +776,9 @@ router.get(
  *       403:
  *         description: Forbidden
  */
-router.get(
-  "/targets",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getTargetsForUser(req, res)
+router.get("/targets", authenticateToken, readOwnHealthMetrics, (req, res) =>
+	healthController.getTargetsForUser(req, res),
 );
-
 
 /**
  * @swagger
@@ -819,10 +823,10 @@ router.get(
  *         description: Forbidden
  */
 router.post(
-  "/targets/user/batch",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.upsertUserTargetsBatch(req, res)
+	"/targets/user/batch",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res) => healthController.upsertUserTargetsBatch(req, res),
 );
 /**
  * @swagger
@@ -850,10 +854,10 @@ router.post(
  *         description: Forbidden
  */
 router.delete(
-  "/targets/user/:metricType",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.deleteUserTarget(req, res)
+	"/targets/user/:metricType",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res) => healthController.deleteUserTarget(req, res),
 );
 
 /**
@@ -899,10 +903,10 @@ router.delete(
  *         description: Forbidden - admin only
  */
 router.post(
-  "/targets/recommended/batch",
-  authenticateToken,
-  requirePermission("write:health_targets"),
-  (req, res) => healthController.upsertRecommendedTargetsBatch(req, res)
+	"/targets/recommended/batch",
+	authenticateToken,
+	requirePermission("write:health_targets"),
+	(req, res) => healthController.upsertRecommendedTargetsBatch(req, res),
 );
 
 /**
@@ -948,79 +952,10 @@ router.post(
  *         description: Forbidden
  */
 router.post(
-  "/targets/user/batch",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.upsertUserTargetsBatch(req, res)
-);
-
-/**
- * @swagger
- * /api/settings/remaining-limits:
- *   get:
- *     summary: Get user's remaining limits
- *     tags: [Settings]
- *     security:
- *       - bearerAuth: []
- *     description: Returns the remaining limits for the user
- *     responses:
- *       200:
- *         description: User remaining limits retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         limits:
- *                           type: object
- *                           properties:
- *                             glucoseLimit:
- *                               type: integer
- *                             stepsLimit:
- *                               type: integer
- *                             waterLimit:
- *                               type: integer
- *                             discountedConsultationQuota:
- *                               type: integer
- *                             freeConsultationQuota:
- *                               type: integer
- *                             foodScanLimits:
- *                               type: object
- *                               properties:
- *                                 freeTier:
- *                                   type: integer
- *                                 paidTier:
- *                                   type: integer
- *                         remaining:
- *                           type: object
- *                           properties:
- *                             glucoseLimit:
- *                               type: integer
- *                             stepsLimit:
- *                               type: integer
- *                             waterLimit:
- *                               type: integer
- *                             discountedConsultationQuota:
- *                               type: integer
- *                             freeConsultationQuota:
- *                               type: integer
- *                             foodScanLimits:
- *                               type: object
- *                               properties:
- *                                 freeTier:
- *                                   type: integer
- *                                 paidTier:
- *                                   type: integer
- *       401:
- *         description: Unauthorized
- */
-router.get("/remaining-limits", authenticateToken, (req, res, next) => 
-  healthController.getUserRemainingLimits(req, res, next)
+	"/targets/user/batch",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res) => healthController.upsertUserTargetsBatch(req, res),
 );
 
 /**
@@ -1032,6 +967,14 @@ router.get("/remaining-limits", authenticateToken, (req, res, next) =>
  *     tags: [Health Metrics]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in ISO 8601 format (YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Health insights retrieved successfully
@@ -1091,10 +1034,10 @@ router.get("/remaining-limits", authenticateToken, (req, res, next) =>
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  "/insights",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res, next) => healthController.getHealthInsights(req, res, next)
+	"/insights",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res, next) => healthController.getHealthInsights(req, res, next),
 );
 
 /**
@@ -1219,10 +1162,76 @@ router.get(
  *         description: Forbidden
  */
 router.get(
-  "/exercises/calories-by-activity",
-  authenticateToken,
-  readOwnHealthMetrics,
-  (req, res) => healthController.getCaloriesByActivityType(req, res)
+	"/exercises/calories-by-activity",
+	authenticateToken,
+	readOwnHealthMetrics,
+	(req, res) => healthController.getCaloriesByActivityType(req, res),
+);
+
+/**
+ * @swagger
+ * /api/health/metrics/upload-glucose-image:
+ *   post:
+ *     summary: Upload glucose meter reading image for AI analysis
+ *     description: Uploads an image of a glucose meter reading and uses AI to extract the blood sugar reading. Only available for customer users.
+ *     tags: [Health Metrics]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file of glucose meter reading (JPEG, PNG, GIF, or WebP)
+ *     responses:
+ *       200:
+ *         description: Glucose reading extracted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         blood_sugar_reading:
+ *                           type: string
+ *                           example: "122"
+ *                           description: Extracted blood sugar reading in mg/dL
+ *       400:
+ *         description: Bad request - invalid image or processing error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - only customer users can upload glucose images
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post(
+	"/metrics/upload-glucose-image",
+	authenticateToken,
+	requirePermission(PERMISSIONS.SCAN_FOOD),
+	memoryUpload.single("image"),
+	(req, res) => healthController.uploadGlucoseMeterImage(req, res),
 );
 
 export { router as healthRoutes };

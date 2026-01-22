@@ -1,11 +1,14 @@
-import { Router } from 'express';
-import { FoodController } from '../controllers/food.controller';
-import { authenticateToken, requirePermission } from '../../../shared/middleware/auth';
-import { memoryUpload } from '../../../shared/config/multer.config';
-import { USER_ROLES } from '../../auth/models/user.schema';
+import { Router } from "express";
+import { FoodController } from "../controllers/food.controller";
+import {
+	authenticateToken,
+	requirePermission,
+} from "../../../shared/middleware/auth";
+import { memoryUpload } from "../../../shared/config/multer.config";
+import { PERMISSIONS, USER_ROLES } from "../../auth/models/user.schema";
 
 const router = Router();
-const foodController= new FoodController();
+const foodController = new FoodController();
 
 /**
  * @swagger
@@ -65,11 +68,11 @@ const foodController= new FoodController();
  *         description: Forbidden - daily scan limit reached
  */
 router.post(
-  '/scan',
-  authenticateToken,
-  // requirePermission('scan:food'),
-  memoryUpload.single('food_image'),
-  (req, res) => foodController.scanFood(req, res)
+	"/scan",
+	authenticateToken,
+	// requirePermission('scan:food'),
+	memoryUpload.single("food_image"),
+	(req, res) => foodController.scanFood(req, res),
 );
 
 /**
@@ -122,10 +125,8 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.get(
-  '/daily-data',
-  authenticateToken,
-  (req, res) => foodController.getPaidUserDailyData(req, res)
+router.get("/daily-data", authenticateToken, (req, res) =>
+	foodController.getPaidUserDailyData(req, res),
 );
 
 /**
@@ -173,10 +174,10 @@ router.get(
  *         description: Unauthorized
  */
 router.get(
-  '/nutrition/consumed',
-  authenticateToken,
-  requirePermission('scan:food'),
-  (req, res) => foodController.getConsumedNutrients(req, res)
+	"/nutrition/consumed",
+	authenticateToken,
+	requirePermission("scan:food"),
+	(req, res) => foodController.getConsumedNutrients(req, res),
 );
 
 /**
@@ -263,11 +264,118 @@ router.get(
  *       401:
  *         description: Unauthorized
  */
-router.post(
-  '/details',
-  authenticateToken,
-  (req, res) => foodController.generateRecipe(req, res)
+router.post("/details", authenticateToken, (req, res) =>
+	foodController.generateRecipe(req, res),
 );
 
+/**
+ * @swagger
+ * /api/food/log-meal:
+ *   post:
+ *     summary: Log a meal after scanning (explicit user action)
+ *     tags: [Food Scanner]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Logs a meal that the user explicitly chooses to log after scanning. This updates the consumed nutrients for the day. Only logged meals count towards daily calorie tracking.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - foodName
+ *               - carbs
+ *               - sugars
+ *               - fibres
+ *               - proteins
+ *               - fats
+ *               - calories
+ *             properties:
+ *               foodName:
+ *                 type: string
+ *                 description: Name of the food item
+ *                 example: "Grilled Chicken Salad"
+ *               carbs:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Carbohydrates in grams
+ *                 example: 25.5
+ *               sugars:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Sugars in grams
+ *                 example: 5.2
+ *               fibres:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Fibres in grams
+ *                 example: 8.3
+ *               proteins:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Proteins in grams
+ *                 example: 35.0
+ *               fats:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Fats in grams
+ *                 example: 12.5
+ *               calories:
+ *                 type: number
+ *                 minimum: 0
+ *                 description: Total calories
+ *                 example: 320
+ *     responses:
+ *       200:
+ *         description: Meal logged successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         userId:
+ *                           type: string
+ *                         mealDate:
+ *                           type: string
+ *                           format: date
+ *                         foodName:
+ *                           type: string
+ *                         carbs:
+ *                           type: string
+ *                         sugars:
+ *                           type: string
+ *                         fibres:
+ *                           type: string
+ *                         proteins:
+ *                           type: string
+ *                         fats:
+ *                           type: string
+ *                         calories:
+ *                           type: string
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *                         updatedAt:
+ *                           type: string
+ *                           format: date-time
+ *       400:
+ *         description: Bad request - validation error
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+	"/log-meal",
+	authenticateToken,
+	requirePermission(PERMISSIONS.SCAN_FOOD),
+	(req, res) => foodController.logMeal(req, res),
+);
 
 export { router as foodRoutes };

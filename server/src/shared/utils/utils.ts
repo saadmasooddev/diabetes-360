@@ -1,32 +1,66 @@
-import { CustomerData } from "@shared/schema";
+import type { CustomerData } from "@shared/schema";
 import { BadRequestError } from "../errors";
+import dayjs from "dayjs";
 
-export const parseLocalDate = (dateStr: string): Date => {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day, 0, 0, 0, 0);
-};
+export class DateManager {
 
-export const formatDate = (date: Date | string): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().split('T')[0];
-};
+	static timeToMinutes(timeStr: string): number {
+		const [hours, minutes] = timeStr.split(":").map(Number);
+		return hours * 60 + minutes;
+	};
+
+	static date(date: string) {
+		return dayjs(date).toDate()
+	}
+	static startOfDay(date: Date) {
+		return dayjs(date).startOf("day").toDate()
+	}
+	
+	static parseLocalDate(dateStr: string): Date {
+		const parsed = dayjs(dateStr, "YYYY-MM-DD");
+		if (!parsed.isValid()) {
+			throw new BadRequestError(`Invalid date format: ${dateStr}`);
+		}
+		return parsed.toDate();
+	}
+
+	
+	static formatDate(date: Date | string): string {
+		return dayjs(date).format("YYYY-MM-DD");
+	}
+
+	static isToday(date: string) {
+		const today = dayjs()
+		const providedDate = dayjs(date)
+		const isToday = providedDate.isSame(today, 'day')
+		return isToday
+	}
+
+	static isBeforeToday(date: string) {
+		const today = dayjs()
+		const providedDate = dayjs(date)
+		const isBeforeToday = providedDate.isBefore(today, "day")
+		console.log("the today is", today, "the provided", providedDate, isBeforeToday)
+		return isBeforeToday
+	}
+}
 
 export const formatUserInfo = (customerData: CustomerData) => {
-  return {
-    gender: customerData.gender,
-    birthday: formatDate(customerData.birthday),
-    diagnosisDate: formatDate(customerData.diagnosisDate),
-    weight: `${customerData.weight}kg`,
-    height: `${customerData.height}cm`,
-    diabetesType: customerData.diabetesType,
-  };
+	return {
+		gender: customerData.gender,
+		birthday: DateManager.formatDate(customerData.birthday),
+		diagnosisDate: DateManager.formatDate(customerData.diagnosisDate),
+		weight: `${customerData.weight}kg`,
+		height: `${customerData.height}cm`,
+		diabetesType: customerData.diabetesType,
+	};
 };
 
 export const validateLimitAndOffset = (limit?: number, offset?: number) => {
-  if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
-    throw new BadRequestError("limit must be between 1 and 100");
-  }
-  if (offset !== undefined && (isNaN(offset) || offset < 0)) {
-    throw new BadRequestError("offset must be a non-negative integer");
-  }
-}
+	if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
+		throw new BadRequestError("limit must be between 1 and 100");
+	}
+	if (offset !== undefined && (isNaN(offset) || offset < 0)) {
+		throw new BadRequestError("offset must be a non-negative integer");
+	}
+};

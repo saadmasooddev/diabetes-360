@@ -36,187 +36,189 @@ import { DoctorHome } from "./features/dashboard/doctor/DoctorHome";
 import { DoctorAppointments } from "./features/dashboard/doctor/DoctorAppointments";
 import { PatientAlerts } from "./features/dashboard/doctor/PatientAlerts";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
+import { PERMISSIONS } from "@shared/schema";
 
 function Router() {
-  useAuthInit();
+	useAuthInit();
 
-  return (
-    <Switch>
-      {/* Auth pages */}
-      <Route path={ROUTES.LOGIN} >
-        <AuthRedirect>
-          <LogIn />
-        </AuthRedirect>
-      </Route>
-      <Route path={ROUTES.SIGNUP} >
-        <AuthRedirect>
-          <SignUp />
-        </AuthRedirect>
-      </Route>
-      <Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
-      <Route path={ROUTES.RESET_PASSWORD} component={ResetPassword} />
-
-      {/* Protected routes */}
-      <Route path={ROUTES.HOME}>
-        <ProtectedRoute>
-          <Home />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.HEALTH_ASSESSMENT}>
-        <ProtectedRoute>
-          <HealthAssessment />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.HEALTH_METRICS_HISTORY}>
-        <ProtectedRoute>
-          <HealthMetricsHistory />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DASHBOARD}>
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.INSTANT_CONSULTATION}>
-        <ProtectedRoute>
-          <InstantConsultation />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.FIND_DOCTOR}>
-        <ProtectedRoute>
-          <FindDoctor />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.CONSULTATIONS}>
-        <ProtectedRoute>
-          <Consultations />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.FOOD_SCANNER}>
-        <ProtectedRoute>
-          <FoodScanner />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.TIPS_EXERCISES}>
-        <ProtectedRoute>
-          <TipsExercises />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.MEDICAL_RECORDS}>
-        <ProtectedRoute>
-          <MedicalRecords />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.MEDICATIONS}>
-        <ProtectedRoute>
-          <Medications />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DIABOT}>
-        <ProtectedRoute>
-          <DiaBot />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.HEALTH_PLANS}>
-        <ProtectedRoute>
-          <HealthPlans />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.PAYMENTS}>
-        <ProtectedRoute>
-          <Payments />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.PROFILE_DATA}>
-        <ProtectedRoute>
-          <ProfileData />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.SETTINGS}>
-        <ProtectedRoute>
-          <Settings />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.STRENGTH_TRAINING_PROGRESS}>
-        <ProtectedRoute>
-          <StrengthTrainingProgress />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.RECIPE_DETAIL}>
-        <ProtectedRoute>
-          <RecipeDetail />
-        </ProtectedRoute>
-      </Route>
-
-      <Route path={ROUTES.DOCTOR_HOME} >
-        <ProtectedRoute>
-          <DoctorHome />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DOCTOR_PATIENT_PROFILE}  >
-        <ProtectedRoute>
-          <PatientProfile />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DOCTOR_PATIENTS} >
-        <ProtectedRoute>
-          <DoctorPatients />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DOCTOR_APPOINTMENTS} >
-        <ProtectedRoute>
-          <DoctorAppointments />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.DOCTOR_PATIENTS_ALERTS}  >
-        <ProtectedRoute>
-          <PatientAlerts />
-        </ProtectedRoute>
-      </Route>
-
-      //admin routes
-
-      <Route path={ROUTES.ADMIN_HOME} >
-        <ProtectedRoute>
-          <DoctorHome />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.ADMIN_PATIENT_PROFILE}  >
-        <ProtectedRoute>
-          <PatientProfile />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.ADMIN_PATIENTS} >
-        <ProtectedRoute>
-          <DoctorPatients />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.ADMIN_APPOINTMENTS} >
-        <ProtectedRoute>
-          <DoctorAppointments />
-        </ProtectedRoute>
-      </Route>
-      <Route path={ROUTES.ADMIN_PATIENTS_ALERTS}  >
-        <ProtectedRoute>
-          <PatientAlerts />
-        </ProtectedRoute>
-      </Route>
-
-      {/* Fallback for invalid routes */}
-      <Route component={InvalidRoute} />
-    </Switch>
-  );
+	return (
+		<Switch>
+			{/* Auth pages */}
+			<Route path={ROUTES.LOGIN}>
+				<AuthRedirect>
+					<LogIn />
+				</AuthRedirect>
+			</Route>
+			<Route path={ROUTES.SIGNUP}>
+				<AuthRedirect>
+					<SignUp />
+				</AuthRedirect>
+			</Route>
+			<Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
+			<Route path={ROUTES.RESET_PASSWORD} component={ResetPassword} />
+			{/* Protected routes */}
+			<Route path={ROUTES.HOME}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_PROFILE]}>
+					<Home />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.HEALTH_ASSESSMENT}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
+					<HealthAssessment />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.HEALTH_METRICS_HISTORY}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
+					<HealthMetricsHistory />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DASHBOARD}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
+					<Dashboard />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.INSTANT_CONSULTATION}>
+				<ProtectedRoute permissions={[PERMISSIONS.CREATE_BOOKINGS]}>
+					<InstantConsultation />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.FIND_DOCTOR}>
+				<ProtectedRoute
+					permissions={[
+						PERMISSIONS.READ_PHYSICIANS,
+						PERMISSIONS.CREATE_BOOKINGS,
+					]}
+				>
+					<FindDoctor />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.CONSULTATIONS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_CONSULTATIONS]}>
+					<Consultations />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.FOOD_SCANNER}>
+				<ProtectedRoute permissions={[PERMISSIONS.SCAN_FOOD]}>
+					<FoodScanner />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.TIPS_EXERCISES}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
+					<TipsExercises />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.MEDICAL_RECORDS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_MEDICAL_RECORDS]}>
+					<MedicalRecords />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.MEDICATIONS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_MEDICAL_RECORDS]}>
+					<Medications />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DIABOT}>
+				<ProtectedRoute permissions={[PERMISSIONS.USE_DIABOT]}>
+					<DiaBot />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.HEALTH_PLANS}>
+				<ProtectedRoute permissions={[PERMISSIONS.SUBSCRIBE_HEALTH_PLANS]}>
+					<HealthPlans />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.PAYMENTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_BOOKINGS]}>
+					<Payments />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.PROFILE_DATA}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_PROFILE]}>
+					<ProfileData />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.SETTINGS}>
+				<ProtectedRoute permissions={[PERMISSIONS.MANAGE_OWN_SETTINGS]}>
+					<Settings />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.STRENGTH_TRAINING_PROGRESS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
+					<StrengthTrainingProgress />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.RECIPE_DETAIL}>
+				<ProtectedRoute permissions={[PERMISSIONS.VIEW_RECIPE]}>
+					<RecipeDetail />
+				</ProtectedRoute>
+			</Route>
+			// doctor routes
+			<Route path={ROUTES.DOCTOR_HOME}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_APPOINTMENTS]}>
+					<DoctorHome />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DOCTOR_PATIENT_PROFILE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<PatientProfile />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DOCTOR_PATIENTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<DoctorPatients />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DOCTOR_APPOINTMENTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_APPOINTMENTS]}>
+					<DoctorAppointments />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.DOCTOR_PATIENTS_ALERTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_ALERTS]}>
+					<PatientAlerts />
+				</ProtectedRoute>
+			</Route>
+			//admin routes
+			<Route path={ROUTES.ADMIN_HOME}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_ALL_APPOINTMENTS]}>
+					<DoctorHome />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.ADMIN_PATIENT_PROFILE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<PatientProfile />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.ADMIN_PATIENTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_ALL_PATIENTS]}>
+					<DoctorPatients />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.ADMIN_APPOINTMENTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_ALL_APPOINTMENTS]}>
+					<DoctorAppointments />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.ADMIN_PATIENTS_ALERTS}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_ALERTS]}>
+					<PatientAlerts />
+				</ProtectedRoute>
+			</Route>
+			{/* Fallback for invalid routes */}
+			<Route component={InvalidRoute} />
+		</Switch>
+	);
 }
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
+	return (
+		<QueryClientProvider client={queryClient}>
+			<TooltipProvider>
+				<Toaster />
+				<Router />
+			</TooltipProvider>
+		</QueryClientProvider>
+	);
 }
 
 export default App;

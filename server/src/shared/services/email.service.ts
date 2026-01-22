@@ -1,23 +1,27 @@
-import sgMail from '@sendgrid/mail';
-import { config } from '../../app/config';
+import sgMail from "@sendgrid/mail";
+import { config } from "../../app/config";
 
 export class EmailService {
-  constructor() {
-    // Set SendGrid API key
-    sgMail.setApiKey(config.email.apiKey);
-  }
+	constructor() {
+		// Set SendGrid API key
+		sgMail.setApiKey(config.email.apiKey);
+	}
 
-  async sendPasswordResetEmail(email: string, resetToken: string, userName: string): Promise<void> {
-    const resetUrl = `${config.frontendUrl}/reset-password?token=${resetToken}`;
-    
-    const msg = {
-      to: email,
-      from: {
-        email: config.email.from,
-        name: config.email.fromName,
-      },
-      subject: 'Password Reset Request - Diabetes 360',
-      html: `
+	async sendPasswordResetEmail(
+		email: string,
+		resetToken: string,
+		userName: string,
+	): Promise<void> {
+		const resetUrl = `${config.frontendUrl}/reset-password?token=${resetToken}`;
+
+		const msg = {
+			to: email,
+			from: {
+				email: config.email.from,
+				name: config.email.fromName,
+			},
+			subject: "Password Reset Request - Diabetes 360",
+			html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Password Reset Request</h2>
           <p>Hello ${userName},</p>
@@ -40,22 +44,26 @@ export class EmailService {
           </p>
         </div>
       `,
-    };
+		};
 
-    await sgMail.send(msg);
-  }
+		await sgMail.send(msg);
+	}
 
-  async sendWelcomeEmail(email: string, userName: string, password: string): Promise<void> {
-    const loginUrl = `${config.frontendUrl}/login`;
-    
-    const msg = {
-      to: email,
-      from: {
-        email: config.email.from,
-        name: config.email.fromName,
-      },
-      subject: 'Welcome to Diabetes 360 - Your Account Details',
-      html: `
+	async sendWelcomeEmail(
+		email: string,
+		userName: string,
+		password: string,
+	): Promise<void> {
+		const loginUrl = `${config.frontendUrl}/login`;
+
+		const msg = {
+			to: email,
+			from: {
+				email: config.email.from,
+				name: config.email.fromName,
+			},
+			subject: "Welcome to Diabetes 360 - Your Account Details",
+			html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Welcome to Diabetes 360!</h2>
           <p>Hello ${userName},</p>
@@ -90,21 +98,21 @@ export class EmailService {
           </p>
         </div>
       `,
-    };
+		};
 
-    await sgMail.send(msg);
-  }
+		await sgMail.send(msg);
+	}
 
-  async verifyConnection(): Promise<boolean> {
-    try {
-      // SendGrid doesn't have a direct verify method, but we can test by sending a simple email
-      // For now, we'll just check if the API key is set
-      return !!config.email.apiKey;
-    } catch (error) {
-      console.error('SendGrid connection verification failed:', error);
-      return false;
-    }
-  }
+	async verifyConnection(): Promise<boolean> {
+		try {
+			// SendGrid doesn't have a direct verify method, but we can test by sending a simple email
+			// For now, we'll just check if the API key is set
+			return !!config.email.apiKey;
+		} catch (error) {
+			console.error("SendGrid connection verification failed:", error);
+			return false;
+		}
+	}
 }
 
 export const emailService = new EmailService();

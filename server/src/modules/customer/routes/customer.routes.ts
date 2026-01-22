@@ -58,8 +58,8 @@ router.use(authenticateToken);
  *                             diabetesType:
  *                               type: string
  */
-router.get("/profile", (req, res, next) => 
-  customerController.getCustomerData(req, res, next)
+router.get("/profile", (req, res, next) =>
+	customerController.getCustomerData(req, res, next),
 );
 
 /**
@@ -134,8 +134,8 @@ router.get("/profile", (req, res, next) =>
  *       400:
  *         description: Invalid data or profile already completed
  */
-router.post("/profile", (req, res, next) => 
-  customerController.createCustomerData(req, res, next)
+router.post("/profile", (req, res, next) =>
+	customerController.createCustomerData(req, res, next),
 );
 
 /**
@@ -179,8 +179,8 @@ router.post("/profile", (req, res, next) =>
  *       200:
  *         description: Customer data updated successfully
  */
-router.put("/profile", (req, res, next) => 
-  customerController.updateCustomerData(req, res, next)
+router.put("/profile", (req, res, next) =>
+	customerController.updateCustomerData(req, res, next),
 );
 
 /**
@@ -220,9 +220,8 @@ router.put("/profile", (req, res, next) =>
  *                             freeQuotaLimit:
  *                               type: integer
  */
-router.get("/consultation-quotas", (req, res, next) => 
-  customerController.getConsultationQuotas(req, res, next)
+router.get("/consultation-quotas", (req, res, next) =>
+	customerController.getConsultationQuotas(req, res, next),
 );
 
 export { router as customerRoutes };
-

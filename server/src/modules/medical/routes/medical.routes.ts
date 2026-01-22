@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { MedicalController } from "../controllers/medical.controller";
 import {
-  authenticateToken,
-  requirePermission,
+	authenticateToken,
+	requirePermission,
 } from "../../../shared/middleware/auth";
-import { pdfUpload } from "server/src/shared/config/multer.config";
+import { medicalRecordUpload } from "server/src/shared/config/multer.config";
 
 const router = Router();
 const medicalController = new MedicalController();
@@ -13,7 +13,6 @@ const readOwnMedicalRecords = requirePermission("read:own_medical_records");
 const createOwnMedicalRecords = requirePermission("create:own_medical_records");
 const updateOwnMedicalRecords = requirePermission("update:own_medical_records");
 const deleteOwnMedicalRecords = requirePermission("delete:own_medical_records");
-
 
 /**
  * @swagger
@@ -66,10 +65,10 @@ const deleteOwnMedicalRecords = requirePermission("delete:own_medical_records");
  *         description: Unauthorized
  */
 router.post(
-  "/medications",
-  authenticateToken,
-  createOwnMedicalRecords,
-  (req, res, next) => medicalController.createMedication(req, res, next)
+	"/medications",
+	authenticateToken,
+	createOwnMedicalRecords,
+	(req, res, next) => medicalController.createMedication(req, res, next),
 );
 
 /**
@@ -99,10 +98,10 @@ router.post(
  *         description: Medications retrieved successfully
  */
 router.get(
-  "/medications",
-  authenticateToken,
-  readOwnMedicalRecords,
-  (req, res, next) => medicalController.getMedications(req, res, next)
+	"/medications",
+	authenticateToken,
+	readOwnMedicalRecords,
+	(req, res, next) => medicalController.getMedications(req, res, next),
 );
 
 /**
@@ -130,10 +129,11 @@ router.get(
  *         description: Medications retrieved successfully
  */
 router.get(
-  "/medications/by-physician",
-  authenticateToken,
-  readOwnMedicalRecords,
-  (req, res, next) => medicalController.getMedicationsByPhysicianAndDate(req, res, next)
+	"/medications/by-physician",
+	authenticateToken,
+	readOwnMedicalRecords,
+	(req, res, next) =>
+		medicalController.getMedicationsByPhysicianAndDate(req, res, next),
 );
 
 /**
@@ -161,11 +161,11 @@ router.get(
  *         description: Lab report uploaded successfully
  */
 router.post(
-  "/lab-reports",
-  authenticateToken,
-  createOwnMedicalRecords,
-  pdfUpload,
-  (req, res, next) => medicalController.uploadLabReport(req, res, next)
+	"/lab-reports",
+	authenticateToken,
+	createOwnMedicalRecords,
+	medicalRecordUpload,
+	(req, res, next) => medicalController.uploadLabReport(req, res, next),
 );
 
 /**
@@ -181,10 +181,10 @@ router.post(
  *         description: Lab reports retrieved successfully
  */
 router.get(
-  "/lab-reports",
-  authenticateToken,
-  readOwnMedicalRecords,
-  (req, res, next) => medicalController.getLabReports(req, res, next)
+	"/lab-reports",
+	authenticateToken,
+	readOwnMedicalRecords,
+	(req, res, next) => medicalController.getLabReports(req, res, next),
 );
 
 /**
@@ -218,11 +218,11 @@ router.get(
  *         description: Lab report updated successfully
  */
 router.put(
-  "/lab-reports/:id",
-  authenticateToken,
-  updateOwnMedicalRecords,
-  pdfUpload,
-  (req, res, next) => medicalController.updateLabReport(req, res, next)
+	"/lab-reports/:id",
+	authenticateToken,
+	updateOwnMedicalRecords,
+	medicalRecordUpload,
+	(req, res, next) => medicalController.updateLabReport(req, res, next),
 );
 
 /**
@@ -244,10 +244,10 @@ router.put(
  *         description: Lab report deleted successfully
  */
 router.delete(
-  "/lab-reports/:id",
-  authenticateToken,
-  deleteOwnMedicalRecords,
-  (req, res, next) => medicalController.deleteLabReport(req, res, next)
+	"/lab-reports/:id",
+	authenticateToken,
+	deleteOwnMedicalRecords,
+	(req, res, next) => medicalController.deleteLabReport(req, res, next),
 );
 
 /**
@@ -274,10 +274,10 @@ router.delete(
  *               format: binary
  */
 router.get(
-  "/lab-reports/:id/download",
-  authenticateToken,
-  readOwnMedicalRecords,
-  (req, res, next) => medicalController.downloadLabReport(req, res, next)
+	"/lab-reports/:id/download",
+	authenticateToken,
+	readOwnMedicalRecords,
+	(req, res, next) => medicalController.downloadLabReport(req, res, next),
 );
 
 export { router as medicalRoutes };

@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { BookingController } from "../controllers/booking.controller";
-import { authenticateToken, requirePermission, AuthenticatedRequest, requireAnyPermission } from "../../../shared/middleware/auth";
+import {
+	authenticateToken,
+	requirePermission,
+	AuthenticatedRequest,
+	requireAnyPermission,
+} from "../../../shared/middleware/auth";
 import { PERMISSIONS } from "@shared/schema";
-import { Response, NextFunction } from "express";
-import { ForbiddenError, UnauthorizedError } from "../../../shared/errors";
 
 const router = Router();
 const bookingController = new BookingController();
@@ -41,7 +44,7 @@ const bookingController = new BookingController();
  *                                 example: 30
  */
 router.get("/slot-sizes", authenticateToken, (req, res) =>
-  bookingController.getSlotSizes(req, res)
+	bookingController.getSlotSizes(req, res),
 );
 
 /**
@@ -77,7 +80,7 @@ router.get("/slot-sizes", authenticateToken, (req, res) =>
  *                                 example: online
  */
 router.get("/slot-types", authenticateToken, (req, res) =>
-  bookingController.getSlotTypes(req, res)
+	bookingController.getSlotTypes(req, res),
 );
 
 /**
@@ -106,8 +109,11 @@ router.get("/slot-types", authenticateToken, (req, res) =>
  *                           items:
  *                             type: object
  */
-router.get("/availability-dates", authenticateToken, requirePermission(PERMISSIONS.MANAGE_AVAILABILITY), (req, res) =>
-  bookingController.getAvailabilityDates(req, res)
+router.get(
+	"/availability-dates",
+	authenticateToken,
+	requirePermission(PERMISSIONS.MANAGE_AVAILABILITY),
+	(req, res) => bookingController.getAvailabilityDates(req, res),
 );
 
 /**
@@ -135,8 +141,11 @@ router.get("/availability-dates", authenticateToken, requirePermission(PERMISSIO
  *       200:
  *         description: Availability date created successfully
  */
-router.post("/availability-dates", authenticateToken, requirePermission(PERMISSIONS.MANAGE_AVAILABILITY), (req, res) =>
-  bookingController.createAvailabilityDate(req, res)
+router.post(
+	"/availability-dates",
+	authenticateToken,
+	requirePermission(PERMISSIONS.MANAGE_AVAILABILITY),
+	(req, res) => bookingController.createAvailabilityDate(req, res),
 );
 
 /**
@@ -158,8 +167,10 @@ router.post("/availability-dates", authenticateToken, requirePermission(PERMISSI
  *       200:
  *         description: Dates with availability retrieved successfully
  */
-router.get("/physicians/:physicianId/dates-with-availability", authenticateToken, (req, res) =>
-  bookingController.getDatesWithAvailability(req, res)
+router.get(
+	"/physicians/:physicianId/dates-with-availability",
+	authenticateToken,
+	(req, res) => bookingController.getDatesWithAvailability(req, res),
 );
 
 /**
@@ -218,8 +229,107 @@ router.get("/physicians/:physicianId/dates-with-availability", authenticateToken
  *       200:
  *         description: Slots created successfully
  */
-router.post("/slots", authenticateToken, requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS), (req, res) =>
-  bookingController.createSlots(req, res)
+router.post(
+	"/slots",
+	authenticateToken,
+	requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS),
+	(req, res) => bookingController.createSlots(req, res),
+);
+
+/**
+ * @swagger
+ * /api/booking/custom-slot:
+ *   post:
+ *     summary: Create a custom-sized slot with exact start and end times
+ *     description: |
+ *       Creates a custom slot with user-defined start and end times. 
+ *       - Start and end times must be in the future (if date is today)
+ *       - End time must be after start time
+ *       - No minimum duration restriction (can be any duration)
+ *       - Maximum duration is 8 hours
+ *       - Automatically marks slot as custom and stores actual duration
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - date
+ *               - startTime
+ *               - endTime
+ *               - slotTypeIds
+ *             properties:
+ *               physicianId:
+ *                 type: string
+ *                 description: Physician ID (required for admin, optional for physician)
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-12-25"
+ *                 description: Date for the slot (must be today or future date)
+ *               startTime:
+ *                 type: string
+ *                 format: time
+ *                 example: "09:00:00"
+ *                 description: Start time in HH:MM:SS format (must be in future if date is today)
+ *               endTime:
+ *                 type: string
+ *                 format: time
+ *                 example: "10:30:00"
+ *                 description: End time in HH:MM:SS format (must be after start time and in future if date is today)
+ *               slotTypeIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of slot type IDs (e.g., online, onsite)
+ *               locationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs (required if slotTypeIds includes onsite)
+ *     responses:
+ *       200:
+ *         description: Custom slot created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         slot:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             startTime:
+ *                               type: string
+ *                             endTime:
+ *                               type: string
+ *                             isCustom:
+ *                               type: boolean
+ *                             durationMinutes:
+ *                               type: integer
+ *       400:
+ *         description: Bad request - validation error (past date, invalid times, etc.)
+ *       409:
+ *         description: Conflict - slot overlaps with existing slots
+ */
+router.post(
+	"/custom-slot",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+		PERMISSIONS.MANAGE_OWN_SLOTS,
+	]),
+	(req, res) => bookingController.createCustomSlot(req, res),
 );
 
 /**
@@ -247,7 +357,7 @@ router.post("/slots", authenticateToken, requirePermission(PERMISSIONS.MANAGE_OW
  *         description: Slots retrieved successfully
  */
 router.get("/physicians/:physicianId/slots", authenticateToken, (req, res) =>
-  bookingController.getSlotsForDate(req, res)
+	bookingController.getSlotsForDate(req, res),
 );
 
 /**
@@ -274,8 +384,10 @@ router.get("/physicians/:physicianId/slots", authenticateToken, (req, res) =>
  *       200:
  *         description: Available slots retrieved successfully
  */
-router.get("/physicians/:physicianId/available-slots", authenticateToken, (req, res) =>
-  bookingController.getAvailableSlotsForDate(req, res)
+router.get(
+	"/physicians/:physicianId/available-slots",
+	authenticateToken,
+	(req, res) => bookingController.getAvailableSlotsForDate(req, res),
 );
 
 /**
@@ -296,8 +408,11 @@ router.get("/physicians/:physicianId/available-slots", authenticateToken, (req, 
  *       200:
  *         description: Slot deleted successfully
  */
-router.delete("/slots/:slotId", authenticateToken, requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS), (req, res) =>
-  bookingController.deleteSlot(req, res)
+router.delete(
+	"/slots/:slotId",
+	authenticateToken,
+	requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS),
+	(req, res) => bookingController.deleteSlot(req, res),
 );
 
 /**
@@ -330,7 +445,7 @@ router.delete("/slots/:slotId", authenticateToken, requirePermission(PERMISSIONS
  *         description: Slot price updated successfully
  */
 router.patch("/slot-prices/:priceId", authenticateToken, (req, res) =>
-  bookingController.updateSlotPrice(req, res)
+	bookingController.updateSlotPrice(req, res),
 );
 
 /**
@@ -388,7 +503,108 @@ router.patch("/slot-prices/:priceId", authenticateToken, (req, res) =>
  *         description: Slot not found
  */
 router.patch("/slots/:slotId/locations", authenticateToken, (req, res) =>
-  bookingController.updateSlotLocations(req, res)
+	bookingController.updateSlotLocations(req, res),
+);
+
+/**
+ * @swagger
+ * /api/booking/slots/{slotId}:
+ *   patch:
+ *     summary: Update a slot (physician or admin, cannot update booked slots)
+ *     description: |
+ *       Updates slot properties. For custom slots, start/end times can be updated.
+ *       For non-custom slots, only slot types and locations can be updated.
+ *       - Slot types can be added/removed (at least one must remain)
+ *       - Locations can be updated for offline/onsite consultations
+ *       - Start/end times can only be updated for custom slots
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slotId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slot ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               startTime:
+ *                 type: string
+ *                 format: time
+ *                 example: "09:00:00"
+ *                 description: Start time in HH:MM:SS format (only for custom slots)
+ *               endTime:
+ *                 type: string
+ *                 format: time
+ *                 example: "10:30:00"
+ *                 description: End time in HH:MM:SS format (only for custom slots)
+ *               slotTypeIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of slot type IDs (at least one required)
+ *                 example: ["type-online-123", "type-onsite-456"]
+ *               locationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs for offline/onsite consultations
+ *                 example: ["loc-123"]
+ *     responses:
+ *       200:
+ *         description: Slot updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         slot:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             startTime:
+ *                               type: string
+ *                             endTime:
+ *                               type: string
+ *                             isCustom:
+ *                               type: boolean
+ *                             types:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *                             locations:
+ *                               type: array
+ *                               items:
+ *                                 type: object
+ *       400:
+ *         description: Invalid request (slot is booked, invalid data, or trying to update times for non-custom slot)
+ *       403:
+ *         description: Forbidden (not the slot owner or admin, or insufficient permissions)
+ *       404:
+ *         description: Slot not found
+ *       409:
+ *         description: Conflict (slot overlaps with existing slots)
+ */
+router.patch(
+	"/slots/:slotId",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+		PERMISSIONS.MANAGE_OWN_SLOTS,
+	]),
+	(req, res) => bookingController.updateSlot(req, res),
 );
 
 /**
@@ -448,7 +664,7 @@ router.patch("/slots/:slotId/locations", authenticateToken, (req, res) =>
  *         description: Slot not found
  */
 router.post("/book", authenticateToken, (req, res) =>
-  bookingController.bookSlot(req, res)
+	bookingController.bookSlot(req, res),
 );
 
 /**
@@ -594,7 +810,7 @@ router.post("/book", authenticateToken, (req, res) =>
  *         description: Physician not found
  */
 router.get("/physicians/:physicianId/dates", authenticateToken, (req, res) =>
-  bookingController.getPhysicianDates(req, res)
+	bookingController.getPhysicianDates(req, res),
 );
 
 /**
@@ -658,8 +874,10 @@ router.get("/physicians/:physicianId/dates", authenticateToken, (req, res) =>
  *       404:
  *         description: Physician or customer not found
  */
-router.get("/physicians/:physicianId/calculate-price", authenticateToken, (req, res) =>
-  bookingController.calculateBookingPrice(req, res)
+router.get(
+	"/physicians/:physicianId/calculate-price",
+	authenticateToken,
+	(req, res) => bookingController.calculateBookingPrice(req, res),
 );
 
 /**
@@ -717,7 +935,7 @@ router.get("/physicians/:physicianId/calculate-price", authenticateToken, (req, 
  *                           type: integer
  */
 router.get("/my-consultations", authenticateToken, (req, res) =>
-  bookingController.getUserConsultations(req, res)
+	bookingController.getUserConsultations(req, res),
 );
 
 /**
@@ -739,8 +957,10 @@ router.get("/my-consultations", authenticateToken, (req, res) =>
  *       200:
  *         description: Consultation marked as attended successfully
  */
-router.patch("/consultations/:bookingId/attend", authenticateToken, (req, res) =>
-  bookingController.markConsultationAttended(req, res)
+router.patch(
+	"/consultations/:bookingId/attend",
+	authenticateToken,
+	(req, res) => bookingController.markConsultationAttended(req, res),
 );
 
 /**
@@ -844,10 +1064,13 @@ router.patch("/consultations/:bookingId/attend", authenticateToken, (req, res) =
 // Middleware to check for either appointment permission
 
 router.get(
-  "/appointments",
-  authenticateToken,
-  requireAnyPermission([PERMISSIONS.READ_ALL_APPOINTMENTS, PERMISSIONS.READ_OWN_APPOINTMENTS]),
-  (req, res) => bookingController.getAppointments(req, res)
+	"/appointments",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.READ_ALL_APPOINTMENTS,
+		PERMISSIONS.READ_OWN_APPOINTMENTS,
+	]),
+	(req, res) => bookingController.getAppointments(req, res),
 );
 
 /**
@@ -875,6 +1098,12 @@ router.get(
  *           minimum: 2020
  *           maximum: 2100
  *         description: Year
+ *       - in: query
+ *         name: selectedDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Selected date (YYYY-MM-DD)
  *     responses:
  *       200:
  *         description: Dates with bookings retrieved successfully
@@ -895,10 +1124,13 @@ router.get(
  *                             format: date
  */
 router.get(
-  "/dates-with-bookings",
-  authenticateToken,
-  requireAnyPermission([PERMISSIONS.READ_ALL_APPOINTMENTS, PERMISSIONS.READ_OWN_APPOINTMENTS]),
-  (req, res) => bookingController.getDatesWithBookings(req, res)
+	"/dates-with-bookings",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.READ_ALL_APPOINTMENTS,
+		PERMISSIONS.READ_OWN_APPOINTMENTS,
+	]),
+	(req, res) => bookingController.getDatesWithBookings(req, res),
 );
 
 /**
@@ -955,58 +1187,15 @@ router.get(
  *                           type: array
  */
 router.post(
-  "/generate-slots-for-day",
-  authenticateToken,
-  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
-  (req, res) => bookingController.generateSlotsForDay(req, res)
+	"/generate-slots-for-day",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+		PERMISSIONS.MANAGE_OWN_SLOTS,
+	]),
+	(req, res) => bookingController.generateSlotsForDay(req, res),
 );
 
-/**
- * @swagger
- * /api/booking/create-slots-for-day:
- *   post:
- *     summary: Create slots for a whole day (only available slots without conflicts)
- *     tags: [Booking]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - date
- *               - slotSizeId
- *               - slotTypeIds
- *             properties:
- *               physicianId:
- *                 type: string
- *                 description: Physician ID (required for admin, optional for physician)
- *               date:
- *                 type: string
- *                 format: date
- *               slotSizeId:
- *                 type: string
- *               slotTypeIds:
- *                 type: array
- *                 items:
- *                   type: string
- *               locationIds:
- *                 type: array
- *                 items:
- *                   type: string
- *                 description: Required if slotTypeIds includes onsite/offline
- *     responses:
- *       200:
- *         description: Slots created successfully
- */
-router.post(
-  "/create-slots-for-day",
-  authenticateToken,
-  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
-  (req, res) => bookingController.createSlotsForDay(req, res)
-);
 
 /**
  * @swagger
@@ -1060,11 +1249,13 @@ router.post(
  *                                 type: string
  */
 router.post(
-  "/bulk-delete-slots",
-  authenticateToken,
-  requireAnyPermission([PERMISSIONS.MANAGE_PHYSICIAN_SLOTS, PERMISSIONS.MANAGE_OWN_SLOTS]),
-  (req, res) => bookingController.bulkDeleteSlots(req, res)
+	"/bulk-delete-slots",
+	authenticateToken,
+	requireAnyPermission([
+		PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+		PERMISSIONS.MANAGE_OWN_SLOTS,
+	]),
+	(req, res) => bookingController.bulkDeleteSlots(req, res),
 );
 
 export { router as bookingRoutes };
-
