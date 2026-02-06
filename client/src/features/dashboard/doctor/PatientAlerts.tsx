@@ -181,8 +181,8 @@ export function PatientAlerts() {
 		<div className="flex min-h-screen bg-gray-50">
 			<Sidebar />
 
-			<main className="flex-1 p-6 lg:p-8 overflow-auto">
-				<div className="max-w-6xl mx-auto">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					<h1
 						style={{
 							fontSize: "28px",
