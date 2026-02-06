@@ -56,7 +56,10 @@ export class JWTService {
 		const tid = payload.tokenId ? payload.tokenId : crypto.randomUUID();
 		return {
 			accessToken: JWTService.generateAccessToken(payload),
-			refreshToken: JWTService.generateRefreshToken({ ...payload, tokenId: tid }),
+			refreshToken: JWTService.generateRefreshToken({
+				...payload,
+				tokenId: tid,
+			}),
 			tokenId: tid,
 		};
 	}

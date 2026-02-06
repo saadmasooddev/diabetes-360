@@ -557,19 +557,19 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											/>
 											{(physicianFields.imagePreview ||
 												physicianFields.imageUrl) && (
-													<Image
-														src={
-															physicianFields.imagePreview ||
-															physicianFields.imageUrl
-														}
-														alt="Preview"
-														className="w-24 h-24 rounded-full object-cover border"
-														pointToServer={
-															!!physicianFields.imageUrl &&
-															!physicianFields.imagePreview
-														}
-													/>
-												)}
+												<Image
+													src={
+														physicianFields.imagePreview ||
+														physicianFields.imageUrl
+													}
+													alt="Preview"
+													className="w-24 h-24 rounded-full object-cover border"
+													pointToServer={
+														!!physicianFields.imageUrl &&
+														!physicianFields.imagePreview
+													}
+												/>
+											)}
 										</div>
 									</div>
 								)}

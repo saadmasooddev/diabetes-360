@@ -225,10 +225,12 @@ export function UserHealthTargets() {
 
 	const handleDelete = async (metricType: MetricType) => {
 		try {
-
 			await deleteMutation.mutateAsync(metricType);
 			// Reset to recommended value if available
-			if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE && recommendedGlucose) {
+			if (
+				metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE &&
+				recommendedGlucose
+			) {
 				setGlucoseTarget(parseFloat(recommendedGlucose.targetValue).toString());
 			} else if (metricType === EXERCISE_TYPE_ENUM.STEPS && recommendedSteps) {
 				setStepsTarget(parseFloat(recommendedSteps.targetValue).toString());
@@ -245,16 +247,15 @@ export function UserHealthTargets() {
 					parseFloat(recommendedHeartRate.targetValue).toString(),
 				);
 			} else {
-				if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) setGlucoseTarget("");
+				if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)
+					setGlucoseTarget("");
 				else if (metricType === EXERCISE_TYPE_ENUM.STEPS) setStepsTarget("");
 				else if (metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE)
 					setWaterTarget("");
 				else if (metricType === EXERCISE_TYPE_ENUM.HEART_RATE)
 					setHeartRateTarget("");
 			}
-		} catch (error) {
-
-		}
+		} catch (error) {}
 	};
 
 	const hasUserTarget = (metricType: MetricType) => {

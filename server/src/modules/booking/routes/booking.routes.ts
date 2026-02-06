@@ -232,7 +232,10 @@ router.get(
 router.post(
 	"/slots",
 	authenticateToken,
-	requirePermission(PERMISSIONS.MANAGE_OWN_SLOTS),
+	requireAnyPermission([
+		PERMISSIONS.MANAGE_OWN_SLOTS,
+		PERMISSIONS.MANAGE_PHYSICIAN_SLOTS,
+	]),
 	(req, res) => bookingController.createSlots(req, res),
 );
 
@@ -242,7 +245,7 @@ router.post(
  *   post:
  *     summary: Create a custom-sized slot with exact start and end times
  *     description: |
- *       Creates a custom slot with user-defined start and end times. 
+ *       Creates a custom slot with user-defined start and end times.
  *       - Start and end times must be in the future (if date is today)
  *       - End time must be after start time
  *       - No minimum duration restriction (can be any duration)
@@ -965,9 +968,81 @@ router.patch(
 
 /**
  * @swagger
+ * /api/booking/consultations/{bookingId}/status:
+ *   patch:
+ *     summary: Update consultation status (admin only)
+ *     description: |
+ *       Allows admin to set a consultation to any allowed database status.
+ *       Allowed values are pending, confirmed, cancelled, completed.
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Booking (consultation) ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, cancelled, completed]
+ *                 description: New status for the consultation
+ *     responses:
+ *       200:
+ *         description: Consultation status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         booking:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                             status:
+ *                               type: string
+ *                               enum: [pending, confirmed, cancelled, completed]
+ *       400:
+ *         description: Bad request (invalid status or missing fields)
+ *       403:
+ *         description: Forbidden (requires update:all_bookings permission)
+ *       404:
+ *         description: Booking not found
+ */
+router.patch(
+	"/consultations/:bookingId/status",
+	authenticateToken,
+	requirePermission(PERMISSIONS.UPDATE_ALL_BOOKINGS),
+	(req, res) => bookingController.updateConsultationStatus(req, res),
+);
+
+/**
+ * @swagger
  * /api/booking/appointments:
  *   get:
  *     summary: Get appointments for physicians/admins
+ *     description: |
+ *       Returns paginated appointments. When caller has read_all_appointments (admin),
+ *       all consultations in all statuses (pending, confirmed, cancelled, completed) are returned.
+ *       When caller has only read_own_appointments (physician), only pending and confirmed are returned.
+ *       Date range uses DATE(timestamp) for consistent results between startDate and endDate (inclusive).
  *     tags: [Booking]
  *     security:
  *       - bearerAuth: []
@@ -1195,7 +1270,6 @@ router.post(
 	]),
 	(req, res) => bookingController.generateSlotsForDay(req, res),
 );
-
 
 /**
  * @swagger

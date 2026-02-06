@@ -9,6 +9,7 @@ import path, { join, relative } from "path";
 import fs from "fs";
 import { PhysicianRepository } from "../../physician/repository/physician.repository";
 import { UserRepository } from "../../user/repository/user.repository";
+import { readdir } from "fs/promises";
 
 export class MedicalService {
 	private readonly medicalRepository: MedicalRepository;
@@ -105,12 +106,11 @@ export class MedicalService {
 			throw new NotFoundError("physician not found");
 		}
 
-		const date = new Date(prescriptionDate);
 		const medications =
 			await this.medicalRepository.getMedicationsByPhysicianAndDate(
 				userId,
 				physicianId,
-				date,
+				prescriptionDate,
 			);
 
 		return {
@@ -123,7 +123,7 @@ export class MedicalService {
 						specialty: physicianUser.profileData?.speciality || null,
 					}
 				: null,
-			prescriptionDate: date.toISOString(),
+			prescriptionDate,
 		};
 	}
 
@@ -134,7 +134,7 @@ export class MedicalService {
 		const relativePath = this.getRelativePath(file.path);
 		const report = await this.medicalRepository.createLabReport({
 			userId,
-			fileName: file.originalname,
+			fileName: file.filename,
 			filePath: relativePath,
 			fileSize: file.size.toString(),
 		});
@@ -143,7 +143,18 @@ export class MedicalService {
 	}
 
 	async getLabReportsByUserId(userId: string) {
-		return await this.medicalRepository.getLabReportsByUserId(userId);
+		const reports = await this.medicalRepository.getLabReportsByUserId(userId);
+		const userStoredReportsPath = path.join(
+			process.cwd(),
+			MedicalService.LAB_REPORT_PATH,
+			userId,
+		);
+		const userStoredReports = await readdir(userStoredReportsPath);
+		const userStoredReportsDataSet = new Set(userStoredReports);
+		const filteredReports = reports.filter((report) =>
+			userStoredReportsDataSet.has(report.fileName),
+		);
+		return filteredReports;
 	}
 
 	async getLabReportById(reportId: string, userId: string) {
@@ -180,7 +191,7 @@ export class MedicalService {
 			reportId,
 			userId,
 			{
-				fileName: file.originalname,
+				fileName: file.filename,
 				filePath: relativePath,
 				fileSize: file.size.toString(),
 			},
@@ -199,7 +210,6 @@ export class MedicalService {
 		}
 
 		const filePath = path.join(process.cwd(), report.filePath);
-		console.log("The file path is");
 		if (fs.existsSync(filePath)) {
 			fs.unlinkSync(filePath);
 		}
@@ -219,7 +229,12 @@ export class MedicalService {
 			throw new NotFoundError("Lab report not found");
 		}
 
-		const filePath = path.join(process.cwd(), report.filePath);
+		const filePath = path.join(
+			process.cwd(),
+			MedicalService.LAB_REPORT_PATH,
+			userId,
+			report.fileName,
+		);
 		if (!fs.existsSync(filePath)) {
 			throw new NotFoundError("Lab report file not found");
 		}

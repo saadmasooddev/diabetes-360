@@ -10,11 +10,10 @@ import { useRecipeDetails } from "@/hooks/mutations/useRecipeDetails";
 import healthyFoodImg from "@assets/55ff7c0e103d474de22c65ec97f5ff150c7ef2af_1761129643122.jpg";
 import { useAppStore } from "@/stores/appStore";
 
-
 export function RecipeDetail() {
 	const [, setLocation] = useLocation();
 	const { mutate, data, isPending, isError } = useRecipeDetails();
-	const mealInfo = useAppStore(state => state.mealInfo)
+	const mealInfo = useAppStore((state) => state.mealInfo);
 
 	useEffect(() => {
 		if (!mealInfo.meal || !mealInfo.mealType) return;
@@ -24,7 +23,7 @@ export function RecipeDetail() {
 			mealType: mealInfo.mealType,
 			nutrition_info: mealInfo.meal.nutrition_info,
 		});
-	}, [mealInfo])
+	}, [mealInfo]);
 
 	const recipeTitle = data?.title;
 	const recipeDescription = data?.description;
@@ -42,7 +41,6 @@ export function RecipeDetail() {
 	});
 
 	const recipeSteps = data?.making_steps || [];
-
 
 	return (
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
@@ -67,7 +65,7 @@ export function RecipeDetail() {
 						</h1>
 					</div>
 
-					{(
+					{
 						<Card
 							className="overflow-hidden"
 							style={{
@@ -199,14 +197,13 @@ export function RecipeDetail() {
 														{step}
 													</li>
 												))}
-
 											</ol>
 										)}
 									</div>
 								</div>
 							</div>
 						</Card>
-					)}
+					}
 				</div>
 			</main>
 		</div>

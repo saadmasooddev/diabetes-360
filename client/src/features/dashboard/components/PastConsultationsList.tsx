@@ -102,7 +102,9 @@ export function PastConsultationsList({
 							<div>
 								<p className="text-xs text-gray-400 mb-1">Date</p>
 								<p className="text-xs text-gray-700 font-medium">
-									{formatConsultationDate(new Date(consultation.slot.availability.date).toISOString())}
+									{formatConsultationDate(
+										new Date(consultation.slot.availability.date).toISOString(),
+									)}
 								</p>
 							</div>
 							<div>
@@ -151,7 +153,9 @@ export function PastConsultationsList({
 								<TableRow key={consultation.id}>
 									<TableCell className="text-xs sm:text-sm text-gray-700">
 										{formatConsultationDate(
-											new Date(consultation.slot.availability.date).toISOString()
+											new Date(
+												consultation.slot.availability.date,
+											).toISOString(),
 										)}
 									</TableCell>
 									<TableCell className="text-xs sm:text-sm text-gray-700">
@@ -215,7 +219,9 @@ export function PastConsultationsList({
 												<p className="text-xs text-gray-400 mb-1">Date</p>
 												<p className="text-xs text-gray-700 font-medium">
 													{formatConsultationDate(
-														new Date(consultation.slot.availability.date).toISOString()
+														new Date(
+															consultation.slot.availability.date,
+														).toISOString(),
 													)}
 												</p>
 											</div>
@@ -257,7 +263,9 @@ export function PastConsultationsList({
 											<TableRow key={consultation.id}>
 												<TableCell className="text-xs sm:text-sm text-gray-700">
 													{formatConsultationDate(
-														new Date(consultation.slot.availability.date).toISOString()
+														new Date(
+															consultation.slot.availability.date,
+														).toISOString(),
 													)}
 												</TableCell>
 												<TableCell className="text-xs sm:text-sm text-gray-700">

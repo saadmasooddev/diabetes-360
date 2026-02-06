@@ -14,14 +14,17 @@ import exerciseImg from "@assets/998dd4468701cfe07ad82ef7315ec5abee1cf1c6_176112
 import healthyFoodImg from "@assets/55ff7c0e103d474de22c65ec97f5ff150c7ef2af_1761129643122.jpg";
 import diaBotImg from "@assets/ChatGPT Image Jul 28, 2025, 11_00_42 PM 1_1761129643124.png";
 import foodScannerImg from "@assets/750x750bb 2_1761129643123.png";
-import type { FoodSuggestion, MealDetails } from "@/services/foodScannerService";
+import type {
+	FoodSuggestion,
+	MealDetails,
+} from "@/services/foodScannerService";
 import { MEAL_TYPE_ENUM } from "@shared/schema";
 import { useAppStore } from "@/stores/appStore";
 
 export function Home() {
 	const [, setLocation] = useLocation();
 	const user = useAuthStore((state) => state.user);
-	const setMeal = useAppStore(state => state.setMeal)
+	const setMeal = useAppStore((state) => state.setMeal);
 	const isPaidUser = user?.paymentType !== "free" && user?.paymentType;
 
 	const { data: userDailyData, isLoading: isLoadingUserDailyData } =
@@ -263,8 +266,8 @@ export function Home() {
 														if (currentMeal) {
 															setMeal({
 																meal: currentMeal.meal,
-																mealType: currentMeal.mealType
-															})
+																mealType: currentMeal.mealType,
+															});
 															setLocation(ROUTES.RECIPE_DETAIL);
 														}
 													}}

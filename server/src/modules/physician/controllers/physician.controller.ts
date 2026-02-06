@@ -452,7 +452,8 @@ export class PhysicianController {
 			const page = parseInt(req.query.page as string) || 1;
 			const limit = parseInt(req.query.limit as string) || 10;
 			const search = req.query.search as string | undefined;
-			const physicianId = req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined
+			const physicianId =
+				req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined;
 
 			const result = await this.patientService.getPatientsPaginated({
 				page,
@@ -473,7 +474,8 @@ export class PhysicianController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const physicianId = req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined;
+			const physicianId =
+				req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined;
 			const stats = await this.patientService.getPatientStats(physicianId);
 			sendSuccess(res, stats, "Patient statistics retrieved successfully");
 		} catch (error: any) {
@@ -531,21 +533,28 @@ export class PhysicianController {
 		}
 	}
 
-	async getPatientsHome(req: AuthenticatedRequest, res: Response): Promise<void> {
+	async getPatientsHome(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
 		try {
-			const physicianId = req.user?.userId
-			const date = req.query.date as string
-			if(!date || isNaN(new Date(date).getTime())){
-				throw new BadRequestError("Invalid date format")
+			const physicianId = req.user?.userId;
+			const date = req.query.date as string;
+			if (!date || isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
 			}
 
-			const result =  await this.patientService.getPatientsHome(physicianId!, date)
-			return sendSuccess(res, result, "Patients data for home page retrieved successfully")
-
+			const result = await this.patientService.getPatientsHome(
+				physicianId!,
+				date,
+			);
+			return sendSuccess(
+				res,
+				result,
+				"Patients data for home page retrieved successfully",
+			);
 		} catch (error) {
-			handleError(res, error)
+			handleError(res, error);
 		}
 	}
-
-
 }

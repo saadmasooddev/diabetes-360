@@ -1000,7 +1000,11 @@ router.get("/patients/:patientId", (req, res, next) =>
  * /api/physician/patient-alerts:
  *   get:
  *     summary: Get patient alerts grouped by indication
- *     description: Returns patient alerts grouped by indication (high-risk, stable, needs-attention). For physicians, only shows patients where they are the latest consulting physician. For admins, shows all patients. Returns maximum 4 patients per indication, randomly selected.
+ *     description: |
+ *       Returns patient alerts grouped by indication (high-risk, stable, needs-attention).
+ *       Status is calculated from blood glucose (bloodSugarAlert thresholds), activity from steps in last 24h, and meal status from loggedMeals (missed meals, over/under eating vs daily recommendation).
+ *       Tag values may include: Glucose Spikes, No Activity in last 24hrs, Missed Meals, Over Eating, Under Eating, No Alerts.
+ *       For physicians, only shows patients where they are the latest consulting physician. For admins, shows all patients. Returns maximum 4 patients per indication, randomly selected.
  *     tags: [Physician]
  *     security:
  *       - bearerAuth: []
@@ -1115,12 +1119,13 @@ router.get(
 	(req, res, next) => physicianController.getPatientAlerts(req, res, next),
 );
 
-router.get("/home", 
+router.get(
+	"/home",
 	requireAnyPermission([
 		PERMISSIONS.READ_PATIENT_ALERTS,
-		PERMISSIONS.READ_OWN_APPOINTMENTS
+		PERMISSIONS.READ_OWN_APPOINTMENTS,
 	]),
-	(req, res) => physicianController.getPatientsHome(req, res)
-)
+	(req, res) => physicianController.getPatientsHome(req, res),
+);
 
 export { router as physicianRoutes };

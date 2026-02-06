@@ -155,6 +155,13 @@ export class HealthController {
 			const userId = req.user?.userId || "";
 			const { exercises } = req.body; // Array of exercise log objects
 			const healthMetrics = req.body.healthMetrics;
+
+			if (!Array.isArray(exercises)) {
+				throw new BadRequestError(
+					"Exercises array is required and must not be empty",
+				);
+			}
+
 			let date: string = "";
 
 			if (healthMetrics && typeof healthMetrics === "object") {
@@ -162,19 +169,11 @@ export class HealthController {
 					...healthMetrics,
 					userId,
 				});
-				if (validatedHealthMetricData) {
-					await this.healthService.createMetric(
-						validatedHealthMetricData,
-						userId,
-					);
-					date = validatedHealthMetricData.recordedAt;
-				}
-			}
-
-			if (!Array.isArray(exercises)) {
-				throw new BadRequestError(
-					"Exercises array is required and must not be empty",
+				await this.healthService.createMetric(
+					validatedHealthMetricData,
+					userId,
 				);
+				date = validatedHealthMetricData.recordedAt;
 			}
 
 			const logsToInsert = exercises.map((ex) => ({
@@ -405,7 +404,7 @@ export class HealthController {
 		const validationResult = insertHealthMetricSchema.safeParse(data);
 
 		if (!validationResult.success) {
-			return null;
+			throw new ValidationError(undefined, validationResult.error);
 		}
 
 		if (
@@ -450,7 +449,9 @@ export class HealthController {
 			startDate.setHours(0, 0, 0, 0);
 			endDate.setHours(23, 59, 59, 999);
 
-			const sameDates = DateManager.formatDate(startDateStr) === DateManager.formatDate(endDateStr);
+			const sameDates =
+				DateManager.formatDate(startDateStr) ===
+				DateManager.formatDate(endDateStr);
 			const result = await this.healthService.getCaloriesByActivityType(
 				userId,
 				startDate,

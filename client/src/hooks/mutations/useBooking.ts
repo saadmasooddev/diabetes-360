@@ -318,7 +318,6 @@ export const useGenerateSlotsForDay = () => {
 	});
 };
 
-
 export const useBulkDeleteSlots = () => {
 	const { toast } = useToast();
 	const queryClient = useQueryClient();

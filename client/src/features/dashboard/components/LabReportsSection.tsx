@@ -40,13 +40,14 @@ export function LabReportsSection() {
 	const deleteMutation = useDeleteLabReport();
 	const downloadMutation = useDownloadLabReport();
 
-	const allowedMimeTypes = ["application/pdf",
+	const allowedMimeTypes = [
+		"application/pdf",
 		"image/jpeg",
 		"image/jpg",
 		"image/png",
 		"image/gif",
 		"image/webp",
-	]
+	];
 
 	const handleUploadClick = () => {
 		setIsUploadModalOpen(true);
@@ -409,7 +410,9 @@ export function LabReportsSection() {
 								className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
 							>
 								<Upload className="w-8 h-8 text-gray-400 mb-2" />
-								<p className="text-sm text-gray-600">Click to select new file</p>
+								<p className="text-sm text-gray-600">
+									Click to select new file
+								</p>
 								<p className="text-xs text-gray-400 mt-1">Max 10MB</p>
 							</label>
 							{updateMutation.isPending && (

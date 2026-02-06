@@ -60,7 +60,6 @@ export function PhysicianSettings() {
 	const handleCreate = async () => {
 		createMutation.mutate(formData, {
 			onSuccess: () => {
-
 				setIsCreateDialogOpen(false);
 				setFormData({
 					name: "",
@@ -68,7 +67,7 @@ export function PhysicianSettings() {
 					icon: "stethoscope",
 					isActive: true,
 				});
-			}
+			},
 		});
 	};
 
@@ -84,21 +83,23 @@ export function PhysicianSettings() {
 
 	const handleUpdate = async () => {
 		if (editingSpecialty) {
-			updateMutation.mutate({
-				id: editingSpecialty.id,
-				data: formData,
-			}, {
-				onSuccess: () => {
-					setEditingSpecialty(null);
-					setFormData({
-						name: "",
-						description: "",
-						icon: "stethoscope",
-						isActive: true,
-					});
-
-				}
-			});
+			updateMutation.mutate(
+				{
+					id: editingSpecialty.id,
+					data: formData,
+				},
+				{
+					onSuccess: () => {
+						setEditingSpecialty(null);
+						setFormData({
+							name: "",
+							description: "",
+							icon: "stethoscope",
+							isActive: true,
+						});
+					},
+				},
+			);
 		}
 	};
 

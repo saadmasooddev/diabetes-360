@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { patientService } from "@/services/patientService";
 import type { DateRange } from "@/features/dashboard/components/HealthTrendChart";
+import { useToast } from "@/hooks/use-toast";
 
 export interface UsePatientsParams {
 	page?: number;
@@ -37,8 +39,21 @@ export const usePatientById = (
 };
 
 export const usePatientAlerts = () => {
-	return useQuery({
+	const { toast } = useToast();
+	const result = useQuery({
 		queryKey: ["patient-alerts"],
 		queryFn: () => patientService.getPatientAlerts(),
 	});
+
+	useEffect(() => {
+		if (result.error) {
+			toast({
+				title: "Patient alerts",
+				description: "Failed to load patient alerts. Please try again.",
+				variant: "destructive",
+			});
+		}
+	}, [result.error, toast]);
+
+	return result;
 };

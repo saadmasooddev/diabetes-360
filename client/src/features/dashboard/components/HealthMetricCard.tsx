@@ -110,7 +110,7 @@ export function HealthMetricCard({
 
 	return (
 		<Card
-			className="overflow-hidden transition-all duration-300 hover:shadow-lg"
+			className=" overflow-hidden transition-all duration-300 hover:shadow-lg"
 			style={{
 				background: "#FFFFFF",
 				border: `1px solid ${metricConfig.borderColor}20`,

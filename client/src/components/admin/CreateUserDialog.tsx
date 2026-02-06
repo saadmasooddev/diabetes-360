@@ -36,15 +36,15 @@ import {
 	heightOptions,
 } from "@/mocks/profileData";
 import { handleNumberInput } from "@/lib/utils";
+import { signupSchema } from "@/schemas/auth.schema";
+import { USER_ROLES } from "@shared/schema";
 
-const createUserSchema = z.object({
-	firstName: z.string().min(1, "First name is required"),
-	lastName: z.string().min(1, "Last name is required"),
-	email: z.email("Invalid email address"),
-	password: z.string().min(6, "Password must be at least 6 characters"),
-	role: z.enum(["customer", "admin", "physician"]),
-	isActive: z.boolean(),
-});
+const createUserSchema = signupSchema
+	.omit({ confirmPassword: true, agreeToTerms: true })
+	.extend({
+		role: z.enum(Object.values(USER_ROLES)),
+		isActive: z.boolean(),
+	});
 
 type CreateUserForm = z.infer<typeof createUserSchema>;
 

@@ -1,9 +1,14 @@
 import { useState, useMemo } from "react";
-import { HealthTrendChart } from "./HealthTrendChart";
+import {
+	HealthTrendChart,
+	getDateRange,
+	getFilteredMetricsQueryKeys,
+} from "./HealthTrendChart";
 import { useFilteredMetrics } from "@/hooks/mutations/useHealth";
 import { useTargetsForUser } from "@/hooks/mutations/useHealth";
 import { formatDate } from "@/lib/utils";
 import { EXERCISE_TYPE_ENUM } from "@shared/schema";
+import { API_ENDPOINTS } from "@/config/endpoints";
 
 type IntervalType = "daily" | "weekly" | "monthly";
 
@@ -11,36 +16,13 @@ export function GlucoseChartSection() {
 	const [interval, setInterval] = useState<IntervalType>("daily");
 	const { data: targets } = useTargetsForUser();
 
-	// Helper function to calculate date range based on interval
-	const getDateRange = (
-		interval: IntervalType,
-	): { startDate: string; endDate: string } => {
-		const today = new Date();
-		today.setHours(23, 59, 59, 999);
-		const endDate = today.toISOString().split("T")[0];
-
-		const startDate = new Date();
-		if (interval === "daily") {
-			startDate.setHours(0, 0, 0, 0);
-		} else if (interval === "weekly") {
-			startDate.setDate(today.getDate() - 7);
-			startDate.setHours(0, 0, 0, 0);
-		} else if (interval === "monthly") {
-			startDate.setDate(today.getDate() - 30);
-			startDate.setHours(0, 0, 0, 0);
-		}
-		return {
-			startDate: formatDate(startDate, "yyyy-MM-dd"),
-			endDate: formatDate(new Date(endDate), "yyyy-MM-dd"),
-		};
-	};
-
 	const dateRange = getDateRange(interval);
-	const { data: glucoseMetrics, isLoading } = useFilteredMetrics(
-		dateRange.startDate,
-		dateRange.endDate,
-		[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+	const bloodGlucoseQueryKey = getFilteredMetricsQueryKeys(
+		EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+		dateRange,
 	);
+	const { data: glucoseMetrics, isLoading } =
+		useFilteredMetrics(bloodGlucoseQueryKey);
 
 	const formatTimeLabel = (date: Date, interval: IntervalType): string => {
 		if (interval === "daily") {

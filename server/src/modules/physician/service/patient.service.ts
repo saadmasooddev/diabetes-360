@@ -11,7 +11,7 @@ export class PatientService {
 
 	constructor() {
 		this.patientRepository = new PatientRepository();
-		this.bookingService = new BookingService()
+		this.bookingService = new BookingService();
 	}
 
 	async getPatientsPaginated(params: {
@@ -50,21 +50,28 @@ export class PatientService {
 	}
 
 	async getPatientsHome(physicianId: string, date: string) {
-		const appointments = await this.bookingService.getAppointments(physicianId, false, {
-			limit: 3,
-			skip: 0,
-			startDate: date,
-			endDate: date
-		})
+		const appointments = await this.bookingService.getAppointments(
+			physicianId,
+			false,
+			{
+				limit: 3,
+				skip: 0,
+				startDate: date,
+				endDate: date,
+			},
+		);
 
-		const alerts = await this.patientRepository.getPatientAlerts(physicianId)
-		const slicedAlerts = [...alerts.highRisk, ...alerts.needsAttention, ...alerts.stable].slice(0,3)
-		const slicedAppointments = appointments.appointments.slice(0,3)
+		const alerts = await this.patientRepository.getPatientAlerts(physicianId);
+		const slicedAlerts = [
+			...alerts.highRisk,
+			...alerts.needsAttention,
+			...alerts.stable,
+		].slice(0, 3);
+		const slicedAppointments = appointments.appointments.slice(0, 3);
 
 		return {
 			alerts: slicedAlerts,
-			appointments: slicedAppointments
-		}
-
+			appointments: slicedAppointments,
+		};
 	}
 }

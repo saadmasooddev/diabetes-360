@@ -23,6 +23,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { FreeTierLimitsManagement } from "@/components/admin/FreeTierLimitsManagement";
 import { PhysicianSettings } from "@/components/admin/PhysicianSettings";
 import { HealthMetricTargetsManagement } from "@/components/admin/HealthMetricTargetsManagement";
+import { AdminConsultationsManagement } from "@/components/admin/AdminConsultationsManagement";
 import { UserHealthTargets } from "@/components/customer/UserHealthTargets";
 import { useAuthStore } from "@/stores/authStore";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -35,6 +36,7 @@ import {
 	SettingsIcon,
 	CalendarIcon,
 	MapPin,
+	ClipboardList,
 } from "lucide-react";
 import {
 	useGetCustomerData,
@@ -162,6 +164,16 @@ export function Settings() {
 										<MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
 										<span className="hidden sm:inline">Locations</span>
 										<span className="sm:hidden">Locations</span>
+									</TabsTrigger>
+								</AccessControl>
+								<AccessControl permission={PERMISSIONS.READ_ALL_APPOINTMENTS}>
+									<TabsTrigger
+										value="consultations"
+										className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 py-1.5 sm:py-2"
+									>
+										<ClipboardList className="h-3 w-3 sm:h-4 sm:w-4" />
+										<span className="hidden sm:inline">Consultations</span>
+										<span className="sm:hidden">Consults</span>
 									</TabsTrigger>
 								</AccessControl>
 								<AccessControl permission={PERMISSIONS.READ_ALL_USERS}>
@@ -647,6 +659,14 @@ export function Settings() {
 							</TabsContent>
 						</AccessControl>
 
+						<AccessControl permission={PERMISSIONS.READ_ALL_APPOINTMENTS}>
+							<TabsContent
+								value="consultations"
+								className="space-y-6 overflow-x-hidden"
+							>
+								<AdminConsultationsManagement />
+							</TabsContent>
+						</AccessControl>
 						<AccessControl permission={PERMISSIONS.READ_ALL_USERS}>
 							<TabsContent
 								value="admin"

@@ -18,7 +18,6 @@ export class UserController {
 			const user = await this.userService.getProfile(req.user.userId);
 
 			sendSuccess(res, user, "Profile retrieved successfully");
-
 		} catch (error: any) {
 			handleError(res, error);
 		}

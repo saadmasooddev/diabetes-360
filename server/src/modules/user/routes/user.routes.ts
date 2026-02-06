@@ -157,10 +157,8 @@ const userController = new UserController();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get(
-	"/profile",
-	authenticateToken,
-	(req, res) => userController.getProfile(req, res),
+router.get("/profile", authenticateToken, (req, res) =>
+	userController.getProfile(req, res),
 );
 
 export { router as userRoutes };

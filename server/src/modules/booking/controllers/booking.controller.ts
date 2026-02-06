@@ -4,9 +4,10 @@ import { sendSuccess } from "../../../app/utils/response";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { BadRequestError, ForbiddenError } from "../../../shared/errors";
-import { USER_ROLES } from "@shared/schema";
+import { BOOKING_TYPE_QUERY_ENUM, USER_ROLES } from "@shared/schema";
 import { DateManager } from "server/src/shared/utils/utils";
 import { PERMISSIONS } from "@shared/schema";
+import { BOOKING_STATUS_ENUM } from "../models/booking.schema";
 import type {
 	DateSlotCount,
 	SlotWithDetails,
@@ -120,72 +121,98 @@ export class BookingController {
 
 	async createSlots(req: AuthenticatedRequest, res: Response): Promise<void> {
 		try {
-			const physicianId = req.user?.userId;
-			if (!physicianId) {
-				throw new BadRequestError("User ID not found");
+			const userId = req.user?.userId;
+			let physicianId: string = userId as string;
+
+			const {
+				date,
+				slotSizeId,
+				slotTimes,
+				slotTypeIds,
+				locationIds,
+				timeZone,
+				physicianId: paramPhysicianId,
+			} = req.body;
+
+			if (paramPhysicianId && typeof paramPhysicianId !== "string") {
+				throw new BadRequestError("Incorrect physician Id provided");
 			}
 
-			const { date, slotSizeId, slotTimes, slotTypeIds, locationIds, timeZone } =
-				req.body;
+			if (paramPhysicianId) {
+				physicianId = paramPhysicianId;
+			}
 
-			if (!date || !slotSizeId || !Array.isArray(slotTimes) ||  !slotTypeIds) {
+			if (!date || !slotSizeId || !Array.isArray(slotTimes) || !slotTypeIds) {
 				throw new BadRequestError("All fields are required");
 			}
 
 			if (!Array.isArray(slotTypeIds) || slotTypeIds.length === 0) {
 				throw new BadRequestError("At least one slot type is required");
 			}
-			const numberDate = Number(date)
+			const numberDate = Number(date);
 			if (isNaN(numberDate)) {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			if(!Intl.supportedValuesOf("timeZone").includes(timeZone)){
+			if (!Intl.supportedValuesOf("timeZone").includes(timeZone)) {
 				throw new BadRequestError("Invalid timezone");
 			}
 
-			const dateWithTimezone = new Intl.DateTimeFormat("en-US",{
-			  day: "numeric",
+			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
+				day: "numeric",
 				month: "numeric",
-				year:"numeric",
-				hour:"numeric",
-				minute:"numeric",
-				second:"numeric",
-				timeZone
-			}).format(Number(date))
+				year: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+				second: "numeric",
+				timeZone,
+			}).format(Number(date));
 
-			const results = await  this.bookingService.createSlots(
+			const results = await this.bookingService.createSlots(
 				physicianId,
 				dateWithTimezone,
 				slotSizeId,
 				slotTimes,
 				slotTypeIds,
 				locationIds,
-			)
+			);
 
-      const message = results.ignoredCount > 0
-				? `Slots created successfully. ${results.ignoredCount} past slot(s) were ignored.`
-				: "Slots created successfully";
+			const message =
+				results.ignoredCount > 0
+					? `Slots created successfully. ${results.ignoredCount} past slot(s) were ignored.`
+					: "Slots created successfully";
 
-			sendSuccess(res, { 
-				slots: results.slots, 
-				ignoredCount: results.ignoredCount 
-			}, 
-			message);
+			sendSuccess(
+				res,
+				{
+					slots: results.slots,
+					ignoredCount: results.ignoredCount,
+				},
+				message,
+			);
 		} catch (error: any) {
 			handleError(res, error);
 		}
 	}
 
-	async createCustomSlot(req: AuthenticatedRequest, res: Response): Promise<void> {
+	async createCustomSlot(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
 		try {
 			const physicianId = req.user?.userId;
 			if (!physicianId) {
 				throw new BadRequestError("User ID not found");
 			}
 
-			const { date, startTime, endTime, slotTypeIds, locationIds, physicianId: adminPhysicianId } =
-				req.body;
+			const {
+				date,
+				startTime,
+				endTime,
+				slotTypeIds,
+				locationIds,
+				physicianId: adminPhysicianId,
+			} = req.body;
 
 			if (!date || !startTime || !endTime || !Array.isArray(slotTypeIds)) {
 				throw new BadRequestError("All required fields are missing");
@@ -377,10 +404,7 @@ export class BookingController {
 		}
 	}
 
-	async updateSlot(
-		req: AuthenticatedRequest,
-		res: Response,
-	): Promise<void> {
+	async updateSlot(req: AuthenticatedRequest, res: Response): Promise<void> {
 		try {
 			const userId = req.user?.userId;
 			const userPermissions = req.user?.permissions || [];
@@ -450,11 +474,7 @@ export class BookingController {
 				isAdmin,
 			);
 
-			sendSuccess(
-				res,
-				{ slot: updatedSlot },
-				"Slot updated successfully",
-			);
+			sendSuccess(res, { slot: updatedSlot }, "Slot updated successfully");
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -523,7 +543,9 @@ export class BookingController {
 				throw new BadRequestError("Selected date is required");
 			}
 
-			const selectedDateObj = DateManager.parseLocalDate(selectedDate as string);
+			const selectedDateObj = DateManager.parseLocalDate(
+				selectedDate as string,
+			);
 			if (isNaN(selectedDateObj.getTime())) {
 				throw new BadRequestError("Invalid date format");
 			}
@@ -594,7 +616,21 @@ export class BookingController {
 				throw new BadRequestError("User ID not found");
 			}
 
-			const type = req.query.type as "upcoming" | "past" | undefined;
+			const type = req.query.type as BOOKING_TYPE_QUERY_ENUM;
+			if (type && !Object.values(BOOKING_TYPE_QUERY_ENUM).includes(type)) {
+				throw new BadRequestError("Invalid consultation type provided");
+			}
+
+			const date = req.query.date as string;
+			if (!date || isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+
+			const timeZone = req.query.timeZone as string;
+			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
+				throw new BadRequestError("Invalid timezone");
+			}
+
 			const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
 			const limit = req.query.limit
 				? parseInt(req.query.limit as string, 10)
@@ -612,6 +648,8 @@ export class BookingController {
 					page,
 					limit,
 					skip,
+					date,
+					timeZone,
 				},
 			);
 
@@ -797,7 +835,9 @@ export class BookingController {
 				);
 			}
 
-			const selectedDateObj = DateManager.parseLocalDate(selectedDate as string);
+			const selectedDateObj = DateManager.parseLocalDate(
+				selectedDate as string,
+			);
 			if (isNaN(selectedDateObj.getTime())) {
 				throw new BadRequestError("invalid selected date provided");
 			}
@@ -835,7 +875,12 @@ export class BookingController {
 		req: AuthenticatedRequest,
 		res: Response,
 	): Promise<void> {
-		const { physicianId: paramPhysicianId, date, slotSizeId, timeZone } = req.body;
+		const {
+			physicianId: paramPhysicianId,
+			date,
+			slotSizeId,
+			timeZone,
+		} = req.body;
 		try {
 			const userId = req.user?.userId;
 			const userPermissions = req.user?.permissions || [];
@@ -855,10 +900,9 @@ export class BookingController {
 				throw new ForbiddenError("You do not have permission to manage slots");
 			}
 
-			if(!Intl.supportedValuesOf("timeZone").includes(timeZone)){
+			if (!Intl.supportedValuesOf("timeZone").includes(timeZone)) {
 				throw new BadRequestError("Invalid timezone");
 			}
-
 
 			// For admin, require physicianId; for physician, use their own ID
 			const physicianId = hasManageAllSlots
@@ -869,20 +913,20 @@ export class BookingController {
 				throw new BadRequestError("Date and slotSizeId are required");
 			}
 
-			const timestamp = Number(date)
+			const timestamp = Number(date);
 			if (isNaN(timestamp) || isNaN(new Date(timestamp).getTime())) {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			const dateWithTimezone = new Intl.DateTimeFormat("en-US",{
-			  day: "numeric",
+			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
+				day: "numeric",
 				month: "numeric",
-				year:"numeric",
-				hour:"numeric",
-				minute:"numeric",
-				second:"numeric",
-				timeZone
-			}).format(timestamp)
+				year: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+				second: "numeric",
+				timeZone,
+			}).format(timestamp);
 
 			const result = await this.bookingService.generateSlotsForDay(
 				physicianId,
@@ -895,6 +939,45 @@ export class BookingController {
 			const today = new Date().toISOString();
 			const providedDate = new Date(date).toISOString();
 			handleError(res, error, { today, providedDate });
+		}
+	}
+
+	async updateConsultationStatus(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const { bookingId } = req.params;
+			const { status } = req.body;
+
+			if (!bookingId) {
+				throw new BadRequestError("Booking ID is required");
+			}
+			if (!status || typeof status !== "string") {
+				throw new BadRequestError("Status is required");
+			}
+			const validStatuses = Object.values(BOOKING_STATUS_ENUM);
+			if (
+				!validStatuses.includes(
+					status as (typeof BOOKING_STATUS_ENUM)[keyof typeof BOOKING_STATUS_ENUM],
+				)
+			) {
+				throw new BadRequestError(
+					`Invalid status. Allowed: ${validStatuses.join(", ")}`,
+				);
+			}
+
+			const updated = await this.bookingService.updateConsultationStatus(
+				bookingId,
+				status as "pending" | "confirmed" | "cancelled" | "completed",
+			);
+			sendSuccess(
+				res,
+				{ booking: updated },
+				"Consultation status updated successfully",
+			);
+		} catch (error: unknown) {
+			handleError(res, error);
 		}
 	}
 

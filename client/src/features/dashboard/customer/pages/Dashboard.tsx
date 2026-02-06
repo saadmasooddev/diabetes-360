@@ -421,11 +421,11 @@ export function Dashboard() {
 	};
 
 	return (
-		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
+		<div className="flex min-h-screen " style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
 			<main
-				className="flex-1 flex justify-center"
+				className="flex-1 flex justify-center "
 				style={{ padding: "24px 16px" }}
 			>
 				<div className="w-full" style={{ maxWidth: "1200px" }}>
@@ -443,7 +443,7 @@ export function Dashboard() {
 					</div>
 
 					{/* Metric Cards Row */}
-					<div className="mb-8 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+					<div className=" mb-8 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
 						<HealthMetricCard
 							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestBloodSugar.toString()}

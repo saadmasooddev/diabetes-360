@@ -17,12 +17,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	useMyConsultations,
-	useMarkConsultationAttended,
-} from "@/hooks/mutations/useBooking";
+import { useMyConsultations } from "@/hooks/mutations/useBooking";
 import { usePhysiciansPaginated } from "@/hooks/mutations/usePhysician";
-import { useToast } from "@/hooks/use-toast";
 import { formatDate, formatTime12 } from "@/lib/utils";
 import { ROUTES } from "@/config/routes";
 import { Star, Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
@@ -32,7 +28,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Physician } from "@/services/physicianService";
 import { PastConsultationsList } from "../../components/PastConsultationsList";
 import { UserConsultation } from "server/src/modules/booking/repository/booking.repository";
-
 
 export function Consultations() {
 	const [, setLocation] = useLocation();
@@ -218,15 +213,17 @@ export function Consultations() {
 										</p>
 										<div className="space-y-2 mb-3 sm:mb-4">
 											<div className="flex items-start gap-2">
-												<MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0 text-gray-400" />
-												<div className="min-w-0 flex-1">
-													<p className="text-xs text-gray-400">Location</p>
-													<p className="text-xs sm:text-sm text-gray-700 break-words">
-														{upcomingConsultation.slot.location
-															? `${upcomingConsultation.slot.location.locationName}${upcomingConsultation.slot.location.address ? `, ${upcomingConsultation.slot.location.address}` : ""}`
-															: "Online Consultation"}
-													</p>
-												</div>
+												{upcomingConsultation.slot.location?.locationName && (
+													<>
+														<MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0 text-gray-400" />
+														<div className="min-w-0 flex-1">
+															<p className="text-xs text-gray-400">Location</p>
+															<p className="text-xs sm:text-sm text-gray-700 break-words">
+																{`${upcomingConsultation.slot.location.locationName}${upcomingConsultation.slot.location.address ? `, ${upcomingConsultation.slot.location.address}` : ""}`}
+															</p>
+														</div>
+													</>
+												)}
 											</div>
 											<div className="flex items-start gap-2">
 												<Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0 text-gray-400" />
@@ -234,7 +231,9 @@ export function Consultations() {
 													<p className="text-xs text-gray-400">Date & Time</p>
 													<p className="text-xs sm:text-sm text-gray-700">
 														{formatConsultationTime(
-															new Date(upcomingConsultation.slot.availability.date).toISOString(),
+															new Date(
+																upcomingConsultation.slot.availability.date,
+															).toISOString(),
 															upcomingConsultation.slot.startTime,
 															upcomingConsultation.slot.endTime,
 														)}
@@ -408,7 +407,9 @@ export function Consultations() {
 										<p className="text-xs text-gray-400">Date</p>
 										<p className="text-xs sm:text-sm text-gray-700">
 											{formatConsultationDate(
-												new Date(selectedConsultation.slot.availability.date).toISOString()
+												new Date(
+													selectedConsultation.slot.availability.date,
+												).toISOString(),
 											)}
 										</p>
 									</div>
@@ -424,15 +425,17 @@ export function Consultations() {
 									</div>
 								</div>
 								<div className="flex items-start gap-2">
-									<MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
-									<div className="min-w-0 flex-1">
-										<p className="text-xs text-gray-400">Location</p>
-										<p className="text-xs sm:text-sm text-gray-700 break-words">
-											{selectedConsultation.slot.location
-												? `${selectedConsultation.slot.location.locationName}${selectedConsultation.slot.location.address ? `, ${selectedConsultation.slot.location.address}` : ""}`
-												: "Online Consultation"}
-										</p>
-									</div>
+									{selectedConsultation.slot.location?.locationName && (
+										<>
+											<MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mt-0.5 flex-shrink-0" />
+											<div className="min-w-0 flex-1">
+												<p className="text-xs text-gray-400">Location</p>
+												<p className="text-xs sm:text-sm text-gray-700 break-words">
+													{`${selectedConsultation.slot.location.locationName}${selectedConsultation.slot.location.address ? `, ${selectedConsultation.slot.location.address}` : ""}`}
+												</p>
+											</div>
+										</>
+									)}
 								</div>
 								<div>
 									<p className="text-xs text-gray-400 mb-1">
@@ -497,7 +500,9 @@ export function Consultations() {
 											</p>
 											<p className="text-xs text-gray-600">
 												{formatConsultationTime(
-													new Date(consultation.slot.availability.date).toISOString(),
+													new Date(
+														consultation.slot.availability.date,
+													).toISOString(),
 													consultation.slot.startTime,
 													consultation.slot.endTime,
 												)}
@@ -561,7 +566,9 @@ export function Consultations() {
 												<p className="text-xs text-gray-400 mb-1">Date</p>
 												<p className="text-xs text-gray-700 font-medium">
 													{formatConsultationDate(
-														new Date(consultation.slot.availability.date).toISOString(),
+														new Date(
+															consultation.slot.availability.date,
+														).toISOString(),
 													)}
 												</p>
 											</div>
@@ -603,7 +610,9 @@ export function Consultations() {
 											<TableRow key={consultation.id}>
 												<TableCell className="text-xs sm:text-sm text-gray-700">
 													{formatConsultationDate(
-														new Date(consultation.slot.availability.date).toISOString(),
+														new Date(
+															consultation.slot.availability.date,
+														).toISOString(),
 													)}
 												</TableCell>
 												<TableCell className="text-xs sm:text-sm text-gray-700">

@@ -11,19 +11,26 @@ import {
 	ROUTES,
 	USER_DASHBOARD_PREFIX,
 } from "@/config/routes";
-import dayjs from "dayjs"
+import dayjs from "dayjs";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-
 export class DateManager {
-
-	static startOfDay(date: Date) {
-		return dayjs(date).startOf("day").toDate()
+	static formatDisplayDate(dateStr: string): string {
+		const d = new Date(dateStr);
+		if (isNaN(d.getTime())) return dateStr;
+		return d.toLocaleDateString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
 	}
-	
+	static startOfDay(date: Date) {
+		return dayjs(date).startOf("day").toDate();
+	}
+
 	static parseLocalDate(dateStr: string): Date {
 		const parsed = dayjs(dateStr, "YYYY-MM-DD");
 		if (!parsed.isValid()) {
@@ -32,23 +39,22 @@ export class DateManager {
 		return parsed.toDate();
 	}
 
-	
 	static formatDate(date: Date | string): string {
 		return dayjs(date).format("YYYY-MM-DD");
 	}
 
 	static isToday(date: Date | string) {
-		const today = dayjs()
-		const providedDate = dayjs(date)
-		const isToday = providedDate.isSame(today, 'day')
-		return isToday
+		const today = dayjs();
+		const providedDate = dayjs(date);
+		const isToday = providedDate.isSame(today, "day");
+		return isToday;
 	}
 
 	static isBeforeToday(date: string) {
-		const today = dayjs()
-		const providedDate = dayjs(date)
-		const isBeforeToday = providedDate.isBefore(today, "day")
-		return isBeforeToday
+		const today = dayjs();
+		const providedDate = dayjs(date);
+		const isBeforeToday = providedDate.isBefore(today, "day");
+		return isBeforeToday;
 	}
 }
 export const formatDate = (date: Date, formatStr: string): string => {
@@ -266,8 +272,8 @@ class Utils {
 		(data: AuthData, navigate: (p: string) => void) => void
 	> = {
 		[USER_ROLES.CUSTOMER]: (data, navigate) => {
-			if(!data.user.profileComplete) {
-				return navigate(ROUTES.PROFILE_DATA)
+			if (!data.user.profileComplete) {
+				return navigate(ROUTES.PROFILE_DATA);
 			}
 			navigate(ROUTES.HOME);
 			return;
@@ -645,6 +651,39 @@ class CalorieUtils {
 
 	getEstimatedDurationForSteps(steps: number) {
 		return steps * 1;
+	}
+
+	getDistanceKm(steps: number, user: User): number {
+		const strideLengthCm = this.calculateStrideLength(user.profileData?.height);
+		const distance = (steps * strideLengthCm) / 100000;
+		return this.round2(distance); // km
+	}
+
+	getDurationMinutes(distanceKm: number): number {
+		const walkingSpeedKmH = 5;
+		const duration = (distanceKm / walkingSpeedKmH) * 60;
+		return duration ? Math.ceil(duration) : duration; // minutes
+	}
+
+	getPaceMinutesPerKm(durationMinutes: number, distanceKm: number): number {
+		const pace = distanceKm > 0 ? durationMinutes / distanceKm : 0;
+		return this.round2(pace);
+	}
+
+	getEstimatedCaloriesBurned(steps: number, user: User): number {
+		const weight = Number(user?.profileData?.weight || 0);
+		const distanceKm = this.getDistanceKm(steps, user);
+		const duration = this.getDurationMinutes(distanceKm);
+
+		const walkingMET = 3.5;
+		const caloriesPerMinute = (walkingMET * 3.5 * weight) / 200;
+
+		const calories = caloriesPerMinute * duration;
+		return this.round2(calories);
+	}
+
+	round2(value: number): number {
+		return Math.round(value * 100) / 100;
 	}
 }
 

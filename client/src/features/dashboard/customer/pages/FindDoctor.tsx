@@ -113,7 +113,7 @@ export function FindDoctor() {
 
 	const searchValue =
 		debouncedSearchQuery.trim() === "" ||
-			debouncedSearchQuery.toLowerCase() === "all"
+		debouncedSearchQuery.toLowerCase() === "all"
 			? undefined
 			: debouncedSearchQuery.trim();
 
@@ -227,14 +227,6 @@ export function FindDoctor() {
 	const availableDates = datesWithAvailability.map((d) => {
 		return new Date(d.date);
 	});
-
-	// Skip step 1 if only 1 physician
-	useEffect(() => {
-		if (currentStep === 1 && !isLoadingPhysicians && physicians.length === 1) {
-			setSelectedPhysician(physicians[0]);
-			setCurrentStep(2);
-		}
-	}, [currentStep, isLoadingPhysicians, physicians.length]);
 
 	const handleConsultClick = (physician: Physician) => {
 		setSelectedPhysician(physician);
@@ -368,13 +360,13 @@ export function FindDoctor() {
 							bookingPrice={
 								bookingPrice
 									? {
-										originalFee: bookingPrice.originalFee,
-										discountedFee: bookingPrice.discountedFee,
-										finalPrice: bookingPrice.finalPrice,
-										isDiscounted: bookingPrice.isDiscounted,
-										isFree: bookingPrice.isFree,
-										discountPercentage: bookingPrice.discountPercentage,
-									}
+											originalFee: bookingPrice.originalFee,
+											discountedFee: bookingPrice.discountedFee,
+											finalPrice: bookingPrice.finalPrice,
+											isDiscounted: bookingPrice.isDiscounted,
+											isFree: bookingPrice.isFree,
+											discountPercentage: bookingPrice.discountPercentage,
+										}
 									: null
 							}
 							isLoadingPrice={isLoadingPrice}

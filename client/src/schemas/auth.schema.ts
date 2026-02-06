@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-	email: z.email("Invalid email address").max(50, "Email is too long"),
+	email: z.email("Invalid email address").max(70, "Email is too long"),
 	password: z
 		.string()
 		.min(1, "Password is required")
@@ -31,10 +31,9 @@ export const signupSchema = z
 			.max(100, "Last name is too long")
 			.regex(/^[a-zA-Z\s]+$/, "Last name can only contain letters and spaces"),
 		email: z
-			.string()
-			.min(1, "Email is required")
 			.email("Invalid email address")
-			.max(50, "Email is too long"),
+			.min(1, "Email is required")
+			.max(70, "Email is too long"),
 		password: z
 			.string()
 			.min(1, "Password is required")
@@ -62,10 +61,9 @@ export const signupSchema = z
 
 export const forgotPasswordSchema = z.object({
 	email: z
-		.string()
-		.min(1, "Email is required")
 		.email("Invalid email address")
-		.max(50, "Email is too long"),
+		.min(1, "Email is required")
+		.max(70, "Email is too long"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

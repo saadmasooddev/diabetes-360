@@ -1,20 +1,44 @@
 import { db } from "../../../app/config/db";
-import { eq, and, or, ilike, sql, count, desc, inArray, isNotNull } from "drizzle-orm";
-import { users, customerData, diabetesTypeEnum, DIABETES_TYPE } from "../../auth/models/user.schema";
+import {
+	eq,
+	and,
+	or,
+	ilike,
+	sql,
+	count,
+	desc,
+	inArray,
+	isNotNull,
+} from "drizzle-orm";
+import {
+	users,
+	customerData,
+	diabetesTypeEnum,
+	DIABETES_TYPE,
+} from "../../auth/models/user.schema";
 import { USER_ROLES } from "../../auth/models/user.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
-import { EXERCISE_TYPE_ENUM } from "../../health/models/health.schema";
+import {
+	EXERCISE_TYPE_ENUM,
+	MertricRecord,
+	healthMetrics,
+} from "../../health/models/health.schema";
 import { BookingRepository } from "../../booking/repository/booking.repository";
-import { bookedSlots, slots, availabilityDate, BOOKING_STATUS_ENUM } from "../../booking/models/booking.schema";
+import {
+	bookedSlots,
+	slots,
+	availabilityDate,
+	BOOKING_STATUS_ENUM,
+	BOOKING_TYPE_QUERY_ENUM,
+} from "../../booking/models/booking.schema";
 import { FoodRepository } from "../../food/repository/food.repository";
 import { PgColumn } from "drizzle-orm/pg-core";
-import { physicianData } from "../../auth/models/user.schema";
 import {
 	getIndicationColor,
 	getStatusColor,
 	getAlertTagColor,
-	INDICATION_COLORS,
 	PATIENT_INDICATION,
+	getDiseaseColor,
 } from "../utils/patientColors";
 
 export interface PatientListItem {
@@ -39,12 +63,35 @@ export interface PatientStats {
 	}>;
 }
 
+export interface PatientAlert {
+	id: string;
+	name: string;
+	age: number;
+	diabetesType: string;
+	tags: Array<{ text: string; color: string }>;
+	status: PATIENT_INDICATION;
+	statusColor: string;
+}
+
 export class PatientRepository {
 	private healthRepository: HealthRepository;
 	private bookingRepository: BookingRepository;
 	private foodRepository: FoodRepository;
+	private static readonly MIN_STEPS_FOR_ACTIVITY = 500;
+	private static readonly OVER_EATING_RATIO = 1.2;
+	private static readonly UNDER_EATING_RATIO = 0.7;
 
-  private conditionSql = (column: PgColumn) =>sql<string>`
+	private bloodSugarAlert = (value: number): PATIENT_INDICATION => {
+		if (value >= 250 || value <= 54) {
+			return PATIENT_INDICATION.HIGH_RISK;
+		}
+		if ((value >= 180 && value <= 250) || (value <= 70 && value >= 54)) {
+			return PATIENT_INDICATION.NEEDS_ATTENTION;
+		}
+		return PATIENT_INDICATION.STABLE;
+	};
+
+	private diabetesTypeSql = (column: PgColumn) => sql<DIABETES_TYPE>`
     CASE ${column}
       WHEN 'type1' THEN 'Diabetes Type 1'
       WHEN 'type2' THEN 'Diabetes Type 2'
@@ -52,13 +99,14 @@ export class PatientRepository {
       WHEN 'prediabetes' THEN 'Prediabetes'
       ELSE ${column}
     END
-  `
-  private ageSql = sql<number>`EXTRACT(YEAR FROM AGE(${customerData.birthday}))::int`
-  private indicationDistirbution = [
-    { name: "Stable", percentage: 0, color: "#B2DFDB" },
-    { name: "High Risk", percentage: 0, color: "#00856F" },
-    { name: "Needs Attention", percentage: 0, color: "#00453A" },
-  ]
+  `;
+	private ageSql =
+		sql<number>`EXTRACT(YEAR FROM AGE(${customerData.birthday}))::int`;
+	private indicationDistirbution = [
+		{ name: "Stable", percentage: 0, color: "#B2DFDB" },
+		{ name: "High Risk", percentage: 0, color: "#00856F" },
+		{ name: "Needs Attention", percentage: 0, color: "#00453A" },
+	];
 
 	constructor() {
 		this.healthRepository = new HealthRepository();
@@ -76,35 +124,44 @@ export class PatientRepository {
 		physicianId: string,
 	): Promise<string[]> {
 		// Get all consultations with their dates and physicians
-    const latestConsultations = db.$with("latest_consultations").as(
-      db.select({
-        customerId: bookedSlots.customerId,
-        consultationDate: sql`DATE(${availabilityDate.date})`,
-        physicianId: availabilityDate.physicianId,
-        createdAt: bookedSlots.createdAt,
-        rank: sql`
+		const latestConsultations = db.$with("latest_consultations").as(
+			db
+				.select({
+					customerId: bookedSlots.customerId,
+					consultationDate: sql`DATE(${availabilityDate.date})`,
+					physicianId: availabilityDate.physicianId,
+					createdAt: bookedSlots.createdAt,
+					rank: sql`
           ROW_NUMBER() OVER (PARTITION BY ${bookedSlots.customerId} ORDER BY ${bookedSlots.createdAt} DESC,
-          ${availabilityDate.date} DESC, ${bookedSlots.createdAt} DESC)`.as("rank")
-      })
-      .from(bookedSlots)
-      .innerJoin(slots, eq(bookedSlots.slotId, slots.id))
-      .innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
-      .where(and(
-        inArray(bookedSlots.status, [BOOKING_STATUS_ENUM.COMPLETED, BOOKING_STATUS_ENUM.CONFIRMED]),
-        eq(availabilityDate.physicianId, physicianId),
-      ))
-    )
+          ${availabilityDate.date} DESC, ${bookedSlots.createdAt} DESC)`.as(
+						"rank",
+					),
+				})
+				.from(bookedSlots)
+				.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+				.innerJoin(
+					availabilityDate,
+					eq(slots.availabilityId, availabilityDate.id),
+				)
+				.where(
+					and(
+						inArray(bookedSlots.status, [
+							BOOKING_STATUS_ENUM.COMPLETED,
+							BOOKING_STATUS_ENUM.CONFIRMED,
+						]),
+						eq(availabilityDate.physicianId, physicianId),
+					),
+				),
+		);
 
-    const consultations = await db
-    .with(latestConsultations)
-    .select(
-      {
-        patientId: latestConsultations.customerId
-      }
-    )
-    .from(latestConsultations)
+		const consultations = await db
+			.with(latestConsultations)
+			.select({
+				patientId: latestConsultations.customerId,
+			})
+			.from(latestConsultations);
 
-		return consultations.map(c => c.patientId);
+		return consultations.map((c) => c.patientId);
 	}
 
 	async getPatientsPaginated(params: {
@@ -126,7 +183,8 @@ export class PatientRepository {
 
 		// If physicianId is provided, filter by latest consulting physician
 		if (physicianId) {
-			const patientIds = await this.getPatientIdsWithLatestPhysician(physicianId);
+			const patientIds =
+				await this.getPatientIdsWithLatestPhysician(physicianId);
 			if (patientIds.length === 0) {
 				// No patients found for this physician
 				return {
@@ -161,23 +219,15 @@ export class PatientRepository {
 			.innerJoin(customerData, eq(users.id, customerData.userId))
 			.where(whereCondition);
 
-
 		// Get paginated results
 		const patientsPromise = db
 			.select({
 				id: users.id,
-        name: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
-        indication: sql<PATIENT_INDICATION>`
-          CASE ${customerData.diabetesType}
-            WHEN 'type1' THEN 'Needs Attention'
-            WHEN 'type2' THEN 'Stable'
-            WHEN 'gestational' THEN 'High Risk'
-            WHEN 'prediabetes' THEN 'Needs Attention'
-            ELSE 'Stable'
-          END
-        `,
-				age: this.ageSql ,
-				condition: this.conditionSql(customerData.diabetesType) ,
+				firstName: users.firstName,
+				lastName: users.lastName,
+				name: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+				age: this.ageSql,
+				condition: this.diabetesTypeSql(customerData.diabetesType),
 			})
 			.from(users)
 			.innerJoin(customerData, eq(users.id, customerData.userId))
@@ -186,19 +236,34 @@ export class PatientRepository {
 			.offset(offset)
 			.orderBy(desc(users.createdAt));
 
-		const [totalResult, patients] = await Promise.all([totalResultPromise, patientsPromise]);
+		const [totalResult, patients] = await Promise.all([
+			totalResultPromise,
+			patientsPromise,
+		]);
 		const total = totalResult[0]?.count || 0;
 
-		// Add colors to patients
-		const patientsWithColors: PatientListItem[] = patients.map((patient) => ({
-			...patient,
-			indicationColor: getIndicationColor(
-				patient.indication,
-			),
-		}));
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+		const yesterdayStr = yesterday.toISOString().split("T")[0];
+		const todayStr = new Date().toISOString().split("T")[0];
+
+		const patientWithAlerts = await Promise.all(
+			patients.map(async (p) => {
+				const alert = await this.patientAlert(
+					{ ...p, diabetesType: p.condition as DIABETES_TYPE },
+					yesterdayStr,
+					todayStr,
+				);
+				return {
+					...p,
+					indication: alert.status,
+					indicationColor: alert.statusColor,
+				};
+			}),
+		);
 
 		return {
-			patients: patientsWithColors,
+			patients: patientWithAlerts,
 			total,
 			page,
 			limit,
@@ -208,62 +273,107 @@ export class PatientRepository {
 	async getPatientStats(physicianId?: string): Promise<PatientStats> {
 		// Build base where condition
 		let whereCondition = eq(users.role, USER_ROLES.CUSTOMER);
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+		const yesterdayStr = yesterday.toISOString().split("T")[0];
+		const todayStr = new Date().toISOString().split("T")[0];
 
 		// If physicianId is provided, filter by latest consulting physician
 		if (physicianId) {
-			const patientIds = await this.getPatientIdsWithLatestPhysician(physicianId);
+			const patientIds =
+				await this.getPatientIdsWithLatestPhysician(physicianId);
 			if (patientIds.length === 0) {
-				// No patients found for this physician
 				return {
 					diseaseDistribution: [],
-          indicationDistribution: this.indicationDistirbution
+					indicationDistribution: this.indicationDistirbution,
 				};
 			}
-			whereCondition = and(whereCondition, inArray(users.id, patientIds))!;
+			whereCondition = and(
+				whereCondition,
+				inArray(users.id, patientIds),
+				sql`DATE(${healthMetrics.recordedAt}) BETWEEN DATE(${yesterdayStr}) AND DATE(${todayStr})`,
+				isNotNull(healthMetrics.bloodSugar),
+			)!;
 		}
-		console.log("THe here")
 
-    const totalPatients = db.$with("total_patients").as(
-      db.select({
-        total: count().as("total")
-      })
-      .from(users)
-      .where(whereCondition)
-    )
-
-    const diseaseDistribution= await 
-      db
-      .with(totalPatients)
-      .select({
-        name: this.conditionSql(customerData.diabetesType),
-				diabetesType: customerData.diabetesType,
-        color: sql<string>`
-          CASE ${customerData.diabetesType}
-            WHEN ${DIABETES_TYPE.TYPE1} THEN '#B2DFDB'
-            WHEN ${DIABETES_TYPE.TYPE2} THEN '#00856F'
-            WHEN ${DIABETES_TYPE.GESTATIONAL} THEN '#00453A'
-            WHEN ${DIABETES_TYPE.PREDIABETES} THEN '#E0F2F1'
-            ELSE '#B2DFDB'
-          END
-        `,
-        percentage: sql<number>`
-          COALESCE(
-            ROUND(
-              count(*) * 100 / NULLIF(${totalPatients.total},0)
-            ),
-            0
-          )
-        `
-      })
+		const patients = await db
+			.select({
+				id: users.id,
+				name: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+				diabetesType: this.diabetesTypeSql(customerData.diabetesType),
+				bloodSugar: healthMetrics.bloodSugar,
+			})
 			.from(users)
 			.innerJoin(customerData, eq(users.id, customerData.userId))
-      .crossJoin(totalPatients)
-			.where(whereCondition)
-			.groupBy(customerData.diabetesType, totalPatients.total)
+			.innerJoin(healthMetrics, eq(users.id, healthMetrics.userId))
+			.groupBy(users.id, customerData.diabetesType, healthMetrics.bloodSugar)
+			.where(whereCondition);
+
+		type PatientInfo = {
+			name: string;
+			bloodSugar: number;
+			diabetesType: DIABETES_TYPE;
+		};
+		const patientIndicationMap = new Map<string, PatientInfo[]>();
+		const patientDiseaseDistributionMap = new Map<DIABETES_TYPE, number>();
+
+		for (const patient of patients) {
+			if (!patient.bloodSugar) continue;
+			const patientInfo = patientIndicationMap.get(patient.id) || [];
+			patientInfo.push({
+				name: patient.name,
+				bloodSugar: parseFloat(patient.bloodSugar),
+				diabetesType: patient.diabetesType,
+			});
+			patientDiseaseDistributionMap.set(
+				patient.diabetesType,
+				patientDiseaseDistributionMap.get(patient.diabetesType) || 0 + 1,
+			);
+
+			patientIndicationMap.set(patient.id, patientInfo);
+		}
+
+		const patientIndicationDistribution: PATIENT_INDICATION[] = [];
+
+		patientIndicationMap.forEach((patientData) => {
+			const worst = this.getPatientWorstIndicationStatus(
+				patientData.map((p) => ({ value: p.bloodSugar })),
+			);
+			patientIndicationDistribution.push(worst);
+		});
+
+		const indicationDistribution = patientIndicationDistribution.reduce(
+			(acc, indication) => {
+				acc[indication] = (acc[indication] || 0) + 1;
+				return acc;
+			},
+			{} as Record<PATIENT_INDICATION, number>,
+		);
+		let totalIndications = 0;
+		for (const key in indicationDistribution) {
+			totalIndications += indicationDistribution[key as PATIENT_INDICATION];
+		}
+
+		let totalDiseaseDistribution = 0;
+		patientDiseaseDistributionMap.forEach((value) => {
+			totalDiseaseDistribution += value;
+		});
 
 		return {
-			diseaseDistribution,
-			indicationDistribution: this.indicationDistirbution,
+			diseaseDistribution: Array.from(patientDiseaseDistributionMap).map(
+				([disease, count]) => ({
+					name: disease,
+					percentage: Math.round((count / totalDiseaseDistribution) * 100),
+					color: getDiseaseColor(disease),
+				}),
+			),
+			indicationDistribution: Object.entries(indicationDistribution).map(
+				([indication, count]) => ({
+					name: indication,
+					percentage: Math.round((count / totalIndications) * 100),
+					color: getIndicationColor(indication as PATIENT_INDICATION),
+				}),
+			),
 		};
 	}
 
@@ -276,11 +386,13 @@ export class PatientRepository {
 		patientId: string,
 		physicianId?: string,
 		limit: number = 3,
-	): Promise<Array<{
-		summary: string;
-		date: string;
-		physicianName?: string;
-	}>> {
+	): Promise<
+		Array<{
+			summary: string;
+			date: string;
+			physicianName?: string;
+		}>
+	> {
 		// Base query conditions
 		const conditions = [
 			eq(bookedSlots.customerId, patientId),
@@ -298,20 +410,20 @@ export class PatientRepository {
 			.select({
 				summary: bookedSlots.summary,
 				date: availabilityDate.date,
-				physicianName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`
+				physicianName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
 			})
 			.from(bookedSlots)
 			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
-			.innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
 			.innerJoin(users, eq(availabilityDate.physicianId, users.id))
 			.where(and(...conditions))
 			.orderBy(desc(availabilityDate.date), desc(bookedSlots.createdAt))
 			.limit(limit);
 
-
-		return consultations
-	
-		
+		return consultations;
 	}
 
 	async getPatientById(
@@ -328,21 +440,12 @@ export class PatientRepository {
 				email: users.email,
 				birthday: customerData.birthday,
 				diagnosisDate: customerData.diagnosisDate,
-        age: this.ageSql,
-        condition: this.conditionSql(customerData.diabetesType),
+				age: this.ageSql,
+				condition: this.diabetesTypeSql(customerData.diabetesType),
 				weight: customerData.weight,
 				height: customerData.height,
 				diabetesType: customerData.diabetesType,
 				gender: customerData.gender,
-        indication: sql<PATIENT_INDICATION>`
-          CASE ${customerData.diabetesType}
-            WHEN 'type1' THEN 'Needs Attention'
-            WHEN 'type2' THEN 'Stable'
-            WHEN 'gestational' THEN 'High Risk'
-            WHEN 'prediabetes' THEN 'Needs Attention'
-            ELSE 'Stable'
-          END
-        `,
 			})
 			.from(users)
 			.innerJoin(customerData, eq(users.id, customerData.userId))
@@ -353,82 +456,34 @@ export class PatientRepository {
 			return null;
 		}
 
-		
 		// Calculate alerts dynamically
 		const yesterday = new Date();
 		yesterday.setDate(yesterday.getDate() - 1);
-		const alerts: string[] = [];
+		const yesterdayStr = yesterday.toISOString().split("T")[0];
+		const todayStr = new Date().toISOString().split("T")[0];
 
-		// Check glucose spikes
-		const glucoseData = await this.healthRepository.getFilteredMetrics(
-			patient.id,
-			yesterday.toISOString().split("T")[0],
-			new Date().toISOString().split("T")[0],
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+		const [glucoseTrend, appointments, consultationSummaries] =
+			await Promise.all([
+				await this.healthRepository.getFilteredMetrics(
+					patient.id,
+					startDate,
+					endDate,
+					[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+				),
+				await this.bookingRepository.getUserConsultations(patient.id, {
+					limit: 3,
+					skip: 0,
+					type: BOOKING_TYPE_QUERY_ENUM.PAST,
+					physicianId,
+				}),
+				this.getConsultationSummaries(patient.id, physicianId, 100), // Fetch all summaries for "See All" dialog
+			]);
+
+		const patientAlert = await this.patientAlert(
+			patient,
+			yesterdayStr,
+			todayStr,
 		);
-
-		if (glucoseData.bloodSugarRecords.length > 0) {
-			const highReadings = glucoseData.bloodSugarRecords.filter((record) => {
-				const value =
-					typeof record.value === "string"
-						? parseFloat(record.value)
-						: record.value || 0;
-				return value > 180;
-			});
-			if (highReadings.length > 0) {
-				alerts.push("Glucose Spikes");
-			}
-		}
-
-		// Check activity
-		const activityData = await this.healthRepository.getFilteredMetrics(
-			patient.id,
-			yesterday.toISOString().split("T")[0],
-			new Date().toISOString().split("T")[0],
-			[EXERCISE_TYPE_ENUM.STEPS],
-		);
-		if (activityData.stepsRecords.length === 0) {
-			alerts.push("No Activity in last 24hrs");
-		}
-
-		// Check missed meals
-		const today = new Date();
-		const todayFoodScan = await this.foodRepository.getConsumedNutrients(
-			patient.id,
-			today,
-		);
-		const yesterdayFoodScan = await this.foodRepository.getConsumedNutrients(
-			patient.id,
-			yesterday,
-		);
-		if (!todayFoodScan && !yesterdayFoodScan) {
-			alerts.push("Missed Meals");
-		}
-
-		// Add colors to alerts
-		const alertsWithColors = alerts.map((alert) => ({
-			text: alert,
-			color: getAlertTagColor(alert),
-		}));
-
-    const [glucoseTrend, appointments, consultationSummaries] = await Promise.all([
-		 await this.healthRepository.getFilteredMetrics(
-			patient.id,
-			startDate,
-			endDate,
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
-     ),
-		 await this.bookingRepository.getUserConsultations(
-			patient.id,
-			{
-				limit: 3,
-				skip: 0,
-				type: "past",
-				physicianId,
-			},
-		),
-		this.getConsultationSummaries(patient.id, physicianId, 100), // Fetch all summaries for "See All" dialog
-  ])
 
 		// Format recent notes from consultation summaries
 		const recentNotes = consultationSummaries.map((cs) => cs.summary);
@@ -445,138 +500,215 @@ export class PatientRepository {
 			height: patient.height,
 			diabetesType: patient.diabetesType,
 			gender: patient.gender,
-			indication: patient.indication,
-			indicationColor: getIndicationColor(patient.indication),
-			riskLevel: patient.indication,
-			riskLevelColor: getIndicationColor(patient.indication),
-			alerts: alertsWithColors,
-			glucoseSummary: {
-				highs: 67,
-				lows: 12,
-				timeInRange: 35,
-			},
+			indication: patientAlert.status,
+			indicationColor: patientAlert.statusColor,
+			riskLevel: patientAlert.status,
+			riskLevelColor: patientAlert.statusColor,
+			alerts: patientAlert.tags,
+			glucoseSummary: this.getPatientGlucoseRangeSummary(
+				glucoseTrend.bloodSugarRecords,
+			),
 			recentNotes,
 			consultationSummaries,
 			appointments: appointments.consultations,
 			glucoseTrend: glucoseTrend.bloodSugarRecords,
 		};
 	}
+	private getPatientWorstIndicationStatus(
+		records: { value: number | null }[],
+	): PATIENT_INDICATION {
+		let bloodSugarStatus: PATIENT_INDICATION = PATIENT_INDICATION.STABLE;
+		if (records.length > 0) {
+			let worst: PATIENT_INDICATION = PATIENT_INDICATION.STABLE;
+			for (const record of records) {
+				const value =
+					typeof record.value === "string"
+						? parseFloat(record.value)
+						: Number(record.value) || 0;
+				const indication = this.bloodSugarAlert(value);
+				if (indication === PATIENT_INDICATION.HIGH_RISK)
+					worst = PATIENT_INDICATION.HIGH_RISK;
+				else if (
+					indication === PATIENT_INDICATION.NEEDS_ATTENTION &&
+					worst !== PATIENT_INDICATION.HIGH_RISK
+				)
+					worst = PATIENT_INDICATION.NEEDS_ATTENTION;
+			}
+			bloodSugarStatus = worst;
+			return bloodSugarStatus;
+		}
+		return bloodSugarStatus;
+	}
 
- // TODO: optimize
+	private getPatientGlucoseRangeSummary(
+		glucoseDate: { value: number | null }[],
+	): {
+		highs: number;
+		lows: number;
+		timeInRange: number;
+	} {
+		const alerts = glucoseDate
+			.filter((g) => g.value !== null)
+			.map((g) => this.bloodSugarAlert(g.value as number));
+
+		const highs = Math.round(
+			(alerts.filter((a) => a === PATIENT_INDICATION.HIGH_RISK).length /
+				alerts.length) *
+				100,
+		);
+		const lows = Math.round(
+			(alerts.filter((a) => a === PATIENT_INDICATION.NEEDS_ATTENTION).length /
+				alerts.length) *
+				100,
+		);
+		const timeInRange = Math.round(
+			(alerts.filter((a) => a === PATIENT_INDICATION.STABLE).length /
+				alerts.length) *
+				100,
+		);
+
+		return {
+			highs,
+			lows,
+			timeInRange,
+		};
+	}
+
+	private async patientAlert(
+		patient: {
+			id: string;
+			firstName: string;
+			lastName: string;
+			age: number;
+			diabetesType: DIABETES_TYPE;
+			condition: string;
+		},
+		yesterdayStr: string,
+		todayStr: string,
+	) {
+		const alerts: string[] = [];
+		// 1) Blood glucose (last 24h) – status and "Glucose Spikes" tag
+		const glucoseData = await this.healthRepository.getFilteredMetrics(
+			patient.id,
+			yesterdayStr,
+			todayStr,
+			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+		);
+		const worst = this.getPatientWorstIndicationStatus(
+			glucoseData.bloodSugarRecords,
+		);
+		if (worst !== PATIENT_INDICATION.STABLE) {
+			alerts.push("Glucose Fluctuations");
+		}
+
+		// 2) Activity (steps in last 24h)
+		const activityData = await this.healthRepository.getFilteredMetrics(
+			patient.id,
+			yesterdayStr,
+			todayStr,
+			[EXERCISE_TYPE_ENUM.STEPS],
+		);
+		const totalSteps = activityData.stepsRecords.reduce((sum, r) => {
+			const v =
+				typeof r.value === "string"
+					? parseFloat(r.value)
+					: Number(r.value) || 0;
+			return sum + v;
+		}, 0);
+		if (
+			activityData.stepsRecords.length === 0 ||
+			totalSteps < PatientRepository.MIN_STEPS_FOR_ACTIVITY
+		) {
+			alerts.push("No Activity in last 24hrs");
+		}
+
+		// 3) Meals from loggedMeals: count and over/under eating vs recommendation
+		const mealsCount = await this.foodRepository.getLoggedMealsCount(
+			patient.id,
+			yesterdayStr,
+			todayStr,
+		);
+		if (mealsCount === 0) {
+			alerts.push("Missed Meals");
+		}
+
+		const todayConsumed = await this.foodRepository.getConsumedNutrients(
+			patient.id,
+			todayStr,
+		);
+		const recommendation =
+			await this.foodRepository.getDailyNutrientRecommendation(
+				patient.id,
+				todayStr,
+			);
+		if (recommendation) {
+			const recCal = parseFloat(recommendation.calories?.toString() || "0");
+			const consumedCal = todayConsumed
+				? parseFloat(todayConsumed.calories?.toString() || "0")
+				: 0;
+			if (recCal > 0) {
+				if (consumedCal > recCal * PatientRepository.OVER_EATING_RATIO) {
+					alerts.push("Over Eating");
+				}
+				if (
+					consumedCal > 0 &&
+					consumedCal < recCal * PatientRepository.UNDER_EATING_RATIO
+				) {
+					alerts.push("Under Eating");
+				}
+			}
+		}
+
+		const bloodSugarStatus = worst;
+		const status = bloodSugarStatus;
+		const tags = alerts.length > 0 ? alerts : ["No Alerts"];
+		const tagsWithColors = tags.map((tag) => ({
+			text: tag,
+			color: getAlertTagColor(tag),
+		}));
+
+		return {
+			id: patient.id,
+			name: `${patient.firstName} ${patient.lastName}`,
+			age: patient.age,
+			diabetesType: patient.condition as string,
+			tags: tagsWithColors,
+			status,
+			statusColor: getStatusColor(status),
+			indication: status,
+		};
+	}
+
 	async getPatientAlerts(physicianId?: string): Promise<{
-		highRisk: Array<{
-			id: string;
-			name: string;
-			age: number;
-			diabetesType: string;
-			tags: Array<{ text: string; color: string }>;
-			status: PATIENT_INDICATION; 
-			statusColor: string;
-		}>;
-		stable: Array<{
-			id: string;
-			name: string;
-			age: number;
-			diabetesType: string;
-			tags: Array<{ text: string; color: string }>;
-			status: PATIENT_INDICATION; 
-			statusColor: string;
-		}>;
-		needsAttention: Array<{
-			id: string;
-			name: string;
-			age: number;
-			diabetesType: string;
-			tags: Array<{ text: string; color: string }>;
-			status: PATIENT_INDICATION; 
-			statusColor: string;
-		}>;
+		highRisk: PatientAlert[];
+		stable: PatientAlert[];
+		needsAttention: PatientAlert[];
 	}> {
 		// Build base where condition
 		let whereCondition = eq(users.role, USER_ROLES.CUSTOMER);
 
 		// If physicianId is provided, filter by latest consulting physician
-		let patientIds: string[] | null = null;
 		if (physicianId) {
-			patientIds = await this.getPatientIdsWithLatestPhysician(physicianId);
+			const patientIds =
+				await this.getPatientIdsWithLatestPhysician(physicianId);
 			if (patientIds.length === 0) {
 				return {
-				highRisk: [
-					{
-						id: "hardcoded-1",
-						name: "John Smith",
-						age: 52,
-						diabetesType: "Gestational Diabetes",
-						tags: [
-							{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") },
-							{ text: "No Activity in last 24hrs", color: getAlertTagColor("No Activity in last 24hrs") },
-						],
-						status: PATIENT_INDICATION.HIGH_RISK,
-						statusColor: getStatusColor(PATIENT_INDICATION.HIGH_RISK),
-					},
-					{
-						id: "hardcoded-2",
-						name: "Sarah Johnson",
-						age: 45,
-						diabetesType: "Gestational Diabetes",
-						tags: [
-							{ text: "Missed Meals", color: getAlertTagColor("Missed Meals") },
-							{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") },
-						],
-						status: PATIENT_INDICATION.HIGH_RISK,
-						statusColor: getStatusColor(PATIENT_INDICATION.HIGH_RISK),
-					},
-				],
-				stable: [
-					{
-						id: "hardcoded-3",
-						name: "Michael Brown",
-						age: 38,
-						diabetesType: "Diabetes Type 2",
-						tags: [{ text: "No Alerts", color: getAlertTagColor("No Alerts") }],
-						status: PATIENT_INDICATION.STABLE,
-						statusColor: getStatusColor(PATIENT_INDICATION.STABLE),
-					},
-					{
-						id: "hardcoded-4",
-						name: "Emily Davis",
-						age: 41,
-						diabetesType: "Diabetes Type 2",
-						tags: [{ text: "No Alerts", color: getAlertTagColor("No Alerts") }],
-						status: PATIENT_INDICATION.STABLE,
-						statusColor: getStatusColor(PATIENT_INDICATION.STABLE),
-					},
-				],
-				needsAttention: [
-					{
-						id: "hardcoded-5",
-						name: "David Wilson",
-						age: 35,
-						diabetesType: "Diabetes Type 1",
-						tags: [
-							{ text: "No Activity in last 24hrs", color: getAlertTagColor("No Activity in last 24hrs") },
-							{ text: "Missed Meals", color: getAlertTagColor("Missed Meals") },
-						],
-						status: PATIENT_INDICATION.NEEDS_ATTENTION,
-						statusColor: getStatusColor(PATIENT_INDICATION.NEEDS_ATTENTION),
-					},
-					{
-						id: "hardcoded-6",
-						name: "Lisa Anderson",
-						age: 29,
-						diabetesType: "Prediabetes",
-						tags: [{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") }],
-						status: PATIENT_INDICATION.NEEDS_ATTENTION,
-						statusColor: getStatusColor(PATIENT_INDICATION.NEEDS_ATTENTION),
-					},
-				],
-			
+					highRisk: [],
+					stable: [],
+					needsAttention: [],
 				};
 			}
 			whereCondition = and(whereCondition, inArray(users.id, patientIds))!;
 		}
 
-		// Get all patients with their indication
+		// Date range: last 24h = yesterday and today (cast to date for consistency)
+		const today = new Date();
+		const yesterday = new Date(today);
+		yesterday.setDate(yesterday.getDate() - 1);
+		const yesterdayStr = yesterday.toISOString().split("T")[0];
+		const todayStr = today.toISOString().split("T")[0];
+
+		// Get all patients with base indication from diabetes type (fallback when no glucose data)
 		const allPatients = await db
 			.select({
 				id: users.id,
@@ -584,95 +716,17 @@ export class PatientRepository {
 				lastName: users.lastName,
 				age: this.ageSql,
 				diabetesType: customerData.diabetesType,
-				condition: this.conditionSql(customerData.diabetesType),
-				indication: sql<string>`
-					CASE ${customerData.diabetesType}
-						WHEN 'type1' THEN 'Needs Attention'
-						WHEN 'type2' THEN 'Stable'
-						WHEN 'gestational' THEN 'High Risk'
-						WHEN 'prediabetes' THEN 'Needs Attention'
-						ELSE 'Stable'
-					END
-				`,
+				condition: this.diabetesTypeSql(customerData.diabetesType),
 			})
 			.from(users)
 			.innerJoin(customerData, eq(users.id, customerData.userId))
 			.where(whereCondition);
 
-		// Calculate alerts for each patient
+		// Calculate alerts per patient: status from bloodSugarAlert; tags from glucose, activity, meals
 		const patientsWithAlerts = await Promise.all(
-			allPatients.map(async (patient) => {
-				const alerts: string[] = [];
-
-				// Check glucose spikes (last 24 hours)
-				const yesterday = new Date();
-				yesterday.setDate(yesterday.getDate() - 1);
-				const glucoseData = await this.healthRepository.getFilteredMetrics(
-					patient.id,
-					yesterday.toISOString().split("T")[0],
-					new Date().toISOString().split("T")[0],
-					[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
-				);
-
-				if (glucoseData.bloodSugarRecords.length > 0) {
-					const highReadings = glucoseData.bloodSugarRecords.filter(
-						(record) => {
-							const value =
-								typeof record.value === "string"
-									? parseFloat(record.value)
-									: record.value || 0;
-							return value > 180; // High threshold
-						},
-					);
-					if (highReadings.length > 0) {
-						alerts.push("Glucose Spikes");
-					}
-				}
-
-				// Check activity in last 24 hours (check steps)
-				const activityData = await this.healthRepository.getFilteredMetrics(
-					patient.id,
-					yesterday.toISOString().split("T")[0],
-					new Date().toISOString().split("T")[0],
-					[EXERCISE_TYPE_ENUM.STEPS],
-				);
-				if (activityData.stepsRecords.length === 0) {
-					alerts.push("No Activity in last 24hrs");
-				}
-
-				// Check missed meals - check if there are food scans in the last 24 hours
-				const today = new Date();
-				const todayStr = today.toISOString().split("T")[0];
-				const yesterdayStr = yesterday.toISOString().split("T")[0];
-				
-				// Check food scans for today and yesterday
-				const todayFoodScan = await this.foodRepository.getConsumedNutrients(patient.id, today);
-				const yesterdayFoodScan = await this.foodRepository.getConsumedNutrients(patient.id, yesterday);
-				
-				// If no food scans in last 24 hours, consider meals missed
-				if (!todayFoodScan && !yesterdayFoodScan) {
-					alerts.push("Missed Meals");
-				}
-
-				const status = patient.indication as PATIENT_INDICATION
-
-				const tags = alerts.length > 0 ? alerts : ["No Alerts"];
-				const tagsWithColors = tags.map((tag) => ({
-					text: tag,
-					color: getAlertTagColor(tag),
-				}));
-
-				return {
-					id: patient.id,
-					name: `${patient.firstName} ${patient.lastName}`,
-					age: patient.age,
-					diabetesType: patient.condition as string,
-					tags: tagsWithColors,
-					status,
-					statusColor: getStatusColor(status),
-					indication: patient.indication,
-				};
-			}),
+			allPatients.map(async (patient) =>
+				this.patientAlert(patient, yesterdayStr, todayStr),
+			),
 		);
 
 		// Group by indication and limit to 4 per group with random selection
@@ -684,9 +738,9 @@ export class PatientRepository {
 				id: p.id,
 				name: p.name,
 				age: p.age,
-				diabetesType: p.diabetesType as string,
+				diabetesType: p.diabetesType,
 				tags: p.tags,
-				status: PATIENT_INDICATION.HIGH_RISK, 
+				status: PATIENT_INDICATION.HIGH_RISK,
 				statusColor: p.statusColor,
 			}));
 
@@ -717,85 +771,6 @@ export class PatientRepository {
 				status: PATIENT_INDICATION.NEEDS_ATTENTION,
 				statusColor: p.statusColor,
 			}));
-
-		// If no data found, return hardcoded sample data
-		if (
-			highRisk.length === 0 &&
-			stable.length === 0 &&
-			needsAttention.length === 0
-		) {
-			return {
-				highRisk: [
-					{
-						id: "hardcoded-1",
-						name: "John Smith",
-						age: 52,
-						diabetesType: "Gestational Diabetes",
-						tags: [
-							{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") },
-							{ text: "No Activity in last 24hrs", color: getAlertTagColor("No Activity in last 24hrs") },
-						],
-						status: PATIENT_INDICATION.HIGH_RISK,
-						statusColor: getStatusColor(PATIENT_INDICATION.HIGH_RISK),
-					},
-					{
-						id: "hardcoded-2",
-						name: "Sarah Johnson",
-						age: 45,
-						diabetesType: "Gestational Diabetes",
-						tags: [
-							{ text: "Missed Meals", color: getAlertTagColor("Missed Meals") },
-							{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") },
-						],
-						status: PATIENT_INDICATION.HIGH_RISK,
-						statusColor: getStatusColor(PATIENT_INDICATION.HIGH_RISK),
-					},
-				],
-				stable: [
-					{
-						id: "hardcoded-3",
-						name: "Michael Brown",
-						age: 38,
-						diabetesType: "Diabetes Type 2",
-						tags: [{ text: "No Alerts", color: getAlertTagColor("No Alerts") }],
-						status: PATIENT_INDICATION.STABLE,
-						statusColor: getStatusColor(PATIENT_INDICATION.STABLE),
-					},
-					{
-						id: "hardcoded-4",
-						name: "Emily Davis",
-						age: 41,
-						diabetesType: "Diabetes Type 2",
-						tags: [{ text: "No Alerts", color: getAlertTagColor("No Alerts") }],
-						status: PATIENT_INDICATION.STABLE,
-						statusColor: getStatusColor(PATIENT_INDICATION.STABLE),
-					},
-				],
-				needsAttention: [
-					{
-						id: "hardcoded-5",
-						name: "David Wilson",
-						age: 35,
-						diabetesType: "Diabetes Type 1",
-						tags: [
-							{ text: "No Activity in last 24hrs", color: getAlertTagColor("No Activity in last 24hrs") },
-							{ text: "Missed Meals", color: getAlertTagColor("Missed Meals") },
-						],
-						status: PATIENT_INDICATION.NEEDS_ATTENTION,
-						statusColor: getStatusColor(PATIENT_INDICATION.NEEDS_ATTENTION),
-					},
-					{
-						id: "hardcoded-6",
-						name: "Lisa Anderson",
-						age: 29,
-						diabetesType: "Prediabetes",
-						tags: [{ text: "Glucose Spikes", color: getAlertTagColor("Glucose Spikes") }],
-						status: PATIENT_INDICATION.NEEDS_ATTENTION,
-						statusColor: getStatusColor(PATIENT_INDICATION.NEEDS_ATTENTION),
-					},
-				],
-			};
-		}
 
 		return {
 			highRisk,

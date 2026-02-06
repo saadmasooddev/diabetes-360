@@ -2,8 +2,10 @@ import { Router } from "express";
 import { SettingsController } from "../controllers/settings.controller";
 import {
 	authenticateToken,
+	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
+import { PERMISSIONS } from "@/utils/permissions";
 
 const router = Router();
 const settingsController = new SettingsController();
@@ -147,7 +149,7 @@ router.get("/limits", authenticateToken, (req, res, next) =>
 router.post(
 	"/limits",
 	authenticateToken,
-	requirePermission("create:settings"),
+	requireAnyPermission([PERMISSIONS.CREATE_SETTINGS]),
 	(req, res, next) => settingsController.createLimits(req, res, next),
 );
 
@@ -234,7 +236,7 @@ router.post(
 router.put(
 	"/limits",
 	authenticateToken,
-	requirePermission("update:settings"),
+	requireAnyPermission([PERMISSIONS.UPDATE_SETTINGS]),
 	(req, res, next) => settingsController.upsertLimits(req, res, next),
 );
 
@@ -325,7 +327,7 @@ router.put(
 router.patch(
 	"/limits",
 	authenticateToken,
-	requirePermission("update:settings"),
+	requireAnyPermission([PERMISSIONS.UPDATE_SETTINGS]),
 	(req, res, next) => settingsController.updateLimits(req, res, next),
 );
 

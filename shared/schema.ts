@@ -6,3 +6,4 @@ export * from "../server/src/modules/twoFactor/models/twoFactor.schema";
 export * from "../server/src/modules/booking/models/booking.schema";
 export * from "../server/src/modules/medical/models/medical.schema";
 export * from "../server/src/modules/booking/models/consultation-quota.schema";
+export * from "../server/src/modules/chat/models/chat.schema";

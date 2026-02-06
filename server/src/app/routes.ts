@@ -11,6 +11,7 @@ import { foodRoutes } from "../modules/food/routes/food.routes";
 import { twoFactorRoutes } from "../modules/twoFactor/routes/twoFactor.routes";
 import { medicalRoutes } from "../modules/medical/routes/medical.routes";
 import { commonRoutes } from "../modules/common/routes/common.routes";
+import { chatRoutes } from "../modules/chat/routes/chat.routes";
 
 export function registerRoutes(app: Express): Express {
 	app.use("/api/auth", authRoutes);
@@ -25,6 +26,7 @@ export function registerRoutes(app: Express): Express {
 	app.use("/api/two-factor", twoFactorRoutes);
 	app.use("/api/medical", medicalRoutes);
 	app.use("/api/common", commonRoutes);
+	app.use("/api/chat", chatRoutes);
 
 	return app;
 }

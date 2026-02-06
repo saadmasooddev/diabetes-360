@@ -50,6 +50,7 @@ module.exports = {
 			},
 			fontFamily: {
 				sans: [
+					'"Open Sauce Sans"',
 					"ui-sans-serif",
 					"system-ui",
 					"sans-serif",
@@ -58,6 +59,7 @@ module.exports = {
 					'"Segoe UI Symbol"',
 					'"Noto Color Emoji"',
 				],
+				inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
 			},
 			keyframes: {
 				"accordion-down": {

@@ -23,10 +23,12 @@ import { useAuthStore } from "@/stores/authStore";
 import { calorieUtils, handleNumberInput } from "@/lib/utils";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import { ACTIVITY_TYPE_ENUM, type ActivityType } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 type ModalType = "time" | "exercises";
 
 export function TipsExercises() {
+	const { toast } = useToast();
 	const [, setLocation] = useLocation();
 	const { user } = useAuthStore();
 	const isPremium = user?.paymentType !== "free";
@@ -113,37 +115,50 @@ export function TipsExercises() {
 				gender: customerData.customerData.gender as "male" | "female",
 			};
 
-			// Calculate calories burned
 			const calories = calorieUtils.calculateCaloriesBurned(
 				userInfo,
 				activityName,
 				durationSeconds,
 			);
 
-			addActivityLogsBatch.mutate({
-				exercises: [
-					{
-						exerciseName,
-						calories,
-						activityType,
-						duration: durationSeconds, // in seconds
-						...(activityName === "walking" && {
-							steps: Math.round((durationSeconds / 60) * 100),
-							pace: "moderate",
-						}),
+			if (calories <= 0 || durationSeconds <= 0) {
+				return toast({
+					title: "Invalid Duration",
+					description: "Please enter a valid duration.",
+					variant: "destructive",
+				});
+			}
 
-						...(activityName === "yoga" && {
-							duration: Math.round((durationSeconds / 60) * 100),
-							pace: "moderate",
-						}),
-						recordedAt: new Date().toISOString(),
+			addActivityLogsBatch.mutate(
+				{
+					exercises: [
+						{
+							exerciseName,
+							calories,
+							activityType,
+							duration: durationSeconds, // in seconds
+							...(activityName === "walking" && {
+								steps: Math.round((durationSeconds / 60) * 100),
+								pace: "moderate",
+							}),
+
+							...(activityName === "yoga" && {
+								duration: Math.round((durationSeconds / 60) * 100),
+								pace: "moderate",
+							}),
+							recordedAt: new Date().toISOString(),
+						},
+					],
+				},
+				{
+					onSuccess: () => {
+						setMinutes(30);
 					},
-				],
-			});
+				},
+			);
 			// Close modal and reset all state
 			setIsExerciseModalOpen(false);
 			setHours(0);
-			setMinutes(30);
 			setSelectedExercise(null);
 			setModalType("time");
 		} else {

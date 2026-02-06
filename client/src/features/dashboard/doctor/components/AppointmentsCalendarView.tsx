@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { BookingCalendar } from "@/features/dashboard/components/BookingCalendar";
-import { useDatesWithBookings, useCreateCustomSlot } from "@/hooks/mutations/useBooking";
+import {
+	useDatesWithBookings,
+	useCreateCustomSlot,
+} from "@/hooks/mutations/useBooking";
 import { CreateCustomSlotModal } from "./CreateCustomSlotModal";
 import type { CreateCustomSlotFormData } from "./CreateCustomSlotModal";
 

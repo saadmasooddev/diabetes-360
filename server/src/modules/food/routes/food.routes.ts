@@ -2,6 +2,7 @@ import { Router } from "express";
 import { FoodController } from "../controllers/food.controller";
 import {
 	authenticateToken,
+	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
 import { memoryUpload } from "../../../shared/config/multer.config";
@@ -70,7 +71,6 @@ const foodController = new FoodController();
 router.post(
 	"/scan",
 	authenticateToken,
-	// requirePermission('scan:food'),
 	memoryUpload.single("food_image"),
 	(req, res) => foodController.scanFood(req, res),
 );
@@ -176,7 +176,7 @@ router.get("/daily-data", authenticateToken, (req, res) =>
 router.get(
 	"/nutrition/consumed",
 	authenticateToken,
-	requirePermission("scan:food"),
+	requireAnyPermission([PERMISSIONS.SCAN_FOOD]),
 	(req, res) => foodController.getConsumedNutrients(req, res),
 );
 

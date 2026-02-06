@@ -31,7 +31,7 @@ export const ProtectedRoute = ({
 		}
 
 		if (user.role === USER_ROLES.CUSTOMER && !user.profileComplete) {
-			return navigate(ROUTES.PROFILE_DATA)
+			return navigate(ROUTES.PROFILE_DATA);
 		}
 
 		const role = user.role;

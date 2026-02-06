@@ -246,6 +246,18 @@ export function DoctorPatients() {
 								</tbody>
 							</table>
 						</div>
+						{/* {pagination && pagination.totalPages > 1 && (
+							<div className="mt-8">
+								<ReusablePagination
+									currentPage={pagination.page}
+									totalPages={pagination.totalPages}
+									onPageChange={(page) => {
+										onPageChange(page);
+										window.scrollTo({ top: 0, behavior: "smooth" });
+									}}
+								/>
+							</div>
+						)} */}
 					</Card>
 
 					{/* Statistics Cards with Pie Charts */}

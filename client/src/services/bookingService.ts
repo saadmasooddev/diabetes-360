@@ -2,7 +2,10 @@ import { API_ENDPOINTS } from "@/config/endpoints";
 import { httpClient } from "@/utils/httpClient";
 import type { ApiResponse } from "@/types/auth.types";
 import type { DatesWithSpecifiedDateSlots } from "server/src/modules/booking/controllers/booking.controller";
-import { SlotStartEnd, UserConsultation } from "server/src/modules/booking/repository/booking.repository";
+import {
+	SlotStartEnd,
+	UserConsultation,
+} from "server/src/modules/booking/repository/booking.repository";
 import { DateManager } from "@/lib/utils";
 
 export interface SlotSize {
@@ -69,11 +72,13 @@ export interface SlotPrice {
 }
 
 export interface CreateSlotsRequest {
+	physicianId?: string;
 	date: string;
 	slotSizeId: string;
-	slotTimes: { startTime: string, endTime: string}[]
+	slotTimes: { startTime: string; endTime: string }[];
 	slotTypeIds: string[];
 	locationIds?: string[];
+	timeZone: string;
 }
 
 export interface BookingPriceCalculation {
@@ -275,6 +280,11 @@ class BookingService {
 		if (params.type) queryParams.append("type", params.type);
 		if (params.page) queryParams.append("page", params.page.toString());
 		if (params.limit) queryParams.append("limit", params.limit.toString());
+		queryParams.append("date", new Date().toISOString());
+		queryParams.append(
+			"timeZone",
+			Intl.DateTimeFormat().resolvedOptions().timeZone,
+		);
 
 		const response = await httpClient.get<
 			ApiResponse<{
@@ -300,6 +310,23 @@ class BookingService {
 				response.message || "Failed to mark consultation as attended",
 			);
 		}
+	}
+
+	async updateConsultationStatus(
+		bookingId: string,
+		status: "pending" | "confirmed" | "cancelled" | "completed",
+	): Promise<{ id: string; status: string }> {
+		const response = await httpClient.patch<
+			ApiResponse<{ booking: { id: string; status: string } }>
+		>(API_ENDPOINTS.BOOKING.UPDATE_CONSULTATION_STATUS(bookingId), {
+			status,
+		});
+		if (!response.success || !response.data) {
+			throw new Error(
+				response.message || "Failed to update consultation status",
+			);
+		}
+		return response.data.booking;
 	}
 
 	async getAppointments(
@@ -442,7 +469,9 @@ class BookingService {
 		data: UpdateSlotRequest,
 	): Promise<Slot & { types?: SlotType[]; locations?: PhysicianLocation[] }> {
 		const response = await httpClient.patch<
-			ApiResponse<{ slot: Slot & { types?: SlotType[]; locations?: PhysicianLocation[] } }>
+			ApiResponse<{
+				slot: Slot & { types?: SlotType[]; locations?: PhysicianLocation[] };
+			}>
 		>(API_ENDPOINTS.BOOKING.UPDATE_SLOT(slotId), data);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to update slot");

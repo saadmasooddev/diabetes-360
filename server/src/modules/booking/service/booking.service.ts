@@ -14,6 +14,7 @@ import { db } from "../../../app/config/db";
 import { physicianData } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
 import type {
+	BOOKING_TYPE_QUERY_ENUM,
 	InsertSlot,
 	InsertSlotTypeJunction,
 } from "../models/booking.schema";
@@ -90,29 +91,32 @@ export class BookingService {
 		physicianId: string,
 		date: string,
 		slotSizeId: string,
-		slotTimes: { startTime: string, endTime: string}[],
+		slotTimes: { startTime: string; endTime: string }[],
 		slotTypeIds: string[],
 		locationIds?: string[],
 	) {
-
 		if (DateManager.isBeforeToday(date)) {
 			throw new BadRequestError("Cannot create slots for past dates");
 		}
-   const { availableSlots } = await this.generateSlotsForDay(
+		const { availableSlots } = await this.generateSlotsForDay(
 			physicianId,
 			date,
 			slotSizeId,
 		);
 
 		// Filter out past slots if date is today
-		const useableSlots = slotTimes.filter(st => availableSlots.some(as => as.startTime === st.startTime && as.endTime === st.endTime)) 
+		const useableSlots = slotTimes.filter((st) =>
+			availableSlots.some(
+				(as) => as.startTime === st.startTime && as.endTime === st.endTime,
+			),
+		);
 		let ignoredCount = slotTimes.length - useableSlots.length;
 
-
 		if (useableSlots.length === 0) {
-			const message = ignoredCount > 0
-				? `No available slots for this date. ${ignoredCount} slot(s) were in the past and ignored.`
-				: "No available slots for this date. All time slots conflict with existing slots.";
+			const message =
+				ignoredCount > 0
+					? `No available slots for this date. ${ignoredCount} slot(s) were in the past and ignored.`
+					: "No available slots for this date. All time slots conflict with existing slots.";
 			throw new BadRequestError(message);
 		}
 		// Get or create availability date
@@ -129,7 +133,7 @@ export class BookingService {
 			});
 		}
 
-		if(!availability){
+		if (!availability) {
 			throw new ConflictError("Availability not found");
 		}
 
@@ -148,32 +152,31 @@ export class BookingService {
 		}
 
 		// Validate time format and calculate slots
-		const slotResults  = await Promise.all(useableSlots.map(async({startTime, endTime}) => {
-			const slots = this.generateSlots(startTime, endTime, slotSize.size);
-			if (slots.length === 0) {
-				throw new BadRequestError("Invalid time range or slot size");
-			}
+		const slotResults = await Promise.all(
+			useableSlots.map(async ({ startTime, endTime }) => {
+				const slots = this.generateSlots(startTime, endTime, slotSize.size);
+				if (slots.length === 0) {
+					throw new BadRequestError("Invalid time range or slot size");
+				}
 
-			// Check for overlapping slots
-			const hasOverlap = await this.bookingRepository.checkOverlappingSlots(
-				availability!.id,
-				startTime,
-				endTime,
-				slotTypeIds,
-			);
+				// Check for overlapping slots
+				const hasOverlap = await this.bookingRepository.checkOverlappingSlots(
+					availability!.id,
+					startTime,
+					endTime,
+					slotTypeIds,
+				);
 
-			if (hasOverlap) {
+				if (hasOverlap) {
 					throw new ConflictError(
 						"Slots overlap with existing slots for this date. Please delete existing slots in this time range before creating new ones.",
 					);
 				}
-			return slots
+				return slots;
+			}),
+		);
 
-		}))
-
-		const slots = slotResults.flat()
-	
-
+		const slots = slotResults.flat();
 
 		// Create slots
 		const slotData: InsertSlot[] = slots.map((slot) => ({
@@ -267,8 +270,6 @@ export class BookingService {
 			throw new BadRequestError("Slot duration cannot exceed 8 hours");
 		}
 
-
-
 		// Get or create availability date
 		let availability =
 			await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
@@ -288,8 +289,8 @@ export class BookingService {
 			throw new NotFoundError("No slot sizes found in the system");
 		}
 
-		const smallestSlotSize = allSlotSizes.reduce((min, size) => 
-			size.size < min.size ? size : min
+		const smallestSlotSize = allSlotSizes.reduce((min, size) =>
+			size.size < min.size ? size : min,
 		);
 
 		// Validate slot types exist
@@ -447,7 +448,9 @@ export class BookingService {
 			),
 		);
 
-		return details.filter((d) => d !== null).map(d => ({ ...d, availabilityDate: availability.date })) as Array<
+		return details
+			.filter((d) => d !== null)
+			.map((d) => ({ ...d, availabilityDate: availability.date })) as Array<
 			NonNullable<(typeof details)[0]>
 		>;
 	}
@@ -514,9 +517,7 @@ export class BookingService {
 
 		// Check permissions
 		if (!isAdmin && availability.physicianId !== physicianId) {
-			throw new ForbiddenError(
-				"You can only update your own slots",
-			);
+			throw new ForbiddenError("You can only update your own slots");
 		}
 
 		// Check if slot is booked
@@ -532,7 +533,9 @@ export class BookingService {
 			}
 
 			// Validate slot types exist
-			const slotTypes = await this.bookingRepository.getSlotTypesByIds(data.slotTypeIds)
+			const slotTypes = await this.bookingRepository.getSlotTypesByIds(
+				data.slotTypeIds,
+			);
 			if (slotTypes.length !== data.slotTypeIds.length) {
 				throw new NotFoundError(`Slot types proivded are incorrect`);
 			}
@@ -567,8 +570,9 @@ export class BookingService {
 			}
 
 			// Get current slot types for overlap check
-			const currentTypeJunctions = await this.bookingRepository.getSlotTypeJunctionsBySlotId(slotId);
-			const currentTypeIds = currentTypeJunctions.map(j => j.slotTypeId);
+			const currentTypeJunctions =
+				await this.bookingRepository.getSlotTypeJunctionsBySlotId(slotId);
+			const currentTypeIds = currentTypeJunctions.map((j) => j.slotTypeId);
 			const typeIdsForOverlapCheck = data.slotTypeIds || currentTypeIds;
 
 			// Check for overlapping slots (excluding current slot)
@@ -601,13 +605,14 @@ export class BookingService {
 		// Update locations if provided
 		if (data.locationIds !== undefined) {
 			// Get current slot types (use updated types if provided, otherwise get from slot)
-			const typeIdsToCheck = data.slotTypeIds || 
-				(await this.bookingRepository.getSlotTypeJunctionsBySlotId(slotId)).map(j => j.slotTypeId);
-			
+			const typeIdsToCheck =
+				data.slotTypeIds ||
+				(await this.bookingRepository.getSlotTypeJunctionsBySlotId(slotId)).map(
+					(j) => j.slotTypeId,
+				);
+
 			const currentSlotTypes = await Promise.all(
-				typeIdsToCheck.map((id) =>
-					this.bookingRepository.getSlotTypeById(id),
-				),
+				typeIdsToCheck.map((id) => this.bookingRepository.getSlotTypeById(id)),
 			);
 
 			const hasOfflineType = currentSlotTypes.some(
@@ -694,7 +699,7 @@ export class BookingService {
 	}
 
 	private timeToMinutes(time: string): number {
-		return DateManager.timeToMinutes(time)
+		return DateManager.timeToMinutes(time);
 	}
 
 	private minutesToTime(minutes: number): string {
@@ -857,10 +862,12 @@ export class BookingService {
 	async getUserConsultations(
 		customerId: string,
 		options: {
-			type?: "upcoming" | "past";
+			type?: BOOKING_TYPE_QUERY_ENUM;
 			page?: number;
 			limit?: number;
 			skip?: number;
+			date?: string;
+			timeZone?: string;
 		} = {},
 	) {
 		return await this.bookingRepository.getUserConsultations(
@@ -891,6 +898,19 @@ export class BookingService {
 			bookingId,
 			summary,
 			physicianId,
+		);
+	}
+
+	/**
+	 * Update consultation status (admin only). Status must be one of the allowed DB enum values.
+	 */
+	async updateConsultationStatus(
+		bookingId: string,
+		status: "pending" | "confirmed" | "cancelled" | "completed",
+	) {
+		return await this.bookingRepository.updateBookedSlotStatus(
+			bookingId,
+			status,
 		);
 	}
 
@@ -939,7 +959,6 @@ export class BookingService {
 		date: string,
 		slotSizeId: string,
 	) {
-
 		const result = await this.bookingRepository.generateSlotsForDay(
 			physicianId,
 			date,
@@ -947,10 +966,8 @@ export class BookingService {
 		);
 		return {
 			...result,
-		} 
+		};
 	}
-
-
 
 	/**
 	 * Bulk delete slots (only unbooked ones)

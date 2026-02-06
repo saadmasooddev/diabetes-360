@@ -86,7 +86,7 @@ export class HealthService {
 					const todaysWaterTotal =
 						await this.healthRepository.getTodaysMetricTotal(
 							data.userId,
-EXERCISE_TYPE_ENUM.WATER_INTAKE,
+							EXERCISE_TYPE_ENUM.WATER_INTAKE,
 							data.recordedAt,
 						);
 					const waterValue = parseFloat(data.waterIntake.toString());
@@ -268,7 +268,7 @@ EXERCISE_TYPE_ENUM.WATER_INTAKE,
 				const todaysStepsTotal =
 					await this.healthRepository.getTodaysMetricTotal(
 						log.userId,
-EXERCISE_TYPE_ENUM.STEPS,
+						EXERCISE_TYPE_ENUM.STEPS,
 						log.recordedAt,
 					);
 				const newTotal = todaysStepsTotal + log.steps;
@@ -455,9 +455,10 @@ EXERCISE_TYPE_ENUM.STEPS,
 	}
 
 	async getHealthInsights(userId: string, date: string) {
-		const healthInsights = await this.healthRepository.getHealthInsightsByUserId(userId, date)
-		if(healthInsights){
-			return healthInsights
+		const healthInsights =
+			await this.healthRepository.getHealthInsightsByUserId(userId, date);
+		if (healthInsights) {
+			return healthInsights;
 		}
 
 		// Get user data and statistics
@@ -561,10 +562,14 @@ EXERCISE_TYPE_ENUM.STEPS,
 		};
 
 		// Store in database
-		const healthInsightsResults = await this.healthRepository.createOrUpdateHealthInsights(userId, date, result);
+		const healthInsightsResults =
+			await this.healthRepository.createOrUpdateHealthInsights(
+				userId,
+				date,
+				result,
+			);
 
-
-		return healthInsightsResults ;
+		return healthInsightsResults;
 	}
 	async upsertUserTargetsBatch(
 		userId: string,

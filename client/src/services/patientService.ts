@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from "@/config/endpoints";
 import { httpClient } from "@/utils/httpClient";
 import type { ApiResponse } from "@/types/auth.types";
 import type { DateRange } from "@/features/dashboard/components/HealthTrendChart";
-import type { MertricRecord } from "@shared/schema";
+import type { DIABETES_TYPE, MertricRecord } from "@shared/schema";
 import { UserConsultation } from "server/src/modules/booking/repository/booking.repository";
 
 export interface PatientListItem {
@@ -16,7 +16,7 @@ export interface PatientListItem {
 
 export interface PatientStats {
 	diseaseDistribution: Array<{
-		name: string;
+		name: DIABETES_TYPE;
 		percentage: number;
 		color: string;
 	}>;
@@ -55,8 +55,8 @@ export interface PatientProfile {
 		date: string;
 		physicianName?: string;
 	}>;
-	appointments: UserConsultation[],
-  glucoseTrend: MertricRecord[];
+	appointments: UserConsultation[];
+	glucoseTrend: MertricRecord[];
 }
 
 class PatientService {
@@ -127,7 +127,7 @@ class PatientService {
 			age: number;
 			diabetesType: string;
 			tags: Array<{ text: string; color: string }>;
-			status: "high-risk";
+			status: "High Risk";
 			statusColor: string;
 		}>;
 		stable: Array<{
@@ -136,7 +136,7 @@ class PatientService {
 			age: number;
 			diabetesType: string;
 			tags: Array<{ text: string; color: string }>;
-			status: "stable";
+			status: "Stable";
 			statusColor: string;
 		}>;
 		needsAttention: Array<{
@@ -145,7 +145,7 @@ class PatientService {
 			age: number;
 			diabetesType: string;
 			tags: Array<{ text: string; color: string }>;
-			status: "needs-attention";
+			status: "Needs Attention";
 			statusColor: string;
 		}>;
 	}> {
@@ -157,7 +157,7 @@ class PatientService {
 					age: number;
 					diabetesType: string;
 					tags: Array<{ text: string; color: string }>;
-					status: "high-risk";
+					status: "High Risk";
 					statusColor: string;
 				}>;
 				stable: Array<{
@@ -166,7 +166,7 @@ class PatientService {
 					age: number;
 					diabetesType: string;
 					tags: Array<{ text: string; color: string }>;
-					status: "stable";
+					status: "Stable";
 					statusColor: string;
 				}>;
 				needsAttention: Array<{
@@ -175,7 +175,7 @@ class PatientService {
 					age: number;
 					diabetesType: string;
 					tags: Array<{ text: string; color: string }>;
-					status: "needs-attention";
+					status: "Needs Attention";
 					statusColor: string;
 				}>;
 			}>

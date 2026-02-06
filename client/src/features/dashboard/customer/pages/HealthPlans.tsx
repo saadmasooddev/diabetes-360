@@ -4,10 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowUpRight } from "lucide-react";
 import { healthPlans } from "@/mocks/healthPlans";
+import { useAuthStore } from "@/stores/authStore";
+import { PAYMENT_TYPE } from "@shared/schema";
 
 type BillingCycle = "monthly" | "yearly";
 
 export function HealthPlans() {
+	const { user } = useAuthStore();
+	const paymentType = user?.paymentType;
+	const isPaidUser = paymentType !== PAYMENT_TYPE.FREE;
+	const isYearlyUser = paymentType === PAYMENT_TYPE.ANNUAL;
+
 	const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
 
 	const formatPrice = (price: number) => {

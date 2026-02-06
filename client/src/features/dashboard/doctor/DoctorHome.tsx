@@ -99,9 +99,12 @@ export function DoctorHome() {
 		PERMISSIONS.READ_ALL_APPOINTMENTS,
 	]);
 
+	const today = new Date().toISOString().split("T")[0];
 	const { data, isLoading, error } = useAppointments({
 		page: 1,
 		limit: 3,
+		startDate: today,
+		endDate: today,
 	});
 
 	const { data: patientsData, isLoading: isLoadingPatients } = usePatients({
@@ -162,7 +165,9 @@ export function DoctorHome() {
 
 	const handleViewAllAlerts = () => {
 		const isAdmin = window.location.pathname.startsWith("/dashboard/admin");
-		const route = isAdmin ? ROUTES.ADMIN_PATIENTS_ALERTS : ROUTES.DOCTOR_PATIENTS_ALERTS;
+		const route = isAdmin
+			? ROUTES.ADMIN_PATIENTS_ALERTS
+			: ROUTES.DOCTOR_PATIENTS_ALERTS;
 		navigate(route);
 	};
 

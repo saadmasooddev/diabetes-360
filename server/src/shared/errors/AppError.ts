@@ -1,3 +1,4 @@
+import { ZodError } from "zod";
 import { HTTP_STATUS } from "../../app/constants";
 
 export class AppError extends Error {
@@ -18,7 +19,14 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-	constructor(message: string = "Validation error") {
+	constructor(message: string = "Validation error", error?: ZodError) {
+		if (error instanceof ZodError) {
+			super(
+				error.issues.map((i) => i.message).join(", "),
+				HTTP_STATUS.BAD_REQUEST,
+			);
+			return;
+		}
 		super(message, HTTP_STATUS.BAD_REQUEST);
 	}
 }

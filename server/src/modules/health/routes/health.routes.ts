@@ -2,6 +2,7 @@ import { Router } from "express";
 import { HealthController } from "../controllers/health.controller";
 import {
 	authenticateToken,
+	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
 import { memoryUpload } from "../../../shared/config/multer.config";
@@ -10,7 +11,9 @@ import { PERMISSIONS, USER_ROLES } from "@shared/schema";
 const router = Router();
 const healthController = new HealthController();
 
-const readOwnHealthMetrics = requirePermission("read:own_health_metrics");
+const readOwnHealthMetrics = requireAnyPermission([
+	PERMISSIONS.READ_OWN_HEALTH_METRICS,
+]);
 
 /**
  * @swagger
@@ -614,7 +617,7 @@ router.get(
 router.post(
 	"/exercises/add/batch",
 	authenticateToken,
-	requirePermission("create:own_health_metrics"),
+	requireAnyPermission([PERMISSIONS.CREATE_OWN_HEALTH_METRICS]),
 	(req, res) => healthController.addExerciseLogsBatch(req, res),
 );
 
@@ -905,7 +908,7 @@ router.delete(
 router.post(
 	"/targets/recommended/batch",
 	authenticateToken,
-	requirePermission("write:health_targets"),
+	requireAnyPermission([PERMISSIONS.WRITE_HEALTH_TARGETS]),
 	(req, res) => healthController.upsertRecommendedTargetsBatch(req, res),
 );
 

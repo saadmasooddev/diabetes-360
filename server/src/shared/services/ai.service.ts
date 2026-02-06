@@ -94,6 +94,48 @@ export interface HealthAssessmentInsightsResponse {
 	what_to_do_next: Array<{ name: string; tip: string }>;
 }
 
+/** Payload for AI /chat/ endpoint (DiaBot) */
+export interface AIChatPayload {
+	user_info: {
+		name: string;
+		gender: string;
+		birthday: string;
+		diagnosisDate: string;
+		weight: string;
+		height: string;
+		diabetesType: string;
+	};
+	health_summary: {
+		last_24_hours: {
+			blood_sugar: Array<{ value: string; recorded_at: string }>;
+			steps: Array<{ value: string; recorded_at: string }>;
+			water_intake: Array<{ value: string; recorded_at: string }>;
+			heart_rate: Array<{ value: string; recorded_at: string }>;
+			meals: Array<{
+				mealDate: string;
+				foodName: string;
+				carbs: string;
+				sugars: string;
+				fibres: string;
+				proteins: string;
+				fats: string;
+				calories: string;
+			}>;
+		};
+		last_days_health_summary: Array<{ date: string; summary: string }>;
+	};
+	current_section_messages: Array<{
+		role: "user" | "assistant";
+		content: string;
+	}>;
+	old_chat_memory: Array<{ date: string; chat_memory: string }>;
+	current_message: string;
+}
+
+export interface AIChatResponse {
+	reply?: string;
+}
+
 /**
  * AI Service - Centralized wrapper for all AI service HTTP requests
  */
@@ -262,6 +304,26 @@ class AIService {
 			timeout: this.defaultTimeout,
 		});
 		this.validateResponse(response.data, (data) => !!data.blood_sugar_reading);
+		return response.data;
+	}
+
+	async chat(payload: AIChatPayload): Promise<AIBaseResponse<AIChatResponse>> {
+		console.log("chat payload", payload);
+		const response = await axios.post<AIBaseResponse<AIChatResponse>>(
+			`${this.baseUrl}/api/chat/`,
+			payload,
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout: this.defaultTimeout,
+			},
+		);
+
+		this.validateResponse(response.data, (data) => {
+			return !!data.reply;
+		});
+
 		return response.data;
 	}
 }

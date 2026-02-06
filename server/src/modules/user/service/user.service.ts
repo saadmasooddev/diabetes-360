@@ -9,7 +9,7 @@ export class UserService {
 	private readonly twoFactorService: TwoFactorService;
 	constructor() {
 		this.userRepository = new UserRepository();
-		this.twoFactorService = new TwoFactorService()
+		this.twoFactorService = new TwoFactorService();
 	}
 	async getProfile(userId: string) {
 		const user = await this.userRepository.getUser(userId);
@@ -18,8 +18,10 @@ export class UserService {
 		}
 		const twoFactorStatus = await this.twoFactorService.get2FAStatus(user.id);
 
-		return { user: user, permissions: [...(ROLE_PERMISSIONS[user.role as UserRole])],
-			requiresTwoFactor: twoFactorStatus.enabled && twoFactorStatus.verified
+		return {
+			user: user,
+			permissions: [...ROLE_PERMISSIONS[user.role as UserRole]],
+			requiresTwoFactor: twoFactorStatus.enabled && twoFactorStatus.verified,
 		};
 	}
 }

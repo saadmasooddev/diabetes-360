@@ -193,12 +193,12 @@ export function ManageLocation() {
 												{(location.city ||
 													location.state ||
 													location.country) && (
-														<p className="ml-6">
-															{[location.city, location.state, location.country]
-																.filter(Boolean)
-																.join(", ")}
-														</p>
-													)}
+													<p className="ml-6">
+														{[location.city, location.state, location.country]
+															.filter(Boolean)
+															.join(", ")}
+													</p>
+												)}
 											</div>
 										)}
 									</CardContent>
@@ -234,16 +234,16 @@ export function ManageLocation() {
 							initialLocation={
 								editingLocation
 									? {
-										locationName: editingLocation.locationName,
-										address: editingLocation.address || undefined,
-										city: editingLocation.city || undefined,
-										state: editingLocation.state || undefined,
-										country: editingLocation.country || undefined,
-										postalCode: editingLocation.postalCode || undefined,
-										latitude: editingLocation.latitude,
-										longitude: editingLocation.longitude,
-										status: editingLocation.status,
-									}
+											locationName: editingLocation.locationName,
+											address: editingLocation.address || undefined,
+											city: editingLocation.city || undefined,
+											state: editingLocation.state || undefined,
+											country: editingLocation.country || undefined,
+											postalCode: editingLocation.postalCode || undefined,
+											latitude: editingLocation.latitude,
+											longitude: editingLocation.longitude,
+											status: editingLocation.status,
+										}
 									: null
 							}
 						/>

@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { IsPrimaryKey, sql } from "drizzle-orm";
 import {
 	pgTable,
 	text,
@@ -11,6 +11,7 @@ import {
 	uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+
 import { z } from "zod";
 
 export const USER_ROLES = {
@@ -51,12 +52,16 @@ export const providerEnum = z.enum([
 	PROVIDERS.FACEBOOK,
 ]);
 
-export const paymentTypeEnum = z.enum(["monthly", "annual", "free"]);
-export const paymentType = pgEnum("payment_type", [
-	"monthly",
-	"annual",
-	"free",
-]);
+export enum PAYMENT_TYPE {
+	MONTHLY = "monthly",
+	ANNUAL = "annual",
+	FREE = "free",
+}
+export const paymentTypeZodSchema = z.enum(Object.values(PAYMENT_TYPE));
+export const paymentType = pgEnum(
+	"payment_type",
+	Object.values(PAYMENT_TYPE) as [string, ...string[]],
+);
 
 export const users = pgTable("users", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -239,11 +244,11 @@ export const insertPhysicianRatingSchema = createInsertSchema(physicianRatings)
 
 // Customer Data Table
 export enum DIABETES_TYPE {
-	TYPE1= "type1",
-	TYPE2= "type2",
-	GESTATIONAL= "gestational",
-	PREDIABETES= "prediabetes",
-};
+	TYPE1 = "type1",
+	TYPE2 = "type2",
+	GESTATIONAL = "gestational",
+	PREDIABETES = "prediabetes",
+}
 
 export const diabetesTypeEnum = z.enum([
 	DIABETES_TYPE.TYPE1,
@@ -270,7 +275,7 @@ export const customerData = pgTable("customer_data", {
 	diagnosisDate: timestamp("diagnosis_date").notNull(), // Combined diagnosis date field
 	weight: text("weight").notNull(), // Stored as string, e.g., "70"
 	height: text("height").notNull(), // Stored as string, e.g., "175"
-	diabetesType:diabetesTypePgEnum ("diabetes_type").notNull(), // 'type1', 'type2', 'gestational', 'prediabetes'
+	diabetesType: diabetesTypePgEnum("diabetes_type").notNull(), // 'type1', 'type2', 'gestational', 'prediabetes'
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -301,6 +306,40 @@ export const insertCustomerDataSchema = createInsertSchema(customerData)
 				}
 				return val;
 			}),
+	})
+	.superRefine((data, ctx) => {
+		const weight = parseFloat(data.weight);
+		if (isNaN(weight) || weight <= 0) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Weight must be a positive number",
+				path: ["weight"],
+			});
+		}
+		const maxWeight = 1000;
+		if (weight > maxWeight) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Weight must be less than 1000kg",
+				path: ["weight"],
+			});
+		}
+		const height = parseFloat(data.height);
+		if (isNaN(height) || height < 0) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Height must be a positive number",
+				path: ["height"],
+			});
+		}
+		const maxHeight = 250;
+		if (height > maxHeight) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Height must be less than 250cm",
+				path: ["height"],
+			});
+		}
 	});
 
 // Schema for admin creating customer data (dates optional, diabetesType required)
@@ -358,7 +397,8 @@ export const updateCustomerDataSchema = createInsertSchema(customerData)
 			}),
 		firstName: z.string().optional(),
 		lastName: z.string().optional(),
-	});
+	})
+	.superRefine((data, ctx) => {});
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -516,6 +556,7 @@ export const PERMISSIONS = {
 	CREATE_BOOKINGS: "create:bookings",
 	CANCEL_OWN_BOOKINGS: "cancel:own_bookings",
 	READ_ALL_BOOKINGS: "read:all_bookings",
+	UPDATE_ALL_BOOKINGS: "update:all_bookings",
 
 	// Consultation permissions
 	READ_OWN_CONSULTATIONS: "read:own_consultations",
@@ -550,3 +591,66 @@ export const PERMISSIONS = {
 	MANAGE_OWN_SETTINGS: "manage:own_settings",
 	VIEW_RECIPE: "view:recipe",
 } as const;
+
+const obj = {
+	settings: {
+		actions: ["create", "revoke"],
+		children: {
+			limits: {
+				actions: ["delete", "update"],
+			},
+		},
+	},
+	healthMetrics: {
+		actions: ["scan", "follow"],
+	},
+} as const;
+
+type IsPlainObject<T> = T extends object
+	? T extends readonly any[]
+		? false
+		: true
+	: false;
+
+type DeepKeys<T> = T extends object
+	? {
+			[K in keyof T]-?: K extends "children"
+				? DeepKeys<T[K]>
+				: K extends string
+					?
+							| `${K}`
+							| (IsPlainObject<T[K]> extends true
+									? `${K}.${DeepKeys<T[K]>}`
+									: never)
+					: never;
+		}[keyof T]
+	: never;
+
+type t = DeepKeys<typeof obj>;
+
+type Permissions<T> = {
+	[K in keyof T]: K extends "children"
+		? Permissions<T[K]>
+		: T[K] extends object
+			? T[K] extends { actions: readonly string[] }
+				? `${K & string}:${T[K]["actions"][number]}`
+				: never
+			: K extends string
+				? `${K}`
+				: never;
+};
+type P = Permissions<(typeof obj)["settings"]["children"]>;
+
+type NewPermission<T, Prefix extends string = ""> = T extends object
+	? {
+			[K in keyof T]-?: K extends "children"
+				? NewPermission<T[K], Prefix>
+				: K extends string
+					? T[K] extends { actions: readonly string[] }
+						? `${Prefix}${K}:${T[K]["actions"][number]}`
+						: IsPlainObject<T[K]> extends true
+							? NewPermission<T[K], `${Prefix}${K}.`>
+							: never
+					: never;
+		}[keyof T]
+	: never;

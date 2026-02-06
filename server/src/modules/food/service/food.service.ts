@@ -3,6 +3,7 @@ import { UserRepository } from "../../user/repository/user.repository";
 import type { CustomerData } from "../../auth/models/user.schema";
 import {
 	FoodRepository,
+	RecommendedNutrients,
 	type MealDetails,
 	type MealPlan,
 } from "../repository/food.repository";
@@ -302,6 +303,7 @@ export class FoodService {
 		isPremium: boolean,
 		user: CustomerData,
 		userId: string,
+		date: string,
 	): Promise<ScanResult> {
 		const userInfo = formatUserInfo(user);
 
@@ -318,21 +320,22 @@ export class FoodService {
 		const breakdown = scanResult.breakdown;
 
 		// Don't automatically add nutrients - user must explicitly log the meal
-		const [{	foodSuggestions, ...recommended}, consumed] = await Promise.all([
-			await this.getPaidUserDailyData(userId),
-			await this.getConsumedNutrients(userId)
-		])
+		const [{ foodSuggestions, ...recommended }, consumed] = await Promise.all([
+			await this.getPaidUserDailyData(userId, date),
+			await this.getConsumedNutrients(userId, date),
+		]);
 
 		return {
 			...scanResult,
 			recommended,
 			consumed,
 		};
-
-
 	}
 
-	async getPaidUserDailyData(userId: string): Promise<
+	async getPaidUserDailyData(
+		userId: string,
+		date: string,
+	): Promise<
 		NutritionProfile & {
 			foodSuggestions: {
 				mealType: string;
@@ -341,18 +344,15 @@ export class FoodService {
 			foodInsights: DailyPersonalizedInsight[];
 		}
 	> {
-		const today = new Date();
+		const today = date;
 		const existingRecommendation =
 			await this.foodRepository.getDailyNutrientRecommendation(userId, today);
 
 		if (existingRecommendation) {
 			const [mealPlanData, perosnalizedInsights] = await Promise.all([
-				await this.foodRepository.getDailyMealPlans(
-					userId,
-					today,
-			  ),
-			  await this.foodRepository.getDailyPersonalizedInsights(userId, today)]
-		  )
+				await this.foodRepository.getDailyMealPlans(userId, today),
+				await this.foodRepository.getDailyPersonalizedInsights(userId, today),
+			]);
 			const mealPlans = mealPlanData
 				? mealPlanData.mealPlans.reduce(
 						(acc, meal) => {
@@ -513,7 +513,7 @@ export class FoodService {
 		// Call AI service
 		const response = await aiService.getNutritionalRecommendation(payload);
 
-		const nutrientData = response.data.nutrient_intake;
+		const nutrientData: RecommendedNutrients = response.data.nutrient_intake;
 		const foodSuggestionsResponse = response.data.food_suggestions || [];
 		const insights = response.data.personalized_insight || [];
 
@@ -582,11 +582,13 @@ export class FoodService {
 		};
 	}
 
-	async getConsumedNutrients(userId: string): Promise<NutritionProfile> {
-		const today = new Date();
+	async getConsumedNutrients(
+		userId: string,
+		dateStr: string,
+	): Promise<NutritionProfile> {
 		const consumed = await this.foodRepository.getConsumedNutrients(
 			userId,
-			today,
+			dateStr,
 		);
 
 		return {
@@ -610,9 +612,9 @@ export class FoodService {
 			fats: number;
 			calories: number;
 		},
-		date: Date = new Date(),
+		dateStr: string,
 	): Promise<LoggedMeal> {
-		return await this.foodRepository.logMeal(userId, meal, date);
+		return await this.foodRepository.logMeal(userId, meal, dateStr);
 	}
 
 	async generateRecipe(

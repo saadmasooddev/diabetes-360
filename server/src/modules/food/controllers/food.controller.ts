@@ -25,6 +25,11 @@ export class FoodController {
 		try {
 			const userId = req.user?.userId || "";
 			const file = req.file;
+			const dateStr = req.body.date;
+			const date = new Date(dateStr);
+
+			if (!dateStr || isNaN(date.getTime()))
+				throw new BadRequestError("Invalid date format");
 
 			if (!file) {
 				throw new BadRequestError("No image file provided");
@@ -52,6 +57,7 @@ export class FoodController {
 				isPremium,
 				profileData,
 				userId,
+				dateStr,
 			);
 
 			// Increment scan count after successful scan
@@ -81,7 +87,14 @@ export class FoodController {
 		try {
 			const userId = req.user?.userId || "";
 
-			const result = await this.foodService.getPaidUserDailyData(userId);
+			const dateStr = req.query.date as string;
+			if (!dateStr || isNaN(new Date(dateStr).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+			const result = await this.foodService.getPaidUserDailyData(
+				userId,
+				dateStr,
+			);
 			sendSuccess(res, result, "Nutrition requirements retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
@@ -94,8 +107,12 @@ export class FoodController {
 	): Promise<void> {
 		try {
 			const userId = req.user?.userId || "";
+			const date = req.query.date as string;
+			if (!date || isNaN(new Date(date).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
 
-			const result = await this.foodService.getConsumedNutrients(userId);
+			const result = await this.foodService.getConsumedNutrients(userId, date);
 			sendSuccess(res, result, "Consumed nutrients retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
@@ -130,6 +147,11 @@ export class FoodController {
 	async logMeal(req: AuthenticatedRequest, res: Response): Promise<void> {
 		try {
 			const userId = req.user?.userId || "";
+			const dateStr = req.query.date as string;
+			if (!dateStr || isNaN(new Date(dateStr).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+
 			const schema = z.object({
 				foodName: z.string().min(1, "Food name is required"),
 				carbs: z.number().nonnegative(),
@@ -142,7 +164,7 @@ export class FoodController {
 
 			const body = schema.parse(req.body);
 
-			const result = await this.foodService.logMeal(userId, body);
+			const result = await this.foodService.logMeal(userId, body, dateStr);
 			sendSuccess(res, result, "Meal logged successfully");
 		} catch (error: any) {
 			handleError(res, error);

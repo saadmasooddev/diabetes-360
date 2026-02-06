@@ -4,6 +4,7 @@ import { config } from ".";
 
 const db: NodePgDatabase<typeof schema> = drizzle(config.databaseUrl, {
 	schema,
+	logger: true,
 });
 
 export { db };

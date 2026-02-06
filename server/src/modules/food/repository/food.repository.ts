@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray, asc } from "drizzle-orm";
 import {
 	dailyNutrientRecommendations,
 	foodScanNutrients,
@@ -19,6 +19,17 @@ import {
 	MEAL_TYPE_ENUM,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
+
+export interface RecommendedNutrients {
+	carbs: {
+		total: number;
+		sugars: number;
+		fibres: number;
+	};
+	proteins: number;
+	fats: number;
+	calories: number;
+}
 
 export interface RecipeIngredients {
 	main_ingredients: {
@@ -52,16 +63,15 @@ export class FoodRepository {
 	// Get daily nutrient recommendation for a user on a specific date
 	async getDailyNutrientRecommendation(
 		userId: string,
-		date: Date = new Date(),
+		date: string,
 	): Promise<DailyNutrientRecommendation | null> {
-		const dateStr = date.toISOString().split("T")[0];
 		const [recommendation] = await db
 			.select()
 			.from(dailyNutrientRecommendations)
 			.where(
 				and(
 					eq(dailyNutrientRecommendations.userId, userId),
-					eq(dailyNutrientRecommendations.recommendationDate, dateStr as any),
+					eq(dailyNutrientRecommendations.recommendationDate, date),
 				),
 			)
 			.limit(1);
@@ -120,13 +130,35 @@ export class FoodRepository {
 		return newRecommendation;
 	}
 
+	/**
+	 * Get count of logged meals for a user between two dates (inclusive).
+	 * Uses DATE cast for consistent date-range comparison.
+	 */
+	async getLoggedMealsCount(
+		userId: string,
+		startDateStr: string,
+		endDateStr: string,
+	): Promise<number> {
+		const [row] = await db
+			.select({
+				count: sql<number>`count(*)::int`,
+			})
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.mealDate}) >= DATE(${startDateStr})`,
+					sql`DATE(${loggedMeals.mealDate}) <= DATE(${endDateStr})`,
+				),
+			);
+		return row?.count ?? 0;
+	}
+
 	// Get consumed nutrients for a user on a specific date (from logged meals only)
 	async getConsumedNutrients(
 		userId: string,
-		date: Date = new Date(),
+		dateStr: string,
 	): Promise<FoodScanNutrients | null> {
-		const dateStr = date.toISOString().split("T")[0];
-		
 		// Aggregate nutrients from all logged meals for the date
 		const [aggregated] = await db
 			.select({
@@ -145,8 +177,10 @@ export class FoodRepository {
 				),
 			);
 
-		if (!aggregated || 
-			(aggregated.carbs === "0" && aggregated.calories === "0")) {
+		if (
+			!aggregated ||
+			(aggregated.carbs === "0" && aggregated.calories === "0")
+		) {
 			return null;
 		}
 
@@ -166,14 +200,32 @@ export class FoodRepository {
 		};
 	}
 
+	/**
+	 * Get all logged meals for a user on a specific date.
+	 * Uses DATE cast for consistent results.
+	 */
+	async getLoggedMealsByDate(
+		userId: string,
+		dateStr: string,
+	): Promise<LoggedMeal[]> {
+		return db
+			.select()
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.mealDate}) = DATE(${dateStr})`,
+				),
+			)
+			.orderBy(asc(loggedMeals.createdAt));
+	}
+
 	// Log a meal (explicitly logged by user after scanning)
 	async logMeal(
 		userId: string,
 		meal: Omit<InsertLoggedMeal, "userId" | "mealDate">,
-		date: Date = new Date(),
+		dateStr: string,
 	): Promise<LoggedMeal> {
-		const dateStr = date.toISOString().split("T")[0];
-		
 		const [logged] = await db
 			.insert(loggedMeals)
 			.values({
@@ -252,16 +304,15 @@ export class FoodRepository {
 	// Get daily meal plan for a user on a specific date
 	async getDailyMealPlans(
 		userId: string,
-		date: Date = new Date(),
+		date: string,
 	): Promise<{ mealPlans: MealPlanMeal[] }> {
-		const dateStr = date.toISOString().split("T")[0];
 		const [mealPlan] = await db
 			.select()
 			.from(dailyMealPlans)
 			.where(
 				and(
 					eq(dailyMealPlans.userId, userId),
-					eq(dailyMealPlans.planDate, dateStr),
+					eq(dailyMealPlans.planDate, date),
 				),
 			);
 
@@ -280,40 +331,44 @@ export class FoodRepository {
 	// Create or update daily meal plan with meals
 	async upsertDailyMealPlan(
 		userId: string,
-		planDate: Date,
+		dateStr: string,
 		meals: Array<MealPlan>,
+		// recommendedNutrients: RecommendedNutrients
 	): Promise<{ meals: MealPlanMeal[] }> {
-		const dateStr =
-			planDate instanceof Date
-				? planDate.toISOString().split("T")[0]
-				: planDate;
+		const existing = await this.getDailyMealPlans(userId, dateStr);
 
-		const existing = await this.getDailyMealPlans(userId, planDate);
 		if (existing.mealPlans.length > 0) {
-		const [_, insertedMeals] = 
-			await Promise.all([db.delete(mealPlanMeals)
-				.where(eq(mealPlanMeals.mealPlanId, existing.mealPlans[0].mealPlanId))
-
-		
-		,  db
-			.insert(mealPlanMeals)
-			.values(meals.map(mp=> ({
-				mealPlanId: existing.mealPlans[0].mealPlanId,
-				mealType: mp.mealType,
-				name: mp.name,
-				carbs: mp.carbs.toString(),
-				proteins: mp.proteins.toString(),
-				calories: mp.calories.toString(),
-			})))
-			.returning()
-		])	
-
+			await db
+				.delete(mealPlanMeals)
+				.where(eq(mealPlanMeals.mealPlanId, existing.mealPlans[0].mealPlanId));
+			const insertedMeals = await db
+				.insert(mealPlanMeals)
+				.values(
+					meals.map((mp) => ({
+						mealPlanId: existing.mealPlans[0].mealPlanId,
+						mealType: mp.mealType,
+						name: mp.name,
+						carbs: mp.carbs.toString(),
+						proteins: mp.proteins.toString(),
+						calories: mp.calories.toString(),
+					})),
+				)
+				.returning();
 			return { meals: insertedMeals };
 		}
 
 		const [mealPlan] = await db
 			.insert(dailyMealPlans)
-			.values({ userId, planDate: dateStr })
+			.values({
+				userId,
+				planDate: dateStr,
+				// total_carbs: recommendedNutrients.carbs.total,
+				// sugars: recommendedNutrients.carbs.sugars,
+				// fibres: recommendedNutrients.carbs.fibres,
+				// calories: recommendedNutrients.calories,
+				// proteins: recommendedNutrients.proteins,
+				// fats: recommendedNutrients.fats,
+			})
 			.returning();
 		// Insert meals
 		const insertedMeals = await db
@@ -336,16 +391,15 @@ export class FoodRepository {
 	// Get daily personalized insights for a user on a specific date
 	async getDailyPersonalizedInsights(
 		userId: string,
-		date: Date = new Date(),
+		dateStr: string,
 	): Promise<DailyPersonalizedInsight[]> {
-		const dateStr = date.toISOString().split("T")[0];
 		const insights = await db
 			.select()
 			.from(dailyPersonalizedInsights)
 			.where(
 				and(
 					eq(dailyPersonalizedInsights.userId, userId),
-					eq(dailyPersonalizedInsights.insightDate, dateStr as any),
+					eq(dailyPersonalizedInsights.insightDate, dateStr),
 				),
 			);
 
@@ -355,21 +409,16 @@ export class FoodRepository {
 	// Create or replace daily personalized insights
 	async upsertDailyPersonalizedInsights(
 		userId: string,
-		insightDate: Date,
+		insightDate: string,
 		insights: string[],
 	): Promise<DailyPersonalizedInsight[]> {
-		const dateStr =
-			insightDate instanceof Date
-				? insightDate.toISOString().split("T")[0]
-				: insightDate;
-
 		// Delete existing insights for this date
 		await db
 			.delete(dailyPersonalizedInsights)
 			.where(
 				and(
 					eq(dailyPersonalizedInsights.userId, userId),
-					eq(dailyPersonalizedInsights.insightDate, dateStr),
+					eq(dailyPersonalizedInsights.insightDate, insightDate),
 				),
 			);
 
@@ -380,7 +429,7 @@ export class FoodRepository {
 				.values(
 					insights.map((insightText) => ({
 						userId,
-						insightDate: dateStr,
+						insightDate,
 						insightText,
 					})),
 				)

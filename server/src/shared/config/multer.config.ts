@@ -182,7 +182,6 @@ export const memoryUpload = multer({
 		file: Express.Multer.File,
 		cb: multer.FileFilterCallback,
 	) => {
-		console.log(file.mimetype);
 		if (file.mimetype.startsWith("image/")) {
 			cb(null, true);
 		} else {

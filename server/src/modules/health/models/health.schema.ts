@@ -36,6 +36,31 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		waterIntake: z.number().nullable().optional(),
 		heartRate: z.number().int().nullable().optional(),
 		recordedAt: z.string(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.bloodSugar && (data.bloodSugar < 70 || data.bloodSugar > 600)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Blood glucose value must be between 70-600 mg/dL",
+				path: ["bloodSugar"],
+			});
+		}
+
+		if (data.waterIntake && (data.waterIntake < 0 || data.waterIntake > 5)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Water intake value must be between 0-5 liters per day",
+				path: ["waterIntake"],
+			});
+		}
+
+		if (data.heartRate && (data.heartRate < 0 || data.heartRate > 220)) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Heart rate value must be between 0-220 bpm",
+				path: ["heartRate"],
+			});
+		}
 	});
 
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
@@ -99,6 +124,7 @@ export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
 		muscle: z.string().nullable().optional(),
 		duration: z.coerce
 			.number()
+			.min(1, { error: "Duration must be greater than 0" })
 			.transform((v) => Math.round(v))
 			.nullable()
 			.optional(),
@@ -137,19 +163,22 @@ export const healthMetricTargets = pgTable("health_metric_targets", {
 });
 
 // Validation helper function for target values based on metric type
-const validateTargetValue = (metricType: string, value: number): boolean => {
+const validateTargetValue = (
+	metricType: MetricType,
+	value: number,
+): boolean => {
 	switch (metricType) {
-		case "glucose":
+		case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
 			// Normal blood glucose: 70-100 mg/dL (fasting), 140-180 mg/dL (post-meal)
 			// Target range: 70-200 mg/dL (reasonable range for diabetes management)
 			return value >= 70 && value <= 200;
-		case "steps":
+		case EXERCISE_TYPE_ENUM.STEPS:
 			// Reasonable daily steps: 0-50,000 (very active person max)
 			return value >= 0 && value <= 50000;
-		case "water_intake":
+		case EXERCISE_TYPE_ENUM.WATER_INTAKE:
 			// Maximum 5L per day (recommended max is 3-4L, but 5L is absolute max)
 			return value >= 0 && value <= 5;
-		case "heart_rate":
+		case EXERCISE_TYPE_ENUM.HEART_RATE:
 			// Normal resting: 60-100 bpm, max during exercise: ~220 - age
 			// Target range: 40-200 bpm (covers all scenarios)
 			return value >= 40 && value <= 200;
@@ -174,28 +203,28 @@ export const insertHealthMetricTargetSchema = createInsertSchema(
 	.superRefine((data, ctx) => {
 		if (!validateTargetValue(data.metricType, data.targetValue)) {
 			switch (data.metricType) {
-				case "blood_glucose":
+				case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Blood glucose target must be between 70-200 mg/dL",
 						path: ["targetValue"],
 					});
 					break;
-				case "steps":
-					ctx.addIssue({
-						code: "custom",
-						message: "Steps target must be between 0-50,000 steps per day",
-						path: ["targetValue"],
-					});
-					break;
-				case "water_intake":
+				case EXERCISE_TYPE_ENUM.WATER_INTAKE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Water intake target must be between 0-5 liters per day",
 						path: ["targetValue"],
 					});
 					break;
-				case "heart_rate":
+				case EXERCISE_TYPE_ENUM.STEPS:
+					ctx.addIssue({
+						code: "custom",
+						message: "Steps target must be between 0-50,000 steps per day",
+						path: ["targetValue"],
+					});
+					break;
+				case EXERCISE_TYPE_ENUM.HEART_RATE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Heart rate target must be between 40-200 bpm",
@@ -219,9 +248,6 @@ export const batchUpsertHealthMetricTargetsSchema = z.object({
 export type InsertHealthMetricTarget = z.infer<
 	typeof insertHealthMetricTargetSchema
 >;
-export type UpdateHealthMetricTarget = z.infer<
-	typeof updateHealthMetricTargetSchema
->;
 export type HealthMetricTarget = typeof healthMetricTargets.$inferSelect;
 
 // Health Insights Table - stores AI-generated health insights, tips, and summary
@@ -240,6 +266,5 @@ export const healthInsights = pgTable("health_insights", {
 		.notNull()
 		.defaultNow(),
 });
-
 
 export type HealthInsight = typeof healthInsights.$inferSelect;

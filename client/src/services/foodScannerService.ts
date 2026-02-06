@@ -3,6 +3,7 @@ import { httpClient } from "@/utils/httpClient";
 import type { ApiResponse } from "@/types/auth.types";
 import type { ScanResult } from "@/mocks/scanResults";
 import type { DailyPersonalizedInsight } from "@shared/schema";
+import { DateManager } from "@/lib/utils";
 
 export interface RecipeIngredients {
 	main_ingredients: {
@@ -49,6 +50,7 @@ class FoodScannerService {
 	async scanFoodImage(file: File): Promise<ScanResult> {
 		const formData = new FormData();
 		formData.append("food_image", file);
+		formData.append("date", DateManager.formatDate(new Date()));
 
 		const response = await httpClient.post<ApiResponse<ScanResult>>(
 			API_ENDPOINTS.FOOD_SCANNER.SCAN,
@@ -64,7 +66,7 @@ class FoodScannerService {
 
 	async getNutritionRequirements(): Promise<DailyUserData> {
 		const response = await httpClient.get<ApiResponse<DailyUserData>>(
-			API_ENDPOINTS.FOOD_SCANNER.DAILY_DATA,
+			`${API_ENDPOINTS.FOOD_SCANNER.DAILY_DATA}?date=${DateManager.formatDate(new Date())}`,
 		);
 
 		if (!response.success || !response.data) {
@@ -79,7 +81,9 @@ class FoodScannerService {
 	async getConsumedNutrients(): Promise<ConsumedNutrients | null> {
 		const response = await httpClient.get<
 			ApiResponse<ConsumedNutrients | null>
-		>(API_ENDPOINTS.FOOD_SCANNER.NUTRITION_CONSUMED);
+		>(
+			`${API_ENDPOINTS.FOOD_SCANNER.NUTRITION_CONSUMED}?date=${DateManager.formatDate(new Date())}`,
+		);
 
 		if (!response.success) {
 			throw new Error(response.message || "Failed to get consumed nutrients");
@@ -123,7 +127,7 @@ class FoodScannerService {
 		calories: number;
 	}) {
 		const response = await httpClient.post<ApiResponse<any>>(
-			API_ENDPOINTS.FOOD_SCANNER.LOG_MEAL,
+			`${API_ENDPOINTS.FOOD_SCANNER.LOG_MEAL}?date=${DateManager.formatDate(new Date())}`,
 			payload,
 		);
 

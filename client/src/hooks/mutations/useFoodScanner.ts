@@ -100,8 +100,7 @@ export const useLogMeal = () => {
 		onError: (error: any) => {
 			toast({
 				title: "Failed to Log Meal",
-				description:
-					error.message || "Failed to log meal. Please try again.",
+				description: error.message || "Failed to log meal. Please try again.",
 				variant: "destructive",
 			});
 		},

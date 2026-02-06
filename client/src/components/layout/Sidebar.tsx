@@ -29,6 +29,7 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PERMISSIONS } from "@/utils/permissions";
+import { PAYMENT_TYPE } from "@shared/schema";
 
 interface NavItem {
 	label: string;
@@ -203,6 +204,7 @@ export function Sidebar({ className }: SidebarProps) {
 			path: () => ROUTES.HEALTH_PLANS,
 			testId: "nav-payments",
 			permissions: [PERMISSIONS.SUBSCRIBE_HEALTH_PLANS],
+			paymentTypes: [PAYMENT_TYPE.FREE],
 		},
 		{
 			label: "Home",
@@ -253,6 +255,7 @@ export function Sidebar({ className }: SidebarProps) {
 			permissions: [PERMISSIONS.READ_PATIENT_ALERTS],
 		},
 	];
+
 	useEffect(() => {
 		if (isDashboardRoute) {
 			setIsDashboardExpanded(true);
@@ -290,7 +293,7 @@ export function Sidebar({ className }: SidebarProps) {
 
 			<aside
 				className={cn(
-					"fixed z-40 flex h-screen w-64 flex-col border-r bg-white transition-transform dark:bg-gray-900",
+					"font-inter fixed z-40 flex h-screen w-64 flex-col border-r bg-white transition-transform dark:bg-gray-900",
 					isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
 					className,
 				)}

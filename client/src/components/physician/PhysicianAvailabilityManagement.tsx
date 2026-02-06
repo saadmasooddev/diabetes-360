@@ -155,8 +155,7 @@ export function PhysicianAvailabilityManagement() {
 		if (!selectedDate) return;
 
 		try {
-
-			const date = new Date(selectedDate)
+			const date = new Date(selectedDate);
 			if (!DateManager.isToday(date)) {
 				date.setHours(0, 0, 0, 0);
 			}
@@ -165,7 +164,7 @@ export function PhysicianAvailabilityManagement() {
 				date: date.getTime().toString(),
 				slotTimes: [{ startTime: data.startTime, endTime: data.endTime }],
 				...data,
-				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 			});
 			setIsCreateModalOpen(false);
 			// Refetch slots and dates with availability

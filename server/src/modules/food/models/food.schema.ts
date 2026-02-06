@@ -8,6 +8,8 @@ import {
 	text,
 	pgEnum,
 	jsonb,
+	integer,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -21,8 +23,8 @@ export const mealTypeEnum = pgEnum("meal_type_enum", [
 export enum MEAL_TYPE_ENUM {
 	Breakfast = "Breakfast",
 	Lunch = "Lunch",
-	Dinner= "Dinner",
-};
+	Dinner = "Dinner",
+}
 
 export const zodMealTypeEnum = z.enum([
 	MEAL_TYPE_ENUM.Breakfast,
@@ -50,6 +52,12 @@ export const dailyNutrientRecommendations = pgTable(
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 	},
+	(table) => [
+		uniqueIndex("idx_user_id_recommedation_date").on(
+			table.userId,
+			table.recommendationDate,
+		),
+	],
 );
 
 // Food Scan Nutrients Table - tracks consumed nutrients from each food scan
@@ -119,6 +127,12 @@ export const dailyMealPlans = pgTable("daily_meal_plans", {
 		.notNull()
 		.references(() => users.id, { onDelete: "cascade" }),
 	planDate: date("plan_date").notNull().default(sql`CURRENT_DATE`),
+	// total_carbs: integer("total_carbs").notNull().default(0),
+	// sugars: integer("sugars").notNull().default(0),
+	// fibres: integer("fibres").notNull().default(0),
+	// proteins: integer("proteins").notNull().default(0),
+	// fats: integer("fats").notNull().default(0),
+	// calories: integer("calories").notNull().default(0),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

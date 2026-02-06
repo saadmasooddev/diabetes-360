@@ -82,8 +82,10 @@ export function SlotManagementView({
 	]);
 	const { toast } = useToast();
 
+	const userId = user?.id || null;
+	const physicianId = hasManageAllSlots ? null : userId;
 	const [selectedPhysicianId, setSelectedPhysicianId] = useState<string | null>(
-		null,
+		physicianId,
 	);
 	const [physicianSearchQuery, setPhysicianSearchQuery] = useState("");
 	const [selectedSlotSizeId, setSelectedSlotSizeId] = useState<string>("");
@@ -98,7 +100,9 @@ export function SlotManagementView({
 		Set<number>
 	>(new Set());
 
-	const [editingSlot, setEditingSlot] = useState<typeof existingSlots[0] | null>(null);
+	const [editingSlot, setEditingSlot] = useState<
+		(typeof existingSlots)[0] | null
+	>(null);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	// Drag state for existing slots
@@ -116,7 +120,7 @@ export function SlotManagementView({
 	const debouncedPhysicianSearch = useDebounce(physicianSearchQuery, 500);
 	const searchValue =
 		debouncedPhysicianSearch.trim() === "" ||
-			debouncedPhysicianSearch.toLowerCase() === "all"
+		debouncedPhysicianSearch.toLowerCase() === "all"
 			? undefined
 			: debouncedPhysicianSearch.trim();
 
@@ -128,24 +132,14 @@ export function SlotManagementView({
 
 	const physicians: Physician[] = physiciansData?.physicians || [];
 
-	// Determine which physician ID to use
-	const physicianId = useMemo(() => {
-		if (hasManageAllSlots) {
-			return selectedPhysicianId || user?.id || null;
-		}
-		return user?.id || null;
-	}, [hasManageAllSlots, selectedPhysicianId, user?.id]);
-
 	function getDateString(date: Date) {
 		if (DateManager.isToday(date)) {
 			return date.toISOString();
 		}
-		return DateManager.startOfDay(date).toISOString()
+		return DateManager.startOfDay(date).toISOString();
 	}
 
-	const dateString = selectedDate
-		? getDateString(selectedDate)
-		: null;
+	const dateString = selectedDate ? getDateString(selectedDate) : null;
 
 	const { data: slotSizes = [] } = useSlotSizes();
 	const { data: slotTypes = [] } = useSlotTypes();
@@ -153,13 +147,12 @@ export function SlotManagementView({
 		data: existingSlots = [],
 		isLoading: isLoadingSlots,
 		refetch: refetchSlots,
-	} = useSlotsForDate(physicianId, dateString);
+	} = useSlotsForDate(selectedPhysicianId, dateString);
 	const { data: ownLocations = [] } = usePhysicianLocations();
-	const { data: adminLocations = [] } = usePhysicianLocationsByPhysicianId(
-		hasManageAllSlots && physicianId ? physicianId : null,
-	);
+	const { data: adminLocations = [] } =
+		usePhysicianLocationsByPhysicianId(selectedPhysicianId);
 	const locations =
-		hasManageAllSlots && physicianId ? adminLocations : ownLocations;
+		hasManageAllSlots && selectedPhysicianId ? adminLocations : ownLocations;
 	const activeLocations = locations.filter((loc) => loc.status === "active");
 
 	const generateSlotsMutation = useGenerateSlotsForDay();
@@ -168,12 +161,8 @@ export function SlotManagementView({
 	const updateSlotMutation = useUpdateSlot();
 	const createCustomSlotMutation = useCreateCustomSlot();
 
-	const [generatedSlots, setGeneratedSlots] = useState<
-		Array<SlotStartEnd>
-	>([]);
-	const [conflicts, setConflicts] = useState<
-		Array<SlotStartEnd>
-	>([]);
+	const [generatedSlots, setGeneratedSlots] = useState<Array<SlotStartEnd>>([]);
+	const [conflicts, setConflicts] = useState<Array<SlotStartEnd>>([]);
 
 	// Separate slots into booked, existing unbooked, and generated
 	const bookedSlots = useMemo(() => {
@@ -190,7 +179,7 @@ export function SlotManagementView({
 				physicianId: hasManageAllSlots ? physicianId : undefined,
 				date: date.getTime().toString(),
 				slotSizeId: selectedSlotSizeId,
-				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 			},
 			{
 				onSuccess: (data) => {
@@ -202,19 +191,18 @@ export function SlotManagementView({
 	}
 	// Generate slots when slot size changes
 	useEffect(() => {
-		if (selectedSlotSizeId && dateString && physicianId) {
-			const date = new Date(dateString)
+		if (selectedSlotSizeId && dateString && selectedPhysicianId) {
+			const date = new Date(dateString);
 			if (!DateManager.isToday(date)) {
 				date.setHours(0, 0, 0, 0);
 			}
 
-			generateSlots(physicianId, date)
-
+			generateSlots(selectedPhysicianId, date);
 		} else {
 			setGeneratedSlots([]);
 			setConflicts([]);
 		}
-	}, [selectedSlotSizeId, dateString, physicianId, hasManageAllSlots]);
+	}, [selectedSlotSizeId, dateString, selectedPhysicianId, hasManageAllSlots]);
 
 	const handleSlotTypeToggle = (typeId: string) => {
 		setSelectedSlotTypeIds((prev) =>
@@ -323,7 +311,7 @@ export function SlotManagementView({
 			!selectedSlotSizeId ||
 			selectedSlotTypeIds.length === 0 ||
 			!dateString ||
-			!physicianId
+			!selectedPhysicianId
 		) {
 			toast({
 				title: "Validation Error",
@@ -367,7 +355,7 @@ export function SlotManagementView({
 			return;
 		}
 
-		const date = new Date(dateString)
+		const date = new Date(dateString);
 		if (!DateManager.isToday(date)) {
 			date.setHours(0, 0, 0, 0);
 		}
@@ -378,8 +366,9 @@ export function SlotManagementView({
 			slotTimes: slotsToCreate,
 			slotTypeIds: selectedSlotTypeIds,
 			locationIds: hasOfflineType ? [selectedLocationId] : undefined,
-			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-		}
+			physicianId: selectedPhysicianId,
+			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		};
 
 		createSlotsIndividualMutation.mutate(payload);
 
@@ -400,26 +389,30 @@ export function SlotManagementView({
 	};
 
 	const handleBulkDelete = async () => {
-		if (selectedExistingSlots.size === 0 || !physicianId) return;
+		if (selectedExistingSlots.size === 0 || !selectedPhysicianId) return;
 
-		bulkDeleteMutation.mutate({
-			physicianId: hasManageAllSlots ? physicianId : undefined,
-			slotIds: Array.from(selectedExistingSlots),
-		}, {
-			onSuccess: async (result) => {
-				await refetchSlots();
-				if (dateString) generateSlots(physicianId, new Date(dateString))
-				setSelectedExistingSlots(new Set());
+		bulkDeleteMutation.mutate(
+			{
+				physicianId: hasManageAllSlots ? selectedPhysicianId : undefined,
+				slotIds: Array.from(selectedExistingSlots),
+			},
+			{
+				onSuccess: async (result) => {
+					await refetchSlots();
+					if (dateString)
+						generateSlots(selectedPhysicianId, new Date(dateString));
+					setSelectedExistingSlots(new Set());
 
-				if (result.failed.length > 0) {
-					toast({
-						title: "Partial Success",
-						description: `Some slots could not be deleted (may have been booked).`,
-						variant: "default",
-					});
-				}
-			}
-		});
+					if (result.failed.length > 0) {
+						toast({
+							title: "Partial Success",
+							description: `Some slots could not be deleted (may have been booked).`,
+							variant: "default",
+						});
+					}
+				},
+			},
+		);
 	};
 
 	const handleEditSlotSubmit = async (data: EditSlotFormData) => {
@@ -469,11 +462,11 @@ export function SlotManagementView({
 	};
 
 	const handleCreateCustomSlot = async (data: EditSlotFormData) => {
-		if (!dateString || !physicianId) return;
+		if (!dateString || !selectedPhysicianId) return;
 
 		createCustomSlotMutation.mutate(
 			{
-				physicianId: hasManageAllSlots ? physicianId : undefined,
+				physicianId: hasManageAllSlots ? selectedPhysicianId : undefined,
 				date: dateString,
 				startTime: data.startTime!,
 				endTime: data.endTime!,
@@ -566,7 +559,7 @@ export function SlotManagementView({
 				</Card>
 			)}
 
-			{!physicianId && (
+			{!selectedPhysicianId && (
 				<Card className="p-4">
 					<p className="text-center text-gray-500">
 						{hasManageAllSlots ? "Please select a physician" : "Loading..."}
@@ -574,7 +567,7 @@ export function SlotManagementView({
 				</Card>
 			)}
 
-			{physicianId && (
+			{selectedPhysicianId && (
 				<>
 					{/* Slot Size Selection */}
 					<Card className="p-4">
@@ -685,7 +678,10 @@ export function SlotManagementView({
 															{slot.types.map((t) => t.type).join(", ")}
 														</p>
 													)}
-													{slot.locations && slot.types?.some(t => t.type === SLOT_TYPE.ONSITE) &&
+													{slot.locations &&
+														slot.types?.some(
+															(t) => t.type === SLOT_TYPE.ONSITE,
+														) &&
 														slot.locations.length > 0 && (
 															<div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
 																<MapPin className="h-3 w-3" />
@@ -883,12 +879,18 @@ export function SlotManagementView({
 					open={isEditModalOpen}
 					onOpenChange={setIsEditModalOpen}
 					selectedDate={selectedDate}
-					slot={editingSlot ? {
-						...editingSlot,
-						isCustom: editingSlot.isCustom,
-					} : undefined}
+					slot={
+						editingSlot
+							? {
+									...editingSlot,
+									isCustom: editingSlot.isCustom,
+								}
+							: undefined
+					}
 					onSubmit={editingSlot ? handleEditSlotSubmit : handleCreateCustomSlot}
-					isLoading={updateSlotMutation.isPending || createCustomSlotMutation.isPending}
+					isLoading={
+						updateSlotMutation.isPending || createCustomSlotMutation.isPending
+					}
 				/>
 			)}
 		</div>

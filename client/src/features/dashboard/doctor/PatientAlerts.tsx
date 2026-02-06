@@ -12,7 +12,7 @@ interface PatientAlert {
 	age: number;
 	diabetesType: string;
 	tags: Array<{ text: string; color: string }>;
-	status: "high-risk" | "stable" | "needs-attention";
+	status: "High Risk" | "Stable" | "Needs Attention";
 	statusColor: string;
 }
 
@@ -163,11 +163,7 @@ function PatientAlertCard({
 export function PatientAlerts() {
 	const pathname = usePathname();
 	const [, navigate] = useLocation();
-	const {
-		data: alertsData,
-		isLoading,
-		error,
-	} = usePatientAlerts();
+	const { data: alertsData, isLoading, error } = usePatientAlerts();
 
 	const highRiskPatients = alertsData?.highRisk || [];
 	const stablePatients = alertsData?.stable || [];

@@ -2,17 +2,27 @@ import { Router } from "express";
 import { MedicalController } from "../controllers/medical.controller";
 import {
 	authenticateToken,
+	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
 import { medicalRecordUpload } from "server/src/shared/config/multer.config";
+import { PERMISSIONS } from "@shared/schema";
 
 const router = Router();
 const medicalController = new MedicalController();
 
-const readOwnMedicalRecords = requirePermission("read:own_medical_records");
-const createOwnMedicalRecords = requirePermission("create:own_medical_records");
-const updateOwnMedicalRecords = requirePermission("update:own_medical_records");
-const deleteOwnMedicalRecords = requirePermission("delete:own_medical_records");
+const readOwnMedicalRecords = requireAnyPermission([
+	PERMISSIONS.READ_OWN_MEDICAL_RECORDS,
+]);
+const createOwnMedicalRecords = requireAnyPermission([
+	PERMISSIONS.CREATE_OWN_MEDICAL_RECORDS,
+]);
+const updateOwnMedicalRecords = requireAnyPermission([
+	PERMISSIONS.UPDATE_OWN_MEDICAL_RECORDS,
+]);
+const deleteOwnMedicalRecords = requireAnyPermission([
+	PERMISSIONS.DELETE_OWN_MEDICAL_RECORDS,
+]);
 
 /**
  * @swagger

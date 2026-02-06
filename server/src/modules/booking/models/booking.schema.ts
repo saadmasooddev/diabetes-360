@@ -22,6 +22,12 @@ export enum BOOKING_STATUS_ENUM {
 	CANCELLED = "cancelled",
 	COMPLETED = "completed",
 }
+
+export enum BOOKING_TYPE_QUERY_ENUM {
+	UPCOMING = "upcoming",
+	PAST = "past",
+}
+
 export const bookedSlotsStatusEnum = pgEnum(
 	"booking_status_enum",
 	Object.values(BOOKING_STATUS_ENUM) as [string, ...string[]],
@@ -54,20 +60,30 @@ export const availabilityDate = pgTable(
 	],
 );
 
-export const slots = pgTable("slots", {
-	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-	availabilityId: varchar("availability_id")
-		.notNull()
-		.references(() => availabilityDate.id, { onDelete: "cascade" }),
-	startTime: text("start_time").notNull(), // Stored as time string (HH:MM:SS)
-	endTime: text("end_time").notNull(), // Stored as time string (HH:MM:SS)
-	slotSizeId: varchar("slot_size_id")
-		.notNull()
-		.references(() => slotSize.id, { onDelete: "restrict" }),
-	isCustom: boolean("is_custom").notNull().default(false), // Indicates if this is a custom-sized slot
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const slots = pgTable(
+	"slots",
+	{
+		id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+		availabilityId: varchar("availability_id")
+			.notNull()
+			.references(() => availabilityDate.id, { onDelete: "cascade" }),
+		startTime: text("start_time").notNull(), // Stored as time string (HH:MM:SS)
+		endTime: text("end_time").notNull(), // Stored as time string (HH:MM:SS)
+		slotSizeId: varchar("slot_size_id")
+			.notNull()
+			.references(() => slotSize.id, { onDelete: "restrict" }),
+		isCustom: boolean("is_custom").notNull().default(false), // Indicates if this is a custom-sized slot
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("idx_slots_availability_id_start_time_end_time").on(
+			table.availabilityId,
+			table.startTime,
+			table.endTime,
+		),
+	],
+);
 
 export const SLOT_TYPE = {
 	ONLINE: "online",

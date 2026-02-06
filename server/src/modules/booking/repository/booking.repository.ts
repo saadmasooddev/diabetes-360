@@ -13,6 +13,7 @@ import {
 	count,
 	getTableColumns,
 	notInArray,
+	gt,
 } from "drizzle-orm";
 import {
 	slotSize,
@@ -33,7 +34,7 @@ import {
 	physicianRatings,
 	physicianSpecialties,
 } from "../../auth/models/user.schema";
-import type {
+import {
 	SlotSize,
 	InsertAvailabilityDate,
 	AvailabilityDate,
@@ -49,8 +50,10 @@ import type {
 	BookedSlot,
 	InsertSlotLocation,
 	SlotLocation,
+	BOOKING_TYPE_QUERY_ENUM,
 } from "../models/booking.schema";
 import { alias } from "drizzle-orm/pg-core";
+import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 export type DateSlotCount = { date: string; count: number };
 export type DateWithBookings = {
@@ -58,31 +61,30 @@ export type DateWithBookings = {
 	availableSlots: DateSlotCount[];
 };
 
-export type SlotStartEnd = { startTime: string; endTime: string }
+export type SlotStartEnd = { startTime: string; endTime: string };
 export type UserConsultation = BookedSlot & {
-				slot: Slot & {
-					availability: AvailabilityDate;
-					slotSize: SlotSize;
-					slotType: SlotType;
-					physician: {
-						id: string;
-						firstName: string;
-						lastName: string;
-						specialty?: string;
-						imageUrl?: string | null;
-						rating?: number;
-					};
-					location?: {
-						locationName: string;
-						address?: string | null;
-						city?: string | null;
-						state?: string | null;
-						country?: string | null;
-						postalCode?: string | null;
-					} | null;
-				};
-			}
-
+	slot: Slot & {
+		availability: AvailabilityDate;
+		slotSize: SlotSize;
+		slotType: SlotType;
+		physician: {
+			id: string;
+			firstName: string;
+			lastName: string;
+			specialty?: string;
+			imageUrl?: string | null;
+			rating?: number;
+		};
+		location?: {
+			locationName: string;
+			address?: string | null;
+			city?: string | null;
+			state?: string | null;
+			country?: string | null;
+			postalCode?: string | null;
+		} | null;
+	};
+};
 
 export type SlotWithDetails = {
 	id: string;
@@ -143,11 +145,8 @@ export class BookingRepository {
 	}
 
 	async getSlotTypesByIds(ids: string[]): Promise<SlotType[]> {
-		if(ids.length === 0) return []
-		return await db
-			.select()
-			.from(slotType)
-			.where(inArray(slotType.id, ids));
+		if (ids.length === 0) return [];
+		return await db.select().from(slotType).where(inArray(slotType.id, ids));
 	}
 
 	async getSlotTypeByType(type: string): Promise<SlotType | null> {
@@ -295,10 +294,12 @@ export class BookingRepository {
 
 		// Create new type junctions
 		if (slotTypeIds.length === 0) return [];
-		const junctionData: InsertSlotTypeJunction[] = slotTypeIds.map((typeId) => ({
-			slotId,
-			slotTypeId: typeId,
-		}));
+		const junctionData: InsertSlotTypeJunction[] = slotTypeIds.map(
+			(typeId) => ({
+				slotId,
+				slotTypeId: typeId,
+			}),
+		);
 		return await this.createMultipleSlotTypeJunctions(junctionData);
 	}
 
@@ -316,7 +317,6 @@ export class BookingRepository {
 			.from(slotSize)
 			.where(eq(slotSize.id, slot.slotSizeId))
 			.limit(1);
-
 
 		const typeJunctions = await db
 			.select()
@@ -350,7 +350,6 @@ export class BookingRepository {
 		const endMinutes = this.timeToMinutes(slot.endTime);
 
 		const durationMinutes = endMinutes - startMinutes;
-
 
 		return {
 			...slot,
@@ -905,9 +904,7 @@ export class BookingRepository {
 			.where(
 				and(
 					inArray(bookedSlots.slotId, slotIds),
-					or(
-						eq(bookedSlots.status, "pending"),
-					),
+					or(eq(bookedSlots.status, "pending")),
 				),
 			);
 		const bookedSlotIds = new Set(bookedSlotsResult.map((b) => b.slotId));
@@ -983,11 +980,13 @@ export class BookingRepository {
 	async getUserConsultations(
 		customerId: string,
 		options: {
-			type?: "upcoming" | "past";
+			type?: BOOKING_TYPE_QUERY_ENUM;
 			page?: number;
 			limit?: number;
 			skip?: number;
 			physicianId?: string;
+			date?: string;
+			timeZone?: string;
 		} = {},
 	): Promise<{
 		consultations: Array<UserConsultation>;
@@ -995,245 +994,198 @@ export class BookingRepository {
 		page: number;
 		limit: number;
 	}> {
-		const { type, page = 1, limit = 10, skip, physicianId } = options;
+		const {
+			type,
+			page = 1,
+			limit = 10,
+			skip,
+			physicianId,
+			date,
+			timeZone,
+		} = options;
 		const offset = skip ? skip : (page - 1) * limit;
+
+		let dateWithTimezone: string | null = null;
+		if (date && timeZone) {
+			dateWithTimezone = new Intl.DateTimeFormat("en-US", {
+				day: "numeric",
+				month: "numeric",
+				year: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+				second: "numeric",
+				timeZone,
+			}).format(Number(new Date(date).getTime()));
+		}
 
 		// Base query conditions
 		let statusCondition = or(
-			eq(bookedSlots.status, "pending"),
-			eq(bookedSlots.status, "confirmed"),
-			eq(bookedSlots.status, "completed"),
+			eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+			eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+			eq(bookedSlots.status, BOOKING_STATUS_ENUM.COMPLETED),
 		);
 
-		if (type === "upcoming") {
+		if (type === BOOKING_TYPE_QUERY_ENUM.UPCOMING) {
 			statusCondition = or(
-				eq(bookedSlots.status, "pending"),
-				eq(bookedSlots.status, "confirmed"),
+				eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+				eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
 			);
-		} else if (type === "past") {
-			statusCondition = eq(bookedSlots.status, "completed");
-		}
 
-		// Get total count
-		const totalResult = await db
-			.select({ count: sql<number>`count(*)` })
-			.from(bookedSlots)
-			.where(and(eq(bookedSlots.customerId, customerId), statusCondition));
-		const total = Number(totalResult[0]?.count || 0);
-
-		// Get booked slots with related data
-		// First get all bookings
-		const allBookings = await db
-			.select()
-			.from(bookedSlots)
-			.where(and(eq(bookedSlots.customerId, customerId), statusCondition));
-
-		// Get slots and availability dates for ordering
-		if (allBookings.length === 0) {
-			return { consultations: [], total, page, limit };
-		}
-
-		const slotIdsForOrdering = allBookings.map((b) => b.slotId);
-		const slotsForOrdering = await db
-			.select()
-			.from(slots)
-			.where(inArray(slots.id, slotIdsForOrdering));
-		const availabilityIdsForOrdering = slotsForOrdering.map(
-			(s) => s.availabilityId,
-		);
-		const availabilitiesForOrdering = await db
-			.select()
-			.from(availabilityDate)
-			.where(inArray(availabilityDate.id, availabilityIdsForOrdering));
-
-		const slotToAvailabilityMap = new Map<string, Date>();
-		slotsForOrdering.forEach((slot) => {
-			const availability = availabilitiesForOrdering.find(
-				(a) => a.id === slot.availabilityId,
-			);
-			if (availability) {
-				slotToAvailabilityMap.set(slot.id, new Date(availability.date));
+			if (dateWithTimezone && date) {
+				statusCondition = and(
+					statusCondition,
+					sql`DATE(${availabilityDate.date}) >= DATE(${date})`,
+				);
 			}
-		});
-
-		// Sort bookings by date
-		const sortedBookings = allBookings.sort((a, b) => {
-			const dateA = slotToAvailabilityMap.get(a.slotId) || new Date(0);
-			const dateB = slotToAvailabilityMap.get(b.slotId) || new Date(0);
-			if (type === "upcoming") {
-				return dateA.getTime() - dateB.getTime();
-			} else {
-				return dateB.getTime() - dateA.getTime();
-			}
-		});
-
-		// Apply pagination
-		const bookings = sortedBookings.slice(offset, offset + limit);
-
-		if (bookings.length === 0) {
-			return { consultations: [], total, page, limit };
+		} else if (type === BOOKING_TYPE_QUERY_ENUM.PAST) {
+			statusCondition = eq(bookedSlots.status, BOOKING_STATUS_ENUM.COMPLETED);
 		}
-
-		// Get all related data
-		const slotIds = bookings.map((b) => b.slotId);
-		const slotsData = await db
-			.select()
-			.from(slots)
-			.where(inArray(slots.id, slotIds));
-		const slotMap = new Map(slotsData.map((s) => [s.id, s]));
-
-		const availabilityIds = slotsData.map((s) => s.availabilityId);
-		const availabilitiesConditions: SQL<unknown>[] = [
-			inArray(availabilityDate.id, availabilityIds),
-		];
 
 		if (physicianId) {
-			availabilitiesConditions.push(
+			statusCondition = and(
+				statusCondition,
 				eq(availabilityDate.physicianId, physicianId),
 			);
 		}
 
-		const availabilities = await db
-			.select()
-			.from(availabilityDate)
-			.where(and(...availabilitiesConditions));
-		const availabilityMap = new Map(availabilities.map((a) => [a.id, a]));
+		const totalConsulations = await db
+			.select({ count: count() })
+			.from(bookedSlots)
+			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.innerJoin(slotSize, eq(slotSize.id, slots.slotSizeId))
+			.innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
+			.innerJoin(users, eq(availabilityDate.physicianId, users.id))
+			.innerJoin(physicianData, eq(physicianData.userId, users.id))
+			.innerJoin(
+				physicianSpecialties,
+				eq(physicianData.specialtyId, physicianSpecialties.id),
+			)
+			.leftJoin(slotLocations, eq(slotLocations.slotId, slots.id))
+			.leftJoin(
+				physicianLocations,
+				eq(physicianLocations.id, slotLocations.locationId),
+			)
+			.where(and(eq(bookedSlots.customerId, customerId), statusCondition));
 
-		const slotSizeIds = slotsData.map((s) => s.slotSizeId);
-		const slotSizes = await db
-			.select()
-			.from(slotSize)
-			.where(inArray(slotSize.id, slotSizeIds));
-		const slotSizeMap = new Map(slotSizes.map((s) => [s.id, s]));
+		const total = totalConsulations[0].count || 0;
 
-		const slotTypeIds = bookings.map((b) => b.slotTypeId);
-		const slotTypes = await db
-			.select()
-			.from(slotType)
-			.where(inArray(slotType.id, slotTypeIds));
-		const slotTypeMap = new Map(slotTypes.map((t) => [t.id, t]));
-
-		// Get physician data
-		const physicianIds = availabilities.map((a) => a.physicianId);
-		const physicians = await db
+		const consultations: UserConsultation[] = await db
 			.select({
-				id: users.id,
-				firstName: users.firstName,
-				lastName: users.lastName,
+				id: bookedSlots.id,
+				customerId: bookedSlots.customerId,
+				slotId: bookedSlots.slotId,
+				slotTypeId: bookedSlots.slotTypeId,
+				status: bookedSlots.status,
+				summary: bookedSlots.summary,
+				createdAt: bookedSlots.createdAt,
+				updatedAt: bookedSlots.updatedAt,
+				slot: {
+					id: slots.id,
+					availabilityId: slots.availabilityId,
+					startTime: slots.startTime,
+					endTime: slots.endTime,
+					slotSizeId: slots.slotSizeId,
+					isCustom: slots.isCustom,
+					createdAt: slots.createdAt,
+					updatedAt: slots.updatedAt,
+					availability: {
+						id: availabilityDate.id,
+						physicianId: availabilityDate.physicianId,
+						date: availabilityDate.date,
+						createdAt: availabilityDate.createdAt,
+						updatedAt: availabilityDate.updatedAt,
+					},
+					slotSize: {
+						id: slotSize.id,
+						size: slotSize.size,
+						createdAt: slotSize.createdAt,
+						updatedAt: slotSize.updatedAt,
+					},
+					slotType: {
+						id: slotType.id,
+						type: slotType.type,
+						createdAt: slotType.createdAt,
+						updatedAt: slotType.updatedAt,
+					},
+					physician: {
+						id: users.id,
+						firstName: users.firstName,
+						lastName: users.lastName,
+						specialty: physicianSpecialties.name,
+						imageUrl: physicianData.imageUrl,
+					},
+					location: {
+						locationName: physicianLocations.locationName,
+						address: physicianLocations.address,
+						city: physicianLocations.city,
+						state: physicianLocations.state,
+						country: physicianLocations.country,
+						postalCode: physicianLocations.postalCode,
+					},
+				},
 			})
-			.from(users)
-			.where(inArray(users.id, physicianIds));
+			.from(bookedSlots)
+			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.innerJoin(slotSize, eq(slotSize.id, slots.slotSizeId))
+			.innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
+			.innerJoin(users, eq(availabilityDate.physicianId, users.id))
+			.innerJoin(physicianData, eq(physicianData.userId, users.id))
+			.innerJoin(
+				physicianSpecialties,
+				eq(physicianData.specialtyId, physicianSpecialties.id),
+			)
+			.leftJoin(slotLocations, eq(slotLocations.slotId, slots.id))
+			.leftJoin(
+				physicianLocations,
+				eq(physicianLocations.id, slotLocations.locationId),
+			)
+			.where(and(eq(bookedSlots.customerId, customerId), statusCondition))
+			.orderBy(availabilityDate.date)
+			.limit(limit)
+			.offset(offset);
 
-		const physicianDataRecords = await db
-			.select()
-			.from(physicianData)
-			.where(inArray(physicianData.userId, physicianIds));
-
-		// Get specialties
-		const specialtyIds = physicianDataRecords.map((pd) => pd.specialtyId);
-		const specialties =
-			specialtyIds.length > 0
-				? await db
-						.select()
-						.from(physicianSpecialties)
-						.where(inArray(physicianSpecialties.id, specialtyIds))
-				: [];
-		const specialtyMap = new Map(specialties.map((s) => [s.id, s.name]));
-
-		// Get physician ratings
+		const physicianIds = consultations.map((c) => c.slot.physician.id);
 		const ratings = await db
 			.select({
 				physicianId: physicianRatings.physicianId,
-				avgRating: sql<number>`COALESCE(AVG(${physicianRatings.rating})::numeric, 0)`,
+				avgRating:
+					sql<number>`COALESCE(AVG(${physicianRatings.rating})::numeric, 0)`.as(
+						"avgRating",
+					),
 			})
 			.from(physicianRatings)
 			.where(inArray(physicianRatings.physicianId, physicianIds))
 			.groupBy(physicianRatings.physicianId);
 
-		const ratingMap = new Map(
-			ratings.map((r) => [r.physicianId, Number(r.avgRating)]),
+		const ratingsMap = new Map(
+			ratings.map((r) => [r.physicianId, r.avgRating]),
 		);
-
-		// Get locations for slots
-		const slotLocationRecords = await db
-			.select()
-			.from(slotLocations)
-			.where(inArray(slotLocations.slotId, slotIds));
-
-		const locationIds = slotLocationRecords.map((sl) => sl.locationId);
-		const locations =
-			locationIds.length > 0
-				? await db
-						.select()
-						.from(physicianLocations)
-						.where(inArray(physicianLocations.id, locationIds))
-				: [];
-		const locationMap = new Map(locations.map((l) => [l.id, l]));
-		const slotLocationMap = new Map(
-			slotLocationRecords.map((sl) => [sl.slotId, sl.locationId]),
-		);
-
-		// Build consultations array
-		const consultations = bookings.map((booking) => {
-			const slot = slotMap.get(booking.slotId);
-			if (!slot) throw new Error(`Slot ${booking.slotId} not found`);
-
-			const availability = availabilityMap.get(slot.availabilityId);
-			if (!availability)
-				throw new Error(`Availability ${slot.availabilityId} not found`);
-
-			const slotSizeRecord = slotSizeMap.get(slot.slotSizeId);
-			if (!slotSizeRecord)
-				throw new Error(`Slot size ${slot.slotSizeId} not found`);
-
-			const slotTypeRecord = slotTypeMap.get(booking.slotTypeId);
-			if (!slotTypeRecord)
-				throw new Error(`Slot type ${booking.slotTypeId} not found`);
-
-			const physician = physicians.find(
-				(p) => p.id === availability.physicianId,
-			);
-			if (!physician)
-				throw new Error(`Physician ${availability.physicianId} not found`);
-
-			const physicianDataRecord = physicianDataRecords.find(
-				(pd) => pd.userId === physician.id,
-			);
-			const locationId = slotLocationMap.get(slot.id);
-			const location = locationId ? locationMap.get(locationId) : null;
-
-			return {
-				...booking,
+		const consultationsWithPhysicianRatings: UserConsultation[] =
+			consultations.map((c) => ({
+				...c,
 				slot: {
-					...slot,
-					availability,
-					slotSize: slotSizeRecord,
-					slotType: slotTypeRecord,
+					...c.slot,
 					physician: {
-						id: physician.id,
-						firstName: physician.firstName,
-						lastName: physician.lastName,
-						specialty: physicianDataRecord
-							? specialtyMap.get(physicianDataRecord.specialtyId) || undefined
-							: undefined,
-						imageUrl: physicianDataRecord?.imageUrl || null,
-						rating: ratingMap.get(physician.id) || 0,
+						...c.slot.physician,
+						rating: ratingsMap.get(c.slot.physician.id) || 0,
 					},
-					location: location
-						? {
-								locationName: location.locationName,
-								address: location.address,
-								city: location.city,
-								state: location.state,
-								country: location.country,
-								postalCode: location.postalCode,
-							}
-						: null,
 				},
-			};
-		});
+			}));
 
-		return { consultations, total, page, limit };
+		return {
+			consultations: consultationsWithPhysicianRatings,
+			total,
+			page,
+			limit,
+		};
 	}
 
 	// Update consultation attended status
@@ -1289,6 +1241,32 @@ export class BookingRepository {
 
 		if (!updated) {
 			throw new Error("Failed to update summary");
+		}
+		return updated;
+	}
+
+	/**
+	 * Update booked slot status (admin only). Status must be a valid booking_status_enum value.
+	 */
+	async updateBookedSlotStatus(
+		bookingId: string,
+		status: (typeof BOOKING_STATUS_ENUM)[keyof typeof BOOKING_STATUS_ENUM],
+	): Promise<BookedSlot> {
+		const booking = await this.getBookedSlotById(bookingId);
+		if (!booking) {
+			throw new Error("Booking not found");
+		}
+		const validStatuses = Object.values(BOOKING_STATUS_ENUM);
+		if (!validStatuses.includes(status)) {
+			throw new Error(`Invalid status. Allowed: ${validStatuses.join(", ")}`);
+		}
+		const [updated] = await db
+			.update(bookedSlots)
+			.set({ status, updatedAt: new Date() })
+			.where(eq(bookedSlots.id, bookingId))
+			.returning();
+		if (!updated) {
+			throw new Error("Failed to update booking status");
 		}
 		return updated;
 	}
@@ -1401,13 +1379,12 @@ export class BookingRepository {
 		const existingSlots = await this.getSlotsByAvailabilityId(availability.id);
 
 		// Generate all possible slots for the day
-		const dateObj = new Date(date)
+		const dateObj = new Date(date);
 		const allSlots: Array<SlotStartEnd> = [];
-		const currentMinutes = dateObj.getHours() * 60 + dateObj.getMinutes()
-		let startMinutes = Math.ceil(currentMinutes/ slotSize.size) * slotSize.size; // 12:00 AM
+		const currentMinutes = dateObj.getHours() * 60 + dateObj.getMinutes();
+		let startMinutes =
+			Math.ceil(currentMinutes / slotSize.size) * slotSize.size; // 12:00 AM
 		const endMinutes = 24 * 60; // 11:59 PM
-
-		
 
 		let currentStart = startMinutes;
 		while (currentStart + slotSize.size <= endMinutes) {
@@ -1531,10 +1508,13 @@ export class BookingRepository {
 		const { page = 1, limit = 10, search, startDate, endDate, skip } = options;
 		const offset = skip ? skip : (page - 1) * limit;
 
-		const statusCondition = or(
-			eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
-			eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
-		);
+		// When admin (hasReadAllAppointments), show all statuses; otherwise only pending/confirmed
+		const statusCondition = hasReadAllAppointments
+			? null
+			: or(
+					eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+					eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+				);
 		const conditions: SQL<unknown>[] = [];
 
 		if (statusCondition) {

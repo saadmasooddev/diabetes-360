@@ -3,19 +3,27 @@ import { BadRequestError } from "../errors";
 import dayjs from "dayjs";
 
 export class DateManager {
-
+	static parseAndValidateDate(dateStr: string) {
+		if (!dateStr || typeof dateStr !== "string") {
+			throw new BadRequestError("Date is required (format: YYYY-MM-DD)");
+		}
+		if (Number.isNaN(new Date(dateStr).getTime())) {
+			throw new BadRequestError("Invalid date.");
+		}
+		return dateStr;
+	}
 	static timeToMinutes(timeStr: string): number {
 		const [hours, minutes] = timeStr.split(":").map(Number);
 		return hours * 60 + minutes;
-	};
+	}
 
 	static date(date: string) {
-		return dayjs(date).toDate()
+		return dayjs(date).toDate();
 	}
 	static startOfDay(date: Date) {
-		return dayjs(date).startOf("day").toDate()
+		return dayjs(date).startOf("day").toDate();
 	}
-	
+
 	static parseLocalDate(dateStr: string): Date {
 		const parsed = dayjs(dateStr, "YYYY-MM-DD");
 		if (!parsed.isValid()) {
@@ -24,24 +32,22 @@ export class DateManager {
 		return parsed.toDate();
 	}
 
-	
 	static formatDate(date: Date | string): string {
 		return dayjs(date).format("YYYY-MM-DD");
 	}
 
 	static isToday(date: string) {
-		const today = dayjs()
-		const providedDate = dayjs(date)
-		const isToday = providedDate.isSame(today, 'day')
-		return isToday
+		const today = dayjs();
+		const providedDate = dayjs(date);
+		const isToday = providedDate.isSame(today, "day");
+		return isToday;
 	}
 
 	static isBeforeToday(date: string) {
-		const today = dayjs()
-		const providedDate = dayjs(date)
-		const isBeforeToday = providedDate.isBefore(today, "day")
-		console.log("the today is", today, "the provided", providedDate, isBeforeToday)
-		return isBeforeToday
+		const today = dayjs();
+		const providedDate = dayjs(date);
+		const isBeforeToday = providedDate.isBefore(today, "day");
+		return isBeforeToday;
 	}
 }
 
