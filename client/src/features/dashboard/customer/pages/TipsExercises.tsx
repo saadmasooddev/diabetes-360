@@ -200,7 +200,7 @@ export function TipsExercises() {
 			<Sidebar />
 
 			<main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-				<div className="w-full max-w-[1200px] mx-auto space-y-8">
+				<div className="w-full max-w-full mx-auto space-y-8">
 					{/* Header Banner - Only show if not premium */}
 					{!isPremium && (
 						<Card

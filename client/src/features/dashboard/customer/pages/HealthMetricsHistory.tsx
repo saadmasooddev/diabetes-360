@@ -140,7 +140,7 @@ export function HealthMetricsHistory() {
 				className="flex-1 flex justify-center"
 				style={{ padding: "24px 16px" }}
 			>
-				<div className="w-full" style={{ maxWidth: "1200px" }}>
+				<div className="w-full" >
 					{/* Header */}
 					<div className="mb-8">
 						<h1
@@ -276,7 +276,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{bloodSugarData?.bloodSugarRecords &&
-												bloodSugarData.bloodSugarRecords.length > 0 ? (
+													bloodSugarData.bloodSugarRecords.length > 0 ? (
 													bloodSugarData.bloodSugarRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -292,8 +292,8 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(bloodSugarData.bloodSugarRecords
-																				?.length || 0) -
+																				(bloodSugarData.bloodSugarRecords
+																					?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -423,7 +423,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{waterIntakeData?.waterIntakeRecords &&
-												waterIntakeData.waterIntakeRecords.length > 0 ? (
+													waterIntakeData.waterIntakeRecords.length > 0 ? (
 													waterIntakeData.waterIntakeRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -439,8 +439,8 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(waterIntakeData.waterIntakeRecords
-																				?.length || 0) -
+																				(waterIntakeData.waterIntakeRecords
+																					?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -570,7 +570,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{stepsData?.stepsRecords &&
-												stepsData.stepsRecords.length > 0 ? (
+													stepsData.stepsRecords.length > 0 ? (
 													stepsData.stepsRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -586,7 +586,7 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(stepsData.stepsRecords?.length || 0) - 1
+																				(stepsData.stepsRecords?.length || 0) - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}
@@ -715,7 +715,7 @@ export function HealthMetricsHistory() {
 												</TableHeader>
 												<TableBody>
 													{heartBeatData?.heartBeatRecords &&
-													heartBeatData.heartBeatRecords.length > 0 ? (
+														heartBeatData.heartBeatRecords.length > 0 ? (
 														heartBeatData.heartBeatRecords.map(
 															(record: MertricRecord, index: number) => (
 																<TableRow
@@ -724,7 +724,7 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			heartBeatData.heartBeatRecords.length - 1
+																				heartBeatData.heartBeatRecords.length - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}

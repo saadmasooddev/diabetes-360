@@ -92,7 +92,7 @@ export function HealthAssessment() {
 			<Sidebar />
 
 			<main className="flex-1 flex justify-center items-start pt-6 pb-8">
-				<div className="w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
+				<div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
 					{/* Header */}
 					<div className="mb-8">
 						<h1

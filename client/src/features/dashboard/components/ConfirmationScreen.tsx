@@ -22,7 +22,7 @@ export function ConfirmationScreen({
 	const formattedDate = format(date, "d MMMM yyyy");
 
 	return (
-		<div className="w-full max-w-[800px]">
+		<div className="w-full max-w-full ">
 			{/* Header with Back Button */}
 			<div className="flex items-center gap-4 mb-6 sm:mb-8">
 				<button

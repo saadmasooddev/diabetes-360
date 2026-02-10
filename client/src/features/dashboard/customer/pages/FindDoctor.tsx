@@ -113,7 +113,7 @@ export function FindDoctor() {
 
 	const searchValue =
 		debouncedSearchQuery.trim() === "" ||
-		debouncedSearchQuery.toLowerCase() === "all"
+			debouncedSearchQuery.toLowerCase() === "all"
 			? undefined
 			: debouncedSearchQuery.trim();
 
@@ -309,57 +309,58 @@ export function FindDoctor() {
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
-			<main className="flex-1 flex justify-center items-start pt-4 sm:pt-8 pb-4 sm:pb-8">
-				{currentStep === 1 ? (
-					<DoctorSearchStep
-						searchQuery={searchQuery}
-						onSearchChange={setSearchQuery}
-						specialties={specialties}
-						selectedSpecialtyId={selectedSpecialtyId}
-						onSpecialtySelect={setSelectedSpecialtyId}
-						isLoadingSpecialties={isLoadingSpecialties}
-						physicians={physicians}
-						isLoadingPhysicians={isLoadingPhysicians}
-						onConsultClick={handleConsultClick}
-						pagination={pagination}
-						onPageChange={setCurrentPage}
-					/>
-				) : currentStep === 2 ? (
-					<>
-						{selectedPhysician && (
-							<BookingStep
-								selectedPhysician={selectedPhysician}
-								selectedDate={selectedDate}
-								onDateSelect={handleDateSelect}
-								calendarMonth={calendarMonth}
-								onMonthChange={setCalendarMonth}
-								availableDates={availableDates}
-								isLoadingDates={isLoadingDates}
-								availableSlots={availableSlots}
-								isLoadingSlots={isLoadingSlots}
-								selectedSlot={selectedSlot}
-								onSlotSelect={handleSlotSelect}
-								selectedLocationId={selectedLocationId}
-								onLocationChange={setSelectedLocationId}
-								locationDistances={locationDistances}
-								onBack={handleBackToList}
-							/>
-						)}
+			<main className="flex-1 p-4  lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6  ">
+					{currentStep === 1 ? (
+						<DoctorSearchStep
+							searchQuery={searchQuery}
+							onSearchChange={setSearchQuery}
+							specialties={specialties}
+							selectedSpecialtyId={selectedSpecialtyId}
+							onSpecialtySelect={setSelectedSpecialtyId}
+							isLoadingSpecialties={isLoadingSpecialties}
+							physicians={physicians}
+							isLoadingPhysicians={isLoadingPhysicians}
+							onConsultClick={handleConsultClick}
+							pagination={pagination}
+							onPageChange={setCurrentPage}
+						/>
+					) : currentStep === 2 ? (
+						<>
+							{selectedPhysician && (
+								<BookingStep
+									selectedPhysician={selectedPhysician}
+									selectedDate={selectedDate}
+									onDateSelect={handleDateSelect}
+									calendarMonth={calendarMonth}
+									onMonthChange={setCalendarMonth}
+									availableDates={availableDates}
+									isLoadingDates={isLoadingDates}
+									availableSlots={availableSlots}
+									isLoadingSlots={isLoadingSlots}
+									selectedSlot={selectedSlot}
+									onSlotSelect={handleSlotSelect}
+									selectedLocationId={selectedLocationId}
+									onLocationChange={setSelectedLocationId}
+									locationDistances={locationDistances}
+									onBack={handleBackToList}
+								/>
+							)}
 
-						{/* Booking Confirmation Dialog */}
-						<BookingConfirmationDialog
-							isOpen={isConsultationTypeDialogOpen}
-							onClose={() => {
-								setIsConsultationTypeDialogOpen(false);
-								setSelectedSlot(null);
-								setSelectedSlotTypeId(null);
-							}}
-							selectedSlot={selectedSlot}
-							selectedSlotTypeId={selectedSlotTypeId}
-							onSlotTypeSelect={setSelectedSlotTypeId}
-							bookingPrice={
-								bookingPrice
-									? {
+							{/* Booking Confirmation Dialog */}
+							<BookingConfirmationDialog
+								isOpen={isConsultationTypeDialogOpen}
+								onClose={() => {
+									setIsConsultationTypeDialogOpen(false);
+									setSelectedSlot(null);
+									setSelectedSlotTypeId(null);
+								}}
+								selectedSlot={selectedSlot}
+								selectedSlotTypeId={selectedSlotTypeId}
+								onSlotTypeSelect={setSelectedSlotTypeId}
+								bookingPrice={
+									bookingPrice
+										? {
 											originalFee: bookingPrice.originalFee,
 											discountedFee: bookingPrice.discountedFee,
 											finalPrice: bookingPrice.finalPrice,
@@ -367,32 +368,34 @@ export function FindDoctor() {
 											isFree: bookingPrice.isFree,
 											discountPercentage: bookingPrice.discountPercentage,
 										}
-									: null
-							}
-							isLoadingPrice={isLoadingPrice}
-							isBooking={bookSlotMutation.isPending}
-							onConfirm={handleConfirmConsultationType}
-							autoSelectedSlotTypeId={selectedSlotTypeId}
-						/>
-					</>
-				) : (
-					<div className="w-full px-4 sm:px-6 lg:px-8 flex justify-center">
-						{selectedPhysician && selectedDate && selectedSlot && (
-							<ConfirmationScreen
-								doctor={mapPhysicianToDoctor(selectedPhysician)}
-								date={selectedDate}
-								time={`${formatTime12(selectedSlot.startTime)} - ${formatTime12(selectedSlot.endTime)}`}
-								hospital={{
-									id: "1",
-									name:
-										selectedSlot.types?.map((t: any) => t.type).join(", ") ||
-										"Online",
-								}}
-								onBack={handleBackToBooking}
+										: null
+								}
+								isLoadingPrice={isLoadingPrice}
+								isBooking={bookSlotMutation.isPending}
+								onConfirm={handleConfirmConsultationType}
+								autoSelectedSlotTypeId={selectedSlotTypeId}
 							/>
-						)}
-					</div>
-				)}
+						</>
+					) : (
+						<div className="w-full px-4 sm:px-6 lg:px-8 flex justify-center">
+							{selectedPhysician && selectedDate && selectedSlot && (
+								<ConfirmationScreen
+									doctor={mapPhysicianToDoctor(selectedPhysician)}
+									date={selectedDate}
+									time={`${formatTime12(selectedSlot.startTime)} - ${formatTime12(selectedSlot.endTime)}`}
+									hospital={{
+										id: "1",
+										name:
+											selectedSlot.types?.map((t: any) => t.type).join(", ") ||
+											"Online",
+									}}
+									onBack={handleBackToBooking}
+								/>
+							)}
+						</div>
+					)}
+
+				</div>
 			</main>
 		</div>
 	);

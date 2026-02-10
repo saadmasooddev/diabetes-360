@@ -1,3 +1,4 @@
+import { PhysicianData } from "@shared/schema";
 import { DoctorCard } from "./DoctorCard";
 import { DoctorSearchBar } from "./DoctorSearchBar";
 import { SpecialtyTabs } from "./SpecialtyTabs";
@@ -17,7 +18,7 @@ interface DoctorSearchStepProps {
 	selectedSpecialtyId: string | null;
 	onSpecialtySelect: (specialtyId: string | null) => void;
 	isLoadingSpecialties: boolean;
-	physicians: Physician[];
+	physicians: (Physician & { practiceStartDate: string })[];
 	isLoadingPhysicians: boolean;
 	onConsultClick: (physician: Physician) => void;
 	pagination?: {
@@ -27,7 +28,7 @@ interface DoctorSearchStepProps {
 	onPageChange: (page: number) => void;
 }
 
-function mapPhysicianToDoctor(physician: Physician) {
+function mapPhysicianToDoctor(physician: Physician & { practiceStartDate: string }) {
 	const practiceStartDate = physician.practiceStartDate || new Date();
 	const yearsOfExperience = Math.max(
 		1,
@@ -41,7 +42,7 @@ function mapPhysicianToDoctor(physician: Physician) {
 		rating: physician.rating || 0,
 		isOnline: physician.isOnline || false,
 		image: physician.imageUrl || "",
-		consultationFee: physician.consultationFee,
+		consultationFee: parseFloat(physician.consultationFee),
 	};
 }
 
@@ -59,7 +60,7 @@ export function DoctorSearchStep({
 	onPageChange,
 }: DoctorSearchStepProps) {
 	return (
-		<div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
+		<div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
 			<DoctorSearchBar
 				searchQuery={searchQuery}
 				onSearchChange={onSearchChange}

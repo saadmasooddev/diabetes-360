@@ -31,7 +31,7 @@ export function Medications() {
 			<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 				<Sidebar />
 				<main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-					<div className="w-full max-w-[1200px] mx-auto">
+					<div className="w-full max-w-full mx-auto">
 						<Card className="p-6 text-center">
 							<p className="text-gray-500">
 								Invalid parameters. Please go back to medical records.

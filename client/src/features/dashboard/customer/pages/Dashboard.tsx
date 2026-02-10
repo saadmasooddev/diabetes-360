@@ -424,11 +424,8 @@ export function Dashboard() {
 		<div className="flex min-h-screen " style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
-			<main
-				className="flex-1 flex justify-center "
-				style={{ padding: "24px 16px" }}
-			>
-				<div className="w-full" style={{ maxWidth: "1200px" }}>
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Welcome Header */}
 					<div className="mb-8">
 						<h1

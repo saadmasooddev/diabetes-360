@@ -92,8 +92,8 @@ export function BookingStep({
 		// Filter by location if selected
 		const filteredSlots = selectedLocationId
 			? unbookedSlots.filter((slot) =>
-					slot.locations?.some((loc) => loc.id === selectedLocationId),
-				)
+				slot.locations?.some((loc) => loc.id === selectedLocationId),
+			)
 			: unbookedSlots;
 
 		// Separate online-only vs slots with offline/onsite
@@ -121,7 +121,7 @@ export function BookingStep({
 
 	return (
 		<div className="w-full px-4 sm:px-6 lg:px-8 flex justify-center">
-			<div className="w-full max-w-[800px]">
+			<div className="w-full max-w-full ">
 				{/* Header with Back Button */}
 				<div className="flex items-center gap-4 mb-6 sm:mb-8">
 					<button

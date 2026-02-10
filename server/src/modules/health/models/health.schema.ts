@@ -38,7 +38,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		recordedAt: z.string(),
 	})
 	.superRefine((data, ctx) => {
-		if (data.bloodSugar && (data.bloodSugar < 70 || data.bloodSugar > 600)) {
+		if (data.bloodSugar && (data.bloodSugar < 70 || data.bloodSugar > 2700)) {
 			ctx.addIssue({
 				code: "custom",
 				message: "Blood glucose value must be between 70-600 mg/dL",

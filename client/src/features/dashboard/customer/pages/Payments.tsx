@@ -43,7 +43,7 @@ export function Payments() {
 				<Sidebar />
 
 				<main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
-					<div className="w-full max-w-[700px]">
+					<div className="w-full max-w-full ">
 						<Card
 							className="p-12 flex flex-col items-center justify-center"
 							style={{

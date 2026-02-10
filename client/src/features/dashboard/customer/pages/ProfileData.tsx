@@ -147,7 +147,7 @@ export function ProfileData() {
 
 			{/* Main Content */}
 			<main className="flex-1 px-4 sm:px-8 lg:px-16 py-8 lg:py-12">
-				<div className="max-w-[762px] mx-auto">
+				<div className="max-w-full mx-auto">
 					{/* Page Title */}
 					<h1
 						className="font-bold leading-[130%] tracking-[-0.01em] mb-8 lg:mb-12 text-3xl sm:text-4xl lg:text-[48px]"
