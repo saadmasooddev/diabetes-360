@@ -175,8 +175,8 @@ export function DoctorHome() {
 		<div className="flex min-h-screen bg-gray-50">
 			<Sidebar />
 
-			<main className="flex-1 p-6 lg:p-8 overflow-auto">
-				<div className="max-w-6xl mx-auto space-y-6">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Today's Appointments */}
 					<Card
 						className="p-6"
@@ -227,7 +227,7 @@ export function DoctorHome() {
 							</div>
 						) : (
 							<div className="overflow-x-auto">
-								<table className="w-full" data-testid="table-appointments">
+								<table className="w-full  " data-testid="table-appointments">
 									<thead>
 										<tr>
 											<th
@@ -651,6 +651,7 @@ export function DoctorHome() {
 							fontSize: "16px",
 							fontWeight: 600,
 						}}
+						onClick={() => navigate(ROUTES.DOCTOR_APPOINTMENTS)}
 						data-testid="button-add-availability"
 					>
 						<Plus className="mr-2 h-5 w-5" />

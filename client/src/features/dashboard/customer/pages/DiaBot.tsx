@@ -61,7 +61,7 @@ export default function DiaBot() {
 
 			<main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
 				<div
-					className="w-full max-w-[1200px] mx-auto flex flex-col"
+					className="w-full max-w-full mx-auto flex flex-col"
 					style={{ height: "calc(100vh - 4rem)" }}
 				>
 					{/* Header */}

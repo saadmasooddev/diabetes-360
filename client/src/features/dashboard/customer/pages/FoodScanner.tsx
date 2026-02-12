@@ -139,8 +139,8 @@ export function FoodScanner() {
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
-			<main className="flex-1 flex flex-col px-4 sm:px-6 lg:px-8 py-8">
-				<div className="w-full max-w-[1200px] mx-auto">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6   ">
 					{/* Header with back button */}
 					{showHeader && (
 						<div className="flex items-center gap-4 mb-8">

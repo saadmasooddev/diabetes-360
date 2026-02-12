@@ -85,7 +85,7 @@ export function InstantConsultation() {
 			<Sidebar />
 
 			<main className="flex-1 flex justify-center items-start pt-8 pb-8">
-				<div className="w-full max-w-[1100px] px-4 sm:px-6 lg:px-8">
+				<div className="w-full max-w-full px-4 sm:px-6 lg:px-8">
 					{currentStep === "concern" && (
 						<div
 							data-testid="section-concern-selection"

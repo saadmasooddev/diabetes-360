@@ -148,7 +148,7 @@ export function LogHistory() {
 				className="flex-1 flex justify-center"
 				style={{ padding: "24px 16px" }}
 			>
-				<div className="w-full" style={{ maxWidth: "1200px" }}>
+				<div className="w-full" >
 					{/* Header */}
 					<div className="mb-8">
 						<h1

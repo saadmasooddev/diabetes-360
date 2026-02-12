@@ -96,8 +96,8 @@ export function Settings() {
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
-			<main className="flex-1 flex justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 overflow-x-hidden">
-				<div className="w-full max-w-full" style={{ maxWidth: "1145px" }}>
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Header */}
 					<div className="mb-4 sm:mb-6">
 						<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">

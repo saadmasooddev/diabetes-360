@@ -70,8 +70,8 @@ export function DoctorPatients() {
 		<div className="flex min-h-screen bg-gray-50">
 			<Sidebar />
 
-			<main className="flex-1 p-6 lg:p-8 overflow-auto">
-				<div className="max-w-5xl mx-auto space-y-6">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Page Title */}
 					<div className="flex items-center gap-3 mb-6">
 						<MoonIcon />

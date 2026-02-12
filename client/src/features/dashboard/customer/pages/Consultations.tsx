@@ -161,8 +161,8 @@ export function Consultations() {
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
-			<main className="flex-1 flex justify-center items-start pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6 lg:pb-8 px-2 sm:px-4 lg:px-6">
-				<div className="w-full max-w-[1100px]">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Header */}
 					<div className="mb-4 sm:mb-6">
 						<h1

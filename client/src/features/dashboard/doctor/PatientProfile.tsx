@@ -128,8 +128,8 @@ export function PatientProfile() {
 		<div className="flex min-h-screen bg-gray-50">
 			<Sidebar />
 
-			<main className="flex-1 p-6 lg:p-8 overflow-auto">
-				<div className="max-w-5xl mx-auto space-y-6">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Page Title */}
 					<h1
 						style={{
@@ -384,7 +384,7 @@ export function PatientProfile() {
 										}}
 										data-testid="text-highs"
 									>
-										{patient.glucoseSummary.highs}%
+										{patient.glucoseSummary.highs || 0}%
 									</p>
 								</div>
 								<div className="text-center">
@@ -406,7 +406,7 @@ export function PatientProfile() {
 										}}
 										data-testid="text-lows"
 									>
-										{patient.glucoseSummary.lows}%
+										{patient.glucoseSummary.lows || 0}%
 									</p>
 								</div>
 								<div className="text-center">
@@ -428,7 +428,7 @@ export function PatientProfile() {
 										}}
 										data-testid="text-time-in-range"
 									>
-										{patient.glucoseSummary.timeInRange}%
+										{patient.glucoseSummary.timeInRange || 0}%
 									</p>
 								</div>
 							</div>
@@ -594,7 +594,7 @@ export function PatientProfile() {
 							}}
 						>
 							{patient.consultationSummaries &&
-							patient.consultationSummaries.length > 0 ? (
+								patient.consultationSummaries.length > 0 ? (
 								<ul className="space-y-4">
 									{patient.consultationSummaries.map((summary, index) => (
 										<li
