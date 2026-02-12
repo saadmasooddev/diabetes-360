@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { JWTService } from "../utils/jwt";
 import { UnauthorizedError, ForbiddenError } from "../errors";
-import { USER_ROLES, type UserRole } from "@shared/schema";
+import { PAYMENT_TYPE, USER_ROLES, type UserRole } from "@shared/schema";
 
 export interface AuthenticatedRequest extends Request {
 	user?: {

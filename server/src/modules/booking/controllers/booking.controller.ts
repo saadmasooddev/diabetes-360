@@ -487,15 +487,20 @@ export class BookingController {
 				throw new BadRequestError("User ID not found");
 			}
 
-			const { slotId, slotTypeId } = req.body;
-			if (!slotId) {
+			const { slotId, slotTypeId, physicianId } = req.body;
+			if (!slotId ) {
 				throw new BadRequestError("Slot ID is required");
 			}
 			if (!slotTypeId) {
 				throw new BadRequestError("Slot type ID is required");
 			}
 
+			if(!physicianId){
+				throw new BadRequestError("Physician ID is required");
+			}
+
 			const booking = await this.bookingService.bookSlot(
+				physicianId,
 				customerId,
 				slotId,
 				slotTypeId,

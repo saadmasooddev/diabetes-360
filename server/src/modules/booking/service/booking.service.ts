@@ -1,4 +1,5 @@
 import {
+	BookingPriceCalculation,
 	BookingRepository,
 	type SlotWithDetails,
 } from "../repository/booking.repository";
@@ -11,15 +12,17 @@ import {
 	ForbiddenError,
 } from "../../../shared/errors";
 import { db } from "../../../app/config/db";
-import { physicianData } from "../../auth/models/user.schema";
+import { PAYMENT_TYPE, physicianData } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
-import type {
-	BOOKING_TYPE_QUERY_ENUM,
-	InsertSlot,
-	InsertSlotTypeJunction,
+import {
+	BOOKING_TYPE_ENUM, BOOKING_STATUS_ENUM,
+	type BOOKING_TYPE_QUERY_ENUM,
+	type InsertSlot,
+	type InsertSlotTypeJunction,
 } from "../models/booking.schema";
 import { ConsultationService } from "./consultation.service";
 import { DateManager } from "server/src/shared/utils/utils";
+
 export class BookingService {
 	private bookingRepository: BookingRepository;
 	private consultationService: ConsultationService;
@@ -638,7 +641,7 @@ export class BookingService {
 		return await this.bookingRepository.getSlotWithDetails(slotId);
 	}
 
-	async bookSlot(customerId: string, slotId: string, slotTypeId: string) {
+	async bookSlot(physicianId: string, customerId: string, slotId: string, slotTypeId: string) {
 		const slot = await this.bookingRepository.getSlotById(slotId);
 		if (!slot) {
 			throw new NotFoundError("Slot not found");
@@ -663,12 +666,18 @@ export class BookingService {
 			throw new BadRequestError("Invalid slot type for this slot");
 		}
 
-		return await this.bookingRepository.createBookedSlot({
+		const calculatedPrice = await this.calculateBookingPrice(physicianId, customerId)
+		if(calculatedPrice.isFree){
+
+		}
+		
+		return await this.bookingRepository.createBookedSlotTransaction({
 			customerId,
 			slotId,
 			slotTypeId,
-			status: "pending",
-		});
+			status: BOOKING_STATUS_ENUM.PENDING,
+		}, 
+		calculatedPrice);
 	}
 
 	private generateSlots(
@@ -760,14 +769,7 @@ export class BookingService {
 	async calculateBookingPrice(
 		physicianId: string,
 		customerId: string,
-	): Promise<{
-		originalFee: string;
-		discountedFee: string | null;
-		finalPrice: string;
-		isFree: boolean;
-		isDiscounted: boolean;
-		discountPercentage?: number;
-	}> {
+	): Promise<BookingPriceCalculation> {
 		// Get physician consultation fee
 		const [physician] = await db
 			.select({
@@ -789,6 +791,19 @@ export class BookingService {
 			throw new NotFoundError("Customer not found");
 		}
 
+		if(customer.paymentType === PAYMENT_TYPE.FREE) {
+			return {
+				originalFee: originalFee.toFixed(2),
+				discountedFee: "0",
+				finalPrice: originalFee.toFixed(2),
+				isFree: false,
+				isDiscounted: false,
+				discountPercentage: 0,
+				type: BOOKING_TYPE_ENUM.PAID
+		
+			}
+		}
+
 		// Get user consultation quota
 		const quota =
 			await this.consultationService.getOrCreateUserConsultationQuota(
@@ -807,9 +822,8 @@ export class BookingService {
 		// Calculate price based on user status
 		let finalPrice = originalFee;
 		let discountedFee: string | null = null;
-		let isFree = false;
-		let isDiscounted = false;
 		let discountPercentage: number | undefined;
+		let type = BOOKING_TYPE_ENUM.PAID
 
 		if (isPaid) {
 			// For paid users
@@ -817,13 +831,13 @@ export class BookingService {
 				// Annual users get free consultations if quota not exhausted
 				if (quota.freeConsultationsUsed < freeQuotaLimit) {
 					finalPrice = 0;
-					isFree = true;
+					type = BOOKING_TYPE_ENUM.FREE
 				} else if (quota.discountedConsultationsUsed < discountedQuotaLimit) {
 					// Apply discount (assuming 20% discount, adjust as needed)
 					discountPercentage = 20;
 					discountedFee = (originalFee * 0.8).toFixed(2);
 					finalPrice = parseFloat(discountedFee);
-					isDiscounted = true;
+					type = BOOKING_TYPE_ENUM.DISCOUNTED
 				} else {
 					// No discount, pay original fee
 					finalPrice = originalFee;
@@ -835,7 +849,7 @@ export class BookingService {
 					discountPercentage = 20;
 					discountedFee = (originalFee * 0.8).toFixed(2);
 					finalPrice = parseFloat(discountedFee);
-					isDiscounted = true;
+					type = BOOKING_TYPE_ENUM.DISCOUNTED
 				} else {
 					// No discount, pay original fee
 					finalPrice = originalFee;
@@ -850,9 +864,10 @@ export class BookingService {
 			originalFee: originalFee.toFixed(2),
 			discountedFee: discountedFee,
 			finalPrice: finalPrice.toFixed(2),
-			isFree,
-			isDiscounted,
+			isFree: type === BOOKING_TYPE_ENUM.FREE,
+			isDiscounted: type === BOOKING_TYPE_ENUM.DISCOUNTED,
 			discountPercentage,
+			type
 		};
 	}
 
@@ -906,7 +921,7 @@ export class BookingService {
 	 */
 	async updateConsultationStatus(
 		bookingId: string,
-		status: "pending" | "confirmed" | "cancelled" | "completed",
+		status: BOOKING_STATUS_ENUM,
 	) {
 		return await this.bookingRepository.updateBookedSlotStatus(
 			bookingId,

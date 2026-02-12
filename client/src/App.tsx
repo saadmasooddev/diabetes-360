@@ -13,7 +13,7 @@ import { SignUp } from "@/features/auth/pages/SignUp";
 import ResetPassword from "@/features/auth/pages/ResetPassword";
 import { Dashboard } from "@/features/dashboard/customer/pages/Dashboard";
 import { HealthAssessment } from "@/features/dashboard/customer/pages/HealthAssessment";
-import { HealthMetricsHistory } from "@/features/dashboard/customer/pages/HealthMetricsHistory";
+import { LogHistory } from "@/features/dashboard/customer/pages/HealthMetricsHistory";
 import { InstantConsultation } from "@/features/dashboard/customer/pages/InstantConsultation";
 import { FindDoctor } from "@/features/dashboard/customer/pages/FindDoctor";
 import { Consultations } from "@/features/dashboard/customer/pages/Consultations";
@@ -69,7 +69,7 @@ function Router() {
 			</Route>
 			<Route path={ROUTES.HEALTH_METRICS_HISTORY}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_HEALTH_METRICS]}>
-					<HealthMetricsHistory />
+					<LogHistory />
 				</ProtectedRoute>
 			</Route>
 			<Route path={ROUTES.DASHBOARD}>

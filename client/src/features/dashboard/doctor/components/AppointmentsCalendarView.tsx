@@ -2,79 +2,40 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { BookingCalendar } from "@/features/dashboard/components/BookingCalendar";
-import {
-	useDatesWithBookings,
-	useCreateCustomSlot,
-} from "@/hooks/mutations/useBooking";
+import { useCreateCustomSlot } from "@/hooks/mutations/useBooking";
 import { CreateCustomSlotModal } from "./CreateCustomSlotModal";
 import type { CreateCustomSlotFormData } from "./CreateCustomSlotModal";
 
-const formatDate = (date: Date, formatStr: string): string => {
-	const months = [
-		"Jan",
-		"Feb",
-		"Mar",
-		"Apr",
-		"May",
-		"Jun",
-		"Jul",
-		"Aug",
-		"Sep",
-		"Oct",
-		"Nov",
-		"Dec",
-	];
-	if (formatStr === "MMM dd, yyyy") {
-		return `${months[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}, ${date.getFullYear()}`;
-	}
-	if (formatStr === "yyyy-MM-dd") {
-		return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-	}
-	return date.toLocaleDateString();
-};
-
 interface CalendarViewProps {
-	onDateClick: (date: Date, hasAppointments: boolean) => void;
 	onAddTimeSlot: () => void;
 	selectedDate: Date;
 	onDateSelect: (date: Date | undefined) => void;
 	calendarMonth: Date;
 	onMonthChange: (date: Date) => void;
+	availableDates: Date[];
+	isLoadingDates: boolean;
 }
 
 export function AppointmentsCalendarView({
-	onDateClick,
 	onAddTimeSlot,
 	selectedDate,
 	onDateSelect,
 	calendarMonth,
 	onMonthChange,
+	availableDates,
+	isLoadingDates,
 }: CalendarViewProps) {
 	const [isCustomSlotModalOpen, setIsCustomSlotModalOpen] = useState(false);
 	const createCustomSlotMutation = useCreateCustomSlot();
 
-	const { data: datesWithBookings, isLoading } = useDatesWithBookings(
-		calendarMonth.getMonth() + 1,
-		calendarMonth.getFullYear(),
-	);
-
-	const availableDates =
-		datesWithBookings?.bookedSlots.map((d) => new Date(d.date)) || [];
-	const datesSet = new Set(datesWithBookings?.bookedSlots.map((d) => d.date));
-
-	const handleDateSelect = async (date: Date | undefined) => {
+	const handleDateSelect = (date: Date | undefined) => {
 		if (!date) return;
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 		const selected = new Date(date);
 		selected.setHours(0, 0, 0, 0);
-
-		if (selected < today) {
-			return;
-		}
-		const dateStr = formatDate(date, "yyyy-MM-dd");
-		const hasAppointments = datesSet.has(dateStr);
-		onDateClick(date, hasAppointments);
+		if (selected < today) return;
+		onDateSelect(date);
 	};
 
 	const handleCreateCustomSlot = (data: CreateCustomSlotFormData) => {
@@ -87,7 +48,7 @@ export function AppointmentsCalendarView({
 
 	return (
 		<div className="space-y-6">
-			{isLoading && (
+			{isLoadingDates && (
 				<div className="flex justify-end">
 					<Loader2 className="h-4 w-4 animate-spin text-teal-600" />
 				</div>
@@ -98,7 +59,7 @@ export function AppointmentsCalendarView({
 				calendarMonth={calendarMonth}
 				onMonthChange={onMonthChange}
 				availableDates={availableDates}
-				isLoading={false}
+				isLoading={isLoadingDates}
 			/>
 
 			<div className="grid grid-cols-2 gap-4">

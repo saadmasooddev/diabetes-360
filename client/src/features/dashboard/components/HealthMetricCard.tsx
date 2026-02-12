@@ -26,6 +26,7 @@ interface HealthMetricCardProps {
 	disabled?: boolean;
 	dailyLimit?: number;
 	isUploading?: boolean;
+	hideUpgradeCallToAction: boolean
 }
 
 export function HealthMetricCard({
@@ -38,6 +39,7 @@ export function HealthMetricCard({
 	disabled = false,
 	dailyLimit: remainingLogsLimit = 0,
 	isUploading,
+	hideUpgradeCallToAction
 }: HealthMetricCardProps) {
 	const uploadImageRef = useRef<HTMLInputElement | null>(null);
 	const config = {
@@ -261,21 +263,23 @@ export function HealthMetricCard({
 					>
 						*You have {remainingLogsLimit} log
 						{remainingLogsLimit !== 1 ? "s" : ""} left for today.{" "}
-						<button
-							onClick={onUpgrade}
-							className="transition-colors duration-200 hover:underline"
-							style={{
-								color: "#00856F",
-								fontWeight: 600,
-								cursor: "pointer",
-								background: "none",
-								border: "none",
-								padding: 0,
-							}}
-							data-testid={`link-upgrade-${type}`}
-						>
-							Upgrade to Paid Plan
-						</button>
+						{!hideUpgradeCallToAction && (
+							<button
+								onClick={onUpgrade}
+								className="transition-colors duration-200 hover:underline"
+								style={{
+									color: "#00856F",
+									fontWeight: 600,
+									cursor: "pointer",
+									background: "none",
+									border: "none",
+									padding: 0,
+								}}
+								data-testid={`link-upgrade-${type}`}
+							>
+								Upgrade to Paid Plan
+							</button>
+						)}
 					</p>
 				)}
 			</div>

@@ -8,7 +8,7 @@ import type {
 	FoodScanLimits,
 	ExtendedLimits,
 } from "../models/settings.schema";
-import { BadRequestError } from "server/src/shared/errors";
+import { BadRequestError, NotFoundError } from "server/src/shared/errors";
 import {
 	EXERCISE_TYPE_ENUM,
 	type MetricType,
@@ -16,17 +16,6 @@ import {
 
 export class SettingsService {
 	private readonly settingsRepository: SettingsRepository;
-	private readonly DEFAULT_LIMITS = {
-		glucoseLimit: 2,
-		stepsLimit: 2,
-		waterLimit: 2,
-		discountedConsultationQuota: 0,
-		freeConsultationQuota: 0,
-	};
-	private readonly DEFAULT_FOOD_SCAN_LIMITS = {
-		freeUserLimit: 5,
-		paidUserLimit: 20,
-	};
 
 	constructor() {
 		this.settingsRepository = new SettingsRepository();
@@ -35,21 +24,8 @@ export class SettingsService {
 		const limits = await this.settingsRepository.getLogLimits();
 		const foodScanLimits = await this.getFoodScanLimits();
 
-		// If still no limits found, return default limits (this shouldn't happen in production)
 		if (!limits) {
-			// Return a default structure
-			return {
-				glucoseLimit: this.DEFAULT_LIMITS.glucoseLimit,
-				stepsLimit: this.DEFAULT_LIMITS.stepsLimit,
-				waterLimit: this.DEFAULT_LIMITS.waterLimit,
-				discountedConsultationQuota:
-					this.DEFAULT_LIMITS.discountedConsultationQuota,
-				freeConsultationQuota: this.DEFAULT_LIMITS.freeConsultationQuota,
-				foodScanLimits: {
-					freeTier: this.DEFAULT_FOOD_SCAN_LIMITS.freeUserLimit,
-					paidTier: this.DEFAULT_FOOD_SCAN_LIMITS.paidUserLimit,
-				},
-			};
+			throw new NotFoundError("No limits found")
 		}
 
 		return {
@@ -99,14 +75,7 @@ export class SettingsService {
 		const limits = await this.settingsRepository.getFoodScanLimits();
 
 		if (!limits) {
-			// Return default structure if no limits configured
-			return {
-				id: "",
-				freeUserLimit: this.DEFAULT_FOOD_SCAN_LIMITS.freeUserLimit,
-				paidUserLimit: this.DEFAULT_FOOD_SCAN_LIMITS.paidUserLimit,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			};
+			throw new NotFoundError("No food scan limits found")
 		}
 
 		return limits;

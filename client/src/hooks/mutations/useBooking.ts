@@ -7,6 +7,12 @@ import {
 	type BookingPriceCalculation,
 } from "@/services/bookingService";
 import { useToast } from "@/hooks/use-toast";
+import { getConsultationQuotasKey } from "./useCustomer";
+
+const getCalculateBookingPriceKey = (physicianId: string | null) => {
+	const key = ["booking", "calculate-price", physicianId]
+	return key 
+}
 
 export const useSlotSizes = () => {
 	return useQuery({
@@ -131,6 +137,9 @@ export const useCreateSlots = () => {
 			queryClient.invalidateQueries({
 				queryKey: ["booking", "dates-with-availability"],
 			});
+
+			queryClient.invalidateQueries({ queryKey: getCalculateBookingPriceKey(variables.physicianId),
+			})
 			toast({
 				title: "Slots Created",
 				description: "Time slots have been created successfully.",
@@ -179,7 +188,7 @@ export const useDeleteSlot = () => {
 
 export const useCalculateBookingPrice = (physicianId: string | null) => {
 	return useQuery({
-		queryKey: ["booking", "calculate-price", physicianId],
+		queryKey: getCalculateBookingPriceKey(physicianId),
 		queryFn: () => bookingService.calculateBookingPrice(physicianId!),
 		enabled: !!physicianId,
 	});
@@ -232,6 +241,7 @@ export const useBookSlot = () => {
 			queryClient.invalidateQueries({
 				queryKey: ["booking", "my-consultations"],
 			});
+			queryClient.invalidateQueries({ queryKey: getConsultationQuotasKey()})
 			toast({
 				title: "Slot Booked",
 				description: "Your appointment has been booked successfully.",

@@ -3,7 +3,10 @@ import { Send } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatByDate, useSendChatMessage } from "@/hooks/mutations/useChat";
+import {
+	useChatByDate,
+	useSendChatMessage,
+} from "@/hooks/mutations/useChat";
 import { DateManager } from "@/lib/utils";
 import { Markdown } from "markdown-to-jsx/react";
 

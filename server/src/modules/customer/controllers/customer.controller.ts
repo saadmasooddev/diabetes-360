@@ -4,6 +4,7 @@ import { sendSuccess } from "../../../app/utils/response";
 import { CustomerService } from "../service/customer.service";
 import { BadRequestError } from "../../../shared/errors";
 import {
+	PAYMENT_TYPE,
 	insertCustomerDataSchema,
 	updateCustomerDataSchema,
 } from "../../auth/models/user.schema";
@@ -132,6 +133,23 @@ export class CustomerController {
 				throw new BadRequestError("User ID is required");
 			}
 
+			const user = await this.customerService.getCustomerDataByUserId(userId)
+			const isFreeUser = user.paymentType === PAYMENT_TYPE.FREE
+			if(isFreeUser) {
+				const data = {
+					quota: {
+					discountedConsultationsUsed: 0,
+					freeConsultationsUsed: 0,
+					discountedConsultationsLeft: 0,
+					freeConsultationsLeft: 0,
+					discountedQuotaLimit: 0,
+					freeQuotaLimit: 0,
+				}
+				} 
+				sendSuccess(res, data, "Consultation quotas retrieved successfully");
+				return
+			}
+
 			// Get user consultation quota
 			const quota =
 				await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(
@@ -144,24 +162,25 @@ export class CustomerController {
 				systemLimits.discountedConsultationQuota || 0;
 			const freeQuotaLimit = systemLimits.freeConsultationQuota || 0;
 
+			const data = {
+				quota: {
+					discountedConsultationsUsed: quota.discountedConsultationsUsed,
+					freeConsultationsUsed: quota.freeConsultationsUsed,
+					discountedConsultationsLeft: Math.max(
+						0,
+						discountedQuotaLimit - quota.discountedConsultationsUsed,
+					),
+					freeConsultationsLeft: Math.max(
+						0,
+						freeQuotaLimit - quota.freeConsultationsUsed,
+					),
+					discountedQuotaLimit,
+					freeQuotaLimit,
+				},
+			}
 			sendSuccess(
 				res,
-				{
-					quota: {
-						discountedConsultationsUsed: quota.discountedConsultationsUsed,
-						freeConsultationsUsed: quota.freeConsultationsUsed,
-						discountedConsultationsLeft: Math.max(
-							0,
-							discountedQuotaLimit - quota.discountedConsultationsUsed,
-						),
-						freeConsultationsLeft: Math.max(
-							0,
-							freeQuotaLimit - quota.freeConsultationsUsed,
-						),
-						discountedQuotaLimit,
-						freeQuotaLimit,
-					},
-				},
+				data,
 				"Consultation quotas retrieved successfully",
 			);
 		} catch (error: any) {

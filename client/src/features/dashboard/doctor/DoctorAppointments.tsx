@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AppointmentsCalendarView } from "./components/AppointmentsCalendarView";
 import { AppointmentsListView } from "./components/AppointmentsListView";
 import { SlotManagementView } from "./components/SlotManagementView";
+import { useDatesWithBookings } from "@/hooks/mutations/useBooking";
+import { Button } from "@/components/ui/button";
+import { CalendarDays } from "lucide-react";
+import { DateManager } from "@/lib/utils";
 
 type ViewMode = "calendar" | "appointments" | "slotManagement";
 
@@ -13,17 +17,37 @@ export function DoctorAppointments() {
 	const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 	const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
 
+	const { data: datesWithBookings, isLoading: isLoadingDates } =
+		useDatesWithBookings(
+			calendarMonth.getMonth() + 1,
+			calendarMonth.getFullYear(),
+		);
+
+	const availableDates = useMemo(
+		() => datesWithBookings?.bookedSlots?.map((d) => new Date(d.date)) ?? [],
+		[datesWithBookings],
+	);
+	const datesSet = useMemo(
+		() =>
+			new Set(datesWithBookings?.bookedSlots?.map((d) => d.date) ?? []),
+		[datesWithBookings],
+	);
+	const hasAppointmentsOnSelected = datesSet.has(
+		DateManager.formatDate(selectedDate),
+	);
+
 	// Reset to calendar when route changes
 	useEffect(() => {
 		setViewMode("calendar");
 		setSelectedDate(new Date());
 	}, [location]);
 
-	const handleDateClick = (date: Date, hasAppointments: boolean) => {
+	const handleDateSelect = (date: Date) => {
 		setSelectedDate(date);
-		if (hasAppointments) {
-			setViewMode("appointments");
-		}
+	};
+
+	const handleViewAppointments = () => {
+		setViewMode("appointments");
 	};
 
 	const handleAddTimeSlot = () => {
@@ -55,16 +79,35 @@ export function DoctorAppointments() {
 					)}
 
 					{viewMode === "calendar" && (
-						<AppointmentsCalendarView
-							onDateClick={handleDateClick}
-							onAddTimeSlot={handleAddTimeSlot}
-							selectedDate={selectedDate}
-							onDateSelect={(date: Date | undefined) =>
-								date && setSelectedDate(date)
-							}
-							calendarMonth={calendarMonth}
-							onMonthChange={setCalendarMonth}
-						/>
+						<div className="space-y-6">
+							<AppointmentsCalendarView
+								onAddTimeSlot={handleAddTimeSlot}
+								selectedDate={selectedDate}
+								onDateSelect={(date: Date | undefined) =>
+									date && handleDateSelect(date)
+								}
+								calendarMonth={calendarMonth}
+								onMonthChange={setCalendarMonth}
+								availableDates={availableDates}
+								isLoadingDates={isLoadingDates}
+							/>
+							{hasAppointmentsOnSelected && (
+								<div className=" w-full flex justify-center sm:justify-start">
+									<Button
+										onClick={handleViewAppointments}
+										className=" w-full gap-2 py-6 px-8 text-base font-semibold rounded-xl shadow-sm"
+										style={{
+											background: "#00856F",
+											color: "white",
+										}}
+										data-testid="button-view-appointments"
+									>
+										<CalendarDays size={20} />
+										View Appointments
+									</Button>
+								</div>
+							)}
+						</div>
 					)}
 
 					{viewMode === "appointments" && (

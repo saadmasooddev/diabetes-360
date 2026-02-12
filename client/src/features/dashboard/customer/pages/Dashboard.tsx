@@ -28,6 +28,7 @@ import { calorieUtils } from "@/lib/utils";
 import {
 	ACTIVITY_TYPE_ENUM,
 	EXERCISE_TYPE_ENUM,
+	PAYMENT_TYPE,
 	type InsertHealthMetric,
 	type MetricType,
 } from "@shared/schema";
@@ -36,6 +37,7 @@ import type { ModifiedInsertExerciseLogs } from "@/services/healthService";
 
 export function Dashboard() {
 	const user = useAuthStore((state) => state.user);
+	const isFreeUser = user?.paymentType === PAYMENT_TYPE.FREE
 	const { toast } = useToast();
 	const [, setLocation] = useLocation();
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -331,10 +333,7 @@ export function Dashboard() {
 	};
 
 	const handleUpgrade = () => {
-		toast({
-			title: "Upgrade to Paid Plan",
-			description: "Unlock unlimited logging and premium features",
-		});
+		setLocation(ROUTES.HEALTH_PLANS)
 	};
 
 	// Transform metrics data for charts
@@ -454,6 +453,7 @@ export function Dashboard() {
 							onUpgrade={handleUpgrade}
 							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
 						/>
 
 						<HealthMetricCard
@@ -464,6 +464,7 @@ export function Dashboard() {
 							onUpgrade={handleUpgrade}
 							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.STEPS)}
 							dailyLimit={freeTierLimits?.stepsLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
 						/>
 
 						<HealthMetricCard
@@ -474,6 +475,8 @@ export function Dashboard() {
 							onUpgrade={handleUpgrade}
 							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
 							dailyLimit={freeTierLimits?.waterLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
+
 						/>
 
 						{/* Heart Beat Card - Only for paid users */}
@@ -486,6 +489,7 @@ export function Dashboard() {
 								onUpgrade={handleUpgrade}
 								disabled={false}
 								dailyLimit={0}
+								hideUpgradeCallToAction={!isFreeUser}
 							/>
 						)}
 					</div>

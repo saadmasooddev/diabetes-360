@@ -130,6 +130,12 @@ export const slotPrice = pgTable("slot_price", {
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export enum BOOKING_TYPE_ENUM {
+	FREE = "free",
+	DISCOUNTED = "discounted",
+	PAID = "paid"
+}
+
 export const bookedSlots = pgTable("booked_slots", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
 	customerId: varchar("customer_id")

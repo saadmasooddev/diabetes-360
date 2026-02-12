@@ -17,6 +17,7 @@ import { eq, and, sql } from "drizzle-orm";
 
 export class SettingsRepository {
 	async getLogLimits(): Promise<FreeTierLimits | null> {
+
 		const [limits] = await db.select().from(freeTierLimits).limit(1);
 
 		return limits || null;

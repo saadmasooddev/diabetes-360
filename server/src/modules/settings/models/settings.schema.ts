@@ -12,9 +12,9 @@ import { users } from "../../auth/models/user.schema";
 
 export const freeTierLimits = pgTable("free_tier_limits", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-	glucoseLimit: integer("glucose_limit").notNull().default(2),
-	stepsLimit: integer("steps_limit").notNull().default(2),
-	waterLimit: integer("water_limit").notNull().default(2),
+	glucoseLimit: integer("glucose_limit").notNull(),
+	stepsLimit: integer("steps_limit").notNull(),
+	waterLimit: integer("water_limit").notNull(),
 	discountedConsultationQuota: integer("discounted_consultation_quota"),
 	freeConsultationQuota: integer("free_consultation_quota"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),

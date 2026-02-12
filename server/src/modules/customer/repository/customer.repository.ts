@@ -30,6 +30,7 @@ export class CustomerRepository {
 				updatedAt: customerData.updatedAt,
 				firstName: users.firstName,
 				lastName: users.lastName,
+				paymentType: users.paymentType
 			})
 			.from(customerData)
 			.where(eq(customerData.userId, userId))

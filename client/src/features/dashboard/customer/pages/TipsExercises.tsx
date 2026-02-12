@@ -370,7 +370,7 @@ export function TipsExercises() {
 							Exercise Plans for Diabetes
 						</h3>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 							{visibleExercisePlans.map((plan) => (
 								<Card
 									key={plan.id}
@@ -444,7 +444,7 @@ export function TipsExercises() {
 							))}
 
 							{/* Show "Add your Own Exercise" if premium, otherwise show locked placeholder */}
-							{isPremium ? (
+							{/* {isPremium ? (
 								<Card
 									className="overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:shadow-lg transition-shadow"
 									style={{
@@ -517,12 +517,12 @@ export function TipsExercises() {
 										</p>
 									</div>
 								</Card>
-							)}
+							)} */}
 						</div>
 					</div>
 
 					{/* Weekly Exercise Challenges */}
-					<div>
+					{/* <div>
 						<h3
 							style={{
 								fontSize: "24px",
@@ -625,7 +625,6 @@ export function TipsExercises() {
 									</div>
 								))}
 
-								{/* Show locked placeholders only if not premium */}
 								{!isPremium &&
 									[...Array(2)].map((_, index) => (
 										<div
@@ -660,7 +659,7 @@ export function TipsExercises() {
 									))}
 							</div>
 						</Card>
-					</div>
+					</div> */}
 				</div>
 			</main>
 

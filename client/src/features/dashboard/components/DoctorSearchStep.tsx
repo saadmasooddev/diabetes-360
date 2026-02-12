@@ -29,15 +29,12 @@ interface DoctorSearchStepProps {
 
 function mapPhysicianToDoctor(physician: Physician) {
 	const practiceStartDate = physician.practiceStartDate || new Date();
-	const yearsOfExperience = Math.max(
-		1,
-		new Date().getFullYear() - new Date(practiceStartDate).getFullYear(),
-	);
+
 	return {
 		id: physician.id,
 		name: physician.firstName + " " + physician.lastName || "Dr. Unknown",
 		specialty: physician.specialty || "",
-		experience: `${yearsOfExperience}+ years`,
+		experience: `${physician.experience}+ years`,
 		rating: physician.rating || 0,
 		isOnline: physician.isOnline || false,
 		image: physician.imageUrl || "",

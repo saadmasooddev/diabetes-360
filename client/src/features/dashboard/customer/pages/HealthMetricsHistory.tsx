@@ -22,7 +22,7 @@ import { EXERCISE_TYPE_ENUM, type MertricRecord } from "@shared/schema";
 
 const ITEMS_PER_PAGE = 10;
 
-export function HealthMetricsHistory() {
+export function LogHistory() {
 	const user = useAuthStore((state) => state.user);
 	const { toast } = useToast();
 	const isPaidUser = user?.paymentType !== "free" && user?.paymentType;
@@ -32,6 +32,12 @@ export function HealthMetricsHistory() {
 	const thirtyDaysAgo = new Date();
 	thirtyDaysAgo.setDate(today.getDate() - 30);
 
+	const [tempStartDate, setTempStartDate] = useState<string>(
+		formatDate(thirtyDaysAgo, "yyyy-MM-dd"),
+	);
+	const [tempEndDate, setTempEndDate] = useState<string>(
+		formatDate(today, "yyyy-MM-dd"),
+	);
 	const [startDate, setStartDate] = useState<string>(
 		formatDate(thirtyDaysAgo, "yyyy-MM-dd"),
 	);
@@ -89,7 +95,7 @@ export function HealthMetricsHistory() {
 		);
 
 	const handleFilter = () => {
-		if (!startDate || !endDate) {
+		if (!tempStartDate || !tempEndDate) {
 			toast({
 				title: "Validation Error",
 				description: "Please select both start and end dates",
@@ -98,8 +104,8 @@ export function HealthMetricsHistory() {
 			return;
 		}
 
-		const start = new Date(startDate);
-		const end = new Date(endDate);
+		const start = new Date(tempStartDate);
+		const end = new Date(tempEndDate);
 
 		if (start > end) {
 			toast({
@@ -111,6 +117,8 @@ export function HealthMetricsHistory() {
 		}
 
 		// Reset all pagination to page 1
+		setStartDate(tempStartDate)
+		setEndDate(tempEndDate)
 		setBloodSugarPage(1);
 		setWaterIntakePage(1);
 		setStepsPage(1);
@@ -147,10 +155,10 @@ export function HealthMetricsHistory() {
 							className="text-3xl font-bold mb-2"
 							style={{ color: "#00453A" }}
 						>
-							Health Metrics History
+							Log History
 						</h1>
 						<p className="text-base" style={{ color: "#546E7A" }}>
-							View and filter your health metrics history
+							View and filter your log history
 						</p>
 					</div>
 
@@ -165,7 +173,7 @@ export function HealthMetricsHistory() {
 									id="startDate"
 									type="date"
 									value={startDate}
-									onChange={(e) => setStartDate(e.target.value)}
+									onChange={(e) => setTempStartDate(e.target.value)}
 									max={endDate}
 									style={{
 										borderColor: "#E0E0E0",
@@ -181,7 +189,7 @@ export function HealthMetricsHistory() {
 									id="endDate"
 									type="date"
 									value={endDate}
-									onChange={(e) => setEndDate(e.target.value)}
+									onChange={(e) => setTempEndDate(e.target.value)}
 									min={startDate}
 									max={formatDate(today, "yyyy-MM-dd")}
 									style={{
@@ -276,7 +284,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{bloodSugarData?.bloodSugarRecords &&
-												bloodSugarData.bloodSugarRecords.length > 0 ? (
+													bloodSugarData.bloodSugarRecords.length > 0 ? (
 													bloodSugarData.bloodSugarRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -292,8 +300,8 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(bloodSugarData.bloodSugarRecords
-																				?.length || 0) -
+																				(bloodSugarData.bloodSugarRecords
+																					?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -423,7 +431,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{waterIntakeData?.waterIntakeRecords &&
-												waterIntakeData.waterIntakeRecords.length > 0 ? (
+													waterIntakeData.waterIntakeRecords.length > 0 ? (
 													waterIntakeData.waterIntakeRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -439,8 +447,8 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(waterIntakeData.waterIntakeRecords
-																				?.length || 0) -
+																				(waterIntakeData.waterIntakeRecords
+																					?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -570,7 +578,7 @@ export function HealthMetricsHistory() {
 											</TableHeader>
 											<TableBody>
 												{stepsData?.stepsRecords &&
-												stepsData.stepsRecords.length > 0 ? (
+													stepsData.stepsRecords.length > 0 ? (
 													stepsData.stepsRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -586,7 +594,7 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			(stepsData.stepsRecords?.length || 0) - 1
+																				(stepsData.stepsRecords?.length || 0) - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}
@@ -715,7 +723,7 @@ export function HealthMetricsHistory() {
 												</TableHeader>
 												<TableBody>
 													{heartBeatData?.heartBeatRecords &&
-													heartBeatData.heartBeatRecords.length > 0 ? (
+														heartBeatData.heartBeatRecords.length > 0 ? (
 														heartBeatData.heartBeatRecords.map(
 															(record: MertricRecord, index: number) => (
 																<TableRow
@@ -724,7 +732,7 @@ export function HealthMetricsHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																			heartBeatData.heartBeatRecords.length - 1
+																				heartBeatData.heartBeatRecords.length - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}

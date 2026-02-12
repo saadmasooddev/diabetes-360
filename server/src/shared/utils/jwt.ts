@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { config } from "../../app/config";
 import { BadRequestError, UnauthorizedError } from "../errors";
-import type { UserRole } from "@shared/schema";
+import type { PAYMENT_TYPE, UserRole } from "@shared/schema";
 
 export interface JWTPayload {
 	userId: string;

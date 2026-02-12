@@ -120,29 +120,31 @@ export function DoctorCard({
 								: "flex flex-wrap gap-4 mb-4"
 						}
 					>
-						<div className="flex items-center gap-2">
-							<span
-								style={{
-									fontSize: "12px",
-									fontWeight: 500,
-									color: "#00856F",
-									textTransform: isCompact ? "none" : "uppercase",
-									letterSpacing: isCompact ? "0" : "0.4px",
-								}}
-							>
-								Experience
-							</span>
-							<span
-								style={{
-									fontSize: "14px",
-									fontWeight: 500,
-									color: "#546E7A",
-								}}
-								data-testid={`text-experience-${doctor.id}`}
-							>
-								{doctor.experience}
-							</span>
-						</div>
+						{!doctor.experience.includes("0+") && (
+							<div className="flex items-center gap-2">
+								<span
+									style={{
+										fontSize: "12px",
+										fontWeight: 500,
+										color: "#00856F",
+										textTransform: isCompact ? "none" : "uppercase",
+										letterSpacing: isCompact ? "0" : "0.4px",
+									}}
+								>
+									Experience
+								</span>
+								<span
+									style={{
+										fontSize: "14px",
+										fontWeight: 500,
+										color: "#546E7A",
+									}}
+									data-testid={`text-experience-${doctor.id}`}
+								>
+									{doctor.experience}
+								</span>
+							</div>
+						)}
 						{!isCompact && (
 							<div className="flex items-center gap-2">
 								<span

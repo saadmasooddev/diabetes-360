@@ -113,7 +113,7 @@ export function FindDoctor() {
 
 	const searchValue =
 		debouncedSearchQuery.trim() === "" ||
-		debouncedSearchQuery.toLowerCase() === "all"
+			debouncedSearchQuery.toLowerCase() === "all"
 			? undefined
 			: debouncedSearchQuery.trim();
 
@@ -177,12 +177,12 @@ export function FindDoctor() {
 	const { data: datesWithSlotsData, isLoading: isLoadingDatesAndSlots } =
 		usePhysicianDatesWithSlots(getPhysicianDatesWithSlotsQueryKey());
 
-	const datesWithAvailability = datesWithSlotsData?.dates || [];
+	const datesWithAvailability = datesWithSlotsData?.dates?.filter(d => d.count > 0) || [];
 	const availableSlots = datesWithSlotsData?.slots || [];
 	const isLoadingDates = isLoadingDatesAndSlots;
 	const isLoadingSlots = isLoadingDatesAndSlots;
 
-	const { data: bookingPrice, isLoading: isLoadingPrice } =
+	const { data: bookingPrice, isLoading: isLoadingPrice, refetch: refetchBookingPrice } =
 		useCalculateBookingPrice(selectedPhysician?.id || null);
 	const bookSlotMutation = useBookSlot();
 
@@ -278,19 +278,21 @@ export function FindDoctor() {
 	};
 
 	const handleConfirmConsultationType = async () => {
-		if (!selectedSlot || !selectedSlotTypeId) return;
+		if (!selectedSlot || !selectedSlotTypeId || !selectedPhysician?.id) return;
 
 		try {
 			await bookSlotMutation.mutateAsync(
 				{
 					slotId: selectedSlot.id,
 					slotTypeId: selectedSlotTypeId,
+					physicianId: selectedPhysician.id
 				},
 				{
 					onSuccess: () => {
 						queryClient.invalidateQueries({
 							queryKey: getPhysicianDatesWithSlotsQueryKey().key,
 						});
+						refetchBookingPrice()
 					},
 				},
 			);
@@ -360,13 +362,13 @@ export function FindDoctor() {
 							bookingPrice={
 								bookingPrice
 									? {
-											originalFee: bookingPrice.originalFee,
-											discountedFee: bookingPrice.discountedFee,
-											finalPrice: bookingPrice.finalPrice,
-											isDiscounted: bookingPrice.isDiscounted,
-											isFree: bookingPrice.isFree,
-											discountPercentage: bookingPrice.discountPercentage,
-										}
+										originalFee: bookingPrice.originalFee,
+										discountedFee: bookingPrice.discountedFee,
+										finalPrice: bookingPrice.finalPrice,
+										isDiscounted: bookingPrice.isDiscounted,
+										isFree: bookingPrice.isFree,
+										discountPercentage: bookingPrice.discountPercentage,
+									}
 									: null
 							}
 							isLoadingPrice={isLoadingPrice}

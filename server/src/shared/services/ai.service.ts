@@ -3,6 +3,7 @@ import FormData from "form-data";
 import { config } from "../../app/config";
 import { BadRequestError } from "../errors";
 import type { MealDetails } from "server/src/modules/food/repository/food.repository";
+import { CHAT_ROLES } from "@shared/schema";
 
 /**
  * AI Service Response Types
@@ -125,20 +126,86 @@ export interface AIChatPayload {
 		last_days_health_summary: Array<{ date: string; summary: string }>;
 	};
 	current_section_messages: Array<{
-		role: "user" | "assistant";
+		role: CHAT_ROLES;
 		content: string;
 	}>;
 	old_chat_memory: Array<{ date: string; chat_memory: string }>;
 	current_message: string;
+	emotional_state?: {
+		mood: string;
+		motivation_level: string;
+		stress_signals: string[];
+		confidence: string;
+	};
 }
 
 export interface AIChatResponse {
 	reply?: string;
 }
 
-/**
- * AI Service - Centralized wrapper for all AI service HTTP requests
- */
+/** Payload for AI POST /api/chat/last-days-health-summary/ */
+export interface LastDaysHealthSummaryPayload {
+	today_data: {
+		recorded_at: string;
+		blood_sugar: Array<{ value: string }>;
+		steps: Array<{ value: string }>;
+		water_intake: Array<{ value: string }>;
+		heart_rate: Array<{ value: string }>;
+		meals: Array<{
+			foodName: string;
+			carbs: string;
+			sugars: string;
+			fibres: string;
+			proteins: string;
+			fats: string;
+			calories: string;
+		}>;
+	};
+}
+
+export interface LastDaysHealthSummaryResponse {
+	data: {
+		last_day_summary: string;
+	};
+	message: string;
+	status: number | string;
+}
+
+export interface OldChatMemoryPayload {
+	messages: Array<{
+		role: CHAT_ROLES;
+		content: string;
+	}>;
+}
+
+export interface OldChatMemoryResponse {
+	data: {
+		suggested_memories: string[];
+	};
+	message: string;
+	status: number | string;
+}
+
+/** Payload for AI POST /api/chat/emotional-state/ */
+export interface EmotionalStatePayload {
+	conversation: Array<{
+		role: CHAT_ROLES;
+		content: string;
+	}>;
+}
+
+/** Response from AI POST /api/chat/emotional-state/ */
+export interface EmotionalStateResponse {
+	data: {
+		mood: string;
+		motivation_level: string;
+		stress_signals: string[];
+		confidence: string;
+	};
+	message: string;
+	status: number | string;
+}
+
 class AIService {
 	private readonly baseUrl: string;
 	private readonly defaultTimeout: number = 120000; // 2 minutes
@@ -322,6 +389,90 @@ class AIService {
 
 		this.validateResponse(response.data, (data) => {
 			return !!data.reply;
+		});
+
+		return response.data;
+	}
+
+	async getLastDaysHealthSummary(
+		payload: LastDaysHealthSummaryPayload,
+	): Promise<AIBaseResponse<LastDaysHealthSummaryResponse["data"]>> {
+		const response = await axios.post<
+			AIBaseResponse<LastDaysHealthSummaryResponse["data"]>
+		>(
+			`${this.baseUrl}/api/chat/last-days-health-summary/`,
+			payload,
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout: this.defaultTimeout,
+			},
+		);
+
+		this.validateResponse(response.data, (data) => {
+			return !!(
+				data &&
+				typeof data.last_day_summary ===
+					"string" &&
+				data.last_day_summary.length > 0
+			);
+		});
+
+		return response.data;
+	}
+
+	async getOldChatMemory(
+		payload: OldChatMemoryPayload,
+	): Promise<AIBaseResponse<OldChatMemoryResponse["data"]>> {
+		const response = await axios.post<
+			AIBaseResponse<OldChatMemoryResponse["data"]>
+		>(
+			`${this.baseUrl}/api/chat/old-chat-memory/`,
+			payload,
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout: this.defaultTimeout,
+			},
+		);
+
+		this.validateResponse(response.data, (data) => {
+			return (
+				Array.isArray(data?.suggested_memories) &&
+				data.suggested_memories.every((m): m is string => typeof m === "string")
+			);
+		});
+
+		return response.data;
+	}
+
+
+	async getEmotionalState(
+		payload: EmotionalStatePayload,
+	): Promise<AIBaseResponse<EmotionalStateResponse["data"]>> {
+		const response = await axios.post<
+			AIBaseResponse<EmotionalStateResponse["data"]>
+		>(
+			`${this.baseUrl}/api/chat/emotional-state/`,
+			payload,
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				timeout: this.defaultTimeout,
+			},
+		);
+
+		this.validateResponse(response.data, (data) => {
+			return (
+				typeof data?.mood === "string" &&
+				typeof data?.motivation_level === "string" &&
+				Array.isArray(data?.stress_signals) &&
+				data.stress_signals.every((s): s is string => typeof s === "string") &&
+				typeof data?.confidence === "string"
+			);
 		});
 
 		return response.data;

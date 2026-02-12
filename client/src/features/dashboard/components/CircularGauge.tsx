@@ -1,3 +1,4 @@
+import { TrendingUp } from "lucide-react";
 import { EXERCISE_TYPE_ENUM, type MetricType } from "@shared/schema";
 
 interface CircularGaugeProps {
@@ -19,7 +20,7 @@ export function CircularGauge({
 	recommendedTarget,
 	userTarget,
 }: CircularGaugeProps) {
-	const maxValue = userTarget || recommendedTarget || value;
+	const maxValue = userTarget || recommendedTarget || value || 1;
 	const percentage = Math.min((value / maxValue) * 100, 100);
 	const radius = size * 0.45; // 35% of size to leave padding
 	const strokeWidth = size * 0.25; // 8% of size for a more prominent stroke
@@ -69,6 +70,14 @@ export function CircularGauge({
 
 	const colors = getGradientColors();
 	const gradientId = `gauge-gradient-${metricType}-${label.toLowerCase().replace(/\s/g, "-")}`;
+
+	// Show "exceeded target" only when a target exists and value is greater than it
+	const effectiveTarget = userTarget ?? recommendedTarget;
+	const hasExceededTarget =
+		effectiveTarget != null &&
+		typeof effectiveTarget === "number" &&
+		!Number.isNaN(effectiveTarget) &&
+		value > effectiveTarget;
 
 	const testId = metricType
 		? `gauge-${metricType}-${label.toLowerCase().replace(/\s/g, "-")}`
@@ -221,6 +230,26 @@ export function CircularGauge({
 			>
 				{label}
 			</p>
+
+			{/* Exceeded target indicator - only when target exists and value > target */}
+			{hasExceededTarget && (
+				<div
+					className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1"
+					style={{
+						background: "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)",
+						border: "1px solid rgba(76, 175, 80, 0.35)",
+						fontSize: "12px",
+						fontWeight: 600,
+						color: "#2E7D32",
+						letterSpacing: "0.02em",
+						boxShadow: "0 1px 3px rgba(76, 175, 80, 0.15)",
+					}}
+					data-testid={`${testId}-exceeded-target`}
+				>
+					<TrendingUp size={14} strokeWidth={2.5} />
+					<span>Target exceeded by {value - effectiveTarget} {unit}</span>
+				</div>
+			)}
 		</div>
 	);
 }

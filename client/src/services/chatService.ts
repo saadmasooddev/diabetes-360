@@ -39,7 +39,7 @@ class ChatService {
 	): Promise<SendMessageResponse> {
 		const response = await httpClient.post<ApiResponse<SendMessageResponse>>(
 			API_ENDPOINTS.CHAT.BASE,
-			{ date, message },
+			{ date, message, recordedAt: new Date().toISOString() },
 		);
 		if (!response.success) {
 			throw new Error(response.message ?? "Failed to send message");

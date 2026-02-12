@@ -31,15 +31,19 @@ export class ChatController {
 			if (!userId) {
 				throw new BadRequestError("User not authenticated");
 			}
-			const { date: dateStr, message } = req.body as {
+			const { date: dateStr, message, recordedAt } = req.body as {
 				date?: string;
 				message?: string;
+				recordedAt?: string
 			};
-			const date = DateManager.parseAndValidateDate(dateStr ?? "");
-			if (!message || typeof message !== "string") {
-				throw new BadRequestError("Message is required");
+			if(!dateStr || !message || !recordedAt) {
+				throw new BadRequestError("Date, message and recordedAt are required");
 			}
-			const result = await this.chatService.sendMessage(userId, date, message);
+			if(isNaN(new Date(dateStr).getTime()) || isNaN(new Date(recordedAt).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+
+			const result = await this.chatService.sendMessage(userId, dateStr, message, recordedAt);
 			sendSuccess(res, result, "Message sent successfully");
 		} catch (error: unknown) {
 			handleError(res, error);

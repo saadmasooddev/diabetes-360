@@ -4,6 +4,8 @@ import { createServer } from "http";
 import { createApp } from "./src/app/app";
 import { config } from "./src/app/config";
 import { db } from "./src/app/config/db";
+import { CronJobService } from "./src/shared/services/cron-job.service";
+import { ChatService } from "./src/modules/chat/service/chat.service";
 
 const app = createApp();
 
@@ -11,6 +13,29 @@ const app = createApp();
 	const appWithRoutes = registerRoutes(app);
 	const server = createServer(appWithRoutes);
 	await db.execute("SELECT 1");
+
+	const cronJobService = new CronJobService();
+	cronJobService
+		.registerAll([
+			{
+				name: "daily-health-summary",
+				schedule: "0 0 * * *",
+				handler: async () => {
+					const chatService = new ChatService();
+					await chatService.generateAndStoreDailySummaryJob();
+				},
+			},
+			{
+				name: "daily-chat-memories",
+				schedule: "0 0 * * *",
+				handler: async () => {
+					const chatService = new ChatService();
+					await chatService.extractAndStoreChatMemoriesJob();
+					
+				},
+			},
+		]);
+	cronJobService.start();
 
 	// importantly only setup vite in development and after
 	// setting up all the other routes so the catch-all route

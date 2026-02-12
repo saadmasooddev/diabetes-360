@@ -26,6 +26,7 @@ import {
 	slotLocations,
 	BOOKING_STATUS_ENUM,
 	SLOT_TYPE,
+	BOOKING_TYPE_ENUM,
 } from "../models/booking.schema";
 import {
 	physicianLocations,
@@ -52,8 +53,21 @@ import {
 	SlotLocation,
 	BOOKING_TYPE_QUERY_ENUM,
 } from "../models/booking.schema";
-import { alias } from "drizzle-orm/pg-core";
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
+import { PgTransaction, alias } from "drizzle-orm/pg-core";
+import { freeTierLimits } from "../../settings/models/settings.schema";
+import { userConsultationQuotas } from "../models/consultation-quota.schema";
+
+
+export type BookingPriceCalculation = {
+	type: BOOKING_TYPE_ENUM
+	originalFee: string;
+	discountedFee: string | null;
+	finalPrice: string;
+	isFree: boolean;
+	isDiscounted: boolean;
+	discountPercentage?: number;
+	
+}
 
 export type DateSlotCount = { date: string; count: number };
 export type DateWithBookings = {
@@ -107,7 +121,6 @@ export type SlotWithDetails = {
 	isBooked: boolean;
 };
 export class BookingRepository {
-	// Slot Size operations
 	async getAllSlotSizes(): Promise<SlotSize[]> {
 		return await db.select().from(slotSize).orderBy(slotSize.size);
 	}
@@ -452,6 +465,58 @@ export class BookingRepository {
 			})
 			.returning();
 		return booked;
+	}
+
+	async createBookedSlotTransaction(data: InsertBookedSlot, pricingData:BookingPriceCalculation){
+		return await db.transaction(async tx => {
+			try {
+				const [ systemLimits ] = await tx.select().from(freeTierLimits).limit(1)
+				if(!systemLimits || !systemLimits.freeConsultationQuota || !systemLimits.discountedConsultationQuota) {
+					throw new Error("System limits not found")
+				}
+
+				const [ userConsultationQuota ] = await tx.select()
+				  .from(userConsultationQuotas).where(eq(userConsultationQuotas.userId, data.customerId))
+				if(!userConsultationQuota){
+					throw new Error("User consultation quota not found")
+				}
+
+				switch (pricingData.type) {
+					case BOOKING_TYPE_ENUM.FREE: {
+						const freeConsultationsUsed = userConsultationQuota.freeConsultationsUsed + 1
+						if(freeConsultationsUsed <= systemLimits.freeConsultationQuota) {
+							await tx.update(userConsultationQuotas).set({
+								freeConsultationsUsed: freeConsultationsUsed
+							}).where(eq(userConsultationQuotas.userId, data.customerId))
+						}
+						break
+				}
+				  case BOOKING_TYPE_ENUM.DISCOUNTED: {
+						const discountedConsultationsUsed = userConsultationQuota.discountedConsultationsUsed + 1
+						if(discountedConsultationsUsed <= systemLimits.discountedConsultationQuota) {
+							await tx.update(userConsultationQuotas).set({
+								discountedConsultationsUsed: discountedConsultationsUsed
+							}).where(eq(userConsultationQuotas.userId, data.customerId))
+						}
+					break
+				}
+					default:
+						break;
+				}
+
+				const [booked] = await tx
+					.insert(bookedSlots)
+					.values({
+						...data,
+						updatedAt: new Date(),
+					})
+					.returning();
+				return booked;
+			} catch (error) {
+				tx.rollback()
+				throw error
+			}
+		})
 	}
 
 	async getBookedSlotById(id: string): Promise<BookedSlot | null> {

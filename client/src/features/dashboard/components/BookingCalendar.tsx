@@ -11,6 +11,12 @@ interface BookingCalendarProps {
 	isLoading?: boolean;
 }
 
+function startOfDay(d: Date): Date {
+	const copy = new Date(d);
+	copy.setHours(0, 0, 0, 0);
+	return copy;
+}
+
 export function BookingCalendar({
 	selectedDate,
 	onDateSelect,
@@ -19,6 +25,8 @@ export function BookingCalendar({
 	availableDates,
 	isLoading = false,
 }: BookingCalendarProps) {
+	const selectedNormalized = startOfDay(selectedDate);
+
 	return (
 		<Card
 			className="w-full p-6 sm:p-8 mb-4 sm:mb-6"
@@ -39,7 +47,7 @@ export function BookingCalendar({
 					<div className="w-full [&_.rdp]:w-full [&_.rdp-table]:w-full [&_.rdp-cell]:flex-1 [&_.rdp-day]:w-full [&_.rdp-day]:h-12 [&_.rdp-head_cell]:flex-1">
 						<Calendar
 							mode="single"
-							selected={selectedDate}
+							selected={selectedNormalized}
 							onSelect={onDateSelect}
 							month={calendarMonth}
 							onMonthChange={onMonthChange}
@@ -72,9 +80,10 @@ export function BookingCalendar({
 								cell: "m-1 flex-1 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
 								day: "h-12 w-full p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-teal-50 transition-all duration-200 flex items-center justify-center text-sm",
 								day_selected:
-									"bg-[#00856F] text-black hover:bg-[#006B5B] hover:text-black ",
+									"!bg-[#00856F] !text-white hover:!bg-[#006B5B] hover:!text-white",
 								day_today:
 									" border-2 border-[#00856F] hover:text-black font-semibold",
+								day_disabled: " bg-white opacity-30  ",
 							}}
 						/>
 					</div>
