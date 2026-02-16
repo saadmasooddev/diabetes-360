@@ -176,13 +176,17 @@ export function FindDoctor() {
 	const { data: datesWithSlotsData, isLoading: isLoadingDatesAndSlots } =
 		usePhysicianDatesWithSlots(getPhysicianDatesWithSlotsQueryKey());
 
-	const datesWithAvailability = datesWithSlotsData?.dates?.filter(d => d.count > 0) || [];
+	const datesWithAvailability =
+		datesWithSlotsData?.dates?.filter((d) => d.count > 0) || [];
 	const availableSlots = datesWithSlotsData?.slots || [];
 	const isLoadingDates = isLoadingDatesAndSlots;
 	const isLoadingSlots = isLoadingDatesAndSlots;
 
-	const { data: bookingPrice, isLoading: isLoadingPrice, refetch: refetchBookingPrice } =
-		useCalculateBookingPrice(selectedPhysician?.id || null);
+	const {
+		data: bookingPrice,
+		isLoading: isLoadingPrice,
+		refetch: refetchBookingPrice,
+	} = useCalculateBookingPrice(selectedPhysician?.id || null);
 	const bookSlotMutation = useBookSlot();
 
 	// Get user's current location
@@ -284,14 +288,14 @@ export function FindDoctor() {
 				{
 					slotId: selectedSlot.id,
 					slotTypeId: selectedSlotTypeId,
-					physicianId: selectedPhysician.id
+					physicianId: selectedPhysician.id,
 				},
 				{
 					onSuccess: () => {
 						queryClient.invalidateQueries({
 							queryKey: getPhysicianDatesWithSlotsQueryKey().key,
 						});
-						refetchBookingPrice()
+						refetchBookingPrice();
 					},
 				},
 			);
@@ -362,13 +366,13 @@ export function FindDoctor() {
 								bookingPrice={
 									bookingPrice
 										? {
-											originalFee: bookingPrice.originalFee,
-											discountedFee: bookingPrice.discountedFee,
-											finalPrice: bookingPrice.finalPrice,
-											isDiscounted: bookingPrice.isDiscounted,
-											isFree: bookingPrice.isFree,
-											discountPercentage: bookingPrice.discountPercentage,
-										}
+												originalFee: bookingPrice.originalFee,
+												discountedFee: bookingPrice.discountedFee,
+												finalPrice: bookingPrice.finalPrice,
+												isDiscounted: bookingPrice.isDiscounted,
+												isFree: bookingPrice.isFree,
+												discountPercentage: bookingPrice.discountPercentage,
+											}
 										: null
 								}
 								isLoadingPrice={isLoadingPrice}
@@ -395,7 +399,6 @@ export function FindDoctor() {
 							)}
 						</div>
 					)}
-
 				</div>
 			</main>
 		</div>

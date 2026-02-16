@@ -3,10 +3,7 @@ import { Send } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-	useChatByDate,
-	useSendChatMessage,
-} from "@/hooks/mutations/useChat";
+import { useChatByDate, useSendChatMessage } from "@/hooks/mutations/useChat";
 import { DateManager } from "@/lib/utils";
 import { Markdown } from "markdown-to-jsx/react";
 
@@ -30,6 +27,7 @@ export default function DiaBot() {
 	const sendMessage = useSendChatMessage(todayStr);
 
 	const messages = data?.messages ?? [];
+	const nudge = data?.nudge;
 	const isSending = sendMessage.isPending;
 
 	const scrollToBottom = () => {
@@ -38,7 +36,7 @@ export default function DiaBot() {
 
 	useEffect(() => {
 		scrollToBottom();
-	}, [messages.length, isSending]);
+	}, [messages.length, isSending, nudge]);
 
 	const handleSendMessage = () => {
 		const trimmed = inputValue.trim();
@@ -127,6 +125,28 @@ export default function DiaBot() {
 							</div>
 						) : (
 							<div className="space-y-4">
+								{nudge && (
+									<div
+										className="flex justify-end"
+										data-testid="message-nudge-assistant"
+									>
+										<div className="flex flex-col items-end gap-1 max-w-[70%]">
+											<div
+												style={{
+													background: "#00856F",
+													borderRadius: "12px",
+													padding: "12px 16px",
+													fontSize: "14px",
+													fontWeight: 400,
+													color: "#FFFFFF",
+												}}
+												data-testid="text-message-nudge"
+											>
+												<Markdown>{nudge}</Markdown>
+											</div>
+										</div>
+									</div>
+								)}
 								{messages.map((msg) => (
 									<div
 										key={msg.id}

@@ -92,8 +92,8 @@ export function BookingStep({
 		// Filter by location if selected
 		const filteredSlots = selectedLocationId
 			? unbookedSlots.filter((slot) =>
-				slot.locations?.some((loc) => loc.id === selectedLocationId),
-			)
+					slot.locations?.some((loc) => loc.id === selectedLocationId),
+				)
 			: unbookedSlots;
 
 		// Separate online-only vs slots with offline/onsite

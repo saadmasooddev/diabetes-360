@@ -133,7 +133,7 @@ export const slotPrice = pgTable("slot_price", {
 export enum BOOKING_TYPE_ENUM {
 	FREE = "free",
 	DISCOUNTED = "discounted",
-	PAID = "paid"
+	PAID = "paid",
 }
 
 export const bookedSlots = pgTable("booked_slots", {

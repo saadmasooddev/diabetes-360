@@ -22,7 +22,7 @@ export class ChatRepository {
 	async getByUserAndDate(
 		userId: string,
 		dateStr: string,
-		limit = 100
+		limit = 100,
 	): Promise<ChatMessage[]> {
 		return db
 			.select()
@@ -34,7 +34,7 @@ export class ChatRepository {
 				),
 			)
 			.orderBy(asc(chatMessages.recordedAt))
-			.limit(limit)
+			.limit(limit);
 	}
 
 	/**
@@ -43,17 +43,20 @@ export class ChatRepository {
 	async insertTransaction(data: InsertChatMessage[]): Promise<ChatMessage[]> {
 		if (!data.length) return [];
 		const dateStr = data[0].chatDate;
-		const rows = await db.transaction(async tx => {
-			return await tx.insert(chatMessages).values(
-				data.map((d) => ({
-					userId: d.userId,
-					chatDate: dateStr,
-					role: d.role,
-					message: d.message,
-					recordedAt: d.recordedAt
-				})),
-			).returning()
-		})
+		const rows = await db.transaction(async (tx) => {
+			return await tx
+				.insert(chatMessages)
+				.values(
+					data.map((d) => ({
+						userId: d.userId,
+						chatDate: dateStr,
+						role: d.role,
+						message: d.message,
+						recordedAt: d.recordedAt,
+					})),
+				)
+				.returning();
+		});
 		if (!rows) throw new Error("Failed to insert chat message");
 		return rows;
 	}
@@ -72,7 +75,6 @@ export class ChatRepository {
 		return rows.length > 0;
 	}
 
-
 	async getSummaryByUserAndDate(
 		userId: string,
 		dateStr: string,
@@ -89,7 +91,6 @@ export class ChatRepository {
 			.limit(1);
 		return rows[0] ?? null;
 	}
-
 
 	async getSummariesForUserLastDays(
 		userId: string,
@@ -119,7 +120,6 @@ export class ChatRepository {
 			summary: r.summary,
 		}));
 	}
-
 
 	async insertDailySummary(
 		data: InsertDailyHealthSummary,
@@ -170,7 +170,6 @@ export class ChatRepository {
 				set: { memories },
 			});
 	}
-
 
 	async getChatMemoriesForUserLastDays(
 		userId: string,

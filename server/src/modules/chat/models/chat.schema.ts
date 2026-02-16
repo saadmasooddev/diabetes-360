@@ -149,5 +149,4 @@ export const emotionalStateSchema = z.object({
 });
 
 export type UserEmotionalState = typeof userEmotionalState.$inferSelect;
-export type InsertUserEmotionalState =
-	typeof userEmotionalState.$inferInsert;
+export type InsertUserEmotionalState = typeof userEmotionalState.$inferInsert;

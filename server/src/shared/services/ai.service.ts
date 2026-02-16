@@ -137,6 +137,11 @@ export interface AIChatPayload {
 		stress_signals: string[];
 		confidence: string;
 	};
+	behavior_patterns?: {
+		late_dinner: boolean;
+		evening_inactivity: boolean;
+		missed_logs_frequency: "yes" | "no";
+	};
 }
 
 export interface AIChatResponse {
@@ -399,22 +404,17 @@ class AIService {
 	): Promise<AIBaseResponse<LastDaysHealthSummaryResponse["data"]>> {
 		const response = await axios.post<
 			AIBaseResponse<LastDaysHealthSummaryResponse["data"]>
-		>(
-			`${this.baseUrl}/api/chat/last-days-health-summary/`,
-			payload,
-			{
-				headers: {
-					"Content-Type": "application/json",
-				},
-				timeout: this.defaultTimeout,
+		>(`${this.baseUrl}/api/chat/last-days-health-summary/`, payload, {
+			headers: {
+				"Content-Type": "application/json",
 			},
-		);
+			timeout: this.defaultTimeout,
+		});
 
 		this.validateResponse(response.data, (data) => {
 			return !!(
 				data &&
-				typeof data.last_day_summary ===
-					"string" &&
+				typeof data.last_day_summary === "string" &&
 				data.last_day_summary.length > 0
 			);
 		});
@@ -427,16 +427,12 @@ class AIService {
 	): Promise<AIBaseResponse<OldChatMemoryResponse["data"]>> {
 		const response = await axios.post<
 			AIBaseResponse<OldChatMemoryResponse["data"]>
-		>(
-			`${this.baseUrl}/api/chat/old-chat-memory/`,
-			payload,
-			{
-				headers: {
-					"Content-Type": "application/json",
-				},
-				timeout: this.defaultTimeout,
+		>(`${this.baseUrl}/api/chat/old-chat-memory/`, payload, {
+			headers: {
+				"Content-Type": "application/json",
 			},
-		);
+			timeout: this.defaultTimeout,
+		});
 
 		this.validateResponse(response.data, (data) => {
 			return (
@@ -448,22 +444,17 @@ class AIService {
 		return response.data;
 	}
 
-
 	async getEmotionalState(
 		payload: EmotionalStatePayload,
 	): Promise<AIBaseResponse<EmotionalStateResponse["data"]>> {
 		const response = await axios.post<
 			AIBaseResponse<EmotionalStateResponse["data"]>
-		>(
-			`${this.baseUrl}/api/chat/emotional-state/`,
-			payload,
-			{
-				headers: {
-					"Content-Type": "application/json",
-				},
-				timeout: this.defaultTimeout,
+		>(`${this.baseUrl}/api/chat/emotional-state/`, payload, {
+			headers: {
+				"Content-Type": "application/json",
 			},
-		);
+			timeout: this.defaultTimeout,
+		});
 
 		this.validateResponse(response.data, (data) => {
 			return (

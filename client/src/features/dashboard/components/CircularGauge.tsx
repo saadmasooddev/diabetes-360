@@ -247,7 +247,9 @@ export function CircularGauge({
 					data-testid={`${testId}-exceeded-target`}
 				>
 					<TrendingUp size={14} strokeWidth={2.5} />
-					<span>Target exceeded by {value - effectiveTarget} {unit}</span>
+					<span>
+						Target exceeded by {value - effectiveTarget} {unit}
+					</span>
 				</div>
 			)}
 		</div>

@@ -13,7 +13,7 @@ import { SignUp } from "@/features/auth/pages/SignUp";
 import ResetPassword from "@/features/auth/pages/ResetPassword";
 import { Dashboard } from "@/features/dashboard/customer/pages/Dashboard";
 import { HealthAssessment } from "@/features/dashboard/customer/pages/HealthAssessment";
-import { LogHistory } from "@/features/dashboard/customer/pages/HealthMetricsHistory";
+import { LogHistory } from "@/features/dashboard/customer/pages/LogHistory";
 import { InstantConsultation } from "@/features/dashboard/customer/pages/InstantConsultation";
 import { FindDoctor } from "@/features/dashboard/customer/pages/FindDoctor";
 import { Consultations } from "@/features/dashboard/customer/pages/Consultations";

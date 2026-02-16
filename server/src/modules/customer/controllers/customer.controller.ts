@@ -133,21 +133,21 @@ export class CustomerController {
 				throw new BadRequestError("User ID is required");
 			}
 
-			const user = await this.customerService.getCustomerDataByUserId(userId)
-			const isFreeUser = user.paymentType === PAYMENT_TYPE.FREE
-			if(isFreeUser) {
+			const user = await this.customerService.getCustomerDataByUserId(userId);
+			const isFreeUser = user.paymentType === PAYMENT_TYPE.FREE;
+			if (isFreeUser) {
 				const data = {
 					quota: {
-					discountedConsultationsUsed: 0,
-					freeConsultationsUsed: 0,
-					discountedConsultationsLeft: 0,
-					freeConsultationsLeft: 0,
-					discountedQuotaLimit: 0,
-					freeQuotaLimit: 0,
-				}
-				} 
+						discountedConsultationsUsed: 0,
+						freeConsultationsUsed: 0,
+						discountedConsultationsLeft: 0,
+						freeConsultationsLeft: 0,
+						discountedQuotaLimit: 0,
+						freeQuotaLimit: 0,
+					},
+				};
 				sendSuccess(res, data, "Consultation quotas retrieved successfully");
-				return
+				return;
 			}
 
 			// Get user consultation quota
@@ -177,12 +177,8 @@ export class CustomerController {
 					discountedQuotaLimit,
 					freeQuotaLimit,
 				},
-			}
-			sendSuccess(
-				res,
-				data,
-				"Consultation quotas retrieved successfully",
-			);
+			};
+			sendSuccess(res, data, "Consultation quotas retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
 		}

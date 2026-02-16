@@ -37,7 +37,7 @@ import type { ModifiedInsertExerciseLogs } from "@/services/healthService";
 
 export function Dashboard() {
 	const user = useAuthStore((state) => state.user);
-	const isFreeUser = user?.paymentType === PAYMENT_TYPE.FREE
+	const isFreeUser = user?.paymentType === PAYMENT_TYPE.FREE;
 	const { toast } = useToast();
 	const [, setLocation] = useLocation();
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -208,7 +208,7 @@ export function Dashboard() {
 		const queriesToInvalidate: FilteredMetricsKey[] = [];
 
 		if (selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
-			metricData.bloodSugar = numericValue;
+			metricData.bloodSugar = parseFloat(numericValue.toFixed(1));
 			queriesToInvalidate.push(bloodGlucoseQueryKey);
 		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
 			const calories =
@@ -219,15 +219,15 @@ export function Dashboard() {
 				calories,
 				activityType: ACTIVITY_TYPE_ENUM.CARDIO,
 				duration,
-				steps: numericValue,
+				steps: Math.round(numericValue),
 				recordedAt: new Date().toISOString(),
 			});
 			queriesToInvalidate.push(stepsQueryKey);
 		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
-			metricData.waterIntake = numericValue;
+			metricData.waterIntake = parseFloat(numericValue.toFixed(1));
 			queriesToInvalidate.push(waterQueryKey);
 		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.HEART_RATE) {
-			metricData.heartRate = numericValue;
+			metricData.heartRate = Math.round(numericValue);
 			queriesToInvalidate.push(heartBeatQueryKey);
 		}
 
@@ -333,7 +333,7 @@ export function Dashboard() {
 	};
 
 	const handleUpgrade = () => {
-		setLocation(ROUTES.HEALTH_PLANS)
+		setLocation(ROUTES.HEALTH_PLANS);
 	};
 
 	// Transform metrics data for charts
@@ -473,7 +473,6 @@ export function Dashboard() {
 							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
 							dailyLimit={freeTierLimits?.waterLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
-
 						/>
 
 						{/* Heart Beat Card - Only for paid users */}
@@ -523,7 +522,6 @@ export function Dashboard() {
 							yAxisConfig={{
 								domain: [0, 120],
 								ticks: [0, 70, 80, 90, 100],
-								label: "100mg/dL",
 							}}
 							interval={glucoseInterval}
 							onIntervalChange={setGlucoseInterval}
@@ -561,7 +559,6 @@ export function Dashboard() {
 								yAxisConfig={{
 									domain: [0, 4],
 									ticks: [0, 1, 2, 3, 4],
-									label: "4 Litre",
 								}}
 								interval={waterInterval}
 								onIntervalChange={setWaterInterval}
@@ -583,7 +580,6 @@ export function Dashboard() {
 								yAxisConfig={{
 									domain: [0, 200],
 									ticks: [0, 50, 100, 150, 200],
-									label: "200 bpm",
 								}}
 								interval={heartbeatInterval}
 								onIntervalChange={setHeartbeatInterval}

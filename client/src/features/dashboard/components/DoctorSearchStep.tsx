@@ -18,7 +18,7 @@ interface DoctorSearchStepProps {
 	selectedSpecialtyId: string | null;
 	onSpecialtySelect: (specialtyId: string | null) => void;
 	isLoadingSpecialties: boolean;
-	physicians: (Physician & { practiceStartDate: string })[];
+	physicians: Physician[];
 	isLoadingPhysicians: boolean;
 	onConsultClick: (physician: Physician) => void;
 	pagination?: {
@@ -28,14 +28,12 @@ interface DoctorSearchStepProps {
 	onPageChange: (page: number) => void;
 }
 
-function mapPhysicianToDoctor(physician: Physician & { practiceStartDate: string }) {
-	const practiceStartDate = physician.practiceStartDate || new Date();
-
+function mapPhysicianToDoctor(physician: Physician) {
 	return {
 		id: physician.id,
 		name: physician.firstName + " " + physician.lastName || "Dr. Unknown",
 		specialty: physician.specialty || "",
-		experience: `${physician.experience}+ years`,
+		experience: physician.experience,
 		rating: physician.rating || 0,
 		isOnline: physician.isOnline || false,
 		image: physician.imageUrl || "",

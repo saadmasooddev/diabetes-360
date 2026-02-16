@@ -71,8 +71,8 @@ export function HealthMetricTargetsManagement() {
 				}
 				break;
 			case EXERCISE_TYPE_ENUM.WATER_INTAKE:
-				if (value < 0 || value > 5) {
-					return "Water intake target must be between 0-5 liters per day";
+				if (value < 0 || value > 4) {
+					return "Water intake target must be between 0-4 liters per day";
 				}
 				break;
 			case EXERCISE_TYPE_ENUM.HEART_RATE:

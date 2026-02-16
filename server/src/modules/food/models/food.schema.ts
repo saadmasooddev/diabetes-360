@@ -10,10 +10,13 @@ import {
 	jsonb,
 	integer,
 	uniqueIndex,
+	PgTransaction,
+	uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "../../auth/models/user.schema";
+import { timeZones } from "./timeZone.schema";
 
 export const mealTypeEnum = pgEnum("meal_type_enum", [
 	"Breakfast",
@@ -32,7 +35,8 @@ export const zodMealTypeEnum = z.enum([
 	MEAL_TYPE_ENUM.Dinner,
 ]);
 
-// Daily Nutrient Recommendations Table - stores AI-generated recommendations per user per day
+export type Tx = PgTransaction<any, any, any>;
+
 export const dailyNutrientRecommendations = pgTable(
 	"daily_nutrient_recommendations",
 	{
@@ -252,6 +256,10 @@ export const loggedMeals = pgTable("logged_meals", {
 	calories: numeric("calories", { precision: 10, scale: 2 })
 		.notNull()
 		.default("0"),
+	recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+	timeZoneId: uuid("time_zone_id")
+		.notNull()
+		.references(() => timeZones.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -272,6 +280,8 @@ export const insertLoggedMealSchema = createInsertSchema(loggedMeals)
 		proteins: z.number().min(0),
 		fats: z.number().min(0),
 		calories: z.number().min(0),
+		recordedAt: z.string().transform((val) => new Date(val)),
+		timeZoneId: z.string().min(1),
 	});
 
 export type LoggedMeal = typeof loggedMeals.$inferSelect;

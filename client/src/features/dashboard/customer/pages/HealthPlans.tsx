@@ -41,20 +41,22 @@ export function HealthPlans() {
 						>
 							<button
 								onClick={() => setBillingCycle("monthly")}
-								className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${billingCycle === "monthly"
-									? "bg-[#E8F5F3] text-[#00856F]"
-									: "bg-transparent text-[#546E7A]"
-									}`}
+								className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${
+									billingCycle === "monthly"
+										? "bg-[#E8F5F3] text-[#00856F]"
+										: "bg-transparent text-[#546E7A]"
+								}`}
 								data-testid="button-monthly"
 							>
 								Monthly
 							</button>
 							<button
 								onClick={() => setBillingCycle("yearly")}
-								className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${billingCycle === "yearly"
-									? "bg-[#E8F5F3] text-[#00856F]"
-									: "bg-transparent text-[#546E7A]"
-									}`}
+								className={`px-8 py-2 rounded-full text-base font-semibold transition-all ${
+									billingCycle === "yearly"
+										? "bg-[#E8F5F3] text-[#00856F]"
+										: "bg-transparent text-[#546E7A]"
+								}`}
 								data-testid="button-yearly"
 							>
 								Yearly

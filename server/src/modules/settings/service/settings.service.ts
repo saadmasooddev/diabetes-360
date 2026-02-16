@@ -25,7 +25,7 @@ export class SettingsService {
 		const foodScanLimits = await this.getFoodScanLimits();
 
 		if (!limits) {
-			throw new NotFoundError("No limits found")
+			throw new NotFoundError("No limits found");
 		}
 
 		return {
@@ -75,7 +75,7 @@ export class SettingsService {
 		const limits = await this.settingsRepository.getFoodScanLimits();
 
 		if (!limits) {
-			throw new NotFoundError("No food scan limits found")
+			throw new NotFoundError("No food scan limits found");
 		}
 
 		return limits;

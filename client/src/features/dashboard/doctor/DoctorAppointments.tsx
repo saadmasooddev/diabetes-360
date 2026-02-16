@@ -28,8 +28,7 @@ export function DoctorAppointments() {
 		[datesWithBookings],
 	);
 	const datesSet = useMemo(
-		() =>
-			new Set(datesWithBookings?.bookedSlots?.map((d) => d.date) ?? []),
+		() => new Set(datesWithBookings?.bookedSlots?.map((d) => d.date) ?? []),
 		[datesWithBookings],
 	);
 	const hasAppointmentsOnSelected = datesSet.has(

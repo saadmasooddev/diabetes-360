@@ -213,7 +213,7 @@ export const insertHealthMetricTargetSchema = createInsertSchema(
 				case EXERCISE_TYPE_ENUM.WATER_INTAKE:
 					ctx.addIssue({
 						code: "custom",
-						message: "Water intake target must be between 0-5 liters per day",
+						message: "Water intake target must be between 0-4 liters per day",
 						path: ["targetValue"],
 					});
 					break;

@@ -93,7 +93,7 @@ export interface BookingPriceCalculation {
 export interface BookSlotRequest {
 	slotId: string;
 	slotTypeId: string;
-	physicianId: string
+	physicianId: string;
 }
 
 export interface UpdateSlotLocationsRequest {
@@ -259,23 +259,24 @@ class BookingService {
 	async bookSlot(
 		data: BookSlotRequest,
 	): Promise<{ id: string; slotId: string; status: string }> {
-		const response = await httpClient.post<ApiResponse<{	booking: {
-			id: string;
-			createdAt: Date;
-			updatedAt: Date;
-			slotId: string;
-			slotTypeId: string;
-			status: string;
-			customerId: string;
-			summary: string | null;
-		}}>>(
-				API_ENDPOINTS.BOOKING.BOOK_SLOT,
-				data,
-			);
-			if (!response.success || !response.data) {
-				throw new Error(response.message || "Failed to book slot");
-			}
-			return response.data.booking;
+		const response = await httpClient.post<
+			ApiResponse<{
+				booking: {
+					id: string;
+					createdAt: Date;
+					updatedAt: Date;
+					slotId: string;
+					slotTypeId: string;
+					status: string;
+					customerId: string;
+					summary: string | null;
+				};
+			}>
+		>(API_ENDPOINTS.BOOKING.BOOK_SLOT, data);
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to book slot");
+		}
+		return response.data.booking;
 	}
 
 	async getMyConsultations(

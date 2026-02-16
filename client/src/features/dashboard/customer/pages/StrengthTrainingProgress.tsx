@@ -171,10 +171,11 @@ export function StrengthTrainingProgress() {
 										key={filter}
 										onClick={() => setFilterType(filter)}
 										variant="ghost"
-										className={`px-6 py-2 rounded-lg transition-colors ${filterType === filter
+										className={`px-6 py-2 rounded-lg transition-colors ${
+											filterType === filter
 												? "bg-teal-50 text-teal-700"
 												: "text-gray-600 hover:bg-gray-100"
-											}`}
+										}`}
 										style={{
 											fontWeight: filterType === filter ? 600 : 400,
 											fontSize: "14px",

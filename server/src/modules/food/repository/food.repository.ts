@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, sql, inArray, asc } from "drizzle-orm";
+import { eq, and, sql, inArray, asc, getTableColumns } from "drizzle-orm";
 import {
 	dailyNutrientRecommendations,
 	foodScanNutrients,
@@ -17,8 +17,11 @@ import {
 	type DailyPersonalizedInsight,
 	type Recipe,
 	MEAL_TYPE_ENUM,
+	Tx,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
+import { PgTransaction } from "drizzle-orm/pg-core";
+import { timeZones } from "../models/timeZone.schema";
 
 export interface RecommendedNutrients {
 	carbs: {
@@ -82,14 +85,16 @@ export class FoodRepository {
 	// Create or update daily nutrient recommendation
 	async upsertDailyNutrientRecommendation(
 		data: InsertDailyNutrientRecommendation,
+		tx?: Tx,
 	): Promise<DailyNutrientRecommendation> {
 		const dateStr =
 			data.recommendationDate instanceof Date
 				? data.recommendationDate.toISOString().split("T")[0]
 				: data.recommendationDate;
 
-		// Try to update existing record
-		const [updated] = await db
+		const dbConn = tx || db;
+		const [updated] = await dbConn
+
 			.update(dailyNutrientRecommendations)
 			.set({
 				carbs: data.carbs.toString(),
@@ -113,7 +118,7 @@ export class FoodRepository {
 		}
 
 		// If no existing record, create a new one
-		const [newRecommendation] = await db
+		const [newRecommendation] = await dbConn
 			.insert(dailyNutrientRecommendations)
 			.values({
 				userId: data.userId,
@@ -204,10 +209,7 @@ export class FoodRepository {
 	 * Get all logged meals for a user on a specific date.
 	 * Uses DATE cast for consistent results.
 	 */
-	async getLoggedMealsByDate(
-		userId: string,
-		dateStr: string,
-	): Promise<LoggedMeal[]> {
+	async getLoggedMealsByDate(userId: string, dateStr: string) {
 		return db
 			.select()
 			.from(loggedMeals)
@@ -215,6 +217,28 @@ export class FoodRepository {
 				and(
 					eq(loggedMeals.userId, userId),
 					sql`DATE(${loggedMeals.mealDate}) = DATE(${dateStr})`,
+				),
+			)
+			.orderBy(asc(loggedMeals.createdAt));
+	}
+
+	async getLoggedMealsInDateRange(
+		userId: string,
+		startDateStr: string,
+		endDateStr: string,
+	) {
+		return db
+			.select({
+				...getTableColumns(loggedMeals),
+				timeZone: timeZones.name,
+			})
+			.from(loggedMeals)
+			.innerJoin(timeZones, eq(loggedMeals.timeZoneId, timeZones.id))
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.createdAt}) >= DATE(${startDateStr})`,
+					sql`DATE(${loggedMeals.createdAt}) <= DATE(${endDateStr})`,
 				),
 			)
 			.orderBy(asc(loggedMeals.createdAt));
@@ -238,6 +262,8 @@ export class FoodRepository {
 				proteins: meal.proteins.toString(),
 				fats: meal.fats.toString(),
 				calories: meal.calories.toString(),
+				recordedAt: meal.recordedAt,
+				timeZoneId: meal.timeZoneId,
 			})
 			.returning();
 
@@ -305,8 +331,10 @@ export class FoodRepository {
 	async getDailyMealPlans(
 		userId: string,
 		date: string,
+		tx?: Tx,
 	): Promise<{ mealPlans: MealPlanMeal[] }> {
-		const [mealPlan] = await db
+		const dbConn = tx || db;
+		const [mealPlan] = await dbConn
 			.select()
 			.from(dailyMealPlans)
 			.where(
@@ -320,7 +348,7 @@ export class FoodRepository {
 			return { mealPlans: [] };
 		}
 
-		const meals = await db
+		const meals = await dbConn
 			.select()
 			.from(mealPlanMeals)
 			.where(eq(mealPlanMeals.mealPlanId, mealPlan.id));
@@ -333,15 +361,17 @@ export class FoodRepository {
 		userId: string,
 		dateStr: string,
 		meals: Array<MealPlan>,
+		tx?: Tx,
 		// recommendedNutrients: RecommendedNutrients
 	): Promise<{ meals: MealPlanMeal[] }> {
-		const existing = await this.getDailyMealPlans(userId, dateStr);
+		const existing = await this.getDailyMealPlans(userId, dateStr, tx);
 
+		const dbConn = tx || db;
 		if (existing.mealPlans.length > 0) {
-			await db
+			await dbConn
 				.delete(mealPlanMeals)
 				.where(eq(mealPlanMeals.mealPlanId, existing.mealPlans[0].mealPlanId));
-			const insertedMeals = await db
+			const insertedMeals = await dbConn
 				.insert(mealPlanMeals)
 				.values(
 					meals.map((mp) => ({
@@ -357,7 +387,7 @@ export class FoodRepository {
 			return { meals: insertedMeals };
 		}
 
-		const [mealPlan] = await db
+		const [mealPlan] = await dbConn
 			.insert(dailyMealPlans)
 			.values({
 				userId,
@@ -371,7 +401,7 @@ export class FoodRepository {
 			})
 			.returning();
 		// Insert meals
-		const insertedMeals = await db
+		const insertedMeals = await dbConn
 			.insert(mealPlanMeals)
 			.values(
 				meals.map((meal) => ({
@@ -411,9 +441,11 @@ export class FoodRepository {
 		userId: string,
 		insightDate: string,
 		insights: string[],
+		tx?: Tx,
 	): Promise<DailyPersonalizedInsight[]> {
 		// Delete existing insights for this date
-		await db
+		const dbConn = tx || db;
+		await dbConn
 			.delete(dailyPersonalizedInsights)
 			.where(
 				and(
@@ -424,7 +456,7 @@ export class FoodRepository {
 
 		// Insert new insights
 		if (insights.length > 0) {
-			const inserted = await db
+			const inserted = await dbConn
 				.insert(dailyPersonalizedInsights)
 				.values(
 					insights.map((insightText) => ({

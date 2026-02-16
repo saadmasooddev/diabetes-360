@@ -126,9 +126,15 @@ class FoodScannerService {
 		fats: number;
 		calories: number;
 	}) {
+		const p = {
+			...payload,
+			recordedAt: new Date().toISOString(),
+			timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		};
+
 		const response = await httpClient.post<ApiResponse<any>>(
 			`${API_ENDPOINTS.FOOD_SCANNER.LOG_MEAL}?date=${DateManager.formatDate(new Date())}`,
-			payload,
+			p,
 		);
 
 		if (!response.success || !response.data) {

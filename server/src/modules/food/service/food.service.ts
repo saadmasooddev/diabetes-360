@@ -12,6 +12,7 @@ import type {
 	DailyPersonalizedInsight,
 	MEAL_TYPE_ENUM,
 	LoggedMeal,
+	InsertLoggedMeal,
 } from "../models/food.schema";
 import { PersonalizedInsight } from "@/features/dashboard/components/FoodScanner/PersonalizedInsight";
 import { formatUserInfo } from "server/src/shared/utils/utils";
@@ -21,6 +22,8 @@ import {
 	type RecipeGenerationResponse,
 } from "../../../shared/services/ai.service";
 import { EXERCISE_TYPE_ENUM } from "@shared/schema";
+import { dbUtils } from "server/src/app/config/db";
+import { resourceLimits } from "worker_threads";
 
 interface BreakdownItem {
 	name: string;
@@ -512,8 +515,8 @@ export class FoodService {
 
 		// Call AI service
 		const response = await aiService.getNutritionalRecommendation(payload);
-		console.log("The payload for daily data is", payload)
-		console.log("THe response received is", response)
+		console.log("The payload for daily data is", payload);
+		console.log("THe response received is", response);
 
 		const nutrientData: RecommendedNutrients = response.data.nutrient_intake;
 		const foodSuggestionsResponse = response.data.food_suggestions || [];
@@ -524,18 +527,6 @@ export class FoodService {
 			nutrientData.carbs.total -
 			nutrientData.carbs.sugars -
 			nutrientData.carbs.fibres;
-
-		// Store recommendation in database
-		await this.foodRepository.upsertDailyNutrientRecommendation({
-			userId,
-			recommendationDate: today,
-			carbs,
-			sugars: nutrientData.carbs.sugars,
-			fibres: nutrientData.carbs.fibres,
-			proteins: nutrientData.proteins,
-			fats: nutrientData.fats,
-			calories: nutrientData.calories,
-		});
 
 		const allMeals: Array<MealPlan> = [];
 
@@ -561,16 +552,40 @@ export class FoodService {
 			});
 		});
 
-		if (allMeals.length > 0) {
-			await this.foodRepository.upsertDailyMealPlan(userId, today, allMeals);
-		}
-
-		const foodInsights =
-			await this.foodRepository.upsertDailyPersonalizedInsights(
-				userId,
-				today,
-				insights,
+		const result = await dbUtils.transaction(async (tx) => {
+			await this.foodRepository.upsertDailyNutrientRecommendation(
+				{
+					userId,
+					recommendationDate: today,
+					carbs,
+					sugars: nutrientData.carbs.sugars,
+					fibres: nutrientData.carbs.fibres,
+					proteins: nutrientData.proteins,
+					fats: nutrientData.fats,
+					calories: nutrientData.calories,
+				},
+				tx,
 			);
+
+			if (allMeals.length > 0) {
+				await this.foodRepository.upsertDailyMealPlan(
+					userId,
+					today,
+					allMeals,
+					tx,
+				);
+			}
+
+			const foodInsights =
+				await this.foodRepository.upsertDailyPersonalizedInsights(
+					userId,
+					today,
+					insights,
+					tx,
+				);
+
+			return { foodInsights };
+		});
 
 		return {
 			carbs,
@@ -580,7 +595,7 @@ export class FoodService {
 			fat: nutrientData.fats,
 			calories: nutrientData.calories,
 			foodSuggestions: foodSuggestions,
-			foodInsights,
+			foodInsights: result.foodInsights,
 		};
 	}
 
@@ -605,15 +620,7 @@ export class FoodService {
 
 	async logMeal(
 		userId: string,
-		meal: {
-			foodName: string;
-			carbs: number;
-			sugars: number;
-			fibres: number;
-			proteins: number;
-			fats: number;
-			calories: number;
-		},
+		meal: Omit<InsertLoggedMeal, "userId" | "mealDate">,
 		dateStr: string,
 	): Promise<LoggedMeal> {
 		return await this.foodRepository.logMeal(userId, meal, dateStr);

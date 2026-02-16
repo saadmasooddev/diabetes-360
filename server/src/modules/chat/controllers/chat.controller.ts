@@ -18,8 +18,11 @@ export class ChatController {
 			const dateStr = DateManager.parseAndValidateDate(
 				(req.query.date as string) ?? "",
 			);
-			const messages = await this.chatService.getChatByDate(userId, dateStr);
-			sendSuccess(res, { messages }, "Chat retrieved successfully");
+			const { messages, nudge } = await this.chatService.getChatByDate(
+				userId,
+				dateStr,
+			);
+			sendSuccess(res, { messages, nudge }, "Chat retrieved successfully");
 		} catch (error: unknown) {
 			handleError(res, error);
 		}
@@ -31,19 +34,31 @@ export class ChatController {
 			if (!userId) {
 				throw new BadRequestError("User not authenticated");
 			}
-			const { date: dateStr, message, recordedAt } = req.body as {
+			const {
+				date: dateStr,
+				message,
+				recordedAt,
+			} = req.body as {
 				date?: string;
 				message?: string;
-				recordedAt?: string
+				recordedAt?: string;
 			};
-			if(!dateStr || !message || !recordedAt) {
+			if (!dateStr || !message || !recordedAt) {
 				throw new BadRequestError("Date, message and recordedAt are required");
 			}
-			if(isNaN(new Date(dateStr).getTime()) || isNaN(new Date(recordedAt).getTime())) {
+			if (
+				isNaN(new Date(dateStr).getTime()) ||
+				isNaN(new Date(recordedAt).getTime())
+			) {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			const result = await this.chatService.sendMessage(userId, dateStr, message, recordedAt);
+			const result = await this.chatService.sendMessage(
+				userId,
+				dateStr,
+				message,
+				recordedAt,
+			);
 			sendSuccess(res, result, "Message sent successfully");
 		} catch (error: unknown) {
 			handleError(res, error);

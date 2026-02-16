@@ -15,7 +15,8 @@ import { db } from "../../../app/config/db";
 import { PAYMENT_TYPE, physicianData } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
 import {
-	BOOKING_TYPE_ENUM, BOOKING_STATUS_ENUM,
+	BOOKING_TYPE_ENUM,
+	BOOKING_STATUS_ENUM,
 	type BOOKING_TYPE_QUERY_ENUM,
 	type InsertSlot,
 	type InsertSlotTypeJunction,
@@ -641,7 +642,12 @@ export class BookingService {
 		return await this.bookingRepository.getSlotWithDetails(slotId);
 	}
 
-	async bookSlot(physicianId: string, customerId: string, slotId: string, slotTypeId: string) {
+	async bookSlot(
+		physicianId: string,
+		customerId: string,
+		slotId: string,
+		slotTypeId: string,
+	) {
 		const slot = await this.bookingRepository.getSlotById(slotId);
 		if (!slot) {
 			throw new NotFoundError("Slot not found");
@@ -666,18 +672,22 @@ export class BookingService {
 			throw new BadRequestError("Invalid slot type for this slot");
 		}
 
-		const calculatedPrice = await this.calculateBookingPrice(physicianId, customerId)
-		if(calculatedPrice.isFree){
-
-		}
-		
-		return await this.bookingRepository.createBookedSlotTransaction({
+		const calculatedPrice = await this.calculateBookingPrice(
+			physicianId,
 			customerId,
-			slotId,
-			slotTypeId,
-			status: BOOKING_STATUS_ENUM.PENDING,
-		}, 
-		calculatedPrice);
+		);
+		if (calculatedPrice.isFree) {
+		}
+
+		return await this.bookingRepository.createBookedSlotTransaction(
+			{
+				customerId,
+				slotId,
+				slotTypeId,
+				status: BOOKING_STATUS_ENUM.PENDING,
+			},
+			calculatedPrice,
+		);
 	}
 
 	private generateSlots(
@@ -791,7 +801,7 @@ export class BookingService {
 			throw new NotFoundError("Customer not found");
 		}
 
-		if(customer.paymentType === PAYMENT_TYPE.FREE) {
+		if (customer.paymentType === PAYMENT_TYPE.FREE) {
 			return {
 				originalFee: originalFee.toFixed(2),
 				discountedFee: "0",
@@ -799,9 +809,8 @@ export class BookingService {
 				isFree: false,
 				isDiscounted: false,
 				discountPercentage: 0,
-				type: BOOKING_TYPE_ENUM.PAID
-		
-			}
+				type: BOOKING_TYPE_ENUM.PAID,
+			};
 		}
 
 		// Get user consultation quota
@@ -823,7 +832,7 @@ export class BookingService {
 		let finalPrice = originalFee;
 		let discountedFee: string | null = null;
 		let discountPercentage: number | undefined;
-		let type = BOOKING_TYPE_ENUM.PAID
+		let type = BOOKING_TYPE_ENUM.PAID;
 
 		if (isPaid) {
 			// For paid users
@@ -831,13 +840,13 @@ export class BookingService {
 				// Annual users get free consultations if quota not exhausted
 				if (quota.freeConsultationsUsed < freeQuotaLimit) {
 					finalPrice = 0;
-					type = BOOKING_TYPE_ENUM.FREE
+					type = BOOKING_TYPE_ENUM.FREE;
 				} else if (quota.discountedConsultationsUsed < discountedQuotaLimit) {
 					// Apply discount (assuming 20% discount, adjust as needed)
 					discountPercentage = 20;
 					discountedFee = (originalFee * 0.8).toFixed(2);
 					finalPrice = parseFloat(discountedFee);
-					type = BOOKING_TYPE_ENUM.DISCOUNTED
+					type = BOOKING_TYPE_ENUM.DISCOUNTED;
 				} else {
 					// No discount, pay original fee
 					finalPrice = originalFee;
@@ -849,7 +858,7 @@ export class BookingService {
 					discountPercentage = 20;
 					discountedFee = (originalFee * 0.8).toFixed(2);
 					finalPrice = parseFloat(discountedFee);
-					type = BOOKING_TYPE_ENUM.DISCOUNTED
+					type = BOOKING_TYPE_ENUM.DISCOUNTED;
 				} else {
 					// No discount, pay original fee
 					finalPrice = originalFee;
@@ -867,7 +876,7 @@ export class BookingService {
 			isFree: type === BOOKING_TYPE_ENUM.FREE,
 			isDiscounted: type === BOOKING_TYPE_ENUM.DISCOUNTED,
 			discountPercentage,
-			type
+			type,
 		};
 	}
 

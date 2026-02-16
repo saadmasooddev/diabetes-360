@@ -15,26 +15,24 @@ const app = createApp();
 	await db.execute("SELECT 1");
 
 	const cronJobService = new CronJobService();
-	cronJobService
-		.registerAll([
-			{
-				name: "daily-health-summary",
-				schedule: "0 0 * * *",
-				handler: async () => {
-					const chatService = new ChatService();
-					await chatService.generateAndStoreDailySummaryJob();
-				},
+	cronJobService.registerAll([
+		{
+			name: "daily-health-summary",
+			schedule: "0 0 * * *",
+			handler: async () => {
+				const chatService = new ChatService();
+				await chatService.generateAndStoreDailySummaryJob();
 			},
-			{
-				name: "daily-chat-memories",
-				schedule: "0 0 * * *",
-				handler: async () => {
-					const chatService = new ChatService();
-					await chatService.extractAndStoreChatMemoriesJob();
-					
-				},
+		},
+		{
+			name: "daily-chat-memories",
+			schedule: "0 0 * * *",
+			handler: async () => {
+				const chatService = new ChatService();
+				await chatService.extractAndStoreChatMemoriesJob();
 			},
-		]);
+		},
+	]);
 	cronJobService.start();
 
 	// importantly only setup vite in development and after

@@ -57,17 +57,15 @@ import { PgTransaction, alias } from "drizzle-orm/pg-core";
 import { freeTierLimits } from "../../settings/models/settings.schema";
 import { userConsultationQuotas } from "../models/consultation-quota.schema";
 
-
 export type BookingPriceCalculation = {
-	type: BOOKING_TYPE_ENUM
+	type: BOOKING_TYPE_ENUM;
 	originalFee: string;
 	discountedFee: string | null;
 	finalPrice: string;
 	isFree: boolean;
 	isDiscounted: boolean;
 	discountPercentage?: number;
-	
-}
+};
 
 export type DateSlotCount = { date: string; count: number };
 export type DateWithBookings = {
@@ -467,39 +465,59 @@ export class BookingRepository {
 		return booked;
 	}
 
-	async createBookedSlotTransaction(data: InsertBookedSlot, pricingData:BookingPriceCalculation){
-		return await db.transaction(async tx => {
+	async createBookedSlotTransaction(
+		data: InsertBookedSlot,
+		pricingData: BookingPriceCalculation,
+	) {
+		return await db.transaction(async (tx) => {
 			try {
-				const [ systemLimits ] = await tx.select().from(freeTierLimits).limit(1)
-				if(!systemLimits || !systemLimits.freeConsultationQuota || !systemLimits.discountedConsultationQuota) {
-					throw new Error("System limits not found")
+				const [systemLimits] = await tx.select().from(freeTierLimits).limit(1);
+				if (
+					!systemLimits ||
+					!systemLimits.freeConsultationQuota ||
+					!systemLimits.discountedConsultationQuota
+				) {
+					throw new Error("System limits not found");
 				}
 
-				const [ userConsultationQuota ] = await tx.select()
-				  .from(userConsultationQuotas).where(eq(userConsultationQuotas.userId, data.customerId))
-				if(!userConsultationQuota){
-					throw new Error("User consultation quota not found")
+				const [userConsultationQuota] = await tx
+					.select()
+					.from(userConsultationQuotas)
+					.where(eq(userConsultationQuotas.userId, data.customerId));
+				if (!userConsultationQuota) {
+					throw new Error("User consultation quota not found");
 				}
 
 				switch (pricingData.type) {
 					case BOOKING_TYPE_ENUM.FREE: {
-						const freeConsultationsUsed = userConsultationQuota.freeConsultationsUsed + 1
-						if(freeConsultationsUsed <= systemLimits.freeConsultationQuota) {
-							await tx.update(userConsultationQuotas).set({
-								freeConsultationsUsed: freeConsultationsUsed
-							}).where(eq(userConsultationQuotas.userId, data.customerId))
+						const freeConsultationsUsed =
+							userConsultationQuota.freeConsultationsUsed + 1;
+						if (freeConsultationsUsed <= systemLimits.freeConsultationQuota) {
+							await tx
+								.update(userConsultationQuotas)
+								.set({
+									freeConsultationsUsed: freeConsultationsUsed,
+								})
+								.where(eq(userConsultationQuotas.userId, data.customerId));
 						}
-						break
-				}
-				  case BOOKING_TYPE_ENUM.DISCOUNTED: {
-						const discountedConsultationsUsed = userConsultationQuota.discountedConsultationsUsed + 1
-						if(discountedConsultationsUsed <= systemLimits.discountedConsultationQuota) {
-							await tx.update(userConsultationQuotas).set({
-								discountedConsultationsUsed: discountedConsultationsUsed
-							}).where(eq(userConsultationQuotas.userId, data.customerId))
+						break;
+					}
+					case BOOKING_TYPE_ENUM.DISCOUNTED: {
+						const discountedConsultationsUsed =
+							userConsultationQuota.discountedConsultationsUsed + 1;
+						if (
+							discountedConsultationsUsed <=
+							systemLimits.discountedConsultationQuota
+						) {
+							await tx
+								.update(userConsultationQuotas)
+								.set({
+									discountedConsultationsUsed: discountedConsultationsUsed,
+								})
+								.where(eq(userConsultationQuotas.userId, data.customerId));
 						}
-					break
-				}
+						break;
+					}
 					default:
 						break;
 				}
@@ -513,10 +531,10 @@ export class BookingRepository {
 					.returning();
 				return booked;
 			} catch (error) {
-				tx.rollback()
-				throw error
+				tx.rollback();
+				throw error;
 			}
-		})
+		});
 	}
 
 	async getBookedSlotById(id: string): Promise<BookedSlot | null> {
@@ -969,7 +987,10 @@ export class BookingRepository {
 			.where(
 				and(
 					inArray(bookedSlots.slotId, slotIds),
-					or(eq(bookedSlots.status, "pending")),
+					or(
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+					),
 				),
 			);
 		const bookedSlotIds = new Set(bookedSlotsResult.map((b) => b.slotId));

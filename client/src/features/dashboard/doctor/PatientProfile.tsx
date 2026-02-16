@@ -594,7 +594,7 @@ export function PatientProfile() {
 							}}
 						>
 							{patient.consultationSummaries &&
-								patient.consultationSummaries.length > 0 ? (
+							patient.consultationSummaries.length > 0 ? (
 								<ul className="space-y-4">
 									{patient.consultationSummaries.map((summary, index) => (
 										<li

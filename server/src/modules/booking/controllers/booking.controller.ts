@@ -488,14 +488,14 @@ export class BookingController {
 			}
 
 			const { slotId, slotTypeId, physicianId } = req.body;
-			if (!slotId ) {
+			if (!slotId) {
 				throw new BadRequestError("Slot ID is required");
 			}
 			if (!slotTypeId) {
 				throw new BadRequestError("Slot type ID is required");
 			}
 
-			if(!physicianId){
+			if (!physicianId) {
 				throw new BadRequestError("Physician ID is required");
 			}
 
@@ -974,7 +974,7 @@ export class BookingController {
 
 			const updated = await this.bookingService.updateConsultationStatus(
 				bookingId,
-				status as "pending" | "confirmed" | "cancelled" | "completed",
+				status as BOOKING_STATUS_ENUM,
 			);
 			sendSuccess(
 				res,

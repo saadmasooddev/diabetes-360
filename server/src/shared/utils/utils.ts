@@ -1,6 +1,10 @@
 import type { CustomerData } from "@shared/schema";
 import { BadRequestError } from "../errors";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone.js";
+import utc from "dayjs/plugin/utc.js";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export class DateManager {
 	static parseAndValidateDate(dateStr: string) {
@@ -48,6 +52,16 @@ export class DateManager {
 		const providedDate = dayjs(date);
 		const isBeforeToday = providedDate.isBefore(today, "day");
 		return isBeforeToday;
+	}
+
+	static getLocalTime(date: string | Date, timezone: string) {
+		return dayjs.tz(date, timezone);
+	}
+
+	static getLocalHours(date: string | Date, timezone: string) {
+		const d = this.getLocalTime(date, timezone);
+		const localHours = d.hour() 
+		return { localHours, date: d };
 	}
 }
 

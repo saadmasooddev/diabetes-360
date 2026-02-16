@@ -24,19 +24,16 @@ export class CronJobService {
 
 	start(): void {
 		for (const job of this.jobs) {
-			const task = cron.schedule(
-				job.schedule,
-				async () => {
-					try {
-						await job.handler();
-					} catch (err) {
-						console.error(
-							`[CronJobService] Job "${job.name}" failed:`,
-							err instanceof Error ? err.message : err,
-						);
-					}
-				},
-			);
+			const task = cron.schedule(job.schedule, async () => {
+				try {
+					await job.handler();
+				} catch (err) {
+					console.error(
+						`[CronJobService] Job "${job.name}" failed:`,
+						err instanceof Error ? err.message : err,
+					);
+				}
+			});
 			this.tasks.push(task);
 		}
 	}

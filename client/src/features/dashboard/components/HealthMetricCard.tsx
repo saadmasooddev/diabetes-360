@@ -26,7 +26,7 @@ interface HealthMetricCardProps {
 	disabled?: boolean;
 	dailyLimit?: number;
 	isUploading?: boolean;
-	hideUpgradeCallToAction: boolean
+	hideUpgradeCallToAction: boolean;
 }
 
 export function HealthMetricCard({
@@ -39,7 +39,7 @@ export function HealthMetricCard({
 	disabled = false,
 	dailyLimit: remainingLogsLimit = 0,
 	isUploading,
-	hideUpgradeCallToAction
+	hideUpgradeCallToAction,
 }: HealthMetricCardProps) {
 	const uploadImageRef = useRef<HTMLInputElement | null>(null);
 	const config = {

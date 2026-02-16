@@ -27,17 +27,22 @@ export function LogMealPrompt({
 		if (!scanResult) return;
 
 		const breakdown = scanResult.breakdown;
-		await logMealMutation.mutateAsync({
-			foodName: scanResult.foodName,
-			carbs: Math.max(0, Number(breakdown.carbs.value)),
-			sugars: Number(breakdown.sugars.value),
-			fibres: Number(breakdown.fiber.value),
-			proteins: Number(breakdown.protein.value),
-			fats: Number(breakdown.fat.value),
-			calories: Number(breakdown.calories.value),
-		});
-
-		onLogged?.();
+		logMealMutation.mutate(
+			{
+				foodName: scanResult.foodName,
+				carbs: Math.max(0, Number(breakdown.carbs.value)),
+				sugars: Number(breakdown.sugars.value),
+				fibres: Number(breakdown.fiber.value),
+				proteins: Number(breakdown.protein.value),
+				fats: Number(breakdown.fat.value),
+				calories: Number(breakdown.calories.value),
+			},
+			{
+				onSuccess: () => {
+					onLogged?.();
+				},
+			},
+		);
 	};
 
 	const handleDismiss = () => {

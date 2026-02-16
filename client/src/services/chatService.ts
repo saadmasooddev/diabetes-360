@@ -14,6 +14,7 @@ export interface ChatMessageDto {
 
 export interface GetChatResponse {
 	messages: ChatMessageDto[];
+	nudge?: string;
 }
 
 export interface SendMessageResponse {
@@ -30,6 +31,7 @@ class ChatService {
 		}
 		return {
 			messages: response.data?.messages ?? [],
+			nudge: response.data?.nudge,
 		};
 	}
 

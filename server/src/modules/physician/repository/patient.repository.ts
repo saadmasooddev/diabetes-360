@@ -81,7 +81,7 @@ export class PatientRepository {
 	private static readonly OVER_EATING_RATIO = 1.2;
 	private static readonly UNDER_EATING_RATIO = 0.7;
 
-	private bloodSugarAlert = (value: number): PATIENT_INDICATION => {
+	static bloodSugarAlert = (value: number): PATIENT_INDICATION => {
 		if (value >= 250 || value <= 54) {
 			return PATIENT_INDICATION.HIGH_RISK;
 		}
@@ -525,7 +525,7 @@ export class PatientRepository {
 					typeof record.value === "string"
 						? parseFloat(record.value)
 						: Number(record.value) || 0;
-				const indication = this.bloodSugarAlert(value);
+				const indication = PatientRepository.bloodSugarAlert(value);
 				if (indication === PATIENT_INDICATION.HIGH_RISK)
 					worst = PATIENT_INDICATION.HIGH_RISK;
 				else if (
@@ -549,7 +549,7 @@ export class PatientRepository {
 	} {
 		const alerts = glucoseDate
 			.filter((g) => g.value !== null)
-			.map((g) => this.bloodSugarAlert(g.value as number));
+			.map((g) => PatientRepository.bloodSugarAlert(g.value as number));
 
 		const highs = Math.round(
 			(alerts.filter((a) => a === PATIENT_INDICATION.HIGH_RISK).length /

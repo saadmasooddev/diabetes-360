@@ -117,8 +117,8 @@ export function LogHistory() {
 		}
 
 		// Reset all pagination to page 1
-		setStartDate(tempStartDate)
-		setEndDate(tempEndDate)
+		setStartDate(tempStartDate);
+		setEndDate(tempEndDate);
 		setBloodSugarPage(1);
 		setWaterIntakePage(1);
 		setStepsPage(1);
@@ -148,7 +148,7 @@ export function LogHistory() {
 				className="flex-1 flex justify-center"
 				style={{ padding: "24px 16px" }}
 			>
-				<div className="w-full" >
+				<div className="w-full">
 					{/* Header */}
 					<div className="mb-8">
 						<h1
@@ -172,7 +172,7 @@ export function LogHistory() {
 								<Input
 									id="startDate"
 									type="date"
-									value={startDate}
+									value={tempStartDate}
 									onChange={(e) => setTempStartDate(e.target.value)}
 									max={endDate}
 									style={{
@@ -188,7 +188,7 @@ export function LogHistory() {
 								<Input
 									id="endDate"
 									type="date"
-									value={endDate}
+									value={tempEndDate}
 									onChange={(e) => setTempEndDate(e.target.value)}
 									min={startDate}
 									max={formatDate(today, "yyyy-MM-dd")}
@@ -284,7 +284,7 @@ export function LogHistory() {
 											</TableHeader>
 											<TableBody>
 												{bloodSugarData?.bloodSugarRecords &&
-													bloodSugarData.bloodSugarRecords.length > 0 ? (
+												bloodSugarData.bloodSugarRecords.length > 0 ? (
 													bloodSugarData.bloodSugarRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -300,8 +300,8 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				(bloodSugarData.bloodSugarRecords
-																					?.length || 0) -
+																			(bloodSugarData.bloodSugarRecords
+																				?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -345,8 +345,8 @@ export function LogHistory() {
 											</TableBody>
 										</Table>
 									</div>
-									{bloodSugarData?.pagination?.bloodSugar?.total &&
-										bloodSugarData.pagination.bloodSugar.total > 0 && (
+									{bloodSugarData?.bloodSugarRecords &&
+										bloodSugarData?.bloodSugarRecords?.length > 0 && (
 											<div className="mt-6">
 												<ReusablePagination
 													currentPage={bloodSugarPage}
@@ -431,7 +431,7 @@ export function LogHistory() {
 											</TableHeader>
 											<TableBody>
 												{waterIntakeData?.waterIntakeRecords &&
-													waterIntakeData.waterIntakeRecords.length > 0 ? (
+												waterIntakeData.waterIntakeRecords?.length > 0 ? (
 													waterIntakeData.waterIntakeRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -447,8 +447,8 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				(waterIntakeData.waterIntakeRecords
-																					?.length || 0) -
+																			(waterIntakeData.waterIntakeRecords
+																				?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -492,8 +492,8 @@ export function LogHistory() {
 											</TableBody>
 										</Table>
 									</div>
-									{waterIntakeData?.pagination?.waterIntake?.total &&
-										waterIntakeData.pagination.waterIntake.total > 0 && (
+									{waterIntakeData?.waterIntakeRecords &&
+										waterIntakeData?.waterIntakeRecords?.length > 0 && (
 											<div className="mt-6">
 												<ReusablePagination
 													currentPage={waterIntakePage}
@@ -578,7 +578,7 @@ export function LogHistory() {
 											</TableHeader>
 											<TableBody>
 												{stepsData?.stepsRecords &&
-													stepsData.stepsRecords.length > 0 ? (
+												stepsData.stepsRecords.length > 0 ? (
 													stepsData.stepsRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -594,7 +594,7 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				(stepsData.stepsRecords?.length || 0) - 1
+																			(stepsData.stepsRecords?.length || 0) - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}
@@ -636,8 +636,8 @@ export function LogHistory() {
 											</TableBody>
 										</Table>
 									</div>
-									{stepsData?.pagination?.steps?.total &&
-										stepsData.pagination.steps.total > 0 && (
+									{stepsData?.stepsRecords &&
+										stepsData?.stepsRecords?.length > 0 && (
 											<div className="mt-6">
 												<ReusablePagination
 													currentPage={stepsPage}
@@ -723,7 +723,7 @@ export function LogHistory() {
 												</TableHeader>
 												<TableBody>
 													{heartBeatData?.heartBeatRecords &&
-														heartBeatData.heartBeatRecords.length > 0 ? (
+													heartBeatData.heartBeatRecords.length > 0 ? (
 														heartBeatData.heartBeatRecords.map(
 															(record: MertricRecord, index: number) => (
 																<TableRow
@@ -732,7 +732,7 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				heartBeatData.heartBeatRecords.length - 1
+																			heartBeatData.heartBeatRecords.length - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}
@@ -778,8 +778,8 @@ export function LogHistory() {
 												</TableBody>
 											</Table>
 										</div>
-										{heartBeatData?.pagination?.heartBeat?.total &&
-											heartBeatData.pagination.heartBeat.total > 0 && (
+										{heartBeatData?.heartBeatRecords &&
+											heartBeatData?.heartBeatRecords?.length > 0 && (
 												<div className="mt-6">
 													<ReusablePagination
 														currentPage={heartBeatPage}

@@ -2,23 +2,31 @@ import type { Response } from "express";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { FoodService } from "../service/food.service";
-import { BadRequestError, ForbiddenError } from "../../../shared/errors";
+import {
+	BadRequestError,
+	ForbiddenError,
+	ValidationError,
+} from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import { UserService } from "../../user/service/user.service";
 import { SettingsService } from "../../settings/service/settings.service";
 import type { CustomerData } from "../../auth/models/user.schema";
 import { z } from "zod";
-import { MEAL_TYPE_ENUM } from "../models/food.schema";
+import { MEAL_TYPE_ENUM, insertLoggedMealSchema } from "../models/food.schema";
+import { TimeZoneService } from "server/src/shared/services/timeZone.service";
+import { DateManager } from "server/src/shared/utils/utils";
 
 export class FoodController {
 	private foodService: FoodService;
 	private userService: UserService;
 	private settingsService: SettingsService;
+	private timeZoneService: TimeZoneService;
 
 	constructor() {
 		this.foodService = new FoodService();
 		this.userService = new UserService();
 		this.settingsService = new SettingsService();
+		this.timeZoneService = new TimeZoneService();
 	}
 
 	async scanFood(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -152,19 +160,22 @@ export class FoodController {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			const schema = z.object({
-				foodName: z.string().min(1, "Food name is required"),
-				carbs: z.number().nonnegative(),
-				sugars: z.number().nonnegative(),
-				fibres: z.number().nonnegative(),
-				proteins: z.number().nonnegative(),
-				fats: z.number().nonnegative(),
-				calories: z.number().nonnegative(),
+			const timeZone = req.body?.timeZone;
+			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
+				throw new BadRequestError("Invalid timezone");
+			}
+			const tz = await this.timeZoneService.getTimeZone(timeZone);
+			const body = insertLoggedMealSchema.safeParse({
+				...req.body,
+				timeZoneId: tz.id,
+				mealDate: dateStr,
+				userId,
 			});
+			if (!body.success) {
+				throw new ValidationError(undefined, body.error);
+			}
 
-			const body = schema.parse(req.body);
-
-			const result = await this.foodService.logMeal(userId, body, dateStr);
+			const result = await this.foodService.logMeal(userId, body.data, dateStr);
 			sendSuccess(res, result, "Meal logged successfully");
 		} catch (error: any) {
 			handleError(res, error);
