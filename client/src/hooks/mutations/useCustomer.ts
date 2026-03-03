@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { customerService } from "@/services/customerService";
-import type { ProfileDataFormValues } from "@/schemas/profileData";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/config/routes";
 import { useAuthStore } from "@/stores/authStore";
+import { ProfileDataFormValues } from "@shared/schema";
 
 export const useGetCustomerData = () => {
 	return useQuery({

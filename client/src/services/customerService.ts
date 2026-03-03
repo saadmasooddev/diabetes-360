@@ -1,7 +1,7 @@
 import { httpClient } from "@/utils/httpClient";
 import { API_ENDPOINTS } from "@/config/endpoints";
-import type { ProfileDataFormValues } from "@/schemas/profileData";
 import type { ApiResponse } from "@/types/auth.types";
+import { DIABETES_TYPE, ProfileDataFormValues } from "@shared/schema";
 
 export interface CustomerData {
 	id: string;
@@ -10,10 +10,11 @@ export interface CustomerData {
 	userId: string;
 	gender: string;
 	birthday: string; // ISO date string from API
-	diagnosisDate: string; // ISO date string from API
 	weight: string;
 	height: string;
-	diabetesType: string;
+	diabetesType: DIABETES_TYPE;
+	mainGoal?: string;
+	medicationInfo?: string
 	createdAt: string;
 	updatedAt: string;
 }
@@ -70,13 +71,19 @@ function parseDateToComponents(dateString: string): {
 function transformFormDataToAPI(
 	data: ProfileDataFormValues | Partial<ProfileDataFormValues>,
 ): any {
-	const apiData: any = {
+	const apiData = {
 		firstName: data.firstName,
 		lastName: data.lastName,
 		gender: data.gender,
 		weight: data.weight,
 		height: data.height,
 		diabetesType: data.diabetesType,
+		birthday: "",
+		knowsBloodSugarValue: data.knowsBloodSugarValue,
+		bloodSugarType: data.bloodSugarType,
+		bloodSugarReading: data.bloodSugarReading,
+		medicationInfo: data.onDiabetesMedicationOrInsulin,
+		mainGoal: data.mainGoal,
 	};
 
 	// Transform birthday fields
@@ -88,15 +95,6 @@ function transformFormDataToAPI(
 		);
 	}
 
-	// Transform diagnosis date fields
-	if (data.diagnosisDay && data.diagnosisMonth && data.diagnosisYear) {
-		apiData.diagnosisDate = combineDateFields(
-			data.diagnosisDay,
-			data.diagnosisMonth,
-			data.diagnosisYear,
-		);
-	}
-
 	return apiData;
 }
 
@@ -105,21 +103,14 @@ function transformAPIDataToForm(data: CustomerData): CustomerData & {
 	birthDay: string;
 	birthMonth: string;
 	birthYear: string;
-	diagnosisDay: string;
-	diagnosisMonth: string;
-	diagnosisYear: string;
 } {
 	const birthdayComponents = parseDateToComponents(data.birthday);
-	const diagnosisComponents = parseDateToComponents(data.diagnosisDate);
 
 	return {
 		...data,
 		birthDay: birthdayComponents.day,
 		birthMonth: birthdayComponents.month,
 		birthYear: birthdayComponents.year,
-		diagnosisDay: diagnosisComponents.day,
-		diagnosisMonth: diagnosisComponents.month,
-		diagnosisYear: diagnosisComponents.year,
 	};
 }
 

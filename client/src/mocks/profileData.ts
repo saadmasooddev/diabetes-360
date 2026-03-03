@@ -35,3 +35,15 @@ export const heightOptions = Array.from({ length: 150 }, (_, i) => ({
 	value: String(i + 100),
 	label: String(i + 100),
 }));
+
+export const yesNoNotSureOptions = [
+	{ value: "yes", label: "Yes" },
+	{ value: "no", label: "No" },
+	{ value: "not_sure", label: "Not sure" },
+];
+
+export const bloodSugarTypeOptions = [
+	{ value: "fasting", label: "Fasting" },
+	{ value: "random", label: "Random" },
+	{ value: "hba1c", label: "HbA1c" },
+];

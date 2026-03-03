@@ -6,6 +6,8 @@ import { BadRequestError, ValidationError } from "../../../shared/errors";
 import {
 	insertHealthMetricSchema,
 	insertExerciseLogSchema,
+	insertDailyQuickLogSchema,
+	insertHba1cMetricSchema,
 	batchUpsertHealthMetricTargetsSchema,
 	metricTypes,
 	type MetricType,
@@ -186,7 +188,7 @@ export class HealthController {
 			for (const log of logsToInsert) {
 				const validationResult = insertExerciseLogSchema.safeParse(log);
 				if (!validationResult.success) {
-					throw validationResult.error;
+				  throw new ValidationError(undefined, validationResult.error)
 				}
 
 				if (
@@ -399,6 +401,37 @@ export class HealthController {
 			handleError(res, error);
 		}
 	}
+
+	async createDailyQuickLog(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId || "";
+			const validation = insertDailyQuickLogSchema
+				.omit({ userId: true })
+				.safeParse(req.body);
+			if (!validation.success) {
+				throw new ValidationError(undefined, validation.error);
+			}
+			
+			const { data } = validation
+		  if (!data.exercise && !data.diet && !data.sleepDuration && !data.medicines && !data.stressLevel) {
+				throw new BadRequestError("At least one field must be filled");
+			}
+			if(!data.logDate || isNaN(new Date(data.logDate).getTime())) {
+				throw new BadRequestError("Invalid date format");
+			}
+			const log = await this.healthService.createDailyQuickLog(userId, {
+				...data,
+				recordedAt: data.recordedAt ?? new Date().toISOString(),
+			});
+			sendSuccess(res, log, "Daily quick log created successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
 
 	private validateHealthMetric(data: object) {
 		const validationResult = insertHealthMetricSchema.safeParse(data);

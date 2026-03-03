@@ -4,7 +4,7 @@ import { sendSuccess } from "../../../app/utils/response";
 import { ChatService } from "../service/chat.service";
 import { BadRequestError } from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { DateManager } from "server/src/shared/utils/utils";
+import { DateManager, validateLimitAndOffset } from "server/src/shared/utils/utils";
 
 export class ChatController {
 	private chatService = new ChatService();
@@ -18,11 +18,23 @@ export class ChatController {
 			const dateStr = DateManager.parseAndValidateDate(
 				(req.query.date as string) ?? "",
 			);
-			const { messages, nudge } = await this.chatService.getChatByDate(
+			const limit = req.query.limit
+				? parseInt(req.query.limit as string)
+				: undefined;
+			const skip = parseInt(req.query.skip as string, 10);
+			const offset = req.query.offset
+				? parseInt(req.query.offset as string)
+				: skip 
+				  ? skip 
+					: undefined;
+			validateLimitAndOffset(limit, offset)
+			const { messages, nudge } = await this.chatService.getChat(
 				userId,
 				dateStr,
+				offset,
+				limit
 			);
-			sendSuccess(res, { messages, nudge }, "Chat retrieved successfully");
+			sendSuccess(res, { messages, nudge: nudge || null }, "Chat retrieved successfully");
 		} catch (error: unknown) {
 			handleError(res, error);
 		}
@@ -60,6 +72,21 @@ export class ChatController {
 				recordedAt,
 			);
 			sendSuccess(res, result, "Message sent successfully");
+		} catch (error: unknown) {
+			handleError(res, error);
+		}
+	}
+
+	async transcribeAudio(
+		req: AuthenticatedRequest & { file?: Express.Multer.File },
+		res: Response,
+	): Promise<void> {
+		try {
+			if (!req.file?.buffer) {
+				throw new BadRequestError("Audio file is required (WAV format)");
+			}
+			const result = await this.chatService.transcribeAudio(req.file.buffer);
+			sendSuccess(res, result, "Transcription completed successfully");
 		} catch (error: unknown) {
 			handleError(res, error);
 		}

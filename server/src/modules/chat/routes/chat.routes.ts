@@ -5,6 +5,7 @@ import {
 	requireAnyPermission,
 } from "../../../shared/middleware/auth";
 import { PERMISSIONS } from "../../auth/models/user.schema";
+import { audioWavMemoryUpload } from "../../../shared/config/multer.config";
 
 const router = Router();
 const chatController = new ChatController();
@@ -127,6 +128,59 @@ router.post(
 	authenticateToken,
 	requireAnyPermission([PERMISSIONS.USE_DIABOT]),
 	(req, res) => chatController.sendMessage(req as any, res),
+);
+
+/**
+ * @swagger
+ * /api/chat/transcribe-audio:
+ *   post:
+ *     summary: Transcribe voice audio to text (WAV only)
+ *     description: Uploads a WAV audio file for transcription. Returns transcription_text to be used as a chat message. Requires USE_DIABOT permission.
+ *     tags: [Chat / DiaBot]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - audio
+ *             properties:
+ *               audio:
+ *                 type: string
+ *                 format: binary
+ *                 description: Audio file in WAV format only
+ *     responses:
+ *       200:
+ *         description: Transcription completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         transcription_text:
+ *                           type: string
+ *                           description: Transcribed text from the audio
+ *       400:
+ *         description: Bad request - no audio or invalid format (only WAV allowed)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - USE_DIABOT permission required
+ */
+router.post(
+	"/transcribe-audio",
+	authenticateToken,
+	requireAnyPermission([PERMISSIONS.USE_DIABOT]),
+	audioWavMemoryUpload.single("audio"),
+	(req, res) => chatController.transcribeAudio(req as any, res),
 );
 
 export { router as chatRoutes };

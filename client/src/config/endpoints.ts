@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
 		ACTIVITIES: {
 			ADD: "/api/health/activities/add",
 		},
+		DAILY_QUICK_LOGS: "/api/health/daily-quick-logs",
 		EXERCISES: {
 			ADD_BATCH: "/api/health/exercises/add/batch",
 			TODAY_TOTALS: "/api/health/exercises/today/totals",
@@ -123,11 +124,14 @@ export const API_ENDPOINTS = {
 	},
 	CHAT: {
 		BASE: "/api/chat",
+		TRANSCRIBE_AUDIO: "/api/chat/transcribe-audio",
 	},
 	MEDICAL: {
 		MEDICATIONS: "/api/medical/medications",
 		MEDICATIONS_BY_PHYSICIAN: "/api/medical/medications/by-physician",
 		LAB_REPORTS: "/api/medical/lab-reports",
+		LAB_REPORTS_BY_USER: (userId: string) =>
+			`/api/medical/lab-reports/by-user/${userId}`,
 		LAB_REPORT_DOWNLOAD: (id: string) =>
 			`/api/medical/lab-reports/${id}/download`,
 		LAB_REPORT_UPDATE: (id: string) => `/api/medical/lab-reports/${id}`,

@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { connect, disconnect } from "extendable-media-recorder-wav-encoder";
 import { twMerge } from "tailwind-merge";
 import type { Slot } from "@/services/bookingService";
 import type { AuthData, CustomerData, User } from "@/types/auth.types";
@@ -12,6 +13,7 @@ import {
 	USER_DASHBOARD_PREFIX,
 } from "@/config/routes";
 import dayjs from "dayjs";
+import { register } from "extendable-media-recorder";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -81,12 +83,6 @@ export const formatDate = (date: Date, formatStr: string): string => {
 	return date.toLocaleDateString();
 };
 
-export const formatTime24 = (time: string): string => {
-	if (!time) return "";
-	if (time.match(/^\d{2}:\d{2}$/)) return time;
-	if (time.match(/^\d{2}:\d{2}:\d{2}$/)) return time.substring(0, 5);
-	return time;
-};
 
 export const formatTime12 = (time: string): string => {
 	if (!time) return "";
@@ -116,11 +112,6 @@ export const formatTime12 = (time: string): string => {
 	return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
 };
 
-/**
- * Convert 12-hour format time to 24-hour format
- * @param time12 - Time in 12-hour format (e.g., "11:30 AM" or "2:45 PM")
- * @returns Time in 24-hour format (e.g., "11:30:00" or "14:45:00")
- */
 export const convert12To24Hour = (time12: string): string => {
 	if (!time12) return "";
 
@@ -687,5 +678,18 @@ class CalorieUtils {
 	}
 }
 
+export class GeneralUtils {
+
+	private wavEncoderRegistered = false;
+
+	async ensureWavEncoderRegistered(): Promise<void> {
+		if (this.wavEncoderRegistered) return;
+		const port = await connect();
+		await register(port);
+		this.wavEncoderRegistered = true;
+	}
+}
+
+export const generalUtils = new GeneralUtils()
 export const calorieUtils = new CalorieUtils();
 export const utils = new Utils();

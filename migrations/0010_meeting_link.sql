@@ -1,0 +1,1 @@
+alter table booked_slots add column meeting_link text;

@@ -16,9 +16,12 @@ import {
 } from "../../components/HealthTrendChart";
 import { AddMetricDialog } from "../../components/AddMetricDialog";
 import { GlucoseImageVerificationDialog } from "../../components/GlucoseImageVerificationDialog";
+import { DailyQuickLogsModal } from "../../components/DailyQuickLogsModal";
+import { UploadMedicalReportsModal } from "../../components/UploadMedicalReportsModal";
 import {
 	type FilteredMetricsKey,
 	useAddActivityLogsBatch,
+	useCreateDailyQuickLog,
 	useFilteredMetrics,
 	useLatestHealthMetric,
 	useTargetsForUser,
@@ -28,9 +31,16 @@ import { calorieUtils } from "@/lib/utils";
 import {
 	ACTIVITY_TYPE_ENUM,
 	EXERCISE_TYPE_ENUM,
+	BLOOD_SUGAR_READING_TYPES_ENUM,
 	PAYMENT_TYPE,
 	type InsertHealthMetric,
 	type MetricType,
+	BloodSugarReadingTypeEnumValues,
+	type QuickLogExerciseTypeEnumValues,
+	type QuickLogDietTypeEnumValues,
+	type QuickLogSleepDurationTypeEnumValues,
+	type QuickLogMedicinesTypeEnumValues,
+	type QuickLogStressLevelTypeEnumValues,
 } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import type { ModifiedInsertExerciseLogs } from "@/services/healthService";
@@ -45,6 +55,7 @@ export function Dashboard() {
 	const [selectedMetricType, setSelectedMetricType] = useState<MetricType>(
 		EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
 	);
+	const [bloodSugarReadingType, setBloodSugarReadingType] = useState<BloodSugarReadingTypeEnumValues>("normal");
 	const [metricValue, setMetricValue] = useState("");
 	const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("daily");
 	const [stepsInterval, setStepsInterval] = useState<IntervalType>("daily");
@@ -54,18 +65,32 @@ export function Dashboard() {
 
 	const { data: targets } = useTargetsForUser();
 	const addActivityLogsBatch = useAddActivityLogsBatch();
+	const createDailyQuickLog = useCreateDailyQuickLog();
 	const uploadGlucoseImage = useUploadGlucoseMeterImage();
 	const isUploadingGlucoseImage = uploadGlucoseImage.isPending;
 
 	const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
 	const [extractedReading, setExtractedReading] = useState<string>("");
 	const [uploadedImagePreview, setUploadedImagePreview] = useState<string>("");
+	const [dailyQuickLogsOpen, setDailyQuickLogsOpen] = useState(false);
+	const [medicalReportsModalOpen, setMedicalReportsModalOpen] = useState(false);
+	const [medicalReportsInitialStep, setMedicalReportsInitialStep] = useState<
+		1 | 2
+	>(1);
 
 	// Helper function to calculate date range based on interval
 
 	const { data: latestMetric } = useLatestHealthMetric();
 	const freeTierLimits = latestMetric?.remainingLimits;
-	const latestBloodSugar = parseFloat(latestMetric?.current?.bloodSugar ?? "0");
+	const latestBloodSugar = parseFloat(
+		latestMetric?.current?.bloodSugar?.toString() ?? "0",
+	);
+	const latestFastingSugar = parseFloat(
+		latestMetric?.current?.fastingSugar ?? "0",
+	);
+	const latestRandomSugar = parseFloat(
+		latestMetric?.current?.randomSugar ?? "0",
+	);
 	// Steps and water are now totals for today, not latest values
 	const latestStepsValue = latestMetric?.current?.steps;
 	const latestSteps =
@@ -79,9 +104,14 @@ export function Dashboard() {
 		? parseFloat(String(latestWaterIntakeValue))
 		: 0;
 	const latestHeartRate = latestMetric?.current?.heartRate ?? 0;
+	const latestHba1c = latestMetric?.current?.hba1c ?? "-";
+	const exerciseSetsToday =
+		(typeof latestMetric?.current?.exerciseSets === "number"
+			? latestMetric.current.exerciseSets
+			: 0) ?? 0;
 
 	const previousBloodSugar = parseFloat(
-		latestMetric?.previous?.bloodSugar ?? "0",
+		latestMetric?.previous?.bloodSugar?.toString() ?? "0",
 	);
 	// Previous day totals for comparison
 	const previousStepsValue = latestMetric?.previous?.steps;
@@ -140,12 +170,15 @@ export function Dashboard() {
 		return metricsRemainingLimitsMap[metricType] <= 0;
 	};
 
-	const handleAddLog = (metricType: MetricType) => {
+	const handleAddLog = (
+		metricType: MetricType,
+		readingType: BloodSugarReadingTypeEnumValues = BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL) => {
 		if (getHasReachedLimit(metricType)) {
 			setLimitDialogOpen(true);
 			return;
 		}
 		setSelectedMetricType(metricType);
+		setBloodSugarReadingType(readingType);
 		setDialogOpen(true);
 	};
 
@@ -170,6 +203,19 @@ export function Dashboard() {
 				variant: "destructive",
 			});
 			return;
+		}
+
+		if (
+			selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE
+			&& bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C
+			&& (numericValue < 0 || numericValue > 100)
+		) {
+			toast({
+				title: "Invalid Value",
+				description: "HbA1c value must be between 0 and 100",
+				variant: "destructive"
+			})
+			return
 		}
 
 		// Validate maximum limits for steps and water
@@ -200,6 +246,7 @@ export function Dashboard() {
 		const metricData: InsertHealthMetric = {
 			userId: user.id,
 			bloodSugar: null,
+			bloodSugarReadingType: bloodSugarReadingType,
 			heartRate: null,
 			waterIntake: null,
 			recordedAt: new Date().toISOString(),
@@ -209,6 +256,7 @@ export function Dashboard() {
 
 		if (selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
 			metricData.bloodSugar = parseFloat(numericValue.toFixed(1));
+			metricData.bloodSugarReadingType = bloodSugarReadingType
 			queriesToInvalidate.push(bloodGlucoseQueryKey);
 		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
 			const calories =
@@ -237,6 +285,7 @@ export function Dashboard() {
 				onSuccess: () => {
 					setDialogOpen(false);
 					setMetricValue("");
+					setBloodSugarReadingType(BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL);
 					setSelectedMetricType(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE); // Reset to default
 					queriesToInvalidate.forEach((q) => {
 						queryClient.invalidateQueries({ queryKey: [q] });
@@ -300,6 +349,7 @@ export function Dashboard() {
 		const metricData: InsertHealthMetric = {
 			userId: user.id,
 			bloodSugar: numericValue,
+			bloodSugarReadingType: BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
 			heartRate: null,
 			waterIntake: null,
 			recordedAt: new Date().toISOString(),
@@ -444,13 +494,83 @@ export function Dashboard() {
 							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestBloodSugar.toString()}
 							trendArrow={getTrendArrow(latestBloodSugar, previousBloodSugar)}
-							onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							onAddLog={() =>
+								handleAddLog(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)
+							}
 							onUploadPicture={handleUploadPicture}
 							isUploading={isUploadingGlucoseImage}
 							onUpgrade={handleUpgrade}
 							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
+						/>
+
+						<HealthMetricCard
+							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							latestValue={latestRandomSugar.toString()}
+							trendArrow={null}
+							title="Random Sugar *Today*"
+							onAddLog={() =>
+								handleAddLog(
+									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM,
+								)
+							}
+							onUpgrade={handleUpgrade}
+							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							dailyLimit={freeTierLimits?.glucoseLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
+							hideUploadButton
+						/>
+
+						<HealthMetricCard
+							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							latestValue={latestFastingSugar.toString()}
+							trendArrow={null}
+							title="Fasting Sugar *Latest*"
+							onAddLog={() =>
+								handleAddLog(
+									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									BLOOD_SUGAR_READING_TYPES_ENUM.FASTING,
+								)
+							}
+							onUpgrade={handleUpgrade}
+							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							dailyLimit={freeTierLimits?.glucoseLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
+							hideUploadButton
+						/>
+
+						<HealthMetricCard
+							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							latestValue={latestHba1c.toString()}
+							trendArrow={null}
+							title="HbA1c *Latest*"
+							onAddLog={() =>
+								handleAddLog(
+									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C,
+								)
+							}
+							onUpgrade={handleUpgrade}
+							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							dailyLimit={freeTierLimits?.glucoseLimit || 0}
+							hideUpgradeCallToAction={!isFreeUser}
+							hideUploadButton
+						/>
+
+						<HealthMetricCard
+							type={EXERCISE_TYPE_ENUM.STEPS}
+							latestValue={exerciseSetsToday.toString()}
+							trendArrow={null}
+							title="Exercise *Sets*"
+							unit="sets"
+							onAddLog={() => setDailyQuickLogsOpen(true)}
+							onUpgrade={handleUpgrade}
+							disabled={false}
+							dailyLimit={0}
+							hideUpgradeCallToAction
+							hideUploadButton
 						/>
 
 						<HealthMetricCard
@@ -491,7 +611,7 @@ export function Dashboard() {
 					</div>
 
 					{/* Health Assessment Button */}
-					<div className="mb-10 flex justify-center">
+					<div className="mb-6 flex justify-center">
 						<Button
 							onClick={handleHealthAssessment}
 							className="transition-all duration-300 hover:scale-105 hover:shadow-lg"
@@ -509,6 +629,67 @@ export function Dashboard() {
 						>
 							Health Assessment
 						</Button>
+					</div>
+
+					{/* Daily Quick Logs and Upload Medical Reports */}
+					<div className="mb-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<div
+							className="flex items-center justify-between p-4 rounded-xl border"
+							style={{
+								background: "#FFFFFF",
+								borderColor: "rgba(0, 133, 111, 0.2)",
+								boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+							}}
+						>
+							<span
+								className="font-semibold"
+								style={{ color: "#00453A", fontSize: "16px" }}
+							>
+								Daily Quick Logs
+							</span>
+							<Button
+								onClick={() => setDailyQuickLogsOpen(true)}
+								size="sm"
+								style={{
+									background: "#00856F",
+									color: "#FFFFFF",
+									borderRadius: "8px",
+									fontWeight: 600,
+								}}
+							>
+								Continue
+							</Button>
+						</div>
+						<div
+							className="flex items-center justify-between p-4 rounded-xl border"
+							style={{
+								background: "#FFFFFF",
+								borderColor: "rgba(0, 133, 111, 0.2)",
+								boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+							}}
+						>
+							<span
+								className="font-semibold"
+								style={{ color: "#00453A", fontSize: "16px" }}
+							>
+								Upload Medical Reports
+							</span>
+							<Button
+								onClick={() => {
+									setMedicalReportsInitialStep(2);
+									setMedicalReportsModalOpen(true);
+								}}
+								size="sm"
+								style={{
+									background: "#00856F",
+									color: "#FFFFFF",
+									borderRadius: "8px",
+									fontWeight: 600,
+								}}
+							>
+								Upload
+							</Button>
+						</div>
 					</div>
 
 					{/* Charts Section */}
@@ -590,6 +771,41 @@ export function Dashboard() {
 							/>
 						)}
 					</div>
+
+					{/* Consultation Call-to-Action */}
+					<div
+						className="mt-10 flex items-center justify-between gap-4 p-6 rounded-xl"
+						style={{
+							background: "linear-gradient(135deg, #00453A 0%, #006B5C 100%)",
+							boxShadow: "0 4px 12px rgba(0, 69, 58, 0.3)",
+						}}
+					>
+						<div>
+							<h3
+								className="text-xl font-bold mb-2"
+								style={{ color: "#FFFFFF" }}
+							>
+								Your 20-Minute Consultation
+							</h3>
+							<Button
+								onClick={() => setLocation(ROUTES.INSTANT_CONSULTATION)}
+								size="sm"
+								style={{
+									background: "#00856F",
+									color: "#FFFFFF",
+									borderRadius: "8px",
+									fontWeight: 600,
+								}}
+							>
+								Book Consultation
+							</Button>
+						</div>
+						<img
+							src="/figmaAssets/3d-chat-icon_148391-363 1.png"
+							alt="Consultation"
+							className="w-24 h-24 object-contain flex-shrink-0"
+						/>
+					</div>
 				</div>
 			</main>
 
@@ -599,6 +815,8 @@ export function Dashboard() {
 				metricType={selectedMetricType}
 				value={metricValue}
 				onValueChange={setMetricValue}
+				bloodSugarReadingType={bloodSugarReadingType}
+				onBloodSugarReadingTypeChange={setBloodSugarReadingType}
 				onSubmit={handleSubmitLog}
 				isSubmitting={addActivityLogsBatch.isPending}
 			/>
@@ -612,6 +830,38 @@ export function Dashboard() {
 				onCancel={handleCancelVerification}
 				isSubmitting={addActivityLogsBatch.isPending}
 				onReadingChange={setExtractedReading}
+			/>
+
+			<DailyQuickLogsModal
+				open={dailyQuickLogsOpen}
+				onOpenChange={setDailyQuickLogsOpen}
+				onSubmit={(data) => {
+					createDailyQuickLog.mutate(data, {
+						onSuccess: () => setDailyQuickLogsOpen(false),
+					});
+				}}
+				isSubmitting={createDailyQuickLog.isPending}
+				initialData={
+					{
+						exercise:
+							latestMetric?.quickLog?.exercise as QuickLogExerciseTypeEnumValues,
+						diet:
+							latestMetric?.quickLog?.diet as QuickLogDietTypeEnumValues,
+						sleepDuration:
+							latestMetric?.quickLog?.sleepDuration as QuickLogSleepDurationTypeEnumValues,
+						medicines:
+							latestMetric?.quickLog?.medicines as QuickLogMedicinesTypeEnumValues,
+						stressLevel:
+							latestMetric?.quickLog?.stressLevel as QuickLogStressLevelTypeEnumValues,
+					}
+				}
+				logDate={new Date().toISOString().split("T")[0]}
+			/>
+
+			<UploadMedicalReportsModal
+				open={medicalReportsModalOpen}
+				onOpenChange={setMedicalReportsModalOpen}
+				initialStep={medicalReportsInitialStep}
 			/>
 		</div>
 	);

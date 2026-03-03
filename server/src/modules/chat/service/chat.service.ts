@@ -10,7 +10,7 @@ import type {
 	EmotionalStatePayload,
 } from "../../../shared/services/ai.service";
 import { EXERCISE_TYPE_ENUM } from "../../health/models/health.schema";
-import { DIABETES_TYPE } from "../../auth/models/user.schema";
+import { CustomerData, DIABETES_TYPE } from "../../auth/models/user.schema";
 import {
 	CHAT_ROLES,
 	type ChatMessage,
@@ -18,7 +18,7 @@ import {
 } from "../models/chat.schema";
 import type { MertricRecord } from "../../health/models/health.schema";
 import type { LoggedMeal } from "../../food/models/food.schema";
-import { DateManager } from "server/src/shared/utils/utils";
+import { DateManager, formatUserInfo } from "server/src/shared/utils/utils";
 import { PatientRepository } from "../../physician/repository/patient.repository";
 import { PATIENT_INDICATION } from "../../physician/utils/patientColors";
 import dayjs from "dayjs";
@@ -463,7 +463,7 @@ export class ChatService {
 			await this.chatRepo.getDistinctUserIdsWithChatOnDate(dateStr);
 
 		for (const { userId } of usersWithChatOnDate) {
-			const messages = await this.chatRepo.getByUserAndDate(userId, dateStr);
+			const { messages }= await this.chatRepo.getByUser(userId, dateStr);
 			if (messages.length === 0) continue;
 
 			const payload: OldChatMemoryPayload = {
@@ -486,11 +486,13 @@ export class ChatService {
 		}
 	}
 
-	async getChatByDate(
+	async getChat(
 		userId: string,
 		dateStr: string,
+		offset?: number,
+		limit: number = 100
 	): Promise<{ messages: ChatMessage[]; nudge?: string }> {
-		const messages = await this.chatRepo.getByUserAndDate(userId, dateStr);
+		const { messages } = await this.chatRepo.getByUser(userId, dateStr, offset, limit, false);
 		const nudgeRaw =
 			messages.length === 0 ? await this.getNudge(userId, dateStr) : undefined;
 		const nudge = nudgeRaw ?? undefined;
@@ -502,7 +504,7 @@ export class ChatService {
 		dateStr: string,
 		message: string,
 		recordedAt: string,
-	): Promise<{ assistantMessage: string }> {
+	): Promise<ChatMessage> {
 		const trimmed = message.trim();
 		if (trimmed === "") {
 			throw new Error("Message cannot be empty");
@@ -510,14 +512,14 @@ export class ChatService {
 
 		const [
 			customerData,
-			chatHistory,
+			{messages: chatHistory},
 			metricsResult,
 			meals,
 			lastDaysSummaries,
 			oldChatMemory,
 		] = await Promise.all([
 			this.customerRepo.getCustomerDataByUserId(userId),
-			this.chatRepo.getByUserAndDate(userId, dateStr),
+			this.chatRepo.getByUser(userId, dateStr),
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
 				EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
 				EXERCISE_TYPE_ENUM.STEPS,
@@ -573,23 +575,7 @@ export class ChatService {
 			}
 		}
 
-		const name =
-			customerData?.firstName && customerData?.lastName
-				? `${customerData.firstName} ${customerData.lastName}`.trim()
-				: "User";
-		const birthday = DateManager.formatDate(customerData.birthday);
-
-		const diagnosisDate = DateManager.formatDate(customerData.birthday);
-
-		const user_info: AIChatPayload["user_info"] = {
-			name,
-			gender: customerData.gender,
-			birthday,
-			diagnosisDate,
-			weight: customerData.weight,
-			height: customerData.height,
-			diabetesType: this.DIABETES_TYPE_LABELS[customerData.diabetesType],
-		};
+		const user_info: AIChatPayload["user_info"] = formatUserInfo(customerData as unknown as CustomerData);
 
 		const blood_sugar = this.toRecordedValue(metricsResult.bloodSugarRecords);
 		const steps = this.toRecordedValue(metricsResult.stepsRecords);
@@ -635,7 +621,7 @@ export class ChatService {
 		}
 
 		const recordedAtDate = new Date(recordedAt);
-		await this.chatRepo.insertTransaction([
+		const [_, assistantMessage ] = await this.chatRepo.insertTransaction([
 			{
 				userId,
 				chatDate: dateStr,
@@ -648,10 +634,19 @@ export class ChatService {
 				chatDate: dateStr,
 				role: CHAT_ROLES.ASSISTANT,
 				message: assistantText,
-				recordedAt: recordedAtDate,
+				recordedAt: new Date(),
 			},
 		]);
 
-		return { assistantMessage: assistantText };
+		return assistantMessage;
+	}
+
+	async transcribeAudio(
+		audioBuffer: Buffer,
+	): Promise<{ transcription_text: string }> {
+		const response = await aiService.transcribeAudio(audioBuffer);
+		return {
+			transcription_text: response.data.transcription_text || "",
+		};
 	}
 }

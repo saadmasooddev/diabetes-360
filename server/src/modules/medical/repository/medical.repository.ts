@@ -104,6 +104,9 @@ export class MedicalRepository {
 				fileName: data.fileName,
 				filePath: data.filePath,
 				fileSize: data.fileSize,
+				reportName: data.reportName ?? null,
+				reportType: data.reportType ?? null,
+				dateOfReport: data.dateOfReport,
 			})
 			.returning();
 
@@ -118,6 +121,41 @@ export class MedicalRepository {
 			.orderBy(desc(labReports.uploadedAt));
 
 		return results;
+	}
+
+	async getLabReportsPaginated(
+		userId: string,
+		limit: number,
+		offset: number,
+		search?: string,
+	): Promise<{ reports: LabReport[]; total: number }> {
+		const baseConditions = [eq(labReports.userId, userId)];
+		if (search && search.trim()) {
+			const searchPattern = `%${search.trim()}%`;
+			baseConditions.push(
+				sql`(${labReports.reportName} ILIKE ${searchPattern} OR ${labReports.fileName} ILIKE ${searchPattern})` as any,
+			);
+		}
+		const whereClause = and(...baseConditions);
+
+		const [reports, countResult] = await Promise.all([
+			db
+				.select()
+				.from(labReports)
+				.where(whereClause)
+				.orderBy(desc(labReports.uploadedAt))
+				.limit(limit)
+				.offset(offset),
+			db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(labReports)
+				.where(whereClause),
+		]);
+
+		return {
+			reports,
+			total: countResult[0]?.count ?? 0,
+		};
 	}
 
 	async getLabReportById(

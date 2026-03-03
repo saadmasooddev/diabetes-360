@@ -1,10 +1,10 @@
 import { MedicalRepository } from "../repository/medical.repository";
-import { NotFoundError } from "../../../shared/errors";
+import { BookingRepository } from "../../booking/repository/booking.repository";
+import { NotFoundError, ForbiddenError } from "../../../shared/errors";
 import type {
 	InsertMedication,
 	InsertLabReport,
 } from "../models/medical.schema";
-import { BookingRepository } from "../../booking/repository/booking.repository";
 import path, { join, relative } from "path";
 import fs from "fs";
 import { PhysicianRepository } from "../../physician/repository/physician.repository";
@@ -130,6 +130,11 @@ export class MedicalService {
 	async uploadLabReport(
 		userId: string,
 		file: Express.Multer.File,
+		metadata?: {
+			reportName?: string;
+			reportType?: string;
+			dateOfReport?: string;
+		},
 	): Promise<InsertLabReport & { id: string; uploadedAt: Date }> {
 		const relativePath = this.getRelativePath(file.path);
 		const report = await this.medicalRepository.createLabReport({
@@ -137,9 +142,58 @@ export class MedicalService {
 			fileName: file.filename,
 			filePath: relativePath,
 			fileSize: file.size.toString(),
+			reportName: metadata?.reportName,
+			reportType: metadata?.reportType,
+			dateOfReport: metadata?.dateOfReport,
 		});
 
 		return report;
+	}
+
+	async getLabReportsPaginated(
+		userId: string,
+		limit: number,
+		offset: number,
+		search?: string,
+	) {
+		const userStoredReportsPath = path.join(
+			process.cwd(),
+			MedicalService.LAB_REPORT_PATH,
+			userId,
+		);
+
+		if (!fs.existsSync(userStoredReportsPath)) {
+			return {
+				reports: [],
+				total: 0
+			};
+		}
+		const result = await this.medicalRepository.getLabReportsPaginated(
+			userId,
+			limit,
+			offset,
+			search,
+		);
+
+		const userStoredReports = await readdir(userStoredReportsPath);
+		const userStoredReportsDataSet = new Set(userStoredReports);
+		const filteredReports = result.reports.filter((report) =>
+			userStoredReportsDataSet.has(report.fileName),
+		);
+		return {
+			reports: filteredReports,
+			total: result.total 
+		};
+	}
+
+	async verifyPhysicianPatientAccess(
+		physicianId: string,
+		patientId: string,
+	): Promise<boolean> {
+		return this.bookingRepository.hasPhysicianPatientRelationship(
+			physicianId,
+			patientId,
+		);
 	}
 
 	async getLabReportsByUserId(userId: string) {

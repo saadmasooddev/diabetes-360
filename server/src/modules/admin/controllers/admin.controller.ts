@@ -5,6 +5,7 @@ import {
 	updatePhysicianDataSchema,
 	insertCustomerDataAdminSchema,
 	updateCustomerDataSchema,
+	DIABETES_TYPE,
 } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
 import { PhysicianService } from "../../physician/service/physician.service";
@@ -127,7 +128,10 @@ export class AdminController {
 					if (customerDataValidation.success) {
 						await this.customerService.createCustomerData(
 							authResponse.user.id,
-							customerDataValidation.data,
+							{
+								...customerDataValidation.data,
+								diabetesType: customerDataValidation.data.diabetesType as DIABETES_TYPE
+						}
 						);
 					}
 				} catch (customerError) {

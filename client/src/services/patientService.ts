@@ -4,6 +4,7 @@ import type { ApiResponse } from "@/types/auth.types";
 import type { DateRange } from "@/features/dashboard/components/HealthTrendChart";
 import type { DIABETES_TYPE, MertricRecord } from "@shared/schema";
 import { UserConsultation } from "server/src/modules/booking/repository/booking.repository";
+import { PATIENT_INDICATION } from "server/src/modules/physician/utils/patientColors";
 
 export interface PatientListItem {
 	id: string;
@@ -12,6 +13,7 @@ export interface PatientListItem {
 	condition: string;
 	indication: "Needs Attention" | "Stable" | "High Risk";
 	indicationColor: string;
+	latestBloodGlucose?: number | null;
 }
 
 export interface PatientStats {
@@ -34,14 +36,13 @@ export interface PatientProfile {
 	condition: string;
 	email: string;
 	birthday: string;
-	diagnosisDate: string;
 	weight: string;
 	height: string;
-	diabetesType: string;
+	diabetesType: DIABETES_TYPE;
 	gender: string;
-	indication: "Needs Attention" | "Stable" | "High Risk";
+	indication: PATIENT_INDICATION;
 	indicationColor: string;
-	riskLevel: "High Risk" | "Stable" | "Needs Attention";
+	riskLevel: PATIENT_INDICATION;
 	riskLevelColor: string;
 	alerts: Array<{ text: string; color: string }>;
 	glucoseSummary: {
@@ -57,6 +58,32 @@ export interface PatientProfile {
 	}>;
 	appointments: UserConsultation[];
 	glucoseTrend: MertricRecord[];
+	latestBloodGlucose?: number | null;
+	hba1cTrend?: Array<{ value: number; recordedAt: string }>;
+	quickLogsWeek?: Array<{
+		logDate: string;
+		exercise: string | null;
+		sleepDuration: string | null;
+	}>;
+	dietTrend?: {
+		avgRecommendedCalories: number;
+		avgLoggedCalories: number;
+		totalRecommended: number;
+		totalLogged: number;
+	};
+	macros?: {
+		carbs: number;
+		protein: number;
+		fat: number;
+		calories: number;
+		carbsPercent: number;
+		proteinPercent: number;
+		fatPercent: number;
+	};
+	sleepPattern?: {
+		byDay: Array<{ day: string; hours: number; quality: string }>;
+		avgQuality: string;
+	};
 }
 
 class PatientService {

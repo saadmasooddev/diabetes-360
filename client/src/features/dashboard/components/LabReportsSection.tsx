@@ -34,7 +34,8 @@ export function LabReportsSection() {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const updateFileInputRef = useRef<HTMLInputElement>(null);
 
-	const { data: reports = [], isLoading } = useLabReports();
+	const { data, isLoading } = useLabReports({ limit: 100, offset: 0 });
+	const reports = data?.reports ?? [];
 	const uploadMutation = useUploadLabReport();
 	const updateMutation = useUpdateLabReport();
 	const deleteMutation = useDeleteLabReport();
@@ -276,9 +277,9 @@ export function LabReportsSection() {
 										<p
 											className="text-sm font-medium truncate"
 											style={{ color: "#00453A" }}
-											title={report.fileName}
+											title={report.reportName || report.fileName}
 										>
-											{report.fileName}
+											{report.reportName || report.fileName}
 										</p>
 										<p className="text-xs text-gray-500">
 											{formatUploadDate(report.uploadedAt)} •{" "}

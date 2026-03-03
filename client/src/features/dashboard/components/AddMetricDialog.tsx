@@ -11,7 +11,19 @@ import { Button } from "@/components/ui/button";
 import { handleNumberInput } from "@/lib/utils";
 import { Activity, Footprints, Droplet, Heart } from "lucide-react";
 import { ButtonSpinner } from "@/components/ui/spinner";
-import { EXERCISE_TYPE_ENUM, type MetricType } from "@shared/schema";
+import {
+	EXERCISE_TYPE_ENUM,
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	type MetricType,
+	BloodSugarReadingTypeEnumValues,
+} from "@shared/schema";
+
+const GLUCOSE_READING_TYPE_LABELS: Record<BloodSugarReadingTypeEnumValues, string> = {
+	[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: "Current Glucose",
+	[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: "Fasting Sugar",
+	[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: "Random Sugar",
+	[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: "HbA1c"
+};
 
 interface AddMetricDialogProps {
 	open: boolean;
@@ -19,9 +31,20 @@ interface AddMetricDialogProps {
 	metricType: MetricType;
 	value: string;
 	onValueChange: (value: string) => void;
+	bloodSugarReadingType?: BloodSugarReadingTypeEnumValues
+	onBloodSugarReadingTypeChange?: (
+		type: BloodSugarReadingTypeEnumValues,
+	) => void;
 	onSubmit: () => void;
 	isSubmitting: boolean;
 }
+
+const GLUCOSE_READING_OPTIONS: BloodSugarReadingTypeEnumValues[] = [
+	BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+	BLOOD_SUGAR_READING_TYPES_ENUM.FASTING,
+	BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM,
+	BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C
+];
 
 export function AddMetricDialog({
 	open,
@@ -29,17 +52,19 @@ export function AddMetricDialog({
 	metricType,
 	value,
 	onValueChange,
+	bloodSugarReadingType = BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+	onBloodSugarReadingTypeChange,
 	onSubmit,
 	isSubmitting,
 }: AddMetricDialogProps) {
 	const config = {
 		[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: {
 			title: "Log Blood Glucose",
-			placeholder: "Enter glucose level (mg/dL)",
+			placeholder: `Enter glucose level ${bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C ? "(0-100)%" : "(mg/dL)"}`,
 			icon: Activity,
 			gradient: "linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%)",
 			iconColor: "#4CAF50",
-			description: "Record your current blood glucose reading",
+			description: `Record your ${bloodSugarReadingType} blood glucose reading`,
 		},
 		[EXERCISE_TYPE_ENUM.STEPS]: {
 			title: "Log Steps",
@@ -133,6 +158,49 @@ export function AddMetricDialog({
 
 				{/* Content */}
 				<div className="space-y-6 p-6">
+					{metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE &&
+						onBloodSugarReadingTypeChange && (
+							<div className="space-y-3">
+								<Label
+									style={{
+										color: "#00453A",
+										fontSize: "14px",
+										fontWeight: 600,
+										display: "block",
+									}}
+								>
+									Reading Type
+								</Label>
+								<div className="flex flex-wrap gap-2">
+									{GLUCOSE_READING_OPTIONS.map((option) => (
+										<Button
+											key={option}
+											type="button"
+											variant={bloodSugarReadingType === option ? "default" : "outline"}
+											size="sm"
+											onClick={() =>
+												onBloodSugarReadingTypeChange(
+													option
+												)
+											}
+											style={{
+												background:
+													bloodSugarReadingType === option
+														? "linear-gradient(135deg, #00856F 0%, #006B5C 100%)"
+														: undefined,
+												borderColor:
+													bloodSugarReadingType === option
+														? "#00856F"
+														: "rgba(0, 133, 111, 0.3)",
+												borderRadius: "8px",
+											}}
+										>
+											{GLUCOSE_READING_TYPE_LABELS[option] ?? option}
+										</Button>
+									))}
+								</div>
+							</div>
+						)}
 					<div className="space-y-3">
 						<Label
 							htmlFor="metric-value"

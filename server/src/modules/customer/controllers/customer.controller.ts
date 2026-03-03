@@ -2,10 +2,13 @@ import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { CustomerService } from "../service/customer.service";
-import { BadRequestError } from "../../../shared/errors";
+import { BadRequestError, ValidationError } from "../../../shared/errors";
 import {
+	InsertCustomerData,
 	PAYMENT_TYPE,
+	additionalProfileDataSchema,
 	insertCustomerDataSchema,
+	profileDataSchema,
 	updateCustomerDataSchema,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
@@ -63,17 +66,27 @@ export class CustomerController {
 				throw new BadRequestError("User ID is required");
 			}
 
-			const customerDataInput = { ...req.body };
+			const customerDataInput = {
+				...req.body,
+			}
 
 			const validationResult =
 				insertCustomerDataSchema.safeParse(customerDataInput);
 			if (!validationResult.success) {
-				throw validationResult.error;
+				throw new ValidationError(undefined, validationResult.error)
+			}
+
+			const additionalProfileDataValidation = additionalProfileDataSchema.safeParse(
+				req.body
+			) 
+			if(!additionalProfileDataValidation.success){
+				throw new ValidationError(undefined, additionalProfileDataValidation.error)
 			}
 
 			const data = await this.customerService.createCustomerData(
 				userId,
 				validationResult.data,
+				additionalProfileDataValidation.data
 			);
 			sendSuccess(res, { profileData: data }, "Profile completed successfully");
 		} catch (error: any) {

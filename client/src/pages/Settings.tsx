@@ -86,11 +86,6 @@ export function Settings() {
 		month: birthMonth,
 		year: birthYear,
 	} = parseDateToComponents(customerData?.customerData?.birthday || "");
-	const {
-		day: diagnosisDay,
-		month: diagnosisMonth,
-		year: diagnosisYear,
-	} = parseDateToComponents(customerData?.customerData?.diagnosisDate || "");
 
 	return (
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
@@ -329,17 +324,7 @@ export function Settings() {
 																</p>
 															</div>
 														</div>
-														<div>
-															<Label className="text-sm font-medium text-gray-700">
-																Diagnosis Date
-															</Label>
-															<div className="mt-1 p-3 bg-gray-50 rounded-lg">
-																<p className="text-sm text-gray-900">
-																	{diagnosisDay}/{diagnosisMonth}/
-																	{diagnosisYear}
-																</p>
-															</div>
-														</div>
+
 														<div>
 															<Label className="text-sm font-medium text-gray-700">
 																Weight
@@ -372,6 +357,27 @@ export function Settings() {
 																</Badge>
 															</div>
 														</div>
+														<div>
+															<Label className="text-sm font-medium text-gray-700">
+																Main Goal
+															</Label>
+															<div className="mt-1 p-3 bg-gray-50 rounded-lg">
+																<p className="text-sm text-gray-900 overflow-y-scroll  max-h-[100px]">
+																	{customerData.customerData.mainGoal || 'No goal provided'}
+																</p>
+															</div>
+														</div>
+														<div>
+															<Label className="text-sm font-medium text-gray-700">
+																Medication Info
+															</Label>
+															<div className="mt-1 p-3 bg-gray-50 rounded-lg">
+																<p className="text-sm text-gray-900 overflow-y-scroll max-h-[100px]">
+																	{customerData.customerData.medicationInfo || 'No medication info'}
+																</p>
+															</div>
+														</div>
+
 													</div>
 												</div>
 											</div>

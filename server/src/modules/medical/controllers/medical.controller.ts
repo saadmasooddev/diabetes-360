@@ -2,7 +2,8 @@ import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { MedicalService } from "../service/medical.service";
-import { BadRequestError } from "../../../shared/errors";
+import { BadRequestError, ForbiddenError } from "../../../shared/errors";
+import { PERMISSIONS } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import { insertMedicationSchema } from "../models/medical.schema";
 
@@ -126,10 +127,15 @@ export class MedicalController {
 				throw new BadRequestError("No file uploaded");
 			}
 
-			const report = await this.medicalService.uploadLabReport(
-				userId,
-				req.file,
-			);
+			const reportName = req.body?.reportName as string | undefined;
+			const reportType = req.body?.reportType as string | undefined;
+			const dateOfReport = req.body?.dateOfReport as string | undefined;
+
+			const report = await this.medicalService.uploadLabReport(userId, req.file, {
+				reportName: reportName || undefined,
+				reportType: reportType || undefined,
+				dateOfReport: dateOfReport || undefined,
+			});
 			sendSuccess(res, report, "Lab report uploaded successfully");
 		} catch (error: any) {
 			handleError(res, error);
@@ -147,8 +153,78 @@ export class MedicalController {
 				throw new BadRequestError("User ID not found");
 			}
 
-			const reports = await this.medicalService.getLabReportsByUserId(userId);
-			sendSuccess(res, reports, "Lab reports retrieved successfully");
+			const limit = req.query.limit
+				? Math.min(100, Math.max(1, parseInt(req.query.limit as string)))
+				: 10;
+			const offset = req.query.offset
+				? Math.max(0, parseInt(req.query.offset as string))
+				: 0;
+			const search = (req.query.search as string) || undefined;
+
+			const result = await this.medicalService.getLabReportsPaginated(
+				userId,
+				limit,
+				offset,
+				search,
+			);
+			sendSuccess(res, result, "Lab reports retrieved successfully");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
+	async getLabReportsForUser(
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const requesterId = req.user?.userId || "";
+			const permissions = req.user?.permissions || [];
+			const targetUserId = req.params.userId;
+
+			if (!requesterId || !targetUserId) {
+				throw new BadRequestError("User ID is required");
+			}
+
+			const isAdmin = permissions.includes(PERMISSIONS.READ_ALL_MEDICAL_RECORDS);
+			const isPhysician = permissions.includes(
+				PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+			);
+
+			if (!isAdmin && !isPhysician) {
+				throw new ForbiddenError(
+					"Access denied. Physician or admin permission required.",
+				);
+			}
+
+			if (isPhysician && !isAdmin) {
+				const hasAccess = await this.medicalService.verifyPhysicianPatientAccess(
+					requesterId,
+					targetUserId,
+				);
+				if (!hasAccess) {
+					throw new ForbiddenError(
+						"You do not have access to this patient's lab reports",
+					);
+				}
+			}
+
+			const limit = req.query.limit
+				? Math.min(100, Math.max(1, parseInt(req.query.limit as string)))
+				: 10;
+			const offset = req.query.offset
+				? Math.max(0, parseInt(req.query.offset as string))
+				: 0;
+			const search = (req.query.search as string) || undefined;
+
+			const result = await this.medicalService.getLabReportsPaginated(
+				targetUserId,
+				limit,
+				offset,
+				search,
+			);
+			sendSuccess(res, result, "Lab reports retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -214,8 +290,9 @@ export class MedicalController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const userId = req.user?.userId || "";
-			if (!userId) {
+			const requesterId = req.user?.userId || "";
+			const permissions = req.user?.permissions || [];
+			if (!requesterId) {
 				throw new BadRequestError("User ID not found");
 			}
 
@@ -224,8 +301,34 @@ export class MedicalController {
 				throw new BadRequestError("Report ID is required");
 			}
 
+			let ownerUserId = requesterId;
+			const forUser = req.query.userId as string | undefined;
+			if (forUser) {
+				const isAdmin = permissions.includes(
+					PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
+				);
+				const isPhysician = permissions.includes(
+					PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+				);
+				if (isAdmin || isPhysician) {
+					if (isPhysician && !isAdmin) {
+						const hasAccess =
+							await this.medicalService.verifyPhysicianPatientAccess(
+								requesterId,
+								forUser,
+							);
+						if (!hasAccess) {
+							throw new ForbiddenError(
+								"You do not have access to this patient's lab reports",
+							);
+						}
+					}
+					ownerUserId = forUser;
+				}
+			}
+
 			const { filePath, fileName } =
-				await this.medicalService.downloadLabReport(reportId, userId);
+				await this.medicalService.downloadLabReport(reportId, ownerUserId);
 
 			// Send file
 			res.setHeader("Content-Type", "application/pdf");

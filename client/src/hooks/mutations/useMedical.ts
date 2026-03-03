@@ -60,10 +60,38 @@ export const useMedicationsByPhysicianAndDate = (
 };
 
 // Lab Reports Hooks
-export const useLabReports = () => {
-	return useQuery<LabReport[]>({
-		queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
-		queryFn: () => medicalService.getLabReports(),
+export const useLabReports = (params?: {
+	limit?: number;
+	offset?: number;
+	search?: string;
+}) => {
+	return useQuery<{ reports: LabReport[]; total: number }>({
+		queryKey: [
+			API_ENDPOINTS.MEDICAL.LAB_REPORTS,
+			params?.limit,
+			params?.offset,
+			params?.search,
+		],
+		queryFn: () => medicalService.getLabReports(params),
+		refetchOnMount: "always",
+		staleTime: 0,
+	});
+};
+
+export const useLabReportsByUserId = (
+	userId: string | null,
+	params?: { limit?: number; offset?: number; search?: string },
+) => {
+	return useQuery<{ reports: LabReport[]; total: number }>({
+		queryKey: [
+			userId ? API_ENDPOINTS.MEDICAL.LAB_REPORTS_BY_USER(userId) : null,
+			params?.limit,
+			params?.offset,
+			params?.search,
+		],
+		queryFn: () =>
+			medicalService.getLabReportsByUserId(userId!, params),
+		enabled: !!userId,
 		refetchOnMount: "always",
 		staleTime: 0,
 	});
@@ -74,7 +102,22 @@ export const useUploadLabReport = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (file: File) => medicalService.uploadLabReport(file),
+		mutationFn: (
+			arg:
+				| File
+				| {
+						file: File;
+						metadata?: {
+							reportName?: string;
+							reportType?: string;
+							dateOfReport?: string;
+						};
+					},
+		) => {
+			const file = arg instanceof File ? arg : arg.file;
+			const metadata = arg instanceof File ? undefined : arg.metadata;
+			return medicalService.uploadLabReport(file, metadata);
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
@@ -139,6 +182,46 @@ export const useDeleteLabReport = () => {
 			toast({
 				title: "Error",
 				description: error.message || "Failed to delete lab report",
+				variant: "destructive",
+			});
+		},
+	});
+};
+
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp)$/i;
+
+export function isImageFileName(fileName: string): boolean {
+	return IMAGE_EXTENSIONS.test(fileName);
+}
+
+export function isPdfFileName(fileName: string): boolean {
+	return /\.pdf$/i.test(fileName);
+}
+
+export const useViewLabReport = () => {
+	const { toast } = useToast();
+
+	return useMutation({
+		mutationFn: async (arg: {
+			reportId: string;
+			fileName: string;
+			forUserId?: string;
+		}): Promise<{ url: string; isPdf: boolean }> => {
+			const url = await medicalService.getLabReportViewUrl(
+				arg.reportId,
+				arg.forUserId,
+			);
+			const isPdf = isPdfFileName(arg.fileName);
+			if (isPdf) {
+				window.open(url, "_blank", "noopener,noreferrer");
+			}
+			return { url, isPdf };
+		},
+		onError: (error: unknown) => {
+			toast({
+				title: "Error",
+				description:
+					(error as Error).message || "Failed to open report",
 				variant: "destructive",
 			});
 		},

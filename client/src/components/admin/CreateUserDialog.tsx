@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -66,9 +66,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 		birthDay: "",
 		birthMonth: "",
 		birthYear: "",
-		diagnosisDay: "",
-		diagnosisMonth: "",
-		diagnosisYear: "",
 		weight: "",
 		height: "",
 		diabetesType: "" as "type1" | "type2" | "gestational" | "prediabetes" | "",
@@ -176,21 +173,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 					customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
 				}
 
-				if (
-					customerFields.diagnosisDay &&
-					customerFields.diagnosisMonth &&
-					customerFields.diagnosisYear
-				) {
-					const paddedMonth = String(customerFields.diagnosisMonth).padStart(
-						2,
-						"0",
-					);
-					const paddedDay = String(customerFields.diagnosisDay).padStart(
-						2,
-						"0",
-					);
-					customerData.diagnosisDate = `${customerFields.diagnosisYear}-${paddedMonth}-${paddedDay}`;
-				}
 
 				userData.customerData = customerData;
 			}
@@ -218,9 +200,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 				birthDay: "",
 				birthMonth: "",
 				birthYear: "",
-				diagnosisDay: "",
-				diagnosisMonth: "",
-				diagnosisYear: "",
 				weight: "",
 				height: "",
 				diabetesType: "",
@@ -525,72 +504,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 										value={customerFields.birthYear}
 										onValueChange={(value) =>
 											setCustomerFields({ ...customerFields, birthYear: value })
-										}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="YYYY" />
-										</SelectTrigger>
-										<SelectContent>
-											{yearOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-
-							<div className="space-y-2">
-								<Label htmlFor="customerDiagnosisDate">Diagnosis Date</Label>
-								<div className="grid grid-cols-3 gap-2">
-									<Select
-										value={customerFields.diagnosisDay}
-										onValueChange={(value) =>
-											setCustomerFields({
-												...customerFields,
-												diagnosisDay: value,
-											})
-										}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="DD" />
-										</SelectTrigger>
-										<SelectContent>
-											{dayOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Select
-										value={customerFields.diagnosisMonth}
-										onValueChange={(value) =>
-											setCustomerFields({
-												...customerFields,
-												diagnosisMonth: value,
-											})
-										}
-									>
-										<SelectTrigger>
-											<SelectValue placeholder="MM" />
-										</SelectTrigger>
-										<SelectContent>
-											{monthOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<Select
-										value={customerFields.diagnosisYear}
-										onValueChange={(value) =>
-											setCustomerFields({
-												...customerFields,
-												diagnosisYear: value,
-											})
 										}
 									>
 										<SelectTrigger>

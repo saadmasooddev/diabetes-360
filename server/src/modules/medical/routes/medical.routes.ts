@@ -23,6 +23,10 @@ const updateOwnMedicalRecords = requireAnyPermission([
 const deleteOwnMedicalRecords = requireAnyPermission([
 	PERMISSIONS.DELETE_OWN_MEDICAL_RECORDS,
 ]);
+const readPatientOrAllMedicalRecords = requireAnyPermission([
+	PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+	PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
+]);
 
 /**
  * @swagger
@@ -199,6 +203,45 @@ router.get(
 
 /**
  * @swagger
+ * /api/medical/lab-reports/by-user/{userId}:
+ *   get:
+ *     summary: Get lab reports for a user (physician/admin only)
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lab reports retrieved successfully
+ */
+router.get(
+	"/lab-reports/by-user/:userId",
+	authenticateToken,
+	readPatientOrAllMedicalRecords,
+	(req, res, next) => medicalController.getLabReportsForUser(req, res, next),
+);
+
+/**
+ * @swagger
  * /api/medical/lab-reports/{id}:
  *   put:
  *     summary: Update a lab report
@@ -283,10 +326,16 @@ router.delete(
  *               type: string
  *               format: binary
  */
+const readLabReportForDownload = requireAnyPermission([
+	PERMISSIONS.READ_OWN_MEDICAL_RECORDS,
+	PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+	PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
+]);
+
 router.get(
 	"/lab-reports/:id/download",
 	authenticateToken,
-	readOwnMedicalRecords,
+	readLabReportForDownload,
 	(req, res, next) => medicalController.downloadLabReport(req, res, next),
 );
 

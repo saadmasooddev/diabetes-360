@@ -6,6 +6,8 @@ import { config } from "./src/app/config";
 import { db } from "./src/app/config/db";
 import { CronJobService } from "./src/shared/services/cron-job.service";
 import { ChatService } from "./src/modules/chat/service/chat.service";
+import { zoomService } from "./src/shared/services/zoom.service";
+import { DateManager } from "./src/shared/utils/utils";
 
 const app = createApp();
 
@@ -14,6 +16,11 @@ const app = createApp();
 	const server = createServer(appWithRoutes);
 	await db.execute("SELECT 1");
 
+	const startTimeIso = DateManager.slotTimeToISO(
+	  '2026-01-13 00:00:00',
+		'22:30:00',
+	);
+	console.log("THe the start time iso log is", startTimeIso)
 	const cronJobService = new CronJobService();
 	cronJobService.registerAll([
 		{
@@ -30,6 +37,14 @@ const app = createApp();
 			handler: async () => {
 				const chatService = new ChatService();
 				await chatService.extractAndStoreChatMemoriesJob();
+			},
+		},
+		{
+			name: "meeting-link",
+			schedule: "*/1 * * * *",
+			handler: async () => {
+				zoomService.processMeetingLinksJob()
+
 			},
 		},
 	]);

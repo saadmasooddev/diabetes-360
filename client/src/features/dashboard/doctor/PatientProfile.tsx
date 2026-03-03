@@ -6,12 +6,11 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
 import { Sidebar } from "@/components/layout/Sidebar";
 import { usePatientById } from "@/hooks/mutations/usePatients";
 import { useRoute } from "wouter";
 import { ROUTES } from "@/config/routes";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, X, Circle, Moon } from "lucide-react";
 import {
 	HealthTrendChart,
 	type IntervalType,
@@ -19,25 +18,8 @@ import {
 	getDateRange,
 } from "../components/HealthTrendChart";
 import { useMemo, useState } from "react";
-import { convertSlotTypeToLabel, formatDate, formatTime12 } from "@/lib/utils";
-
-function MoonIcon() {
-	return (
-		<svg width="28" height="20" viewBox="0 0 28 20" fill="none">
-			<circle cx="10" cy="10" r="8" fill="#00453A" />
-			<circle cx="18" cy="10" r="6" fill="#B2DFDB" />
-		</svg>
-	);
-}
-
-function ToggleIcon() {
-	return (
-		<svg width="32" height="20" viewBox="0 0 32 20" fill="none">
-			<rect width="32" height="20" rx="10" fill="#00856F" />
-			<circle cx="22" cy="10" r="7" fill="white" />
-		</svg>
-	);
-}
+import { formatDate } from "@/lib/utils";
+import { PatientLabReportsModal } from "../components/PatientLabReportsModal";
 
 function ClipboardIcon() {
 	return (
@@ -49,19 +31,39 @@ function ClipboardIcon() {
 }
 
 function getAlertStyle(alertColor: string) {
-	// Convert hex color to rgba for background
 	const hexToRgba = (hex: string, alpha: number) => {
 		const r = parseInt(hex.slice(1, 3), 16);
 		const g = parseInt(hex.slice(3, 5), 16);
 		const b = parseInt(hex.slice(5, 7), 16);
 		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 	};
-
 	return {
 		background: hexToRgba(alertColor, 0.1),
 		color: alertColor,
 		border: `1px solid ${hexToRgba(alertColor, 0.3)}`,
 	};
+}
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function getWeekDates(): Array<{ label: string; dateStr: string; isPast: boolean; isToday: boolean }> {
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const todayStr = today.toISOString().split("T")[0];
+	const result: Array<{ label: string; dateStr: string; isPast: boolean; isToday: boolean }> = [];
+	for (let i = -6; i <= 0; i++) {
+		const d = new Date(today);
+		d.setDate(d.getDate() + i);
+		const dateStr = d.toISOString().split("T")[0];
+		const dayIdx = (d.getDay() + 6) % 7;
+		result.push({
+			label: WEEKDAYS[dayIdx],
+			dateStr,
+			isPast: i < 0,
+			isToday: i === 0,
+		});
+	}
+	return result;
 }
 
 export function PatientProfile() {
@@ -71,24 +73,23 @@ export function PatientProfile() {
 	const [matchAdmin, paramsAdmin] = useRoute<{ profileId: string }>(
 		ROUTES.ADMIN_PATIENT_PROFILE,
 	);
-	const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("daily");
-	const [isAllSummariesDialogOpen, setIsAllSummariesDialogOpen] =
-		useState(false);
+	const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("weekly");
+	const [hba1cInterval, setHba1cInterval] = useState<IntervalType>("weekly");
+	const [isAllSummariesDialogOpen, setIsAllSummariesDialogOpen] = useState(false);
+	const [medicalReportsOpen, setMedicalReportsOpen] = useState(false);
 	const glucoseDateRange = getDateRange(glucoseInterval);
+	const hba1cDateRange = getDateRange(hba1cInterval);
 	const isAdmin = !!matchAdmin;
 
 	const patientId =
 		(matchDoctor ? paramsDoctor?.profileId : paramsAdmin?.profileId) || null;
-	const {
-		data: patient,
-		isLoading,
-		error,
-	} = usePatientById(patientId, glucoseDateRange);
+	const { data: patient, isLoading, error } = usePatientById(
+		patientId,
+		glucoseDateRange,
+	);
 
 	const glucoseData = useMemo(() => {
 		if (!patient?.glucoseTrend || patient.glucoseTrend.length === 0) return [];
-
-		// Reverse the array so oldest is on left, newest on right
 		return [...patient.glucoseTrend].reverse().map((m) => {
 			const date = new Date(m.recordedAt);
 			return {
@@ -98,9 +99,50 @@ export function PatientProfile() {
 		});
 	}, [patient?.glucoseTrend, glucoseInterval]);
 
+	const hba1cData = useMemo(() => {
+		if (!patient?.hba1cTrend || patient.hba1cTrend.length === 0) return [];
+		return patient.hba1cTrend.map((m) => {
+			const date = new Date(m.recordedAt);
+			return {
+				time: formatTimeLabel(date, hba1cInterval),
+				value: m.value,
+			};
+		});
+	}, [patient?.hba1cTrend, hba1cInterval]);
+
+	const exerciseWeekData = useMemo(() => {
+		const weekDates = getWeekDates();
+		const logMap = new Map<string, { exercise: string | null }>();
+		(patient?.quickLogsWeek ?? []).forEach((q) => {
+			logMap.set(q.logDate, { exercise: q.exercise });
+		});
+		return weekDates.map(({ label, dateStr, isPast, isToday }) => {
+			const log = logMap.get(dateStr);
+			const didExercise =
+				log?.exercise && log.exercise !== "none";
+			let icon: "tick" | "cross" | "neutral" = "neutral";
+			if (isPast) {
+				icon = didExercise ? "tick" : "cross";
+			} else if (isToday) {
+				icon = didExercise ? "tick" : "neutral";
+			}
+			return { label, icon };
+		});
+	}, [patient?.quickLogsWeek]);
+
+	const sleepChartData = useMemo(() => {
+		const byDay = patient?.sleepPattern?.byDay ?? [];
+		if (byDay.length === 0) return [];
+		return byDay.map((d) => {
+			const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+			const dayName = dayNames[new Date(d.day).getDay()];
+			return { time: dayName, value: d.hours };
+		});
+	}, [patient?.sleepPattern]);
+
 	if (isLoading) {
 		return (
-			<div className="flex min-h-screen bg-gray-50">
+			<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 				<Sidebar />
 				<main className="flex-1 p-6 lg:p-8 overflow-auto">
 					<div className="max-w-5xl mx-auto flex items-center justify-center py-12">
@@ -113,7 +155,7 @@ export function PatientProfile() {
 
 	if (error || !patient) {
 		return (
-			<div className="flex min-h-screen bg-gray-50">
+			<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 				<Sidebar />
 				<main className="flex-1 p-6 lg:p-8 overflow-auto">
 					<div className="max-w-5xl mx-auto text-center py-12 text-red-500">
@@ -124,13 +166,20 @@ export function PatientProfile() {
 		);
 	}
 
+	const dietTrend = patient.dietTrend;
+	const macros = patient.macros;
+	const recommendedTotal = Math.round(
+		(dietTrend?.avgRecommendedCalories ?? 0),
+	);
+	const totalLogged = dietTrend?.totalLogged ?? 0;
+	const exceeded = totalLogged > recommendedTotal ? totalLogged - recommendedTotal : 0;
+
 	return (
-		<div className="flex min-h-screen bg-gray-50">
+		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
 
 			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
-				<div className="w-full space-y-6 ">
-					{/* Page Title */}
+				<div className="w-full space-y-6 max-w-5xl mx-auto">
 					<h1
 						style={{
 							fontSize: "28px",
@@ -143,185 +192,153 @@ export function PatientProfile() {
 						Patient Profile
 					</h1>
 
-					{/* Top Row: Patient Info + Appointments Summary */}
-					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-						{/* Patient Info Card */}
-						<Card
-							className="p-6"
-							style={{
-								background: "#FFFFFF",
-								borderRadius: "16px",
-								border: "1px solid rgba(0, 0, 0, 0.08)",
-							}}
-							data-testid="card-patient-info"
-						>
-							<div className="flex items-start justify-between mb-4">
-								<MoonIcon />
-								<span
-									className="px-4 py-1.5 rounded-full"
+					{/* Patient header: Name, Age, Risk + Latest Sugar + Diagnosis + Medical Reports */}
+					<Card
+						className="p-6"
+						style={{
+							background: "#FFFFFF",
+							borderRadius: "16px",
+							border: "1px solid rgba(0, 0, 0, 0.08)",
+						}}
+						data-testid="card-patient-info"
+					>
+						<div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+							<div>
+								<div className="flex items-center gap-3 mb-2">
+									<h2
+										style={{
+											fontSize: "24px",
+											fontWeight: 700,
+											color: "#00453A",
+										}}
+										data-testid="text-patient-name"
+									>
+										{patient.name}
+									</h2>
+									<span
+										className="px-4 py-1.5 rounded-full text-sm font-medium"
+										style={{
+											background: patient.riskLevelColor,
+											color: "#FFFFFF",
+										}}
+										data-testid="badge-risk-level"
+									>
+										{patient.riskLevel}
+									</span>
+								</div>
+								<p
 									style={{
-										background: patient.riskLevelColor,
-										color: "#FFFFFF",
+										fontSize: "14px",
+										fontWeight: 400,
+										color: "#00856F",
+									}}
+									data-testid="text-patient-details"
+								>
+									Age: {patient.age}
+								</p>
+							</div>
+						</div>
+
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+							<div
+								className="p-4 rounded-xl"
+								style={{
+									background: "#E0F2F1",
+									border: "1px solid rgba(0, 133, 111, 0.2)",
+								}}
+							>
+								<p
+									style={{
 										fontSize: "12px",
 										fontWeight: 500,
+										color: "#78909C",
+										marginBottom: "4px",
 									}}
-									data-testid="badge-risk-level"
 								>
-									{patient.riskLevel}
-								</span>
-							</div>
-
-							<h2
-								style={{
-									fontSize: "24px",
-									fontWeight: 700,
-									color: "#00453A",
-									marginBottom: "4px",
-								}}
-								data-testid="text-patient-name"
-							>
-								{patient.name}
-							</h2>
-							<p
-								style={{
-									fontSize: "14px",
-									fontWeight: 400,
-									color: "#00856F",
-									marginBottom: "16px",
-								}}
-								data-testid="text-patient-details"
-							>
-								Age : {patient.age}, {patient.condition}
-							</p>
-
-							<div className="flex flex-wrap gap-2">
-								{patient.alerts.map((alert, index) => (
-									<span
-										key={index}
-										className="px-3 py-1.5 rounded-lg"
-										style={{
-											...getAlertStyle(alert.color),
-											fontSize: "11px",
-											fontWeight: 500,
-										}}
-										data-testid={`badge-alert-${index}`}
-									>
-										{alert.text}
-									</span>
-								))}
-							</div>
-						</Card>
-
-						{/* Appointments Summary Card */}
-						<Card
-							className="p-6"
-							style={{
-								background: "#FFFFFF",
-								borderRadius: "16px",
-								border: "1px solid rgba(0, 0, 0, 0.08)",
-							}}
-							data-testid="card-appointments-summary"
-						>
-							<div className="flex items-center justify-between mb-4">
-								<h3
+									Latest Sugar
+								</p>
+								<p
 									style={{
-										fontSize: "18px",
+										fontSize: "24px",
 										fontWeight: 700,
+										color: "#00856F",
+									}}
+								>
+									{patient.latestBloodGlucose != null
+										? `${patient.latestBloodGlucose} mg/dL`
+										: "—"}
+								</p>
+							</div>
+							<div
+								className="p-4 rounded-xl"
+								style={{
+									background: "#E0F2F1",
+									border: "1px solid rgba(0, 133, 111, 0.2)",
+								}}
+							>
+								<p
+									style={{
+										fontSize: "12px",
+										fontWeight: 500,
+										color: "#78909C",
+										marginBottom: "4px",
+									}}
+								>
+									Diagnosis Status
+								</p>
+								<p
+									style={{
+										fontSize: "16px",
+										fontWeight: 600,
 										color: "#00453A",
 									}}
 								>
-									Appointments Summary
-								</h3>
-								<ToggleIcon />
+									{patient.condition}
+								</p>
 							</div>
+						</div>
 
-							<div className="overflow-x-auto ">
-								<table className="w-full " data-testid="table-appointments">
-									<thead>
-										<tr>
-											<th
-												className="text-left pb-3"
-												style={{
-													fontSize: "13px",
-													fontWeight: 500,
-													color: "#78909C",
-												}}
-											>
-												Time
-											</th>
-											<th
-												className="text-left pb-3"
-												style={{
-													fontSize: "13px",
-													fontWeight: 500,
-													color: "#78909C",
-												}}
-											>
-												Date
-											</th>
-											<th
-												className="text-left pb-3"
-												style={{
-													fontSize: "13px",
-													fontWeight: 500,
-													color: "#78909C",
-												}}
-											>
-												In Person/Video Call
-											</th>
-										</tr>
-									</thead>
-									<tbody>
-										{patient.appointments.map((apt, index) => {
-											const date = new Date(apt.slot.availability.date);
-											const time = apt.slot.startTime;
-											const type = apt.slot.slotType.type;
-											return (
-												<tr
-													key={index}
-													data-testid={`row-appointment-${index}`}
-												>
-													<td
-														className="py-2"
-														style={{
-															fontSize: "15px",
-															fontWeight: 600,
-															color: "#00856F",
-														}}
-													>
-														{formatTime12(time)}
-													</td>
-													<td
-														className="py-2"
-														style={{
-															fontSize: "15px",
-															fontWeight: 500,
-															color: "#37474F",
-														}}
-													>
-														{formatDate(date, "yyyy-MM-dd")}
-													</td>
-													<td
-														className="py-2"
-														style={{
-															fontSize: "15px",
-															fontWeight: 600,
-															color: "#00856F",
-														}}
-													>
-														{convertSlotTypeToLabel(type)}
-													</td>
-												</tr>
-											);
-										})}
-									</tbody>
-								</table>
-							</div>
-						</Card>
-					</div>
+						<div className="flex items-center justify-between">
+							<span
+								style={{
+									fontSize: "14px",
+									fontWeight: 500,
+									color: "#546E7A",
+								}}
+							>
+								Medical Reports
+							</span>
+							<Button
+								onClick={() => setMedicalReportsOpen(true)}
+								size="sm"
+								style={{
+									background: "#00856F",
+									color: "#FFFFFF",
+									borderRadius: "8px",
+									fontWeight: 600,
+								}}
+							>
+								View Reports
+							</Button>
+						</div>
+					</Card>
 
-					{/* Glucose Trend Chart */}
+					{/* HbA1c Trend */}
+					<HealthTrendChart
+						title="HbA1c Trend"
+						data={hba1cData}
+						gradientId="hba1cGradient"
+						testId="card-hba1c-trend"
+						height={250}
+						yAxisConfig={{
+							domain: [0, 10],
+							ticks: [0, 2, 4, 6, 8, 10],
+						}}
+						interval={hba1cInterval}
+						onIntervalChange={setHba1cInterval}
+					/>
 
+					{/* Glucose Trend */}
 					<HealthTrendChart
 						title="Glucose Trend"
 						data={glucoseData}
@@ -329,19 +346,264 @@ export function PatientProfile() {
 						testId="card-glucose-trend"
 						height={250}
 						yAxisConfig={{
-							domain: [0, 120],
-							ticks: [0, 70, 80, 90, 100],
-							label: "100mg/dL",
+							domain: [0, 200],
+							ticks: [70, 80, 90, 100, 120],
 						}}
 						interval={glucoseInterval}
 						onIntervalChange={setGlucoseInterval}
-						recommendedTarget={undefined}
-						userTarget={undefined}
 					/>
 
-					{/* Bottom Row: Glucose Summary + Recent Notes */}
+					{/* Exercise this Week - layout like image: 4+3 grid */}
+					<Card
+						className="p-6"
+						style={{
+							background: "#FFFFFF",
+							borderRadius: "16px",
+							border: "1px solid rgba(0, 0, 0, 0.08)",
+							boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+						}}
+					>
+						<h3
+							style={{
+								fontSize: "18px",
+								fontWeight: 700,
+								color: "#00453A",
+								marginBottom: "20px",
+							}}
+						>
+							Exercise this Week
+						</h3>
+						<div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+							{exerciseWeekData.map(({ label, icon }) => (
+								<div
+									key={label}
+									className="flex flex-col items-center justify-center p-4 rounded-xl border min-h-[80px]"
+									style={{
+										background: "#FFFFFF",
+										borderColor: "rgba(0, 133, 111, 0.2)",
+										boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+									}}
+								>
+									<div className="flex items-center gap-2 w-full justify-center">
+										<span
+											style={{
+												fontSize: "14px",
+												fontWeight: 600,
+												color: "#00453A",
+											}}
+										>
+											{label}
+										</span>
+										{icon === "tick" && (
+											<Check
+												className="w-5 h-5 flex-shrink-0"
+												style={{ color: "#00856F" }}
+											/>
+										)}
+										{icon === "cross" && (
+											<X
+												className="w-5 h-5 flex-shrink-0"
+												style={{ color: "#D32F2F" }}
+											/>
+										)}
+										{icon === "neutral" && (
+											<Circle
+												className="w-5 h-5 flex-shrink-0"
+												style={{ color: "#BDBDBD" }}
+											/>
+										)}
+									</div>
+								</div>
+							))}
+						</div>
+					</Card>
+
+					{/* Diet Trend - 7 Days */}
+					<Card
+						className="p-6"
+						style={{
+							background: "#FFFFFF",
+							borderRadius: "16px",
+							border: "1px solid rgba(0, 0, 0, 0.08)",
+							boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+						}}
+					>
+						<h3
+							style={{
+								fontSize: "18px",
+								fontWeight: 700,
+								color: "#00453A",
+								marginBottom: "20px",
+							}}
+						>
+							Diet Trend (7 Days)
+						</h3>
+
+						{/* Calories bar - clean design like image */}
+						<div className="space-y-3 mb-6">
+							<p
+								style={{
+									fontSize: "14px",
+									fontWeight: 500,
+									color: "#546E7A",
+								}}
+							>
+								Calories :
+							</p>
+							<div className="relative w-full">
+								{/* Track: 0 to recommendedTotal */}
+								<div
+									className="h-8 rounded-lg w-full flex overflow-hidden"
+									style={{
+										background: "linear-gradient(to right, #F5F5F5 0%, #EEEEEE 100%)",
+										border: "1px solid rgba(0,0,0,0.06)",
+									}}
+								>
+									{/* Logged portion (teal) */}
+									<div
+										className="h-full transition-all rounded-l-lg flex-shrink-0"
+										style={{
+											width: `${Math.min(
+												100,
+												(totalLogged / recommendedTotal) * 100,
+											)}%`,
+											background: "linear-gradient(135deg, #B2DFDB 0%, #80CBC4 100%)",
+											borderRight: exceeded > 0 ? "none" : undefined,
+										}}
+									/>
+									{/* Exceeded portion (red) */}
+									{exceeded > 0 && (
+										<div
+											className="h-full flex-shrink-0"
+											style={{
+												width: `${Math.min(
+													100,
+													(exceeded / recommendedTotal) * 100,
+												)}%`,
+												background: "linear-gradient(135deg, #FFCDD2 0%, #EF9A9A 100%)",
+												borderRadius: "0 8px 8px 0",
+											}}
+										/>
+									)}
+								</div>
+								<div className="flex justify-between mt-1.5 text-sm" style={{ color: "#78909C" }}>
+									<span>0</span>
+									<span className="font-semibold" style={{ color: "#00453A" }}>
+										{totalLogged} / {recommendedTotal} kcal
+										{exceeded > 0 && (
+											<span className="ml-1" style={{ color: "#D32F2F" }}>
+												(+{exceeded} over)
+											</span>
+										)}
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Macros section - always visible */}
+						<div>
+							<p
+								style={{
+									fontSize: "14px",
+									fontWeight: 600,
+									color: "#00453A",
+									marginBottom: "12px",
+								}}
+							>
+								Macros
+							</p>
+							<div className="grid grid-cols-3 gap-4">
+								<div
+									className="p-4 rounded-xl text-center border"
+									style={{
+										background: "#FFFFFF",
+										borderColor: "rgba(0, 133, 111, 0.15)",
+										boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+									}}
+								>
+									<p style={{ fontSize: "12px", color: "#78909C", marginBottom: "4px" }}>
+										Carbs
+									</p>
+									<p style={{ fontSize: "22px", fontWeight: 700, color: "#00856F" }}>
+										{macros?.carbsPercent ?? 0}%
+									</p>
+								</div>
+								<div
+									className="p-4 rounded-xl text-center border"
+									style={{
+										background: "#FFFFFF",
+										borderColor: "rgba(0, 133, 111, 0.15)",
+										boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+									}}
+								>
+									<p style={{ fontSize: "12px", color: "#78909C", marginBottom: "4px" }}>
+										Protein
+									</p>
+									<p style={{ fontSize: "22px", fontWeight: 700, color: "#00856F" }}>
+										{macros?.proteinPercent ?? 0}%
+									</p>
+								</div>
+								<div
+									className="p-4 rounded-xl text-center border"
+									style={{
+										background: "#FFFFFF",
+										borderColor: "rgba(0, 133, 111, 0.15)",
+										boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+									}}
+								>
+									<p style={{ fontSize: "12px", color: "#78909C", marginBottom: "4px" }}>
+										Fat
+									</p>
+									<p style={{ fontSize: "22px", fontWeight: 700, color: "#00856F" }}>
+										{macros?.fatPercent ?? 0}%
+									</p>
+								</div>
+							</div>
+						</div>
+					</Card>
+
+					{/* Weekly Sleep Pattern */}
+					{(patient.sleepPattern?.byDay?.length ?? 0) > 0 && (
+						<Card
+							className="p-6"
+							style={{
+								background: "#FFFFFF",
+								borderRadius: "16px",
+								border: "1px solid rgba(0, 0, 0, 0.08)",
+							}}
+						>
+							<h3
+								style={{
+									fontSize: "18px",
+									fontWeight: 700,
+									color: "#00453A",
+									marginBottom: "16px",
+								}}
+							>
+								Weekly Sleep Pattern
+							</h3>
+							<HealthTrendChart
+								title=""
+								data={sleepChartData}
+								gradientId="sleepGradient"
+								testId="card-sleep-trend"
+								height={200}
+								yAxisConfig={{
+									domain: [0, 10],
+									ticks: [0, 4, 6, 8, 10],
+								}}
+							/>
+							<div className="flex items-center gap-2 mt-4">
+								<Moon className="w-5 h-5" style={{ color: "#00856F" }} />
+								<span style={{ fontSize: "14px", color: "#546E7A" }}>
+									Sleep Quality: {patient.sleepPattern?.avgQuality ?? "No data"}
+								</span>
+							</div>
+						</Card>
+					)}
+
+					{/* Glucose Summary + Recent Notes */}
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-						{/* Glucose Summary Card */}
 						<Card
 							className="p-6"
 							style={{
@@ -351,81 +613,45 @@ export function PatientProfile() {
 							}}
 							data-testid="card-glucose-summary"
 						>
-							<div className="flex items-center justify-between mb-6 lg:mb-0 ">
-								<h3
-									style={{
-										fontSize: "20px",
-										fontWeight: 700,
-										color: "#00453A",
-									}}
-								>
-									Glucose Summary
-								</h3>
-								<ToggleIcon />
-							</div>
-
-							<div className="grid grid-cols-3 gap-4 lg:w-full lg:h-full lg:place-items-center ">
+							<h3
+								style={{
+									fontSize: "20px",
+									fontWeight: 700,
+									color: "#00453A",
+									marginBottom: "24px",
+								}}
+							>
+								Glucose Summary
+							</h3>
+							<div className="grid grid-cols-3 gap-4">
 								<div className="text-center">
-									<p
-										style={{
-											fontSize: "13px",
-											fontWeight: 500,
-											color: "#78909C",
-											marginBottom: "8px",
-										}}
-									>
+									<p style={{ fontSize: "13px", color: "#78909C", marginBottom: "8px" }}>
 										Highs
 									</p>
 									<p
-										style={{
-											fontSize: "36px",
-											fontWeight: 700,
-											color: "#00856F",
-										}}
+										style={{ fontSize: "36px", fontWeight: 700, color: "#00856F" }}
 										data-testid="text-highs"
 									>
 										{patient.glucoseSummary.highs || 0}%
 									</p>
 								</div>
 								<div className="text-center">
-									<p
-										style={{
-											fontSize: "13px",
-											fontWeight: 500,
-											color: "#78909C",
-											marginBottom: "8px",
-										}}
-									>
+									<p style={{ fontSize: "13px", color: "#78909C", marginBottom: "8px" }}>
 										Lows
 									</p>
 									<p
-										style={{
-											fontSize: "36px",
-											fontWeight: 700,
-											color: "#00856F",
-										}}
+										style={{ fontSize: "36px", fontWeight: 700, color: "#00856F" }}
 										data-testid="text-lows"
 									>
 										{patient.glucoseSummary.lows || 0}%
 									</p>
 								</div>
 								<div className="text-center">
-									<p
-										style={{
-											fontSize: "13px",
-											fontWeight: 500,
-											color: "#78909C",
-											marginBottom: "8px",
-										}}
-									>
+									<p style={{ fontSize: "13px", color: "#78909C", marginBottom: "8px" }}>
 										Time in Range
 									</p>
 									<p
-										style={{
-											fontSize: "36px",
-											fontWeight: 700,
-											color: "#00856F",
-										}}
+										style={{ fontSize: "36px", fontWeight: 700, color: "#00856F" }}
 										data-testid="text-time-in-range"
 									>
 										{patient.glucoseSummary.timeInRange || 0}%
@@ -434,7 +660,6 @@ export function PatientProfile() {
 							</div>
 						</Card>
 
-						{/* Recent Notes Card */}
 						<Card
 							className="p-6"
 							style={{
@@ -478,7 +703,6 @@ export function PatientProfile() {
 								<div
 									style={{
 										fontSize: "14px",
-										fontWeight: 400,
 										color: "#78909C",
 										textAlign: "center",
 										padding: "20px 0",
@@ -488,7 +712,7 @@ export function PatientProfile() {
 								</div>
 							) : (
 								<ul
-									className="space-y-3 overflow-y-scroll "
+									className="space-y-3"
 									style={{ maxHeight: "200px", overflowY: "auto" }}
 								>
 									{patient.recentNotes.slice(0, 3).map((note, index) => {
@@ -507,7 +731,6 @@ export function PatientProfile() {
 													<span
 														style={{
 															fontSize: "14px",
-															fontWeight: 400,
 															color: "#546E7A",
 															display: "block",
 														}}
@@ -519,7 +742,6 @@ export function PatientProfile() {
 															<span
 																style={{
 																	fontSize: "11px",
-																	fontWeight: 400,
 																	color: "#78909C",
 																}}
 															>
@@ -530,12 +752,7 @@ export function PatientProfile() {
 															</span>
 															{isAdmin && summaryData.physicianName && (
 																<>
-																	<span
-																		style={{
-																			fontSize: "11px",
-																			color: "#78909C",
-																		}}
-																	>
+																	<span style={{ fontSize: "11px", color: "#78909C" }}>
 																		•
 																	</span>
 																	<span
@@ -557,122 +774,129 @@ export function PatientProfile() {
 									})}
 								</ul>
 							)}
+							<Button
+								className="w-full mt-4"
+								style={{
+									background: "#00856F",
+									color: "#FFFFFF",
+									borderRadius: "8px",
+									fontWeight: 600,
+								}}
+							>
+								Add Notes
+							</Button>
 						</Card>
 					</div>
 				</div>
+			</main>
 
-				{/* All Summaries Dialog */}
-				<Dialog
-					open={isAllSummariesDialogOpen}
-					onOpenChange={setIsAllSummariesDialogOpen}
+			{/* Medical Reports - View-only modal for physician/admin */}
+			<PatientLabReportsModal
+				open={medicalReportsOpen}
+				onOpenChange={setMedicalReportsOpen}
+				userId={patientId}
+			/>
+
+			<Dialog
+				open={isAllSummariesDialogOpen}
+				onOpenChange={setIsAllSummariesDialogOpen}
+			>
+				<DialogContent
+					style={{
+						maxWidth: "600px",
+						maxHeight: "80vh",
+						overflow: "hidden",
+						display: "flex",
+						flexDirection: "column",
+					}}
 				>
-					<DialogContent
-						style={{
-							maxWidth: "600px",
-							maxHeight: "80vh",
-							overflow: "hidden",
-							display: "flex",
-							flexDirection: "column",
-						}}
-					>
-						<DialogHeader>
-							<DialogTitle
-								style={{
-									fontSize: "20px",
-									fontWeight: 700,
-									color: "#00453A",
-								}}
-							>
-								All Consultation Summaries
-							</DialogTitle>
-						</DialogHeader>
-						<div
+					<DialogHeader>
+						<DialogTitle
 							style={{
-								overflowY: "auto",
-								flex: 1,
-								padding: "0 24px 24px 24px",
+								fontSize: "20px",
+								fontWeight: 700,
+								color: "#00453A",
 							}}
 						>
-							{patient.consultationSummaries &&
+							All Consultation Summaries
+						</DialogTitle>
+					</DialogHeader>
+					<div
+						style={{
+							overflowY: "auto",
+							flex: 1,
+							padding: "0 24px 24px 24px",
+						}}
+					>
+						{patient.consultationSummaries &&
 							patient.consultationSummaries.length > 0 ? (
-								<ul className="space-y-4">
-									{patient.consultationSummaries.map((summary, index) => (
-										<li
-											key={index}
-											className="flex items-start gap-3 pb-4 border-b last:border-b-0"
-											style={{
-												borderColor: "rgba(0, 0, 0, 0.08)",
-											}}
-										>
-											<div
-												className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-												style={{ background: "#00856F" }}
-											/>
-											<div className="flex-1 min-w-0">
-												<p
+							<ul className="space-y-4">
+								{patient.consultationSummaries.map((summary, index) => (
+									<li
+										key={index}
+										className="flex items-start gap-3 pb-4 border-b last:border-b-0"
+										style={{ borderColor: "rgba(0, 0, 0, 0.08)" }}
+									>
+										<div
+											className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+											style={{ background: "#00856F" }}
+										/>
+										<div className="flex-1 min-w-0">
+											<p
+												style={{
+													fontSize: "14px",
+													color: "#546E7A",
+													marginBottom: "8px",
+													lineHeight: "1.5",
+												}}
+											>
+												{summary.summary}
+											</p>
+											<div className="flex items-center gap-2 flex-wrap">
+												<span
 													style={{
-														fontSize: "14px",
-														fontWeight: 400,
-														color: "#546E7A",
-														marginBottom: "8px",
-														lineHeight: "1.5",
+														fontSize: "12px",
+														color: "#78909C",
 													}}
 												>
-													{summary.summary}
-												</p>
-												<div className="flex items-center gap-2 flex-wrap">
-													<span
-														style={{
-															fontSize: "12px",
-															fontWeight: 400,
-															color: "#78909C",
-														}}
-													>
-														{formatDate(new Date(summary.date), "MMM dd, yyyy")}
-													</span>
-													{isAdmin && summary.physicianName && (
-														<>
-															<span
-																style={{
-																	fontSize: "12px",
-																	color: "#78909C",
-																}}
-															>
-																•
-															</span>
-															<span
-																style={{
-																	fontSize: "12px",
-																	fontWeight: 500,
-																	color: "#00856F",
-																}}
-															>
-																Dr. {summary.physicianName}
-															</span>
-														</>
-													)}
-												</div>
+													{formatDate(new Date(summary.date), "MMM dd, yyyy")}
+												</span>
+												{isAdmin && summary.physicianName && (
+													<>
+														<span style={{ fontSize: "12px", color: "#78909C" }}>
+															•
+														</span>
+														<span
+															style={{
+																fontSize: "12px",
+																fontWeight: 500,
+																color: "#00856F",
+															}}
+														>
+															Dr. {summary.physicianName}
+														</span>
+													</>
+												)}
 											</div>
-										</li>
-									))}
-								</ul>
-							) : (
-								<div
-									style={{
-										fontSize: "14px",
-										fontWeight: 400,
-										color: "#78909C",
-										textAlign: "center",
-										padding: "40px 0",
-									}}
-								>
-									No consultation summaries available yet.
-								</div>
-							)}
-						</div>
-					</DialogContent>
-				</Dialog>
-			</main>
+										</div>
+									</li>
+								))}
+							</ul>
+						) : (
+							<div
+								style={{
+									fontSize: "14px",
+									color: "#78909C",
+									textAlign: "center",
+									padding: "40px 0",
+								}}
+							>
+								No consultation summaries available yet.
+							</div>
+						)}
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

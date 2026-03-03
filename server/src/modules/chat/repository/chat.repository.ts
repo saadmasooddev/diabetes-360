@@ -1,4 +1,4 @@
-import { db } from "../../../app/config/db";
+import { db, dbUtils } from "../../../app/config/db";
 import {
 	CHAT_ROLES,
 	chatMessages,
@@ -19,22 +19,50 @@ export class ChatRepository {
 	 * Get all chat messages for a user on a given date, ordered by recorded_at ascending.
 	 * Uses DATE cast for consistent results.
 	 */
-	async getByUserAndDate(
+	async getByUser(
 		userId: string,
 		dateStr: string,
-		limit = 100,
-	): Promise<ChatMessage[]> {
-		return db
+		offset?: number,
+		limit?: number,
+		filterByDate = true
+	): Promise<{ totalMessages: number, messages: ChatMessage[]}> {
+		const conditions = [
+			eq(chatMessages.userId, userId),
+		]
+		if(filterByDate){
+			conditions.push(
+				sql`DATE(${chatMessages.chatDate}) = DATE(${dateStr})`,
+			)
+		}
+
+		const totalMessagesPromise = db.select({ count: sql<number>`count(*)`})
+		.from(chatMessages)
+		.where(and(...conditions))
+
+		const messagesPromise = db
 			.select()
 			.from(chatMessages)
 			.where(
 				and(
-					eq(chatMessages.userId, userId),
-					sql`DATE(${chatMessages.chatDate}) = DATE(${dateStr})`,
+					...conditions
 				),
 			)
-			.orderBy(asc(chatMessages.recordedAt))
-			.limit(limit);
+			.orderBy(desc(chatMessages.recordedAt))
+			if(offset){
+				messagesPromise.offset(offset)
+			}
+			if(limit){
+				messagesPromise.limit(limit)
+			}
+
+
+			const [totalMessages, messages]= await Promise.all([totalMessagesPromise, messagesPromise])
+
+			return {
+				totalMessages: totalMessages[0].count || 0,
+				messages: messages.reverse()
+			}
+
 	}
 
 	/**
@@ -43,7 +71,7 @@ export class ChatRepository {
 	async insertTransaction(data: InsertChatMessage[]): Promise<ChatMessage[]> {
 		if (!data.length) return [];
 		const dateStr = data[0].chatDate;
-		const rows = await db.transaction(async (tx) => {
+		const rows = await dbUtils.transaction(async (tx) => {
 			return await tx
 				.insert(chatMessages)
 				.values(

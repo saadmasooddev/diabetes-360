@@ -1,11 +1,22 @@
-import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { useInView } from "react-intersection-observer"
+import { Send, Mic, Square } from "lucide-react";
+import {
+	IMediaRecorder,
+	MediaRecorder,
+} from "extendable-media-recorder";
+
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatByDate, useSendChatMessage } from "@/hooks/mutations/useChat";
-import { DateManager } from "@/lib/utils";
+import {
+	useChatByDate,
+	useSendChatMessage,
+	useTranscribeAudio,
+} from "@/hooks/mutations/useChat";
+import { DateManager, generalUtils } from "@/lib/utils";
 import { Markdown } from "markdown-to-jsx/react";
+import { useToast } from "@/hooks/use-toast";
 
 function formatTime(iso: string): string {
 	const d = new Date(iso);
@@ -17,18 +28,43 @@ function formatTime(iso: string): string {
 	return `${h}:${m} ${ampm}`;
 }
 
+
 export default function DiaBot() {
 	const [inputValue, setInputValue] = useState("");
+	const [isRecording, setIsRecording] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
-	const todayStr = DateManager.formatDate(new Date());
-	const { data, isLoading, isError } = useChatByDate(todayStr);
-	const sendMessage = useSendChatMessage(todayStr);
+	const streamRef = useRef<MediaStream | null>(null);
+	const chunksRef = useRef<Blob[]>([]);
+	const mediaRecorderRef = useRef<IMediaRecorder | null>(null);
 
-	const messages = data?.messages ?? [];
-	const nudge = data?.nudge;
+	const todayStr = DateManager.formatDate(new Date());
+	const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, } =
+		useChatByDate(todayStr);
+	const sendMessage = useSendChatMessage(todayStr);
+	const transcribeAudio = useTranscribeAudio();
+	const { toast } = useToast();
+	const { ref: intersectionRef, inView, entry } = useInView({
+		threshold: 0.2
+	})
+	const previousScrollHeightRef = useRef(0);
+
+	const messages = data?.pages.map(page => page.messages).flat() || []
+	const nudge = data?.pages[0]?.nudge;
 	const isSending = sendMessage.isPending;
+	const isTranscribing = transcribeAudio.isPending;
+	const canSendText = Boolean(inputValue.trim()) && !isSending && !isTranscribing;
+	const canSend = canSendText;
+
+	useEffect(() => {
+		if (inView && hasNextPage && !isFetchingNextPage) {
+			const element = chatContainerRef.current
+			previousScrollHeightRef.current = element?.scrollHeight || 0
+			fetchNextPage()
+		}
+	}, [inView, hasNextPage, isFetchingNextPage])
+
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,15 +72,97 @@ export default function DiaBot() {
 
 	useEffect(() => {
 		scrollToBottom();
-	}, [messages.length, isSending, nudge]);
+	}, [isSending, isTranscribing]);
+
+	useLayoutEffect(() => {
+		const element = chatContainerRef.current
+		if (element) {
+			const newScrollHeight = chatContainerRef.current.scrollHeight;
+			const heightDifference = newScrollHeight - previousScrollHeightRef.current;
+			chatContainerRef.current.scrollTop += heightDifference;
+		}
+
+		previousScrollHeightRef.current = chatContainerRef.current?.scrollHeight || 0;
+	}, [messages.length])
+
+	const stopStream = useCallback(() => {
+		streamRef.current?.getTracks().forEach((t) => t.stop());
+		streamRef.current = null;
+	}, []);
+
+	const startRecording = useCallback(async () => {
+		try {
+			await generalUtils.ensureWavEncoderRegistered();
+
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: true,
+			});
+			streamRef.current = stream;
+			chunksRef.current = [];
+			const mimeType = "audio/wav";
+
+			const recorder = new MediaRecorder(stream, { mimeType });
+			mediaRecorderRef.current = recorder;
+			recorder.ondataavailable = (e) => {
+				if (e.data.size > 0) chunksRef.current.push(e.data);
+			};
+			recorder.onstop = async () => {
+				mediaRecorderRef.current = null;
+				setIsRecording(false);
+				stopStream();
+
+				const blob = new Blob(chunksRef.current, { type: mimeType });
+
+				transcribeAudio.mutate(blob, {
+					onSuccess: (result) => {
+						const text = result.transcription_text?.trim();
+						if (!text) {
+							toast({
+								title: "No speech detected",
+								description: "Try recording again or type your message.",
+								variant: "destructive",
+							});
+							return
+						}
+						sendMessage.mutate(text);
+					},
+				});
+
+			};
+			recorder.start();
+			setIsRecording(true);
+		} catch (err) {
+			console.log(err)
+			toast({
+				title: "Microphone access needed",
+				description: "Allow microphone access to record voice messages.",
+				variant: "destructive",
+			});
+		}
+	}, [stopStream, toast]);
+
+	const stopRecording = useCallback(() => {
+		if (mediaRecorderRef.current?.state === "recording") {
+			mediaRecorderRef.current.stop();
+		}
+		setIsRecording(false);
+	}, []);
+
+	useEffect(() => {
+		return () => {
+			stopStream();
+		};
+	}, [stopStream]);
 
 	const handleSendMessage = () => {
+		if (isSending || isTranscribing) return;
+
 		const trimmed = inputValue.trim();
-		if (!trimmed || isSending) return;
+		if (!trimmed) return;
 
 		setInputValue("");
 		sendMessage.mutate(trimmed);
-	};
+	}
 
 	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -125,6 +243,7 @@ export default function DiaBot() {
 							</div>
 						) : (
 							<div className="space-y-4">
+								<div ref={intersectionRef}></div>
 								{nudge && (
 									<div
 										className="flex justify-end"
@@ -275,6 +394,42 @@ export default function DiaBot() {
 									</div>
 								)}
 
+								{isTranscribing && (
+									<div
+										className="flex justify-start"
+										data-testid="indicator-transcribing"
+									>
+										<div
+											className="flex items-center gap-2 px-4 py-2 rounded-full"
+											style={{
+												background: "rgba(0, 133, 111, 0.12)",
+												border: "1px solid rgba(0, 133, 111, 0.3)",
+											}}
+										>
+											<div className="flex gap-1">
+												<div
+													className="w-2 h-2 rounded-full bg-[#00856F] animate-bounce"
+													style={{ animationDelay: "0ms" }}
+												/>
+												<div
+													className="w-2 h-2 rounded-full bg-[#00856F] animate-bounce"
+													style={{ animationDelay: "150ms" }}
+												/>
+												<div
+													className="w-2 h-2 rounded-full bg-[#00856F] animate-bounce"
+													style={{ animationDelay: "300ms" }}
+												/>
+											</div>
+											<span
+												className="text-sm font-medium"
+												style={{ color: "#00453A" }}
+											>
+												Transcribing your voice...
+											</span>
+										</div>
+									</div>
+								)}
+
 								<div ref={messagesEndRef} />
 							</div>
 						)}
@@ -291,6 +446,28 @@ export default function DiaBot() {
 							}}
 							data-testid="container-input"
 						>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								className="flex-shrink-0"
+								onClick={isRecording ? stopRecording : startRecording}
+								disabled={isLoading || isSending || isTranscribing}
+								style={{
+									color: isRecording ? "#C62828" : "#00856F",
+									background: isRecording
+										? "rgba(198, 40, 40, 0.1)"
+										: "transparent",
+								}}
+								aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+								data-testid="button-mic"
+							>
+								{isRecording ? (
+									<Square size={20} fill="currentColor" />
+								) : (
+									<Mic size={20} />
+								)}
+							</Button>
 							<Input
 								value={inputValue}
 								onChange={(e) => setInputValue(e.target.value)}
@@ -302,25 +479,30 @@ export default function DiaBot() {
 									fontWeight: 400,
 									color: "#263238",
 								}}
-								disabled={isLoading || isSending}
+								disabled={isLoading || isSending || isRecording || isTranscribing}
 								data-testid="input-message"
 							/>
 
 							<Button
 								onClick={handleSendMessage}
-								disabled={!inputValue.trim() || isLoading || isSending}
+								disabled={!canSend}
 								variant="ghost"
 								size="icon"
 								className="flex-shrink-0"
 								style={{
-									color:
-										inputValue.trim() && !isSending ? "#00856F" : "#B0BEC5",
+									color: canSend ? "#00856F" : "#B0BEC5",
 								}}
 								aria-label="Send message"
 								data-testid="button-send"
 							>
 								<Send size={20} />
 							</Button>
+							{/* <Button
+								onClick={() => fetchNextPage()}
+								disabled={!hasNextPage || isFetchingNextPage}
+							>
+								Load More
+							</Button> */}
 						</div>
 					</div>
 				</div>

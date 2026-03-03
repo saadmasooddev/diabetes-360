@@ -9,6 +9,11 @@ import type {
 	ActivityType,
 	InsertHealthMetric,
 	InsertExerciseLog,
+	QuickLogDietTypeEnumValues,
+	QuickLogSleepDurationTypeEnumValues,
+	QuickLogMedicinesTypeEnumValues,
+	QuickLogStressLevelTypeEnumValues,
+	QuickLogExerciseTypeEnumValues,
 } from "@shared/schema";
 import type { ApiResponse } from "@/types/auth.types";
 import type { ExtendedLimits } from "./settingsService";
@@ -55,11 +60,22 @@ export interface HealthTips {
 	tip: string;
 }
 
+export interface QuickLogData {
+	id: string;
+	exercise: string | null;
+	diet: string | null;
+	sleepDuration: string | null;
+	medicines: string | null;
+	stressLevel: string | null;
+	logDate: string;
+}
+
 export interface LatestMetrics {
 	current: Partial<ExtendedHealthMetric>;
 	previous: Partial<ExtendedHealthMetric>;
 	limits: ExtendedLimits;
 	remainingLimits: ExtendedLimits;
+	quickLog?: QuickLogData | null;
 }
 class HealthService {
 	async getLatestMetric(): Promise<LatestMetrics> {
@@ -176,6 +192,27 @@ class HealthService {
 	}
 
 	// Activity Logs Methods
+	async createDailyQuickLog(data: {
+		exercise: QuickLogExerciseTypeEnumValues;
+		diet: QuickLogDietTypeEnumValues;
+		sleepDuration: QuickLogSleepDurationTypeEnumValues;
+		medicines: QuickLogMedicinesTypeEnumValues;
+		stressLevel: QuickLogStressLevelTypeEnumValues;
+		logDate?: string;
+	}) {
+		const payload = {
+			...data,
+			logDate: data.logDate ?? new Date().toISOString().split("T")[0],
+		};
+		const response = await httpClient.post<
+			ApiResponse<{ id: string; recordedAt: string }>
+		>(API_ENDPOINTS.HEALTH.DAILY_QUICK_LOGS, payload);
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to create daily quick log");
+		}
+		return response.data;
+	}
+
 	async addActivityLog(data: {
 		activityType: "walking" | "yoga";
 		hours?: number;

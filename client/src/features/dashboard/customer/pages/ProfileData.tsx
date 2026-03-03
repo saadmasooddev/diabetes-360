@@ -19,15 +19,13 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import {
-	profileDataSchema,
-	type ProfileDataFormValues,
-} from "@/schemas/profileData";
-import {
 	genderOptions,
 	diabetesTypeOptions,
 	dayOptions,
 	monthOptions,
 	yearOptions,
+	yesNoNotSureOptions,
+	bloodSugarTypeOptions,
 	weightOptions,
 	heightOptions,
 } from "@/mocks/profileData";
@@ -39,6 +37,8 @@ import {
 import { useState, useEffect } from "react";
 import { parseDateToComponents } from "@/lib/utils";
 import { ButtonSpinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { DIABETES_TYPE, ProfileDataFormValues, YES_NO_NOT_SURE_VALUES, profileDataSchema } from "@shared/schema";
 
 export function ProfileData() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,14 +55,19 @@ export function ProfileData() {
 			birthDay: "",
 			birthMonth: "",
 			birthYear: "",
-			diagnosisDay: "",
-			diagnosisMonth: "",
-			diagnosisYear: "",
 			weight: "",
 			height: "",
-			diabetesType: undefined,
+			diabetesType: DIABETES_TYPE.PREDIABETES,
+			doctorToldDiabetes: undefined,
+			knowsBloodSugarValue: undefined,
+			bloodSugarType: undefined,
+			bloodSugarReading: "",
+			onDiabetesMedicationOrInsulin: "",
+			mainGoal: "",
 		},
 	});
+
+	const knowsBloodSugarValue = form.watch("knowsBloodSugarValue");
 
 	// Populate form with existing data if available
 	useEffect(() => {
@@ -71,11 +76,6 @@ export function ProfileData() {
 			month: birthMonth,
 			year: birthYear,
 		} = parseDateToComponents(existingData?.customerData?.birthday || "");
-		const {
-			day: diagnosisDay,
-			month: diagnosisMonth,
-			year: diagnosisYear,
-		} = parseDateToComponents(existingData?.customerData?.diagnosisDate || "");
 
 		if (existingData?.customerData) {
 			const data = existingData.customerData;
@@ -84,16 +84,15 @@ export function ProfileData() {
 				birthDay: birthDay,
 				birthMonth: birthMonth,
 				birthYear: birthYear,
-				diagnosisDay: diagnosisDay,
-				diagnosisMonth: diagnosisMonth,
-				diagnosisYear: diagnosisYear,
 				weight: data.weight,
 				height: data.height,
-				diabetesType: data.diabetesType as
-					| "type1"
-					| "type2"
-					| "gestational"
-					| "prediabetes",
+				diabetesType: data.diabetesType as DIABETES_TYPE || DIABETES_TYPE.PREDIABETES,
+				knowsBloodSugarValue: undefined,
+				bloodSugarType: undefined,
+				bloodSugarReading: "",
+				onDiabetesMedicationOrInsulin: data.medicationInfo || "",
+				mainGoal: data.mainGoal || "",
+				doctorToldDiabetes: data.diabetesType ? YES_NO_NOT_SURE_VALUES.YES : undefined
 			});
 		}
 	}, [existingData, form]);
@@ -179,6 +178,7 @@ export function ProfileData() {
 								</h2>
 
 								<div className="space-y-6">
+
 									{/* Gender and Date of Birth Row */}
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 										<FormField
@@ -343,6 +343,89 @@ export function ProfileData() {
 											</div>
 										</div>
 									</div>
+									<div className="grid grid-cols-2 gap-3">
+										<FormField
+											control={form.control}
+											name="weight"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel
+														className="text-[20px] font-normal"
+														style={{ fontFamily: "'Inter', sans-serif" }}
+													>
+														Weight(kg)
+													</FormLabel>
+													<Select
+														onValueChange={field.onChange}
+														value={field.value}
+													>
+														<FormControl>
+															<SelectTrigger
+																className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
+																style={{ fontFamily: "'Inter', sans-serif" }}
+																data-testid="select-weight"
+															>
+																<SelectValue placeholder="0" />
+															</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+															{weightOptions.map((option) => (
+																<SelectItem
+																	key={option.value}
+																	value={option.value}
+																	data-testid={`option-weight-${option.value}`}
+																>
+																	{option.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+
+										<FormField
+											control={form.control}
+											name="height"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel
+														className="text-[20px] font-normal"
+														style={{ fontFamily: "'Inter', sans-serif" }}
+													>
+														Height(cm)
+													</FormLabel>
+													<Select
+														onValueChange={field.onChange}
+														value={field.value}
+													>
+														<FormControl>
+															<SelectTrigger
+																className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
+																style={{ fontFamily: "'Inter', sans-serif" }}
+																data-testid="select-height"
+															>
+																<SelectValue placeholder="0" />
+															</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+															{heightOptions.map((option) => (
+																<SelectItem
+																	key={option.value}
+																	value={option.value}
+																	data-testid={`option-height-${option.value}`}
+																>
+																	{option.label}
+																</SelectItem>
+															))}
+														</SelectContent>
+													</Select>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+									</div>
 								</div>
 							</div>
 
@@ -360,217 +443,10 @@ export function ProfileData() {
 								</h2>
 
 								<div className="space-y-6">
-									{/* Diagnosis Date Row */}
-									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-										<div>
-											<FormLabel
-												className="text-[20px] font-normal block mb-2"
-												style={{ fontFamily: "'Inter', sans-serif" }}
-											>
-												Diagnosis Date
-											</FormLabel>
-											<div className="grid grid-cols-3 gap-3">
-												<FormField
-													control={form.control}
-													name="diagnosisDay"
-													render={({ field }) => (
-														<FormItem>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}
-															>
-																<FormControl>
-																	<SelectTrigger
-																		className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
-																		style={{
-																			fontFamily: "'Inter', sans-serif",
-																		}}
-																		data-testid="select-diagnosis-day"
-																	>
-																		<SelectValue placeholder="DD" />
-																	</SelectTrigger>
-																</FormControl>
-																<SelectContent>
-																	{dayOptions.map((option) => (
-																		<SelectItem
-																			key={option.value}
-																			value={option.value}
-																			data-testid={`option-diagnosis-day-${option.value}`}
-																		>
-																			{option.label}
-																		</SelectItem>
-																	))}
-																</SelectContent>
-															</Select>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
 
-												<FormField
-													control={form.control}
-													name="diagnosisMonth"
-													render={({ field }) => (
-														<FormItem>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}
-															>
-																<FormControl>
-																	<SelectTrigger
-																		className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
-																		style={{
-																			fontFamily: "'Inter', sans-serif",
-																		}}
-																		data-testid="select-diagnosis-month"
-																	>
-																		<SelectValue placeholder="MM" />
-																	</SelectTrigger>
-																</FormControl>
-																<SelectContent>
-																	{monthOptions.map((option) => (
-																		<SelectItem
-																			key={option.value}
-																			value={option.value}
-																			data-testid={`option-diagnosis-month-${option.value}`}
-																		>
-																			{option.label}
-																		</SelectItem>
-																	))}
-																</SelectContent>
-															</Select>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-
-												<FormField
-													control={form.control}
-													name="diagnosisYear"
-													render={({ field }) => (
-														<FormItem>
-															<Select
-																onValueChange={field.onChange}
-																value={field.value}
-															>
-																<FormControl>
-																	<SelectTrigger
-																		className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
-																		style={{
-																			fontFamily: "'Inter', sans-serif",
-																		}}
-																		data-testid="select-diagnosis-year"
-																	>
-																		<SelectValue placeholder="YYYY" />
-																	</SelectTrigger>
-																</FormControl>
-																<SelectContent>
-																	{yearOptions.map((option) => (
-																		<SelectItem
-																			key={option.value}
-																			value={option.value}
-																			data-testid={`option-diagnosis-year-${option.value}`}
-																		>
-																			{option.label}
-																		</SelectItem>
-																	))}
-																</SelectContent>
-															</Select>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-											</div>
-										</div>
-
-										{/* Weight and Height */}
-										<div className="grid grid-cols-2 gap-3">
-											<FormField
-												control={form.control}
-												name="weight"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel
-															className="text-[20px] font-normal"
-															style={{ fontFamily: "'Inter', sans-serif" }}
-														>
-															Weight(kg)
-														</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															value={field.value}
-														>
-															<FormControl>
-																<SelectTrigger
-																	className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
-																	style={{ fontFamily: "'Inter', sans-serif" }}
-																	data-testid="select-weight"
-																>
-																	<SelectValue placeholder="0" />
-																</SelectTrigger>
-															</FormControl>
-															<SelectContent>
-																{weightOptions.map((option) => (
-																	<SelectItem
-																		key={option.value}
-																		value={option.value}
-																		data-testid={`option-weight-${option.value}`}
-																	>
-																		{option.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-
-											<FormField
-												control={form.control}
-												name="height"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel
-															className="text-[20px] font-normal"
-															style={{ fontFamily: "'Inter', sans-serif" }}
-														>
-															Height(cm)
-														</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															value={field.value}
-														>
-															<FormControl>
-																<SelectTrigger
-																	className="h-[46px] rounded-[10px] border-[#D8DADC] text-[16px]"
-																	style={{ fontFamily: "'Inter', sans-serif" }}
-																	data-testid="select-height"
-																>
-																	<SelectValue placeholder="0" />
-																</SelectTrigger>
-															</FormControl>
-															<SelectContent>
-																{heightOptions.map((option) => (
-																	<SelectItem
-																		key={option.value}
-																		value={option.value}
-																		data-testid={`option-height-${option.value}`}
-																	>
-																		{option.label}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-										</div>
-									</div>
 
 									{/* Type of Diabetes */}
-									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+									<div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
 										<FormField
 											control={form.control}
 											name="diabetesType"
@@ -580,11 +456,12 @@ export function ProfileData() {
 														className="text-[20px] font-normal"
 														style={{ fontFamily: "'Inter', sans-serif" }}
 													>
-														Type of Diabetes
+														What best describes you today?
 													</FormLabel>
 													<Select
 														onValueChange={field.onChange}
 														value={field.value}
+														defaultValue={DIABETES_TYPE.PREDIABETES}
 													>
 														<FormControl>
 															<SelectTrigger
@@ -592,7 +469,7 @@ export function ProfileData() {
 																style={{ fontFamily: "'Inter', sans-serif" }}
 																data-testid="select-diabetes-type"
 															>
-																<SelectValue placeholder="Type 1 Diabetes" />
+																<SelectValue placeholder={"Prediabetes"} />
 															</SelectTrigger>
 														</FormControl>
 														<SelectContent>
@@ -612,6 +489,222 @@ export function ProfileData() {
 											)}
 										/>
 									</div>
+
+									{/* Has a doctor ever told you that you have diabetes? */}
+									<FormField
+										control={form.control}
+										name="doctorToldDiabetes"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel
+													className="text-[20px] font-normal"
+													style={{ fontFamily: "'Inter', sans-serif" }}
+												>
+													Has a doctor ever told you that you have diabetes?
+												</FormLabel>
+												<Select
+													onValueChange={field.onChange}
+													value={field.value}
+												>
+													<FormControl>
+														<SelectTrigger
+															className="h-[56px] rounded-[10px] border-[#D8DADC] text-[16px]"
+															style={{ fontFamily: "'Inter', sans-serif" }}
+															data-testid="select-doctor-told-diabetes"
+														>
+															<SelectValue placeholder="Yes / No / Not sure" />
+														</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+														{yesNoNotSureOptions.map((option) => (
+															<SelectItem
+																key={option.value}
+																value={option.value}
+																data-testid={`option-doctor-told-${option.value}`}
+															>
+																{option.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									{/* Do you know any recent blood sugar value? */}
+									<FormField
+										control={form.control}
+										name="knowsBloodSugarValue"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel
+													className="text-[20px] font-normal"
+													style={{ fontFamily: "'Inter', sans-serif" }}
+												>
+													Do you know any recent blood sugar value?
+												</FormLabel>
+												<Select
+													onValueChange={(value) => {
+														field.onChange(value);
+														if (value !== "yes") {
+															form.setValue("bloodSugarType", undefined);
+															form.setValue("bloodSugarReading", "");
+														}
+													}}
+													value={field.value}
+												>
+													<FormControl>
+														<SelectTrigger
+															className="h-[56px] rounded-[10px] border-[#D8DADC] text-[16px]"
+															style={{ fontFamily: "'Inter', sans-serif" }}
+															data-testid="select-knows-blood-sugar"
+														>
+															<SelectValue placeholder="Yes / No / Not sure" />
+														</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+														{yesNoNotSureOptions.map((option) => (
+															<SelectItem
+																key={option.value}
+																value={option.value}
+																data-testid={`option-knows-blood-sugar-${option.value}`}
+															>
+																{option.label}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												{knowsBloodSugarValue === "yes" && (
+													<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+														<FormField
+															control={form.control}
+															name="bloodSugarType"
+															render={({ field: typeField }) => (
+																<FormItem>
+																	<FormLabel
+																		className="text-[16px] font-normal"
+																		style={{ fontFamily: "'Inter', sans-serif" }}
+																	>
+																		Type
+																	</FormLabel>
+																	<Select
+																		onValueChange={typeField.onChange}
+																		value={typeField.value}
+																	>
+																		<FormControl>
+																			<SelectTrigger
+																				className="h-[56px] rounded-[10px] border-[#D8DADC] text-[16px]"
+																				style={{
+																					fontFamily: "'Inter', sans-serif",
+																				}}
+																				data-testid="select-blood-sugar-type"
+																			>
+																				<SelectValue placeholder="Fasting / Random / HbA1c" />
+																			</SelectTrigger>
+																		</FormControl>
+																		<SelectContent>
+																			{bloodSugarTypeOptions.map((option) => (
+																				<SelectItem
+																					key={option.value}
+																					value={option.value}
+																					data-testid={`option-blood-sugar-type-${option.value}`}
+																				>
+																					{option.label}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+														<FormField
+															control={form.control}
+															name="bloodSugarReading"
+															render={({ field: readingField }) => (
+																<FormItem>
+																	<FormLabel
+																		className="text-[16px] font-normal"
+																		style={{ fontFamily: "'Inter', sans-serif" }}
+																	>
+																		Reading
+																	</FormLabel>
+																	<FormControl>
+																		<Input
+																			type="number"
+																			placeholder="Enter number"
+																			className="h-[56px] rounded-[10px] bg-white border-[#D8DADC] text-[16px]"
+																			style={{
+																				fontFamily: "'Inter', sans-serif",
+																			}}
+																			data-testid="input-blood-sugar-reading"
+																			{...readingField}
+																		/>
+																	</FormControl>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+													</div>
+												)}
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									{/* Currently on diabetes medication or insulin? */}
+									<FormField
+										control={form.control}
+										name="onDiabetesMedicationOrInsulin"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel
+													className="text-[20px] font-normal"
+													style={{ fontFamily: "'Inter', sans-serif" }}
+												>
+													Currently on diabetes medication or insulin?
+												</FormLabel>
+												<FormControl>
+													<Input
+														placeholder="Text"
+														className="h-[56px] rounded-[10px] border-[#D8DADC] bg-white text-[16px]"
+														style={{ fontFamily: "'Inter', sans-serif" }}
+														data-testid="input-diabetes-medication"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
+									{/* Main goal right now? */}
+									<FormField
+										control={form.control}
+										name="mainGoal"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel
+													className="text-[20px] font-normal"
+													style={{ fontFamily: "'Inter', sans-serif" }}
+												>
+													Main goal right now?
+												</FormLabel>
+												<FormControl>
+													<Input
+														placeholder="Text"
+														className="h-[56px] rounded-[10px] bg-white border-[#D8DADC] text-[16px]"
+														style={{ fontFamily: "'Inter', sans-serif" }}
+														data-testid="input-main-goal"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+
 								</div>
 							</div>
 

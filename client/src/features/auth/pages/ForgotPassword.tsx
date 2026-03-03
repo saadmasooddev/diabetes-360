@@ -108,9 +108,8 @@ export const ForgotPassword = (): JSX.Element => {
 								type="email"
 								placeholder="helloworld@gmail.com"
 								maxLength={50}
-								className={`w-full h-auto pl-4 ${isEmailValid ? "pr-12" : "pr-4"} py-[18px] bg-white rounded-[10px] border border-solid ${
-									errors.email ? "border-red-500" : "border-[#d8dadc]"
-								} [font-family:'Inter',Helvetica] font-normal text-black text-base`}
+								className={`w-full h-auto pl-4 ${isEmailValid ? "pr-12" : "pr-4"} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email ? "border-red-500" : "border-[#d8dadc]"
+									} [font-family:'Inter',Helvetica] font-normal text-black text-base`}
 								{...register("email")}
 								data-testid="input-email"
 							/>
@@ -146,7 +145,7 @@ export const ForgotPassword = (): JSX.Element => {
 						<button
 							type="button"
 							onClick={() => navigate(ROUTES.LOGIN)}
-							className="[font-family:'Inter',Helvetica] font-normal text-black text-sm"
+							className="[font-family:'Inter',Helvetica] text-start font-normal w-full  text-black text-sm"
 							data-testid="link-back-to-login"
 						>
 							Back to <span className="font-semibold">Log in</span>

@@ -146,6 +146,14 @@ router.get(
 	(req, res, next) => healthController.getLatestMetric(req, res),
 );
 
+router.post(
+	"/daily-quick-logs",
+	authenticateToken,
+	requireAnyPermission([PERMISSIONS.CREATE_OWN_HEALTH_METRICS]),
+	(req, res) => healthController.createDailyQuickLog(req, res),
+);
+
+
 /**
  * @swagger
  * /api/health/metrics/statistics:

@@ -60,16 +60,27 @@ export class DateManager {
 
 	static getLocalHours(date: string | Date, timezone: string) {
 		const d = this.getLocalTime(date, timezone);
-		const localHours = d.hour() 
+		const localHours = d.hour();
 		return { localHours, date: d };
+	}
+
+	/**
+	 * Builds an ISO 8601 start time from an availability date and a time string (HH:MM or HH:MM:SS).
+	 * Treats the combined date+time as UTC.
+	 */
+	static slotTimeToISO(date: Date | string, timeStr: string, timeZone = "Asia/Karachi"): string {
+		const datePart = dayjs(date).utc().format("YYYY-MM-DD");
+		const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+		const dateTime = `${datePart} ${normalized}`
+		return this.getLocalHours(dateTime, timeZone).date.toISOString()
 	}
 }
 
-export const formatUserInfo = (customerData: CustomerData) => {
+export const formatUserInfo = (customerData: CustomerData & { firstName?: string; lastName?: string}) => {
 	return {
+		name: customerData.lastName && customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : "User",
 		gender: customerData.gender,
 		birthday: DateManager.formatDate(customerData.birthday),
-		diagnosisDate: DateManager.formatDate(customerData.diagnosisDate),
 		weight: `${customerData.weight}kg`,
 		height: `${customerData.height}cm`,
 		diabetesType: customerData.diabetesType,

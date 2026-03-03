@@ -11,6 +11,11 @@ import type {
 	InsertHealthMetric,
 	MertricRecord,
 	MetricType,
+	QuickLogDietTypeEnumValues,
+	QuickLogExerciseTypeEnumValues,
+	QuickLogMedicinesTypeEnumValues,
+	QuickLogSleepDurationTypeEnumValues,
+	QuickLogStressLevelTypeEnumValues,
 } from "@shared/schema";
 import { type } from "os";
 
@@ -99,6 +104,35 @@ export const useFilteredMetricsPaginated = (
 		enabled: !!startDate && !!endDate,
 		refetchOnMount: "always",
 		staleTime: 0,
+	});
+};
+
+export const useCreateDailyQuickLog = () => {
+	const { toast } = useToast();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (data: {
+			exercise: QuickLogExerciseTypeEnumValues;
+			diet: QuickLogDietTypeEnumValues;
+			sleepDuration: QuickLogSleepDurationTypeEnumValues;
+			medicines: QuickLogMedicinesTypeEnumValues;
+			stressLevel: QuickLogStressLevelTypeEnumValues;
+		}) => healthService.createDailyQuickLog(data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.LATEST] });
+			toast({
+				title: "Success",
+				description: "Daily quick log saved successfully",
+			});
+		},
+		onError: (error: unknown) => {
+			toast({
+				title: "Error",
+				description: (error as Error).message || "Failed to save quick log",
+				variant: "destructive",
+			});
+		},
 	});
 };
 

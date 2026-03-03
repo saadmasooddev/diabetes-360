@@ -16,6 +16,8 @@ import {
 	type ExtendedHealthMetric,
 	type MetricType,
 	EXERCISE_TYPE_ENUM,
+	type InsertDailyQuickLog,
+	type DailyQuickLog,
 } from "../models/health.schema";
 import { BadRequestError } from "../../../shared/errors";
 import type { ExtendedLimits } from "../../settings/models/settings.schema";
@@ -23,7 +25,7 @@ import { ConsultationService } from "../../booking/service/consultation.service"
 import { CustomerService } from "../../customer/service/customer.service";
 import { cacheManager } from "../../../shared/utils/cacheManager";
 import { formatUserInfo } from "server/src/shared/utils/utils";
-import type { CustomerData } from "../../auth/models/user.schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, type CustomerData } from "../../auth/models/user.schema";
 import { aiService } from "../../../shared/services/ai.service";
 import { UserService } from "../../user/service/user.service";
 import { startOfDay } from "date-fns";
@@ -46,7 +48,7 @@ export class HealthService {
 	async createMetric(
 		data: InsertHealthMetric,
 		userId: string,
-	): Promise<HealthMetric> {
+	){
 		const userLimits = await this.getUserRemainingLimits(
 			data.userId,
 			data.recordedAt,
@@ -155,7 +157,16 @@ export class HealthService {
 			}
 		}
 
-		return await this.healthRepository.createMetric(data);
+    if(data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C) {
+			const result =await this.createHba1cMetric(data.userId, {
+				hba1c: data.bloodSugar!.toString(),
+				recordedAt: data.recordedAt
+			})
+			return
+		}
+
+		await this.healthRepository.createMetric(data);
+		return
 	}
 
 	async getLatestMetric(
@@ -176,14 +187,26 @@ export class HealthService {
 		previous: Partial<HealthMetric>;
 		limits: ExtendedLimits;
 		remainingLimits: ExtendedLimits;
+		quickLog?: {
+			id: string;
+			exercise: string | null;
+			diet: string | null;
+			sleepDuration: string | null;
+			medicines: string | null;
+			stressLevel: string | null;
+			logDate: string;
+		} | null;
 	}> {
 		const userLimits = await this.getUserRemainingLimits(userId, startOfDay);
 		const latestMetrics = await this.getLatestMetric(userId, startOfDay);
+		const quickLog =
+			await this.healthRepository.getDailyQuickLogForDate(userId, startOfDay);
 		return {
 			current: latestMetrics.current,
 			previous: latestMetrics.previous,
 			limits: userLimits.limits,
 			remainingLimits: userLimits.remainingLimits,
+			quickLog: quickLog
 		};
 	}
 
@@ -355,6 +378,27 @@ export class HealthService {
 		}
 
 		return { logs, percentageImprovement };
+	}
+
+	async createDailyQuickLog(
+		userId: string,
+		data: Omit<InsertDailyQuickLog, "userId">,
+	): Promise<DailyQuickLog> {
+		return await this.healthRepository.createDailyQuickLog({
+			...data,
+			userId,
+		});
+	}
+
+	async createHba1cMetric(
+		userId: string,
+		data: { hba1c: string; recordedAt: string },
+	) {
+		return await this.healthRepository.createHba1cMetric({
+			...data,
+			userId,
+			recordedAt: data.recordedAt,
+		});
 	}
 
 	// Health Metric Targets Methods

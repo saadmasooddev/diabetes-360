@@ -36,6 +36,9 @@ export interface LabReport {
 	fileName: string;
 	filePath: string;
 	fileSize: string;
+	reportName?: string | null;
+	reportType?: string | null;
+	dateOfReport?: string | null;
 	uploadedAt: string;
 	createdAt: string;
 	updatedAt: string;
@@ -112,10 +115,23 @@ class MedicalService {
 		return response.data;
 	}
 
-	async getLabReports(): Promise<LabReport[]> {
-		const response = await httpClient.get<ApiResponse<LabReport[]>>(
-			API_ENDPOINTS.MEDICAL.LAB_REPORTS,
-		);
+	async getLabReports(params?: {
+		limit?: number;
+		offset?: number;
+		search?: string;
+	}): Promise<{ reports: LabReport[]; total: number }> {
+		const queryParams = new URLSearchParams();
+		if (params?.limit) queryParams.append("limit", params.limit.toString());
+		if (params?.offset) queryParams.append("offset", params.offset.toString());
+		if (params?.search) queryParams.append("search", params.search);
+
+		const url = queryParams.toString()
+			? `${API_ENDPOINTS.MEDICAL.LAB_REPORTS}?${queryParams}`
+			: API_ENDPOINTS.MEDICAL.LAB_REPORTS;
+
+		const response = await httpClient.get<
+			ApiResponse<{ reports: LabReport[]; total: number }>
+		>(url);
 
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch lab reports");
@@ -124,9 +140,47 @@ class MedicalService {
 		return response.data;
 	}
 
-	async uploadLabReport(file: File): Promise<LabReport> {
+	async getLabReportsByUserId(
+		userId: string,
+		params?: { limit?: number; offset?: number; search?: string },
+	): Promise<{ reports: LabReport[]; total: number }> {
+		const queryParams = new URLSearchParams();
+		if (params?.limit) queryParams.append("limit", params.limit.toString());
+		if (params?.offset) queryParams.append("offset", params.offset.toString());
+		if (params?.search) queryParams.append("search", params.search);
+
+		const baseUrl = API_ENDPOINTS.MEDICAL.LAB_REPORTS_BY_USER(userId);
+		const url = queryParams.toString()
+			? `${baseUrl}?${queryParams}`
+			: baseUrl;
+
+		const response = await httpClient.get<
+			ApiResponse<{ reports: LabReport[]; total: number }>
+		>(url);
+
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to fetch lab reports");
+		}
+
+		return response.data;
+	}
+
+	async uploadLabReport(
+		file: File,
+		metadata?: {
+			reportName?: string;
+			reportType?: string;
+			dateOfReport?: string;
+		},
+	): Promise<LabReport> {
 		const formData = new FormData();
 		formData.append("file", file);
+		if (metadata?.reportName)
+			formData.append("reportName", metadata.reportName);
+		if (metadata?.reportType)
+			formData.append("reportType", metadata.reportType);
+		if (metadata?.dateOfReport)
+			formData.append("dateOfReport", metadata.dateOfReport);
 
 		const response = await httpClient.post<ApiResponse<LabReport>>(
 			API_ENDPOINTS.MEDICAL.LAB_REPORTS,
@@ -166,21 +220,21 @@ class MedicalService {
 		}
 	}
 
-	async downloadLabReport(
+	async fetchLabReportBlob(
 		reportId: string,
+		forUserId?: string,
 	): Promise<{ blob: Blob; fileName: string }> {
-		// Use axios directly for blob download
-
 		const authHeader = TokenManager.getAuthHeader();
-		const response = await axios.get(
-			`${BASE_URL}${API_ENDPOINTS.MEDICAL.LAB_REPORT_DOWNLOAD(reportId)}`,
-			{
-				headers: {
-					Authorization: authHeader || "",
-				},
-				responseType: "blob",
+		let url = `${BASE_URL}${API_ENDPOINTS.MEDICAL.LAB_REPORT_DOWNLOAD(reportId)}`;
+		if (forUserId) {
+			url += `?userId=${encodeURIComponent(forUserId)}`;
+		}
+		const response = await axios.get(url, {
+			headers: {
+				Authorization: authHeader || "",
 			},
-		);
+			responseType: "blob",
+		});
 
 		// Extract filename from Content-Disposition header
 		const contentDisposition = response.headers["content-disposition"];
@@ -198,6 +252,21 @@ class MedicalService {
 			blob: response.data,
 			fileName,
 		};
+	}
+
+	async downloadLabReport(
+		reportId: string,
+		forUserId?: string,
+	): Promise<{ blob: Blob; fileName: string }> {
+		return this.fetchLabReportBlob(reportId, forUserId);
+	}
+
+	async getLabReportViewUrl(
+		reportId: string,
+		forUserId?: string,
+	): Promise<string> {
+		const { blob } = await this.fetchLabReportBlob(reportId, forUserId);
+		return URL.createObjectURL(blob);
 	}
 }
 

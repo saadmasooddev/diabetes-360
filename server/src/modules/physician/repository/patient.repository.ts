@@ -48,6 +48,7 @@ export interface PatientListItem {
 	condition: string;
 	indication: "Needs Attention" | "Stable" | "High Risk";
 	indicationColor: string;
+	latestBloodGlucose?: number | null;
 }
 
 export interface PatientStats {
@@ -249,15 +250,19 @@ export class PatientRepository {
 
 		const patientWithAlerts = await Promise.all(
 			patients.map(async (p) => {
-				const alert = await this.patientAlert(
-					{ ...p, diabetesType: p.condition as DIABETES_TYPE },
-					yesterdayStr,
-					todayStr,
-				);
+				const [alert, latestBloodGlucose] = await Promise.all([
+					this.patientAlert(
+						{ ...p, diabetesType: p.condition as DIABETES_TYPE },
+						yesterdayStr,
+						todayStr,
+					),
+					this.healthRepository.getLatestBloodGlucose(p.id),
+				]);
 				return {
 					...p,
 					indication: alert.status,
 					indicationColor: alert.statusColor,
+					latestBloodGlucose,
 				};
 			}),
 		);
@@ -439,7 +444,6 @@ export class PatientRepository {
 				lastName: users.lastName,
 				email: users.email,
 				birthday: customerData.birthday,
-				diagnosisDate: customerData.diagnosisDate,
 				age: this.ageSql,
 				condition: this.diabetesTypeSql(customerData.diabetesType),
 				weight: customerData.weight,
@@ -462,22 +466,35 @@ export class PatientRepository {
 		const yesterdayStr = yesterday.toISOString().split("T")[0];
 		const todayStr = new Date().toISOString().split("T")[0];
 
-		const [glucoseTrend, appointments, consultationSummaries] =
-			await Promise.all([
-				await this.healthRepository.getFilteredMetrics(
-					patient.id,
-					startDate,
-					endDate,
-					[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
-				),
-				await this.bookingRepository.getUserConsultations(patient.id, {
-					limit: 3,
-					skip: 0,
-					type: BOOKING_TYPE_QUERY_ENUM.PAST,
-					physicianId,
-				}),
-				this.getConsultationSummaries(patient.id, physicianId, 100), // Fetch all summaries for "See All" dialog
-			]);
+		const [
+			glucoseTrend,
+			appointments,
+			consultationSummaries,
+			hba1cTrend,
+			quickLogsWeek,
+			dietTrend,
+			macros,
+			latestBloodGlucose,
+		] = await Promise.all([
+			this.healthRepository.getFilteredMetrics(
+				patient.id,
+				startDate,
+				endDate,
+				[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+			),
+			this.bookingRepository.getUserConsultations(patient.id, {
+				limit: 3,
+				skip: 0,
+				type: BOOKING_TYPE_QUERY_ENUM.PAST,
+				physicianId,
+			}),
+			this.getConsultationSummaries(patient.id, physicianId, 100),
+			this.healthRepository.getHba1cTrend(patient.id, startDate, endDate),
+			this.healthRepository.getQuickLogsForDateRange(patient.id, startDate, endDate),
+			this.foodRepository.getDietTrendLast7Days(patient.id),
+			this.foodRepository.getMacrosLast7Days(patient.id),
+			this.healthRepository.getLatestBloodGlucose(patient.id),
+		]);
 
 		const patientAlert = await this.patientAlert(
 			patient,
@@ -488,6 +505,8 @@ export class PatientRepository {
 		// Format recent notes from consultation summaries
 		const recentNotes = consultationSummaries.map((cs) => cs.summary);
 
+		const sleepPattern = this.inferSleepPatternFromQuickLogs(quickLogsWeek);
+
 		return {
 			id: patient.id,
 			name: `${patient.firstName} ${patient.lastName}`,
@@ -495,7 +514,6 @@ export class PatientRepository {
 			condition: patient.condition,
 			email: patient.email,
 			birthday: patient.birthday,
-			diagnosisDate: patient.diagnosisDate,
 			weight: patient.weight,
 			height: patient.height,
 			diabetesType: patient.diabetesType,
@@ -512,7 +530,52 @@ export class PatientRepository {
 			consultationSummaries,
 			appointments: appointments.consultations,
 			glucoseTrend: glucoseTrend.bloodSugarRecords,
+			latestBloodGlucose,
+			hba1cTrend,
+			quickLogsWeek,
+			dietTrend,
+			macros,
+			sleepPattern,
 		};
+	}
+
+	private inferSleepPatternFromQuickLogs(
+		quickLogs: Array<{ logDate: string; sleepDuration: string | null }>,
+	): {
+		byDay: Array<{ day: string; hours: number; quality: string }>;
+		avgQuality: string;
+	} {
+		const durationToHours: Record<string, number> = {
+			less_5: 4,
+			"5_7": 6,
+			more_7: 8,
+		};
+		const durationToQuality: Record<string, string> = {
+			less_5: "Poor",
+			"5_7": "Moderate",
+			more_7: "Good",
+		};
+		const byDay = quickLogs.map((q) => {
+			const hours = q.sleepDuration
+				? durationToHours[q.sleepDuration] ?? 6
+				: 0;
+			const quality = q.sleepDuration
+				? durationToQuality[q.sleepDuration] ?? "Unknown"
+				: "No data";
+			return { day: q.logDate, hours, quality };
+		});
+		const withData = byDay.filter((d) => d.hours > 0);
+		const avgQuality =
+			withData.length === 0
+				? "No data"
+				: withData.filter((d) => d.quality === "Good").length >=
+						withData.length / 2
+					? "Good"
+					: withData.filter((d) => d.quality === "Poor").length >
+							withData.length / 2
+						? "Poor"
+						: "Moderate";
+		return { byDay, avgQuality };
 	}
 	private getPatientWorstIndicationStatus(
 		records: { value: number | null }[],

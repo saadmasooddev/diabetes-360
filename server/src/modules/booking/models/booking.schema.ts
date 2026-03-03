@@ -149,6 +149,7 @@ export const bookedSlots = pgTable("booked_slots", {
 		.references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
 	status: bookedSlotsStatusEnum("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
 	summary: text("summary"), // Consultation summary added by physician
+	meetingLink: text("meeting_link"), // Zoom (or other) link for online consultations; set by cron
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

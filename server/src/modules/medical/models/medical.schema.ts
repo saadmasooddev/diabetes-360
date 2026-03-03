@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { pgTable, varchar, timestamp, text, jsonb } from "drizzle-orm/pg-core";
+import {
+	pgTable,
+	varchar,
+	timestamp,
+	text,
+	jsonb,
+	date,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "../../auth/models/user.schema";
@@ -39,6 +46,9 @@ export const labReports = pgTable("lab_reports", {
 	fileName: text("file_name").notNull(), // Original filename
 	filePath: text("file_path").notNull(), // Path to stored file
 	fileSize: text("file_size").notNull(), // File size in bytes
+	reportName: text("report_name"), // User-provided report name
+	reportType: varchar("report_type"), // blood_test, xray, ecg, prescription, mri_ct, other
+	dateOfReport: date("date_of_report"), // Date of the report
 	uploadedAt: timestamp("uploaded_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
@@ -84,6 +94,9 @@ export const insertLabReportSchema = createInsertSchema(labReports)
 		fileName: z.string().min(1),
 		filePath: z.string().min(1),
 		fileSize: z.string().min(1),
+		reportName: z.string().optional(),
+		reportType: z.string().optional(),
+		dateOfReport: z.string().optional(),
 	});
 
 export type InsertMedication = z.infer<typeof insertMedicationSchema>;

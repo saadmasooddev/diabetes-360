@@ -120,7 +120,7 @@ export function SlotManagementView({
 	const debouncedPhysicianSearch = useDebounce(physicianSearchQuery, 500);
 	const searchValue =
 		debouncedPhysicianSearch.trim() === "" ||
-		debouncedPhysicianSearch.toLowerCase() === "all"
+			debouncedPhysicianSearch.toLowerCase() === "all"
 			? undefined
 			: debouncedPhysicianSearch.trim();
 
@@ -147,6 +147,7 @@ export function SlotManagementView({
 		data: existingSlots = [],
 		isLoading: isLoadingSlots,
 		refetch: refetchSlots,
+		isRefetching: isRefetchingSlots,
 	} = useSlotsForDate(selectedPhysicianId, dateString);
 	const { data: ownLocations = [] } = usePhysicianLocations();
 	const { data: adminLocations = [] } =
@@ -590,7 +591,7 @@ export function SlotManagementView({
 					</Card>
 
 					{/* Booked Slots */}
-					{isLoadingSlots ? (
+					{isLoadingSlots || isRefetchingSlots ? (
 						<Card className="p-4">
 							<div className="flex items-center justify-center py-8">
 								<Loader2 className="h-6 w-6 animate-spin text-teal-600" />
@@ -882,9 +883,9 @@ export function SlotManagementView({
 					slot={
 						editingSlot
 							? {
-									...editingSlot,
-									isCustom: editingSlot.isCustom,
-								}
+								...editingSlot,
+								isCustom: editingSlot.isCustom,
+							}
 							: undefined
 					}
 					onSubmit={editingSlot ? handleEditSlotSubmit : handleCreateCustomSlot}

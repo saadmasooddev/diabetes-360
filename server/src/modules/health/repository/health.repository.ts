@@ -7,8 +7,22 @@ import {
 	metricTypes,
 	EXERCISE_TYPE_ENUM,
 	ACTIVITY_TYPE_ENUM,
+	hba1cMetrics,
+	dailyQuickLogs,
+	QUICK_LOG_EXERCISE_TYPE_ENUM,
 } from "../models/health.schema";
-import { eq, desc, and, gte, lte, sql, isNotNull, isNull } from "drizzle-orm";
+import {
+	eq,
+	ne,
+	desc,
+	asc,
+	and,
+	gte,
+	lte,
+	sql,
+	isNotNull,
+	isNull,
+} from "drizzle-orm";
 import type {
 	InsertHealthMetric,
 	HealthMetric,
@@ -20,9 +34,15 @@ import type {
 	HealthInsight,
 	ExtendedHealthMetric,
 	MetricType,
+	Hba1cMetrics,
+	InsertHba1cMetric,
+	InsertDailyQuickLog,
+	DailyQuickLog,
 } from "../models/health.schema";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
+import { Tx } from "../../food/models/food.schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM } from "../../auth/models/user.schema";
 
 export type ChartData = {
 	value: number;
@@ -84,18 +104,29 @@ export class HealthRepository {
 		return result[0]?.count || 0;
 	}
 
-	async createMetric(data: InsertHealthMetric): Promise<HealthMetric> {
-		const [metric] = await db
+	async createMetric(data: InsertHealthMetric, tx?: Tx): Promise<HealthMetric> {
+		const dbConn = db || tx;
+		const [metric] = await dbConn
 			.insert(healthMetrics)
 			.values({
 				userId: data.userId,
 				bloodSugar: data.bloodSugar?.toString() || null,
+				bloodSugarReadingType: data.bloodSugarReadingType,
 				waterIntake: data.waterIntake?.toString() || null,
 				heartRate: data.heartRate || null,
 				recordedAt: new Date(data.recordedAt),
 			})
 			.returning();
 		return metric;
+	}
+
+	async createHba1cMetric(data: InsertHba1cMetric, tx?: Tx) {
+		const dbConn = db || tx
+		return await dbConn.insert(hba1cMetrics).values({
+			userId: data.userId,
+			hba1c: data.hba1c,
+			recordedAt: new Date(data.recordedAt)
+		}).returning()
 	}
 
 	async getTodaysMetricTotal(
@@ -159,17 +190,37 @@ export class HealthRepository {
 		current: Partial<ExtendedHealthMetric>;
 		previous: Partial<ExtendedHealthMetric>;
 	}> {
-		const latestBloogSugarPromise = db
+		const bloodSugarBaseConditions = and(
+			eq(healthMetrics.userId, userId),
+			isNotNull(healthMetrics.bloodSugar),
+		);
+
+		const latestNormalSugarPromise = db
 			.select()
 			.from(healthMetrics)
 			.where(
-				and(
-					eq(healthMetrics.userId, userId),
-					isNotNull(healthMetrics.bloodSugar),
-				),
+				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)),
 			)
 			.orderBy(desc(healthMetrics.recordedAt))
 			.limit(2);
+
+		const latestFastingSugarPromise = db
+			.select({ bloodSugar: healthMetrics.bloodSugar })
+			.from(healthMetrics)
+			.where(
+				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.FASTING)),
+			)
+			.orderBy(desc(healthMetrics.recordedAt))
+			.limit(1);
+
+		const latestRandomSugarPromise = db
+			.select({ bloodSugar: healthMetrics.bloodSugar })
+			.from(healthMetrics)
+			.where(
+				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM)),
+			)
+			.orderBy(desc(healthMetrics.recordedAt))
+			.limit(1);
 
 		// Get today's totals for steps and water instead of latest values
 		const todaysStepsTotalPromise = this.getTodaysMetricTotal(
@@ -229,20 +280,33 @@ export class HealthRepository {
 			.orderBy(desc(healthMetrics.recordedAt))
 			.limit(2);
 
+		const latestHba1cPromise = db
+			.select({ hba1c: hba1cMetrics.hba1c })
+			.from(hba1cMetrics)
+			.where(eq(hba1cMetrics.userId, userId))
+			.orderBy(desc(hba1cMetrics.recordedAt))
+			.limit(1);
+
 		const [
-			latestBloogSugar,
+			latestNormalSugar,
+			latestFastingSugar,
+			latestRandomSugar,
 			todaysStepsTotal,
 			todaysWaterTotal,
 			previousSteps,
 			previousWater,
 			latestHeartRate,
+			latestHba1c,
 		] = await Promise.all([
-			latestBloogSugarPromise,
+			latestNormalSugarPromise,
+			latestFastingSugarPromise,
+			latestRandomSugarPromise,
 			todaysStepsTotalPromise,
 			todaysWaterTotalPromise,
 			previousStepsPromise,
 			previousWaterPromise,
 			latestHeartRatePromise,
+			latestHba1cPromise,
 		]);
 
 		const previousStepsTotal = parseFloat(
@@ -252,15 +316,25 @@ export class HealthRepository {
 			previousWater[0]?.total?.toString() || "0",
 		);
 
+		const exerciseSetsPromise = this.getTodaysExerciseSetsCount(userId, date);
+
+		const exerciseSets = await exerciseSetsPromise;
+
 		return {
 			current: {
-				bloodSugar: latestBloogSugar[0]?.bloodSugar || null,
+				bloodSugar: latestNormalSugar[0]?.bloodSugar || null,
+				fastingSugar: latestFastingSugar[0]?.bloodSugar?.toString() ?? "0",
+				randomSugar: latestRandomSugar[0]?.bloodSugar?.toString() ?? "0",
 				waterIntake: todaysWaterTotal.toString(),
 				heartRate: latestHeartRate[0]?.heartRate || null,
 				steps: Math.round(todaysStepsTotal),
+				exerciseSets,
+				hba1c: latestHba1c[0]?.hba1c?.toString() ?? null,
 			},
 			previous: {
-				bloodSugar: latestBloogSugar[1]?.bloodSugar || null,
+				bloodSugar: latestNormalSugar[1]?.bloodSugar || null,
+				fastingSugar: latestFastingSugar[1]?.bloodSugar?.toString() ?? "0",
+				randomSugar: latestFastingSugar[1]?.bloodSugar?.toString() ?? "0",
 				waterIntake: previousWaterTotal.toString(),
 				heartRate: latestHeartRate[1]?.heartRate || null,
 				steps: Math.round(previousStepsTotal),
@@ -1051,5 +1125,151 @@ export class HealthRepository {
 				stretching: stretching,
 			},
 		};
+	}
+
+	async getDailyQuickLogForDate(
+		userId: string,
+		dateStr: string,
+	): Promise<DailyQuickLog | null> {
+		const dateOnly = dateStr
+		const [log] = await db
+			.select()
+			.from(dailyQuickLogs)
+			.where(
+				and(
+					eq(dailyQuickLogs.userId, userId),
+					eq(dailyQuickLogs.logDate, dateOnly),
+				),
+			)
+			.limit(1);
+		return log ?? null;
+	}
+
+	async createOrUpdateDailyQuickLog(
+		data: InsertDailyQuickLog & { logDate?: string },
+	): Promise<DailyQuickLog> {
+		const targetDate = data.logDate
+			? new Date(data.logDate)
+			: new Date();
+		const logDateStr = targetDate.toISOString().split("T")[0];
+		const now = new Date();
+
+		const [log] = await db
+			.insert(dailyQuickLogs)
+			.values({
+				userId: data.userId,
+				logDate: logDateStr,
+				exercise: data.exercise,
+				diet: data.diet,
+				sleepDuration: data.sleepDuration,
+				medicines: data.medicines,
+				stressLevel: data.stressLevel,
+				recordedAt: data.recordedAt ? new Date(data.recordedAt) : now,
+			})
+			.onConflictDoUpdate({
+				target: [dailyQuickLogs.userId, dailyQuickLogs.logDate],
+				set: {
+					exercise: data.exercise,
+					diet: data.diet,
+					sleepDuration: data.sleepDuration,
+					medicines: data.medicines,
+					stressLevel: data.stressLevel,
+					recordedAt: data.recordedAt ? new Date(data.recordedAt) : now,
+				},
+			})
+			.returning();
+		return log;
+	}
+
+	async createDailyQuickLog(
+		data: InsertDailyQuickLog,
+	): Promise<DailyQuickLog> {
+		return this.createOrUpdateDailyQuickLog(data);
+	}
+
+	async getTodaysExerciseSetsCount(userId: string, date: string): Promise<number> {
+		const dateOnly = date.split("T")[0];
+		const result = await db
+			.select({
+				count: sql<number>`count(*)::int`,
+			})
+			.from(dailyQuickLogs)
+			.where(
+				and(
+					eq(dailyQuickLogs.userId, userId),
+					eq(dailyQuickLogs.logDate, dateOnly),
+					ne(dailyQuickLogs.exercise, QUICK_LOG_EXERCISE_TYPE_ENUM.NONE),
+					isNotNull(dailyQuickLogs.exercise)
+				),
+			);
+		return result[0]?.count ?? 0;
+	}
+
+	async getHba1cTrend(
+		userId: string,
+		startDate: string,
+		endDate: string,
+	): Promise<Array<{ value: number; recordedAt: Date }>> {
+		const rows = await db
+			.select({
+				hba1c: hba1cMetrics.hba1c,
+				recordedAt: hba1cMetrics.recordedAt,
+			})
+			.from(hba1cMetrics)
+			.where(
+				and(
+					eq(hba1cMetrics.userId, userId),
+					sql`DATE(${hba1cMetrics.recordedAt}) >= DATE(${startDate})`,
+					sql`DATE(${hba1cMetrics.recordedAt}) <= DATE(${endDate})`,
+				),
+			)
+			.orderBy(asc(hba1cMetrics.recordedAt));
+		return rows.map((r) => ({
+			value: parseFloat(r.hba1c?.toString() || "0"),
+			recordedAt: r.recordedAt,
+		}));
+	}
+
+	async getQuickLogsForDateRange(
+		userId: string,
+		startDate: string,
+		endDate: string,
+	): Promise<Array<{ logDate: string; exercise: string | null; sleepDuration: string | null }>> {
+		const rows = await db
+			.select({
+				logDate: dailyQuickLogs.logDate,
+				exercise: dailyQuickLogs.exercise,
+				sleepDuration: dailyQuickLogs.sleepDuration,
+			})
+			.from(dailyQuickLogs)
+			.where(
+				and(
+					eq(dailyQuickLogs.userId, userId),
+					gte(dailyQuickLogs.logDate, startDate.split("T")[0]),
+					lte(dailyQuickLogs.logDate, endDate.split("T")[0]),
+				),
+			)
+			.orderBy(asc(dailyQuickLogs.logDate));
+		return rows.map((r) => ({
+			logDate: String(r.logDate),
+			exercise: r.exercise,
+			sleepDuration: r.sleepDuration,
+		}));
+	}
+
+	async getLatestBloodGlucose(userId: string): Promise<number | null> {
+		const [row] = await db
+			.select({ bloodSugar: healthMetrics.bloodSugar })
+			.from(healthMetrics)
+			.where(
+				and(
+					eq(healthMetrics.userId, userId),
+					eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL),
+					isNotNull(healthMetrics.bloodSugar),
+				),
+			)
+			.orderBy(desc(healthMetrics.recordedAt))
+			.limit(1);
+		return row?.bloodSugar ? parseFloat(row.bloodSugar.toString()) : null;
 	}
 }

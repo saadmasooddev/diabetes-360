@@ -206,6 +206,113 @@ export class FoodRepository {
 	}
 
 	/**
+	 * Get diet trend for last 7 days: average recommended vs logged calories.
+	 */
+	async getDietTrendLast7Days(userId: string): Promise<{
+		avgRecommendedCalories: number;
+		avgLoggedCalories: number;
+		totalRecommended: number;
+		totalLogged: number;
+	}> {
+		const endDate = new Date();
+		const startDate = new Date();
+		startDate.setDate(startDate.getDate() - 6);
+		const startStr = startDate.toISOString().split("T")[0];
+		const endStr = endDate.toISOString().split("T")[0];
+
+		const recRows = await db
+			.select({
+				calories: dailyNutrientRecommendations.calories,
+				recommendationDate: dailyNutrientRecommendations.recommendationDate,
+			})
+			.from(dailyNutrientRecommendations)
+			.where(
+				and(
+					eq(dailyNutrientRecommendations.userId, userId),
+					sql`DATE(${dailyNutrientRecommendations.recommendationDate}) >= DATE(${startStr})`,
+					sql`DATE(${dailyNutrientRecommendations.recommendationDate}) <= DATE(${endStr})`,
+				),
+			);
+
+		const loggedRows = await db
+			.select({
+				calories: sql<string>`COALESCE(SUM(${loggedMeals.calories})::text, '0')`,
+			})
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.mealDate}) >= DATE(${startStr})`,
+					sql`DATE(${loggedMeals.mealDate}) <= DATE(${endStr})`,
+				),
+			);
+
+		const totalRecommended = recRows.reduce(
+			(sum, r) => sum + parseFloat(r.calories?.toString() || "0"),
+			0,
+		);
+		const totalLogged = parseFloat(loggedRows[0]?.calories?.toString() || "0");
+		const dayCount = recRows.length || 1;
+
+		return {
+			avgRecommendedCalories: Math.round(totalRecommended / dayCount),
+			avgLoggedCalories: Math.round(totalLogged / 7),
+			totalRecommended,
+			totalLogged: Math.round(totalLogged),
+		};
+	}
+
+	/**
+	 * Get macros (carbs, protein, fat) from logged meals for last 7 days.
+	 */
+	async getMacrosLast7Days(userId: string): Promise<{
+		carbs: number;
+		protein: number;
+		fat: number;
+		calories: number;
+		carbsPercent: number;
+		proteinPercent: number;
+		fatPercent: number;
+	}> {
+		const endDate = new Date();
+		const startDate = new Date();
+		startDate.setDate(startDate.getDate() - 6);
+		const startStr = startDate.toISOString().split("T")[0];
+		const endStr = endDate.toISOString().split("T")[0];
+
+		const [row] = await db
+			.select({
+				carbs: sql<string>`COALESCE(SUM(${loggedMeals.carbs})::text, '0')`,
+				proteins: sql<string>`COALESCE(SUM(${loggedMeals.proteins})::text, '0')`,
+				fats: sql<string>`COALESCE(SUM(${loggedMeals.fats})::text, '0')`,
+				calories: sql<string>`COALESCE(SUM(${loggedMeals.calories})::text, '0')`,
+			})
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.mealDate}) >= DATE(${startStr})`,
+					sql`DATE(${loggedMeals.mealDate}) <= DATE(${endStr})`,
+				),
+			);
+
+		const carbs = parseFloat(row?.carbs?.toString() || "0");
+		const protein = parseFloat(row?.proteins?.toString() || "0");
+		const fat = parseFloat(row?.fats?.toString() || "0");
+		const calories = parseFloat(row?.calories?.toString() || "0");
+		const totalGrams = carbs + protein + fat || 1;
+		return {
+			carbs,
+			protein,
+			fat,
+			calories,
+			carbsPercent: Math.round((carbs / totalGrams) * 100),
+			proteinPercent: Math.round((protein / totalGrams) * 100),
+			fatPercent: Math.round((fat / totalGrams) * 100),
+		};
+	}
+
+	/**
 	 * Get all logged meals for a user on a specific date.
 	 * Uses DATE cast for consistent results.
 	 */

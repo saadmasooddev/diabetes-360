@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/config/endpoints";
 import type { ApiResponse } from "@/types/auth.types";
 import { httpClient } from "@/utils/httpClient";
+import { DIABETES_TYPE } from "@shared/schema";
 
 export interface User {
 	id: string;
@@ -22,10 +23,9 @@ export interface User {
 export interface CustomerData {
 	gender?: "male" | "female";
 	birthday?: string; // ISO date string
-	diagnosisDate?: string; // ISO date string
 	weight?: string;
 	height?: string;
-	diabetesType: "type1" | "type2" | "gestational" | "prediabetes";
+	diabetesType: DIABETES_TYPE;
 }
 
 export interface PhysicianData {

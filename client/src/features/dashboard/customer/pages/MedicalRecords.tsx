@@ -1,15 +1,18 @@
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { GlucoseChartSection } from "../../components/GlucoseChartSection";
 import { PastConsultationsList } from "../../components/PastConsultationsList";
 import { MedicationsTable } from "../../components/MedicationsTable";
-import { LabReportsSection } from "../../components/LabReportsSection";
+import { UploadMedicalReportsModal } from "../../components/UploadMedicalReportsModal";
 
 export function MedicalRecords() {
 	const user = useAuthStore((state) => state.user);
 	const isPaidUser = user?.paymentType !== "free" && user?.paymentType;
+	const [medicalReportsModalOpen, setMedicalReportsModalOpen] = useState(false);
 	return (
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 			<Sidebar />
@@ -110,9 +113,47 @@ export function MedicalRecords() {
 							}}
 							data-testid="text-lab-reports-title"
 						>
-							Lab Reports
+							Reports
 						</h2>
-						<LabReportsSection />
+						<Card
+							className="p-6"
+							style={{
+								background: "#FFFFFF",
+								borderRadius: "12px",
+								border: "1px solid rgba(0, 133, 111, 0.2)",
+							}}
+						>
+							<div className="flex items-center justify-between">
+								<p
+									style={{
+										fontSize: "16px",
+										fontWeight: 400,
+										color: "#546E7A",
+									}}
+								>
+									View and upload your medical reports
+								</p>
+								<Button
+									onClick={() => setMedicalReportsModalOpen(true)}
+									style={{
+										background: "#E0F2F1",
+										color: "#00856F",
+										fontWeight: 600,
+										fontSize: "14px",
+										borderRadius: "8px",
+										padding: "12px 24px",
+									}}
+									data-testid="button-open-reports-modal"
+								>
+									View Reports
+								</Button>
+							</div>
+						</Card>
+						<UploadMedicalReportsModal
+							open={medicalReportsModalOpen}
+							onOpenChange={setMedicalReportsModalOpen}
+							initialStep={1}
+						/>
 					</div>
 				</div>
 			</main>

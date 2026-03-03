@@ -78,9 +78,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 		birthDay: "",
 		birthMonth: "",
 		birthYear: "",
-		diagnosisDay: "",
-		diagnosisMonth: "",
-		diagnosisYear: "",
 		weight: "",
 		height: "",
 		diabetesType: "" as "type1" | "type2" | "gestational" | "prediabetes" | "",
@@ -147,18 +144,12 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 				const birthdayComponents = parseDateToComponents(
 					customerData.birthday || "",
 				);
-				const diagnosisComponents = parseDateToComponents(
-					customerData.diagnosisDate || "",
-				);
 
 				setCustomerFields({
 					gender: customerData.gender || "male",
 					birthDay: birthdayComponents.day,
 					birthMonth: birthdayComponents.month,
 					birthYear: birthdayComponents.year,
-					diagnosisDay: diagnosisComponents.day,
-					diagnosisMonth: diagnosisComponents.month,
-					diagnosisYear: diagnosisComponents.year,
 					weight: customerData.weight || "",
 					height: customerData.height || "",
 					diabetesType:
@@ -272,21 +263,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 						customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
 					}
 
-					if (
-						customerFields.diagnosisDay &&
-						customerFields.diagnosisMonth &&
-						customerFields.diagnosisYear
-					) {
-						const paddedMonth = String(customerFields.diagnosisMonth).padStart(
-							2,
-							"0",
-						);
-						const paddedDay = String(customerFields.diagnosisDay).padStart(
-							2,
-							"0",
-						);
-						customerData.diagnosisDate = `${customerFields.diagnosisYear}-${paddedMonth}-${paddedDay}`;
-					}
 
 					updateData.customerData = customerData;
 				}
@@ -557,19 +533,19 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											/>
 											{(physicianFields.imagePreview ||
 												physicianFields.imageUrl) && (
-												<Image
-													src={
-														physicianFields.imagePreview ||
-														physicianFields.imageUrl
-													}
-													alt="Preview"
-													className="w-24 h-24 rounded-full object-cover border"
-													pointToServer={
-														!!physicianFields.imageUrl &&
-														!physicianFields.imagePreview
-													}
-												/>
-											)}
+													<Image
+														src={
+															physicianFields.imagePreview ||
+															physicianFields.imageUrl
+														}
+														alt="Preview"
+														className="w-24 h-24 rounded-full object-cover border"
+														pointToServer={
+															!!physicianFields.imageUrl &&
+															!physicianFields.imagePreview
+														}
+													/>
+												)}
 										</div>
 									</div>
 								)}
@@ -683,85 +659,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											</div>
 										</div>
 
-										<div className="space-y-2">
-											<Label htmlFor="customerDiagnosisDate">
-												Diagnosis Date
-											</Label>
-											<div className="grid grid-cols-3 gap-2">
-												<Select
-													value={customerFields.diagnosisDay}
-													onValueChange={(value) =>
-														setCustomerFields({
-															...customerFields,
-															diagnosisDay: value,
-														})
-													}
-													disabled={isLoading}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="DD" />
-													</SelectTrigger>
-													<SelectContent>
-														{dayOptions.map((option) => (
-															<SelectItem
-																key={option.value}
-																value={option.value}
-															>
-																{option.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-												<Select
-													value={customerFields.diagnosisMonth}
-													onValueChange={(value) =>
-														setCustomerFields({
-															...customerFields,
-															diagnosisMonth: value,
-														})
-													}
-													disabled={isLoading}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="MM" />
-													</SelectTrigger>
-													<SelectContent>
-														{monthOptions.map((option) => (
-															<SelectItem
-																key={option.value}
-																value={option.value}
-															>
-																{option.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-												<Select
-													value={customerFields.diagnosisYear}
-													onValueChange={(value) =>
-														setCustomerFields({
-															...customerFields,
-															diagnosisYear: value,
-														})
-													}
-													disabled={isLoading}
-												>
-													<SelectTrigger>
-														<SelectValue placeholder="YYYY" />
-													</SelectTrigger>
-													<SelectContent>
-														{yearOptions.map((option) => (
-															<SelectItem
-																key={option.value}
-																value={option.value}
-															>
-																{option.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</div>
-										</div>
 
 										<div className="grid grid-cols-2 gap-4">
 											<div className="space-y-2">

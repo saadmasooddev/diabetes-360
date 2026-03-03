@@ -157,7 +157,7 @@ export function EditSlotModal({
 	const debouncedPhysicianSearch = useDebounce(physicianSearchQuery, 500);
 	const searchValue =
 		debouncedPhysicianSearch.trim() === "" ||
-		debouncedPhysicianSearch.toLowerCase() === "all"
+			debouncedPhysicianSearch.toLowerCase() === "all"
 			? undefined
 			: debouncedPhysicianSearch.trim();
 
@@ -254,7 +254,7 @@ export function EditSlotModal({
 			setPhysicianSearchQuery("");
 			setErrors({});
 		}
-	}, [open, selectedDate, isEditMode, slot]);
+	}, [open, selectedDate, isEditMode]);
 
 	const handleSlotTypeToggle = (typeId: string) => {
 		setSelectedSlotTypeIds((prev) =>

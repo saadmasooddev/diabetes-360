@@ -101,10 +101,10 @@ export interface AIChatPayload {
 		name: string;
 		gender: string;
 		birthday: string;
-		diagnosisDate: string;
 		weight: string;
 		height: string;
 		diabetesType: string;
+		diagnosisDate?: string
 	};
 	health_summary: {
 		last_24_hours: {
@@ -379,8 +379,42 @@ class AIService {
 		return response.data;
 	}
 
+	async transcribeAudio(
+		audioBuffer: Buffer,
+	): Promise<
+		AIBaseResponse<{
+			transcription_text: string;
+			total_response_time_sec: number;
+			audio_duration_min: number;
+			estimated_cost: number;
+		}>
+	> {
+		const formData = new FormData();
+		formData.append("audio", audioBuffer, {
+			filename: "audio.wav",
+			contentType: "audio/wav",
+		});
+		const response = await axios.post<
+			AIBaseResponse<{
+				transcription_text: string;
+				total_response_time_sec: number;
+				audio_duration_min: number;
+				estimated_cost: number;
+			}>
+		>(`${this.baseUrl}/api/transcribe-audio/`, formData, {
+			headers: {
+				...formData.getHeaders(),
+			},
+			timeout: this.defaultTimeout,
+		});
+		this.validateResponse(
+			response.data,
+			(data) => typeof data?.transcription_text === "string" ,
+		);
+		return response.data;
+	}
+
 	async chat(payload: AIChatPayload): Promise<AIBaseResponse<AIChatResponse>> {
-		console.log("chat payload", payload);
 		const response = await axios.post<AIBaseResponse<AIChatResponse>>(
 			`${this.baseUrl}/api/chat/`,
 			payload,

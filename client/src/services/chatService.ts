@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from "@/config/endpoints";
 import { httpClient } from "@/utils/httpClient";
 import type { ApiResponse } from "@/types/auth.types";
-import { CHAT_ROLES } from "@shared/schema";
+import { CHAT_ROLES, ChatMessage } from "@shared/schema";
 
 export interface ChatMessageDto {
 	id: string;
@@ -17,14 +17,15 @@ export interface GetChatResponse {
 	nudge?: string;
 }
 
-export interface SendMessageResponse {
-	assistantMessage: string;
+
+export interface TranscribeAudioResponse {
+	transcription_text: string;
 }
 
 class ChatService {
-	async getChatByDate(date: string): Promise<GetChatResponse> {
+	async getChatByDate(date: string,{ offset, limit } : { offset: number, limit: number }): Promise<GetChatResponse> {
 		const response = await httpClient.get<ApiResponse<GetChatResponse>>(
-			`${API_ENDPOINTS.CHAT.BASE}?date=${encodeURIComponent(date)}`,
+			`${API_ENDPOINTS.CHAT.BASE}?date=${encodeURIComponent(date)}&offset=${offset}&limit=${limit}`,
 		);
 		if (!response.success) {
 			throw new Error(response.message ?? "Failed to fetch chat");
@@ -38,16 +39,37 @@ class ChatService {
 	async sendMessage(
 		date: string,
 		message: string,
-	): Promise<SendMessageResponse> {
-		const response = await httpClient.post<ApiResponse<SendMessageResponse>>(
+	): Promise<ChatMessage> {
+		const response = await httpClient.post<ApiResponse<ChatMessage>>(
 			API_ENDPOINTS.CHAT.BASE,
 			{ date, message, recordedAt: new Date().toISOString() },
 		);
 		if (!response.success) {
 			throw new Error(response.message ?? "Failed to send message");
 		}
+		
+		return response.data!;
+	}
+
+	async transcribeAudio(
+		audioFile: File | Blob,
+	): Promise<TranscribeAudioResponse> {
+		const formData = new FormData();
+		const file =
+			audioFile instanceof File
+				? audioFile
+				: new File([audioFile], "audio.wav", { type: "audio/wav" });
+		formData.append("audio", file);
+
+		const response = await httpClient.post<
+			ApiResponse<TranscribeAudioResponse>
+		>(API_ENDPOINTS.CHAT.TRANSCRIBE_AUDIO, formData);
+
+		if (!response.success) {
+			throw new Error(response.message ?? "Failed to transcribe audio");
+		}
 		return {
-			assistantMessage: response.data?.assistantMessage ?? "",
+			transcription_text: response.data?.transcription_text ?? "",
 		};
 	}
 }

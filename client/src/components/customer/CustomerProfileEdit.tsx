@@ -20,10 +20,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import {
-	profileDataSchema,
-	type ProfileDataFormValues,
-} from "@/schemas/profileData";
-import {
 	genderOptions,
 	diabetesTypeOptions,
 	dayOptions,
@@ -36,6 +32,7 @@ import { useUpdateCustomerData } from "@/hooks/mutations/useCustomer";
 import type { CustomerData } from "@/services/customerService";
 import { parseDateToComponents } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
+import { DIABETES_TYPE, ProfileDataFormValues, profileDataSchema } from "@shared/schema";
 
 interface CustomerProfileEditProps {
 	customerData: CustomerData;
@@ -57,11 +54,6 @@ export function CustomerProfileEdit({
 		month: birthMonth,
 		year: birthYear,
 	} = parseDateToComponents(customerData.birthday);
-	const {
-		day: diagnosisDay,
-		month: diagnosisMonth,
-		year: diagnosisYear,
-	} = parseDateToComponents(customerData.diagnosisDate);
 
 	const form = useForm<ProfileDataFormValues>({
 		resolver: zodResolver(profileDataSchema),
@@ -72,16 +64,11 @@ export function CustomerProfileEdit({
 			birthDay,
 			birthMonth,
 			birthYear,
-			diagnosisDay,
-			diagnosisMonth,
-			diagnosisYear,
 			weight: customerData.weight,
 			height: customerData.height,
-			diabetesType: customerData.diabetesType as
-				| "type1"
-				| "type2"
-				| "gestational"
-				| "prediabetes",
+			diabetesType: customerData.diabetesType as DIABETES_TYPE,
+			mainGoal: customerData.mainGoal || "",
+			onDiabetesMedicationOrInsulin: customerData.medicationInfo || ""
 		},
 	});
 
@@ -92,8 +79,8 @@ export function CustomerProfileEdit({
 			if (authUser) {
 				setUser({
 					...authUser,
-					firstName: data.firstName,
-					lastName: data.lastName,
+					firstName: data.firstName || "",
+					lastName: data.lastName || "",
 				});
 			}
 			// Reset form to updated values
@@ -102,11 +89,7 @@ export function CustomerProfileEdit({
 				month: birthMonth,
 				year: birthYear,
 			} = parseDateToComponents(customerData.birthday);
-			const {
-				day: diagnosisDay,
-				month: diagnosisMonth,
-				year: diagnosisYear,
-			} = parseDateToComponents(customerData.diagnosisDate);
+
 			form.reset({
 				firstName: data.firstName,
 				lastName: data.lastName,
@@ -114,9 +97,6 @@ export function CustomerProfileEdit({
 				birthDay,
 				birthMonth,
 				birthYear,
-				diagnosisDay,
-				diagnosisMonth,
-				diagnosisYear,
 				weight: data.weight,
 				height: data.height,
 				diabetesType: data.diabetesType,
@@ -264,80 +244,6 @@ export function CustomerProfileEdit({
 					</div>
 				</div>
 
-				<div>
-					<Label className="text-sm">Diagnosis Date</Label>
-					<div className="grid grid-cols-3 gap-2 mt-2">
-						<FormField
-							control={form.control}
-							name="diagnosisDay"
-							render={({ field }) => (
-								<FormItem>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="DD" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{dayOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="diagnosisMonth"
-							render={({ field }) => (
-								<FormItem>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="MM" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{monthOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="diagnosisYear"
-							render={({ field }) => (
-								<FormItem>
-									<Select onValueChange={field.onChange} value={field.value}>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="YYYY" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{yearOptions.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
-				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<FormField
@@ -410,6 +316,33 @@ export function CustomerProfileEdit({
 									))}
 								</SelectContent>
 							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+				<FormField
+					control={form.control}
+					name="mainGoal"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Main Goal</FormLabel>
+							<FormControl>
+								<Input {...field} />
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name="onDiabetesMedicationOrInsulin"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Medication Info</FormLabel>
+							<FormControl>
+								<Input {...field} />
+							</FormControl>
 							<FormMessage />
 						</FormItem>
 					)}

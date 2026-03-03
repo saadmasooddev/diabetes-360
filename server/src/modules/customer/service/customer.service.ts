@@ -1,5 +1,6 @@
 import { CustomerRepository } from "../repository/customer.repository";
 import type {
+	AdditionalProfileDataValues,
 	InsertCustomerData,
 	UpdateCustomerData,
 } from "../../auth/models/user.schema";
@@ -27,27 +28,17 @@ export class CustomerService {
 		return data;
 	}
 
-	async createCustomerData(userId: string, data: InsertCustomerData) {
+	async createCustomerData(
+		userId: string, data: InsertCustomerData, 
+		additionalData?: AdditionalProfileDataValues
+	) {
 		const existing =
 			await this.customerRepository.getCustomerDataByUserId(userId);
 		if (existing) {
 			throw new ConflictError("Customer data already exists for this user");
 		}
 
-		const customerData = await this.customerRepository.createCustomerData({
-			...data,
-			userId,
-		});
-
-		await db
-			.update(users)
-			.set({
-				profileComplete: true,
-				updatedAt: new Date(),
-			})
-			.where(eq(users.id, userId));
-
-		return customerData;
+    return await this.customerRepository.createCustomerDataAndUpdateUserProfileCompleteTransaction(userId, data, additionalData)
 	}
 
 	async updateCustomerData(userId: string, data: UpdateCustomerData) {

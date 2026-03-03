@@ -20,6 +20,8 @@ interface HealthMetricCardProps {
 	type: MetricType;
 	latestValue: string | number | null;
 	trendArrow: React.ReactNode;
+	title?: string;
+	unit?: string;
 	onAddLog: () => void;
 	onUploadPicture?: (file: File) => void;
 	onUpgrade: () => void;
@@ -27,12 +29,14 @@ interface HealthMetricCardProps {
 	dailyLimit?: number;
 	isUploading?: boolean;
 	hideUpgradeCallToAction: boolean;
+	hideUploadButton?: boolean;
 }
 
 export function HealthMetricCard({
 	type,
 	latestValue,
 	trendArrow,
+	title: titleOverride,
 	onAddLog,
 	onUploadPicture,
 	onUpgrade,
@@ -40,11 +44,13 @@ export function HealthMetricCard({
 	dailyLimit: remainingLogsLimit = 0,
 	isUploading,
 	hideUpgradeCallToAction,
+	hideUploadButton = false,
+	unit: unitOverride,
 }: HealthMetricCardProps) {
 	const uploadImageRef = useRef<HTMLInputElement | null>(null);
 	const config = {
 		[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: {
-			title: "Blood Glucose",
+			title: "Current Glucose",
 			unit: "mg/dL",
 			showUploadButton: true,
 			icon: Activity,
@@ -83,6 +89,9 @@ export function HealthMetricCard({
 
 	const metricConfig = config[type];
 	const IconComponent = metricConfig.icon;
+	const displayTitle = titleOverride ?? metricConfig.title;
+	const displayUnit = unitOverride ?? metricConfig.unit;
+	const showUploadButton = !hideUploadButton && metricConfig.showUploadButton;
 
 	const formatValue = () => {
 		if (latestValue === null || latestValue === undefined) return "—";
@@ -157,7 +166,7 @@ export function HealthMetricCard({
 								fontWeight: 600,
 							}}
 						>
-							{metricConfig.title}
+							{displayTitle}
 						</h3>
 					</div>
 				</div>
@@ -182,7 +191,7 @@ export function HealthMetricCard({
 							marginBottom: "4px",
 						}}
 					>
-						{metricConfig.unit}
+						{displayUnit}
 					</span>
 					{trendArrow}
 				</div>
@@ -212,7 +221,7 @@ export function HealthMetricCard({
 					>
 						Add New Log
 					</Button>
-					{metricConfig.showUploadButton && (
+					{showUploadButton && (
 						<>
 							<Button
 								variant="outline"

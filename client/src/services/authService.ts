@@ -63,10 +63,10 @@ class AuthService {
 			API_ENDPOINTS.AUTH.FORGOT_PASSWORD,
 			{ email },
 		);
-		if (!response.success || !response.data) {
+		if (!response.success) {
 			throw new Error(response.message || "Request failed");
 		}
-		return response.data.message;
+		return response.message;
 	}
 
 	async resetPassword(token: string, password: string): Promise<string> {
@@ -74,10 +74,10 @@ class AuthService {
 			API_ENDPOINTS.AUTH.RESET_PASSWORD,
 			{ token, password },
 		);
-		if (!response.success || !response.data) {
+		if (!response.success ) {
 			throw new Error(response.message || "Password reset failed");
 		}
-		return response.data.message;
+		return response.message;
 	}
 
 	async changePassword(

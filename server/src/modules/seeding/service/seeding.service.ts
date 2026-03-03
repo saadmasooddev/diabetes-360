@@ -43,13 +43,14 @@ export class SeedingService {
 				freeConsultationQuota: this.DEFAULT_LIMITS.freeConsultationQuota,
 			});
 		}
+		console.log("General limits seeded successfully");
 
 		const timeZones = Intl.supportedValuesOf("timeZone");
 		const existingTimeZones = await this.timeZoneRepository.getTimeZones();
-		if (!existingTimeZones) {
+		if (existingTimeZones.length === 0) {
 			await this.timeZoneRepository.seedTimeZones(timeZones);
 		}
-
+		console.log("Time zones seeded successfully");
 		return "Seedinng completed successfully";
 	}
 }

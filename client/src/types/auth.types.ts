@@ -1,3 +1,5 @@
+import { DIABETES_TYPE } from "@shared/schema";
+
 export type PaymentType = "free" | "monthly" | "annual";
 
 export interface CustomerData {
@@ -5,10 +7,9 @@ export interface CustomerData {
 	userId: string;
 	gender: "male" | "female";
 	birthday: string;
-	diagnosisDate: string;
 	weight: string;
 	height: string;
-	diabetesType: "type1" | "type2" | "gestational" | "prediabetes";
+	diabetesType: DIABETES_TYPE;
 	createdAt: string;
 	updatedAt: string;
 }

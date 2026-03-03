@@ -255,7 +255,7 @@ export const diabetesTypeEnum = z.enum([
 	DIABETES_TYPE.TYPE2,
 	DIABETES_TYPE.GESTATIONAL,
 	DIABETES_TYPE.PREDIABETES,
-]);
+], { error: "Invalid diabetes type"});
 
 export const diabetesTypePgEnum = pgEnum("diabetes_type_enum", [
 	DIABETES_TYPE.TYPE1,
@@ -272,9 +272,10 @@ export const customerData = pgTable("customer_data", {
 		.unique(),
 	gender: text("gender").notNull(), // 'male' or 'female'
 	birthday: timestamp("birthday").notNull(), // Combined birthday field
-	diagnosisDate: timestamp("diagnosis_date").notNull(), // Combined diagnosis date field
 	weight: text("weight").notNull(), // Stored as string, e.g., "70"
 	height: text("height").notNull(), // Stored as string, e.g., "175"
+	mainGoal: text("main_goal"),
+	medicationInfo: text("medication_info"),
 	diabetesType: diabetesTypePgEnum("diabetes_type").notNull(), // 'type1', 'type2', 'gestational', 'prediabetes'
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -289,15 +290,6 @@ export const insertCustomerDataSchema = createInsertSchema(customerData)
 	})
 	.extend({
 		birthday: z
-			.string()
-			.or(z.date())
-			.transform((val) => {
-				if (typeof val === "string") {
-					return new Date(val);
-				}
-				return val;
-			}),
-		diagnosisDate: z
 			.string()
 			.or(z.date())
 			.transform((val) => {
@@ -355,10 +347,6 @@ export const insertCustomerDataAdminSchema = createInsertSchema(customerData)
 			.string()
 			.min(1, "Birthday is required")
 			.transform((val) => new Date(val)),
-		diagnosisDate: z
-			.string()
-			.min(1, "Diagnosis date is required")
-			.transform((val) => new Date(val)),
 		weight: z.string().min(1, "Weight is required"),
 		height: z.string().min(1, "Height is required"),
 		diabetesType: z.string().min(1, "Diabetes type is required"),
@@ -374,17 +362,6 @@ export const updateCustomerDataSchema = createInsertSchema(customerData)
 	.partial()
 	.extend({
 		birthday: z
-			.string()
-			.or(z.date())
-			.optional()
-			.transform((val) => {
-				if (!val) return undefined;
-				if (typeof val === "string") {
-					return new Date(val);
-				}
-				return val;
-			}),
-		diagnosisDate: z
 			.string()
 			.or(z.date())
 			.optional()
@@ -654,3 +631,129 @@ type NewPermission<T, Prefix extends string = ""> = T extends object
 					: never;
 		}[keyof T]
 	: never;
+
+
+export enum YES_NO_NOT_SURE_VALUES {
+	YES = "yes",
+	NO = "no",
+	NOT_SURE = "not_sure",
+}
+
+export enum BLOOD_SUGAR_READING_TYPES_ENUM {
+	FASTING = "fasting",
+	RANDOM = "random",
+	HBA1C = "hba1c",
+	NORMAL = "normal"
+}
+const yesNoNotSureEnum = z.enum(Object.values(YES_NO_NOT_SURE_VALUES) as [string, ...string[]] );
+export const bloodSugarReadingTypeSchema = z.enum([
+		...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM),
+	] as [string, ...string[]]);
+
+export const profileDataSchema = z
+	.object({
+		gender: z.enum(["male", "female"], {
+			error: "Please select a gender",
+		}),
+		birthDay: z.string().min(1, "Day is required"),
+		birthMonth: z.string().min(1, "Month is required"),
+		birthYear: z.string().min(1, "Year is required"),
+		weight: z
+			.string()
+			.superRefine((data, ctx) => {
+				const weight = parseFloat(data);
+				if (isNaN(weight) || weight <= 0) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Weight must be a positive number",
+						path: ["weight"],
+					});
+				}
+				const maxWeight = 1000;
+				if (weight > maxWeight) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Weight must be less than 1000kg",
+						path: ["weight"],
+					});
+				}
+			})
+			.min(1, "Weight is required"),
+		height: z
+			.string()
+			.superRefine((data, ctx) => {
+				const height = parseFloat(data);
+				if (isNaN(height) || height < 0) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Height must be a positive number",
+						path: ["height"],
+					});
+				}
+				const maxHeight = 250;
+				if (height > maxHeight) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Height must be less than 250cm",
+						path: ["height"],
+					});
+				}
+			})
+			.min(1, "Height is required"),
+		diabetesType: diabetesTypeEnum,
+		firstName: z.string().min(1, "First name is required").optional(),
+		lastName: z.string().min(1, "Last name is required").optional(),
+		doctorToldDiabetes: yesNoNotSureEnum.optional(),
+		knowsBloodSugarValue: yesNoNotSureEnum.optional(),
+		bloodSugarType: bloodSugarReadingTypeSchema.optional(),
+		bloodSugarReading: z.string().optional(),
+		onDiabetesMedicationOrInsulin: z.string().optional(),
+		mainGoal: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.knowsBloodSugarValue === YES_NO_NOT_SURE_VALUES.YES) {
+			if (!data.bloodSugarType) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Please select blood sugar type",
+					path: ["bloodSugarType"],
+				});
+			}
+			if (!data.bloodSugarReading || data.bloodSugarReading.trim() === "") {
+				ctx.addIssue({
+					code: "custom",
+					message: "Please enter your blood sugar reading",
+					path: ["bloodSugarReading"],
+				});
+			} else if (data.bloodSugarReading) {
+				const num = parseFloat(data.bloodSugarReading);
+				if (isNaN(num)) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Please enter a valid number",
+						path: ["bloodSugarReading"],
+					});
+				}
+				if(data.bloodSugarType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (num < 0 || num > 100)){
+					ctx.addIssue({
+						code: "custom",
+						message: "HbA1c value must be between 0-100",
+						path: ["bloodSugarReading"],
+					});
+				} 
+			}
+		}
+	});
+
+export const additionalProfileDataSchema = 
+	profileDataSchema.pick({ 
+		knowsBloodSugarValue: true, 
+		bloodSugarReading: true, 
+		bloodSugarType: true, 
+	})
+
+
+
+export type ProfileDataFormValues = z.infer<typeof profileDataSchema>;
+export type AdditionalProfileDataValues = z.infer<typeof additionalProfileDataSchema>
+export type BloodSugarReadingTypeEnumValues = `${BLOOD_SUGAR_READING_TYPES_ENUM}`

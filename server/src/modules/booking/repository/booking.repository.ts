@@ -1,4 +1,4 @@
-import { db } from "../../../app/config/db";
+import { db, dbUtils } from "../../../app/config/db";
 import {
 	eq,
 	and,
@@ -14,6 +14,7 @@ import {
 	getTableColumns,
 	notInArray,
 	gt,
+	isNull,
 } from "drizzle-orm";
 import {
 	slotSize,
@@ -53,10 +54,24 @@ import {
 	SlotLocation,
 	BOOKING_TYPE_QUERY_ENUM,
 } from "../models/booking.schema";
-import { PgTransaction, alias } from "drizzle-orm/pg-core";
+import { alias } from "drizzle-orm/pg-core";
 import { freeTierLimits } from "../../settings/models/settings.schema";
 import { userConsultationQuotas } from "../models/consultation-quota.schema";
+import { Tx } from "../../food/models/food.schema";
 
+export type BookedSlotWithoutMeetingLink = {
+			bookedSlotId: string;
+			slotStartTime: string;
+			slotEndTime: string;
+			availabilityDate: Date;
+			slotSizeMinutes: number;
+			patientEmail: string;
+			patientFirstName: string;
+			patientLastName: string;
+			physicianEmail: string;
+			physicianFirstName: string;
+			physicianLastName: string;
+		}
 export type BookingPriceCalculation = {
 	type: BOOKING_TYPE_ENUM;
 	originalFee: string;
@@ -469,71 +484,66 @@ export class BookingRepository {
 		data: InsertBookedSlot,
 		pricingData: BookingPriceCalculation,
 	) {
-		return await db.transaction(async (tx) => {
-			try {
-				const [systemLimits] = await tx.select().from(freeTierLimits).limit(1);
-				if (
-					!systemLimits ||
-					!systemLimits.freeConsultationQuota ||
-					!systemLimits.discountedConsultationQuota
-				) {
-					throw new Error("System limits not found");
-				}
-
-				const [userConsultationQuota] = await tx
-					.select()
-					.from(userConsultationQuotas)
-					.where(eq(userConsultationQuotas.userId, data.customerId));
-				if (!userConsultationQuota) {
-					throw new Error("User consultation quota not found");
-				}
-
-				switch (pricingData.type) {
-					case BOOKING_TYPE_ENUM.FREE: {
-						const freeConsultationsUsed =
-							userConsultationQuota.freeConsultationsUsed + 1;
-						if (freeConsultationsUsed <= systemLimits.freeConsultationQuota) {
-							await tx
-								.update(userConsultationQuotas)
-								.set({
-									freeConsultationsUsed: freeConsultationsUsed,
-								})
-								.where(eq(userConsultationQuotas.userId, data.customerId));
-						}
-						break;
-					}
-					case BOOKING_TYPE_ENUM.DISCOUNTED: {
-						const discountedConsultationsUsed =
-							userConsultationQuota.discountedConsultationsUsed + 1;
-						if (
-							discountedConsultationsUsed <=
-							systemLimits.discountedConsultationQuota
-						) {
-							await tx
-								.update(userConsultationQuotas)
-								.set({
-									discountedConsultationsUsed: discountedConsultationsUsed,
-								})
-								.where(eq(userConsultationQuotas.userId, data.customerId));
-						}
-						break;
-					}
-					default:
-						break;
-				}
-
-				const [booked] = await tx
-					.insert(bookedSlots)
-					.values({
-						...data,
-						updatedAt: new Date(),
-					})
-					.returning();
-				return booked;
-			} catch (error) {
-				tx.rollback();
-				throw error;
+		return await dbUtils.transaction(async (tx) => {
+			const [systemLimits] = await tx.select().from(freeTierLimits).limit(1);
+			if (
+				!systemLimits ||
+				!systemLimits.freeConsultationQuota ||
+				!systemLimits.discountedConsultationQuota
+			) {
+				throw new Error("System limits not found");
 			}
+
+			const [userConsultationQuota] = await tx
+				.select()
+				.from(userConsultationQuotas)
+				.where(eq(userConsultationQuotas.userId, data.customerId));
+			if (!userConsultationQuota) {
+				throw new Error("User consultation quota not found");
+			}
+
+			switch (pricingData.type) {
+				case BOOKING_TYPE_ENUM.FREE: {
+					const freeConsultationsUsed =
+						userConsultationQuota.freeConsultationsUsed + 1;
+					if (freeConsultationsUsed <= systemLimits.freeConsultationQuota) {
+						await tx
+							.update(userConsultationQuotas)
+							.set({
+								freeConsultationsUsed: freeConsultationsUsed,
+							})
+							.where(eq(userConsultationQuotas.userId, data.customerId));
+					}
+					break;
+				}
+				case BOOKING_TYPE_ENUM.DISCOUNTED: {
+					const discountedConsultationsUsed =
+						userConsultationQuota.discountedConsultationsUsed + 1;
+					if (
+						discountedConsultationsUsed <=
+						systemLimits.discountedConsultationQuota
+					) {
+						await tx
+							.update(userConsultationQuotas)
+							.set({
+								discountedConsultationsUsed: discountedConsultationsUsed,
+							})
+							.where(eq(userConsultationQuotas.userId, data.customerId));
+					}
+					break;
+				}
+				default:
+					break;
+			}
+
+			const [booked] = await tx
+				.insert(bookedSlots)
+				.values({
+					...data,
+					updatedAt: new Date(),
+				})
+				.returning();
+			return booked;
 		});
 	}
 
@@ -1062,6 +1072,34 @@ export class BookingRepository {
 		});
 	}
 
+	/** Returns true if the physician has any booking (pending/confirmed/completed) with the patient */
+	async hasPhysicianPatientRelationship(
+		physicianId: string,
+		patientId: string,
+	): Promise<boolean> {
+		const [result] = await db
+			.select({ id: bookedSlots.id })
+			.from(bookedSlots)
+			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.where(
+				and(
+					eq(bookedSlots.customerId, patientId),
+					eq(availabilityDate.physicianId, physicianId),
+					or(
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.COMPLETED),
+					),
+				),
+			)
+			.limit(1);
+		return !!result;
+	}
+
 	// Get user consultations (upcoming and past)
 	async getUserConsultations(
 		customerId: string,
@@ -1167,6 +1205,7 @@ export class BookingRepository {
 				slotTypeId: bookedSlots.slotTypeId,
 				status: bookedSlots.status,
 				summary: bookedSlots.summary,
+				meetingLink: bookedSlots.meetingLink,
 				createdAt: bookedSlots.createdAt,
 				updatedAt: bookedSlots.updatedAt,
 				slot: {
@@ -1699,4 +1738,95 @@ export class BookingRepository {
 			.from(availabilityDate)
 			.where(sql`DATE(${availabilityDate.date}) = DATE(${date})`);
 	}
+
+	async getBookedSlotsWithoutMeetingLink(limit?: number, tx?: Tx): Promise<
+		BookedSlotWithoutMeetingLink []
+	> {
+		const patientsAlias = alias(users, "patients_meeting");
+		const physiciansAlias = alias(users, "physicians_meeting");
+		const dbConn = tx || db
+
+		const rows = dbConn
+			.select({
+				bookedSlotId: bookedSlots.id,
+				slotStartTime: slots.startTime,
+				slotEndTime: slots.endTime,
+				availabilityDate: availabilityDate.date,
+				slotSizeMinutes: slotSize.size,
+				patientEmail: patientsAlias.email,
+				patientFirstName: patientsAlias.firstName,
+				patientLastName: patientsAlias.lastName,
+				physicianEmail: physiciansAlias.email,
+				physicianFirstName: physiciansAlias.firstName,
+				physicianLastName: physiciansAlias.lastName,
+			})
+			.from(bookedSlots)
+			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
+			.innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
+			.innerJoin(patientsAlias, eq(bookedSlots.customerId, patientsAlias.id))
+			.innerJoin(
+				physiciansAlias,
+				eq(availabilityDate.physicianId, physiciansAlias.id),
+			)
+			.where(
+				and(
+					isNull(bookedSlots.meetingLink),
+					or(
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+					),
+					gte(availabilityDate.date, new Date()),
+				),
+			);
+
+			if(limit){
+				rows.limit(limit)
+			}
+
+			if(tx) {
+				rows.for("update", { skipLocked: true })
+			}
+
+		return await rows;
+	}
+
+	async updateBookedSlotMeetingLink(
+		bookedSlotId: string,
+		meetingLink: string,
+		tx?: Tx
+	): Promise<void> {
+		const dbConn = tx || db
+		await dbConn
+			.update(bookedSlots)
+			.set({
+				meetingLink,
+				updatedAt: new Date(),
+			})
+			.where(eq(bookedSlots.id, bookedSlotId));
+	}
+
+
+	async updateBookedSlotMeetingLinkTransaction(f: (tx: Tx, slots: BookedSlotWithoutMeetingLink) => Promise<void>){
+
+		await dbUtils.transaction(async (tx) => {
+			try {
+				const slots = await this.getBookedSlotsWithoutMeetingLink(1000, tx);
+				if (slots.length === 0) {
+					return;
+				}
+				for (const slot of slots){
+					await f(tx, slot)
+				}
+			} catch (error) {
+				throw error
+			}
+		})
+
+	}
 }
+

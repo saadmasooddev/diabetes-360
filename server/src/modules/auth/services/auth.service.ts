@@ -74,16 +74,11 @@ export class AuthService {
 		});
 
 		// Send welcome email with credentials
-		try {
-			await emailService.sendWelcomeEmail(
-				user.email,
-				`${user.firstName} ${user.lastName}`.trim(),
-				userData.password!,
-			);
-		} catch (error) {
-			console.error("Failed to send welcome email:", error);
-			// Don't fail the signup if email fails
-		}
+		await emailService.sendWelcomeEmail(
+			user.email,
+			`${user.firstName} ${user.lastName}`.trim(),
+			userData.password!,
+		);
 
 		// Return user without password, with profileData
 		if (!userWithProfile) {

@@ -172,6 +172,9 @@ function createMulterConfigMultiple(
 	return upload.array(fieldName, maxCount);
 }
 
+const MAX_AUDIO_SIZE = 3 * 1024 * 1024; 
+const ALLOWED_AUDIO_WAV_TYPES = ["audio/wav", "audio/wave", "audio/x-wav"];
+
 export const memoryUpload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
@@ -186,6 +189,31 @@ export const memoryUpload = multer({
 			cb(null, true);
 		} else {
 			cb(new BadRequestError("Only image files are allowed"));
+		}
+	},
+});
+
+export const audioWavMemoryUpload = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: MAX_AUDIO_SIZE,
+		files: 1,
+	},
+	fileFilter: (
+		req: Express.Request,
+		file: Express.Multer.File,
+		cb: multer.FileFilterCallback,
+	) => {
+		const ok =
+			ALLOWED_AUDIO_WAV_TYPES.includes(file.mimetype)
+		if (ok) {
+			cb(null, true);
+		} else {
+			cb(
+				new BadRequestError(
+					"Only .wav audio is allowed. Allowed types: audio/wav, audio/wave, audio/x-wav",
+				),
+			);
 		}
 	},
 });

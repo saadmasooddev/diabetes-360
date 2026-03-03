@@ -120,7 +120,7 @@ export function Home() {
 										style={{ color: "#00453A" }}
 										data-testid="text-hero-title"
 									>
-										Try our Free 20 Minute Consultation
+										Consult with a Doctor Today
 									</h1>
 									<Button
 										className="w-full md:w-auto"
