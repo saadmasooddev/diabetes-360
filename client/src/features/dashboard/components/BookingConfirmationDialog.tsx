@@ -115,31 +115,23 @@ export function BookingConfirmationDialog({
 								{bookingPrice.isDiscounted && bookingPrice.discountedFee && (
 									<div className="flex items-center justify-between mb-2">
 										<span className="text-sm text-gray-600">
-											Discounted Fee:
+											Discount Applied:
 										</span>
-										<span className="font-medium text-green-600">
-											PKR{" "}
-											{parseFloat(bookingPrice.discountedFee).toLocaleString(
-												"en-US",
-												{ minimumFractionDigits: 2, maximumFractionDigits: 2 },
-											)}
-										</span>
+										{bookingPrice.discountPercentage && (
+											<span className="font-medium text-green-600">
+												{bookingPrice.discountPercentage} %
+											</span>
+
+										)}
+
 									</div>
 								)}
 								{bookingPrice.isFree && (
 									<div className="flex items-center justify-between mb-2">
 										<span className="text-sm text-gray-600">
-											Discounted Fee:
+											Discounted Applied:
 										</span>
-										<span className="font-medium text-green-600">
-											PKR{" "}
-											{parseFloat(
-												bookingPrice.originalFee || "0",
-											).toLocaleString("en-US", {
-												minimumFractionDigits: 2,
-												maximumFractionDigits: 2,
-											})}
-										</span>
+										<span className="font-medium text-green-600">100 %</span>
 									</div>
 								)}
 								<div className="flex items-center justify-between pt-2 border-t">

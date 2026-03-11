@@ -109,7 +109,7 @@ export function DailyQuickLogsModal({
 		options: readonly { value: string; label: string }[];
 		defaultValue?: string | null;
 	}) => (
-		<div className="space-y-3  ">
+		<div className="space-y-3   ">
 			<label
 				className="block font-semibold text-sm"
 				style={{ color: "#00453A" }}
@@ -120,7 +120,7 @@ export function DailyQuickLogsModal({
 				{options.map((opt) => (
 					<label
 						key={opt.value}
-						className="flex items-center gap-2 cursor-pointer"
+						className=" overflow-y-scrollflex items-center gap-2 cursor-pointer"
 					>
 						<input
 							type="radio"
@@ -147,7 +147,7 @@ export function DailyQuickLogsModal({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
-				className="sm:max-w-md p-4 "
+				className="sm:max-w-md p-4 overflow-y-scroll "
 				style={{
 					background: "#FFFFFF",
 					borderRadius: "16px",

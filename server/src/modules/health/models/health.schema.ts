@@ -157,19 +157,20 @@ export type InsertExerciseLog = z.infer<typeof insertExerciseLogSchema>;
 export type ExerciseLog = typeof exerciseLogs.$inferSelect;
 
 // Health Metric Targets Table - for storing admin recommended values and user-specific targets
-export enum EXERCISE_TYPE_ENUM {
+export enum METRIC_TYPE_ENUM {
 	BLOOD_GLUCOSE = "blood_glucose",
 	STEPS = "steps",
 	WATER_INTAKE = "water_intake",
 	HEART_RATE = "heart_rate",
+	CALORIE_INTAKE = "calorie_intake"
 }
 
-export const metricTypes = Object.values(EXERCISE_TYPE_ENUM);
+export const metricTypes = Object.values(METRIC_TYPE_ENUM);
 export type MetricType =
-	(typeof EXERCISE_TYPE_ENUM)[keyof typeof EXERCISE_TYPE_ENUM];
+	(typeof METRIC_TYPE_ENUM)[keyof typeof METRIC_TYPE_ENUM];
 export const metricTypeEnum = pgEnum(
 	"metric_type_enum",
-	metricTypes as [string, ...string[]],
+	metricTypes.filter(t => t !== METRIC_TYPE_ENUM.CALORIE_INTAKE) as [string, ...string[]],
 );
 
 export const healthMetricTargets = pgTable("health_metric_targets", {
@@ -189,17 +190,17 @@ const validateTargetValue = (
 	value: number,
 ): boolean => {
 	switch (metricType) {
-		case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+		case METRIC_TYPE_ENUM.BLOOD_GLUCOSE:
 			// Normal blood glucose: 70-100 mg/dL (fasting), 140-180 mg/dL (post-meal)
 			// Target range: 70-200 mg/dL (reasonable range for diabetes management)
 			return value >= 70 && value <= 200;
-		case EXERCISE_TYPE_ENUM.STEPS:
+		case METRIC_TYPE_ENUM.STEPS:
 			// Reasonable daily steps: 0-50,000 (very active person max)
 			return value >= 0 && value <= 50000;
-		case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+		case METRIC_TYPE_ENUM.WATER_INTAKE:
 			// Maximum 5L per day (recommended max is 3-4L, but 5L is absolute max)
 			return value >= 0 && value <= 5;
-		case EXERCISE_TYPE_ENUM.HEART_RATE:
+		case METRIC_TYPE_ENUM.HEART_RATE:
 			// Normal resting: 60-100 bpm, max during exercise: ~220 - age
 			// Target range: 40-200 bpm (covers all scenarios)
 			return value >= 40 && value <= 200;
@@ -224,28 +225,28 @@ export const insertHealthMetricTargetSchema = createInsertSchema(
 	.superRefine((data, ctx) => {
 		if (!validateTargetValue(data.metricType, data.targetValue)) {
 			switch (data.metricType) {
-				case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+				case METRIC_TYPE_ENUM.BLOOD_GLUCOSE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Blood glucose target must be between 70-200 mg/dL",
 						path: ["targetValue"],
 					});
 					break;
-				case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+				case METRIC_TYPE_ENUM.WATER_INTAKE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Water intake target must be between 0-4 liters per day",
 						path: ["targetValue"],
 					});
 					break;
-				case EXERCISE_TYPE_ENUM.STEPS:
+				case METRIC_TYPE_ENUM.STEPS:
 					ctx.addIssue({
 						code: "custom",
 						message: "Steps target must be between 0-50,000 steps per day",
 						path: ["targetValue"],
 					});
 					break;
-				case EXERCISE_TYPE_ENUM.HEART_RATE:
+				case METRIC_TYPE_ENUM.HEART_RATE:
 					ctx.addIssue({
 						code: "custom",
 						message: "Heart rate target must be between 40-200 bpm",

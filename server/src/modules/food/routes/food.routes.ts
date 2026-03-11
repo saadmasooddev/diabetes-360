@@ -378,4 +378,94 @@ router.post(
 	(req, res) => foodController.logMeal(req, res),
 );
 
+/**
+ * @swagger
+ * /api/food/calorie-profile:
+ *   get:
+ *     summary: Get user calorie profile between dates
+ *     tags: [Food Scanner]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Returns paginated logged meals and daily calorie totals for the date range. Requires SCAN_FOOD permission.
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-01"
+ *         description: Start date (YYYY-MM-DD)
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2026-02-26"
+ *         description: End date (YYYY-MM-DD)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for meals list
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Meals per page
+ *     responses:
+ *       200:
+ *         description: Calorie profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         meals:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               id: { type: string }
+ *                               mealDate: { type: string, format: date }
+ *                               foodName: { type: string }
+ *                               calories: { type: string }
+ *                               carbs: { type: string }
+ *                               proteins: { type: string }
+ *                               fats: { type: string }
+ *                         total:
+ *                           type: integer
+ *                           description: Total count of meals in the date range
+ *                         calorieIntake:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               day: { type: string, format: date }
+ *                               value: { type: number, description: Calories consumed that day }
+ *       400:
+ *         description: Invalid date range or pagination
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - SCAN_FOOD permission required
+ */
+router.get(
+	"/calorie-profile",
+	authenticateToken,
+	requirePermission(PERMISSIONS.SCAN_FOOD),
+	(req, res) => foodController.getUserCalorieProfileBetweenDates(req, res),
+);
+
 export { router as foodRoutes };

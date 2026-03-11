@@ -31,7 +31,7 @@ class ChatService {
 			throw new Error(response.message ?? "Failed to fetch chat");
 		}
 		return {
-			messages: response.data?.messages ?? [],
+			messages: response.data?.messages.reverse() ?? [],
 			nudge: response.data?.nudge,
 		};
 	}

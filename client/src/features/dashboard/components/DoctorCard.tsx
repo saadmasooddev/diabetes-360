@@ -8,12 +8,14 @@ interface DoctorCardProps {
 	doctor: Doctor;
 	onConsultClick: (doctor: Doctor) => void;
 	variant?: "default" | "compact";
+	nextSlotLabel?: string | null;
 }
 
 export function DoctorCard({
 	doctor,
 	onConsultClick,
 	variant = "default",
+	nextSlotLabel,
 }: DoctorCardProps) {
 	const isCompact = variant === "compact";
 
@@ -187,6 +189,16 @@ export function DoctorCard({
 							</div>
 						</div>
 					)}
+
+					{nextSlotLabel && (
+						<div
+							className="text-sm text-[#546E7A]  flex flex-col gap-1  "
+							data-testid={`text-next-slot-${doctor.id}`}
+						>
+							<span className="font-medium">Availability: </span>
+							<span>{nextSlotLabel}</span>
+						</div>
+					)}
 				</div>
 
 				<Button
@@ -202,6 +214,9 @@ export function DoctorCard({
 						height: "auto",
 					}}
 					data-testid={`button-consult-${doctor.id}`}
+					disabled={
+						nextSlotLabel !== undefined && !nextSlotLabel
+					}
 				>
 					Consult Now
 				</Button>

@@ -1033,6 +1033,14 @@ router.patch(
 	(req, res) => bookingController.updateConsultationStatus(req, res),
 );
 
+
+router.patch(
+	"/consultations/:bookingId/note",
+	authenticateToken,
+	requireAnyPermission([PERMISSIONS.UPDATE_OWN_APPOINTMENTS, PERMISSIONS.UPDATE_ALL_BOOKINGS]),
+	(req, res) => bookingController. updateConsultationNotes(req, res),
+);
+
 /**
  * @swagger
  * /api/booking/appointments:

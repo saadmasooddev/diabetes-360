@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { patientService } from "@/services/patientService";
+import {
+	patientService,
+	type PatientDocumentsResponse,
+} from "@/services/patientService";
 import type { DateRange } from "@/features/dashboard/components/HealthTrendChart";
 import { useToast } from "@/hooks/use-toast";
 
@@ -56,4 +59,16 @@ export const usePatientAlerts = () => {
 	}, [result.error, toast]);
 
 	return result;
+};
+
+/** TODO: Backend endpoint for patient documents not yet created. Enable when endpoint is ready. */
+export const usePatientDocuments = (patientId: string | null) => {
+	return useQuery<PatientDocumentsResponse>({
+		queryKey: ["patient-documents", patientId],
+		queryFn: () => {
+			if (!patientId) throw new Error("Patient ID is required");
+			return patientService.getPatientDocuments(patientId);
+		},
+		enabled: false, // TODO: set to !!patientId when backend is ready
+	});
 };

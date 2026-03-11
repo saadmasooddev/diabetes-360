@@ -60,7 +60,7 @@ export class ChatRepository {
 
 			return {
 				totalMessages: totalMessages[0].count || 0,
-				messages: messages.reverse()
+				messages: messages
 			}
 
 	}

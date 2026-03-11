@@ -10,6 +10,9 @@ type MealInfo = {
 interface AppState {
 	setMeal: (data: MealInfo) => void;
 	mealInfo: MealInfo;
+	medicationInfo: { consultationId?: string;
+	},
+	setMedicationInfo: (data: { consultationId?: string }) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -20,6 +23,10 @@ export const useAppStore = create<AppState>()(
 				mealType: undefined,
 			},
 			setMeal: (data: MealInfo) => set({ mealInfo: data }),
+			medicationInfo: {
+				consultationId: undefined,
+			},
+			setMedicationInfo: (data) => set({ medicationInfo: data })
 		}),
 		{
 			name: "app-storage",

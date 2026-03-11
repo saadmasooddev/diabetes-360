@@ -266,7 +266,9 @@ export default function DiaBot() {
 										</div>
 									</div>
 								)}
+
 								{messages.map((msg) => (
+
 									<div
 										key={msg.id}
 										className={`flex ${msg.role === "assistant" ? "justify-end" : "justify-start"}`}

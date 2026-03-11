@@ -30,7 +30,7 @@ import {
 import { calorieUtils } from "@/lib/utils";
 import {
 	ACTIVITY_TYPE_ENUM,
-	EXERCISE_TYPE_ENUM,
+	METRIC_TYPE_ENUM,
 	BLOOD_SUGAR_READING_TYPES_ENUM,
 	PAYMENT_TYPE,
 	type InsertHealthMetric,
@@ -53,7 +53,7 @@ export function Dashboard() {
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [limitDialogOpen, setLimitDialogOpen] = useState(false);
 	const [selectedMetricType, setSelectedMetricType] = useState<MetricType>(
-		EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+		METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 	);
 	const [bloodSugarReadingType, setBloodSugarReadingType] = useState<BloodSugarReadingTypeEnumValues>("normal");
 	const [metricValue, setMetricValue] = useState("");
@@ -133,19 +133,19 @@ export function Dashboard() {
 	const heartbeatDateRange = getDateRange(heartbeatInterval);
 
 	const bloodGlucoseQueryKey = getFilteredMetricsQueryKeys(
-		EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+		METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 		glucoseDateRange,
 	);
 	const stepsQueryKey = getFilteredMetricsQueryKeys(
-		EXERCISE_TYPE_ENUM.STEPS,
+		METRIC_TYPE_ENUM.STEPS,
 		stepsDateRange,
 	);
 	const waterQueryKey = getFilteredMetricsQueryKeys(
-		EXERCISE_TYPE_ENUM.WATER_INTAKE,
+		METRIC_TYPE_ENUM.WATER_INTAKE,
 		waterDateRange,
 	);
 	const heartBeatQueryKey = getFilteredMetricsQueryKeys(
-		EXERCISE_TYPE_ENUM.HEART_RATE,
+		METRIC_TYPE_ENUM.HEART_RATE,
 		heartbeatDateRange,
 	);
 
@@ -161,10 +161,11 @@ export function Dashboard() {
 		if (!freeTierLimits) return false;
 
 		const metricsRemainingLimitsMap: Record<MetricType, number> = {
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: freeTierLimits.glucoseLimit,
-			[EXERCISE_TYPE_ENUM.STEPS]: freeTierLimits.stepsLimit,
-			[EXERCISE_TYPE_ENUM.WATER_INTAKE]: freeTierLimits.waterLimit,
-			[EXERCISE_TYPE_ENUM.HEART_RATE]: Infinity,
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: freeTierLimits.glucoseLimit,
+			[METRIC_TYPE_ENUM.STEPS]: freeTierLimits.stepsLimit,
+			[METRIC_TYPE_ENUM.WATER_INTAKE]: freeTierLimits.waterLimit,
+			[METRIC_TYPE_ENUM.HEART_RATE]: Infinity,
+			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: Infinity,
 		};
 
 		return metricsRemainingLimitsMap[metricType] <= 0;
@@ -206,7 +207,7 @@ export function Dashboard() {
 		}
 
 		if (
-			selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE
+			selectedMetricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE
 			&& bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C
 			&& (numericValue < 0 || numericValue > 100)
 		) {
@@ -219,7 +220,7 @@ export function Dashboard() {
 		}
 
 		// Validate maximum limits for steps and water
-		if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
+		if (selectedMetricType === METRIC_TYPE_ENUM.STEPS) {
 			const newTotal = latestSteps + numericValue;
 			if (newTotal > 20000) {
 				toast({
@@ -231,7 +232,7 @@ export function Dashboard() {
 			}
 		}
 
-		if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
+		if (selectedMetricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
 			const newTotal = latestWaterIntake + numericValue;
 			if (newTotal > 4) {
 				toast({
@@ -254,11 +255,11 @@ export function Dashboard() {
 		const exercises: ModifiedInsertExerciseLogs[] = [];
 		const queriesToInvalidate: FilteredMetricsKey[] = [];
 
-		if (selectedMetricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
+		if (selectedMetricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE) {
 			metricData.bloodSugar = parseFloat(numericValue.toFixed(1));
 			metricData.bloodSugarReadingType = bloodSugarReadingType
 			queriesToInvalidate.push(bloodGlucoseQueryKey);
-		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.STEPS) {
+		} else if (selectedMetricType === METRIC_TYPE_ENUM.STEPS) {
 			const calories =
 				calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue);
 			const duration = calorieUtils.getEstimatedDurationForSteps(numericValue);
@@ -271,10 +272,10 @@ export function Dashboard() {
 				recordedAt: new Date().toISOString(),
 			});
 			queriesToInvalidate.push(stepsQueryKey);
-		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
+		} else if (selectedMetricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
 			metricData.waterIntake = parseFloat(numericValue.toFixed(1));
 			queriesToInvalidate.push(waterQueryKey);
-		} else if (selectedMetricType === EXERCISE_TYPE_ENUM.HEART_RATE) {
+		} else if (selectedMetricType === METRIC_TYPE_ENUM.HEART_RATE) {
 			metricData.heartRate = Math.round(numericValue);
 			queriesToInvalidate.push(heartBeatQueryKey);
 		}
@@ -286,7 +287,7 @@ export function Dashboard() {
 					setDialogOpen(false);
 					setMetricValue("");
 					setBloodSugarReadingType(BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL);
-					setSelectedMetricType(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE); // Reset to default
+					setSelectedMetricType(METRIC_TYPE_ENUM.BLOOD_GLUCOSE); // Reset to default
 					queriesToInvalidate.forEach((q) => {
 						queryClient.invalidateQueries({ queryKey: [q] });
 					});
@@ -296,7 +297,7 @@ export function Dashboard() {
 	};
 
 	const handleUploadPicture = (file: File) => {
-		setSelectedMetricType(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
+		setSelectedMetricType(METRIC_TYPE_ENUM.BLOOD_GLUCOSE);
 		if (!file.type.startsWith("image/")) {
 			toast({
 				title: "Invalid File",
@@ -491,79 +492,79 @@ export function Dashboard() {
 					{/* Metric Cards Row */}
 					<div className=" mb-8 grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							type={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestBloodSugar.toString()}
 							trendArrow={getTrendArrow(latestBloodSugar, previousBloodSugar)}
 							onAddLog={() =>
-								handleAddLog(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)
+								handleAddLog(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)
 							}
 							onUploadPicture={handleUploadPicture}
 							isUploading={isUploadingGlucoseImage}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							type={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestRandomSugar.toString()}
 							trendArrow={null}
-							title="Random Sugar *Today*"
+							title="Random Sugar"
 							onAddLog={() =>
 								handleAddLog(
-									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 									BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM,
 								)
 							}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 							hideUploadButton
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							type={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestFastingSugar.toString()}
 							trendArrow={null}
-							title="Fasting Sugar *Latest*"
+							title="Fasting Sugar"
 							onAddLog={() =>
 								handleAddLog(
-									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 									BLOOD_SUGAR_READING_TYPES_ENUM.FASTING,
 								)
 							}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 							hideUploadButton
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+							type={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 							latestValue={latestHba1c.toString()}
 							trendArrow={null}
-							title="HbA1c *Latest*"
+							title="HbA1c"
 							onAddLog={() =>
 								handleAddLog(
-									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 									BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C,
 								)
 							}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)}
 							dailyLimit={freeTierLimits?.glucoseLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 							hideUploadButton
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.STEPS}
+							type={METRIC_TYPE_ENUM.STEPS}
 							latestValue={exerciseSetsToday.toString()}
 							trendArrow={null}
-							title="Exercise *Sets*"
+							title="Exercise"
 							unit="sets"
 							onAddLog={() => setDailyQuickLogsOpen(true)}
 							onUpgrade={handleUpgrade}
@@ -574,23 +575,23 @@ export function Dashboard() {
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.STEPS}
+							type={METRIC_TYPE_ENUM.STEPS}
 							latestValue={latestSteps}
 							trendArrow={getTrendArrow(latestSteps, previousSteps)}
-							onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.STEPS)}
+							onAddLog={() => handleAddLog(METRIC_TYPE_ENUM.STEPS)}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.STEPS)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.STEPS)}
 							dailyLimit={freeTierLimits?.stepsLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 						/>
 
 						<HealthMetricCard
-							type={EXERCISE_TYPE_ENUM.WATER_INTAKE}
+							type={METRIC_TYPE_ENUM.WATER_INTAKE}
 							latestValue={latestWaterIntake}
 							trendArrow={getTrendArrow(latestWaterIntake, previousWaterIntake)}
-							onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
+							onAddLog={() => handleAddLog(METRIC_TYPE_ENUM.WATER_INTAKE)}
 							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(EXERCISE_TYPE_ENUM.WATER_INTAKE)}
+							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.WATER_INTAKE)}
 							dailyLimit={freeTierLimits?.waterLimit || 0}
 							hideUpgradeCallToAction={!isFreeUser}
 						/>
@@ -598,10 +599,10 @@ export function Dashboard() {
 						{/* Heart Beat Card - Only for paid users */}
 						{user?.paymentType !== "free" && user?.paymentType && (
 							<HealthMetricCard
-								type={EXERCISE_TYPE_ENUM.HEART_RATE}
+								type={METRIC_TYPE_ENUM.HEART_RATE}
 								latestValue={latestHeartRate.toString()}
 								trendArrow={getTrendArrow(latestHeartRate, previousHeartRate)}
-								onAddLog={() => handleAddLog(EXERCISE_TYPE_ENUM.HEART_RATE)}
+								onAddLog={() => handleAddLog(METRIC_TYPE_ENUM.HEART_RATE)}
 								onUpgrade={handleUpgrade}
 								disabled={false}
 								dailyLimit={0}
@@ -707,9 +708,9 @@ export function Dashboard() {
 							interval={glucoseInterval}
 							onIntervalChange={setGlucoseInterval}
 							recommendedTarget={
-								getTargets(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE).recommended
+								getTargets(METRIC_TYPE_ENUM.BLOOD_GLUCOSE).recommended
 							}
-							userTarget={getTargets(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE).user}
+							userTarget={getTargets(METRIC_TYPE_ENUM.BLOOD_GLUCOSE).user}
 						/>
 
 						<div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -726,9 +727,9 @@ export function Dashboard() {
 								interval={stepsInterval}
 								onIntervalChange={setStepsInterval}
 								recommendedTarget={
-									getTargets(EXERCISE_TYPE_ENUM.STEPS).recommended
+									getTargets(METRIC_TYPE_ENUM.STEPS).recommended
 								}
-								userTarget={getTargets(EXERCISE_TYPE_ENUM.STEPS).user}
+								userTarget={getTargets(METRIC_TYPE_ENUM.STEPS).user}
 							/>
 
 							<HealthTrendChart
@@ -744,9 +745,9 @@ export function Dashboard() {
 								interval={waterInterval}
 								onIntervalChange={setWaterInterval}
 								recommendedTarget={
-									getTargets(EXERCISE_TYPE_ENUM.WATER_INTAKE).recommended
+									getTargets(METRIC_TYPE_ENUM.WATER_INTAKE).recommended
 								}
-								userTarget={getTargets(EXERCISE_TYPE_ENUM.WATER_INTAKE).user}
+								userTarget={getTargets(METRIC_TYPE_ENUM.WATER_INTAKE).user}
 							/>
 						</div>
 
@@ -765,9 +766,9 @@ export function Dashboard() {
 								interval={heartbeatInterval}
 								onIntervalChange={setHeartbeatInterval}
 								recommendedTarget={
-									getTargets(EXERCISE_TYPE_ENUM.HEART_RATE).recommended
+									getTargets(METRIC_TYPE_ENUM.HEART_RATE).recommended
 								}
-								userTarget={getTargets(EXERCISE_TYPE_ENUM.HEART_RATE).user}
+								userTarget={getTargets(METRIC_TYPE_ENUM.HEART_RATE).user}
 							/>
 						)}
 					</div>

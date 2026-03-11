@@ -7,9 +7,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { API_ENDPOINTS } from "@/config/endpoints";
-import { EXERCISE_TYPE_ENUM } from "@shared/schema";
+import { DateManager, METRIC_TYPE_ENUM } from "@shared/schema";
 import type { FilteredMetricsKey } from "@/hooks/mutations/useHealth";
-import { formatDate } from "@/lib/utils";
 import type { MetricType } from "@shared/schema";
 import {
 	AreaChart,
@@ -27,7 +26,7 @@ interface ChartDataPoint {
 	value: number;
 }
 
-export type IntervalType = "daily" | "weekly" | "monthly";
+export type IntervalType = "daily" | "weekly" | "monthly" | "custom";
 
 interface HealthTrendChartProps {
 	title: string;
@@ -57,19 +56,21 @@ export const formatTimeLabel = (date: Date, interval: IntervalType): string => {
 	} else if (interval === "weekly") {
 		const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 		return `${days[date.getDay()]} ${date.getDate()}`;
-	} else {
+	} else if (interval === "monthly") {
 		// Monthly - show date
 		return `${date.getMonth() + 1}/${date.getDate()}`;
+	} else {
+		return DateManager.formatDate(date);
 	}
 };
 
 export type DateRange = { startDate: string; endDate: string };
-export const getDateRange = (interval: IntervalType): DateRange => {
+export const getDateRange = (interval: IntervalType, start?: string, end?: string): DateRange => {
 	const today = new Date();
 	today.setHours(23, 59, 59, 999);
-	const endDate = today.toISOString().split("T")[0];
+	let endDate = today.toISOString().split("T")[0];
 
-	const startDate = new Date();
+	let startDate = new Date();
 	if (interval === "daily") {
 		startDate.setHours(0, 0, 0, 0);
 	} else if (interval === "weekly") {
@@ -78,10 +79,13 @@ export const getDateRange = (interval: IntervalType): DateRange => {
 	} else if (interval === "monthly") {
 		startDate.setDate(today.getDate() - 30);
 		startDate.setHours(0, 0, 0, 0);
+	} else if (interval === "custom" && start && end) {
+		startDate = new Date(start)
+		endDate = DateManager.formatDate(end)
 	}
 	return {
-		startDate: formatDate(startDate, "yyyy-MM-dd"),
-		endDate: formatDate(new Date(endDate), "yyyy-MM-dd"),
+		startDate: DateManager.formatDate(startDate),
+		endDate: DateManager.formatDate(endDate),
 	};
 };
 export const getFilteredMetricsQueryKeys = (
@@ -89,34 +93,41 @@ export const getFilteredMetricsQueryKeys = (
 	dateRange: DateRange,
 ): FilteredMetricsKey => {
 	switch (metricType) {
-		case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+		case METRIC_TYPE_ENUM.BLOOD_GLUCOSE:
 			return {
 				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
 				startDate: dateRange.startDate,
 				endDate: dateRange.endDate,
-				types: [EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+				types: [METRIC_TYPE_ENUM.BLOOD_GLUCOSE],
 			};
-		case EXERCISE_TYPE_ENUM.STEPS:
+		case METRIC_TYPE_ENUM.STEPS:
 			return {
 				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
 				startDate: dateRange.startDate,
 				endDate: dateRange.endDate,
-				types: [EXERCISE_TYPE_ENUM.STEPS],
+				types: [METRIC_TYPE_ENUM.STEPS],
 			};
-		case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+		case METRIC_TYPE_ENUM.WATER_INTAKE:
 			return {
 				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
 				startDate: dateRange.startDate,
 				endDate: dateRange.endDate,
-				types: [EXERCISE_TYPE_ENUM.WATER_INTAKE],
+				types: [METRIC_TYPE_ENUM.WATER_INTAKE],
 			};
-		case EXERCISE_TYPE_ENUM.HEART_RATE:
+		case METRIC_TYPE_ENUM.HEART_RATE:
 			return {
 				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
 				startDate: dateRange.startDate,
 				endDate: dateRange.endDate,
-				types: [EXERCISE_TYPE_ENUM.HEART_RATE],
+				types: [METRIC_TYPE_ENUM.HEART_RATE],
 			};
+		case METRIC_TYPE_ENUM.CALORIE_INTAKE:
+			return {
+				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
+				startDate: dateRange.startDate,
+				endDate: dateRange.endDate,
+				types: [METRIC_TYPE_ENUM.CALORIE_INTAKE],
+			}
 	}
 };
 
@@ -257,11 +268,11 @@ export function HealthTrendChart({
 							label={
 								yAxisConfig?.label
 									? {
-											value: yAxisConfig.label,
-											position: "insideLeft",
-											fill: "#546E7A",
-											fontSize: 11,
-										}
+										value: yAxisConfig.label,
+										position: "insideLeft",
+										fill: "#546E7A",
+										fontSize: 11,
+									}
 									: undefined
 							}
 						/>

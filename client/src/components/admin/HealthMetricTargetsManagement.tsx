@@ -17,7 +17,7 @@ import { Target } from "lucide-react";
 import { handleNumberInput } from "@/lib/utils";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
-import { EXERCISE_TYPE_ENUM, type MetricType } from "@shared/schema";
+import { METRIC_TYPE_ENUM, type MetricType } from "@shared/schema";
 
 export function HealthMetricTargetsManagement() {
 	const { data: recommendedTargets, isLoading } = useRecommendedTargets();
@@ -32,16 +32,16 @@ export function HealthMetricTargetsManagement() {
 	useEffect(() => {
 		if (recommendedTargets) {
 			const glucose = recommendedTargets.find(
-				(t) => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+				(t) => t.metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 			);
 			const steps = recommendedTargets.find(
-				(t) => t.metricType === EXERCISE_TYPE_ENUM.STEPS,
+				(t) => t.metricType === METRIC_TYPE_ENUM.STEPS,
 			);
 			const water = recommendedTargets.find(
-				(t) => t.metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE,
+				(t) => t.metricType === METRIC_TYPE_ENUM.WATER_INTAKE,
 			);
 			const heartRate = recommendedTargets.find(
-				(t) => t.metricType === EXERCISE_TYPE_ENUM.HEART_RATE,
+				(t) => t.metricType === METRIC_TYPE_ENUM.HEART_RATE,
 			);
 
 			setGlucoseTarget(
@@ -60,22 +60,22 @@ export function HealthMetricTargetsManagement() {
 		value: number,
 	): string | null => {
 		switch (metricType) {
-			case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+			case METRIC_TYPE_ENUM.BLOOD_GLUCOSE:
 				if (value < 70 || value > 200) {
 					return "Blood glucose target must be between 70-200 mg/dL";
 				}
 				break;
-			case EXERCISE_TYPE_ENUM.STEPS:
+			case METRIC_TYPE_ENUM.STEPS:
 				if (value < 0 || value > 50000) {
 					return "Steps target must be between 0-50,000 steps per day";
 				}
 				break;
-			case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+			case METRIC_TYPE_ENUM.WATER_INTAKE:
 				if (value < 0 || value > 4) {
 					return "Water intake target must be between 0-4 liters per day";
 				}
 				break;
-			case EXERCISE_TYPE_ENUM.HEART_RATE:
+			case METRIC_TYPE_ENUM.HEART_RATE:
 				if (value < 40 || value > 200) {
 					return "Heart rate target must be between 40-200 bpm";
 				}
@@ -92,14 +92,14 @@ export function HealthMetricTargetsManagement() {
 			const numValue = parseFloat(glucoseTarget);
 			if (!isNaN(numValue)) {
 				const error = validateTarget(
-					EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+					METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 					numValue,
 				);
 				if (error) {
 					errors.push(error);
 				} else {
 					targets.push({
-						metricType: EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+						metricType: METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 						targetValue: numValue,
 					});
 				}
@@ -109,12 +109,12 @@ export function HealthMetricTargetsManagement() {
 		if (stepsTarget) {
 			const numValue = parseFloat(stepsTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(EXERCISE_TYPE_ENUM.STEPS, numValue);
+				const error = validateTarget(METRIC_TYPE_ENUM.STEPS, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
 					targets.push({
-						metricType: EXERCISE_TYPE_ENUM.STEPS,
+						metricType: METRIC_TYPE_ENUM.STEPS,
 						targetValue: numValue,
 					});
 				}
@@ -124,12 +124,12 @@ export function HealthMetricTargetsManagement() {
 		if (waterTarget) {
 			const numValue = parseFloat(waterTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE, numValue);
+				const error = validateTarget(METRIC_TYPE_ENUM.WATER_INTAKE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
 					targets.push({
-						metricType: EXERCISE_TYPE_ENUM.WATER_INTAKE,
+						metricType: METRIC_TYPE_ENUM.WATER_INTAKE,
 						targetValue: numValue,
 					});
 				}
@@ -139,12 +139,12 @@ export function HealthMetricTargetsManagement() {
 		if (heartRateTarget) {
 			const numValue = parseFloat(heartRateTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(EXERCISE_TYPE_ENUM.HEART_RATE, numValue);
+				const error = validateTarget(METRIC_TYPE_ENUM.HEART_RATE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
 					targets.push({
-						metricType: EXERCISE_TYPE_ENUM.HEART_RATE,
+						metricType: METRIC_TYPE_ENUM.HEART_RATE,
 						targetValue: numValue,
 					});
 				}

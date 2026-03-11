@@ -97,13 +97,6 @@ export class PhysicianService {
 		search?: string;
 		specialtyId?: string;
 	}) {
-		// Validate page and limit
-		if (params.page < 1) {
-			throw new BadRequestError("Page must be greater than 0");
-		}
-		if (params.limit < 1 || params.limit > 100) {
-			throw new BadRequestError("Limit must be between 1 and 100");
-		}
 
 		// Validate specialty if provided
 		if (params.specialtyId) {
@@ -118,13 +111,23 @@ export class PhysicianService {
 		return await this.physicianRepository.getPhysiciansPaginated(params);
 	}
 
-	async getPhysiciansBySpecialty(specialtyId: string) {
+	async getPhysiciansBySpecialty(
+		specialtyId: string,
+		timeZone: string,
+		userDateISO: string,
+		fromDate: string,
+	) {
 		const specialty =
 			await this.physicianRepository.getSpecialtyById(specialtyId);
 		if (!specialty) {
 			throw new NotFoundError("Specialty not found");
 		}
-		return await this.physicianRepository.getPhysiciansBySpecialty(specialtyId);
+		return await this.physicianRepository.getPhysiciansBySpecialityAndNextAvailableSlot(
+			specialtyId,
+			timeZone,
+			userDateISO,
+			fromDate
+		);
 	}
 
 	// Rating operations

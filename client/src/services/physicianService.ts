@@ -13,6 +13,14 @@ export interface PhysicianSpecialty {
 	updatedAt: string;
 }
 
+export interface NextAvailableSlot {
+	slotId: string;
+	date: string;
+	startTime: string;
+	endTime: string;
+	slotTypeId: string;
+}
+
 export interface Physician {
 	id: string;
 	firstName: string | null;
@@ -26,6 +34,7 @@ export interface Physician {
 	consultationFee: string;
 	imageUrl?: string | null;
 	isOnline?: boolean;
+	nextAvailableSlot?: NextAvailableSlot | null;
 }
 
 export interface PhysicianData {
@@ -122,9 +131,10 @@ export interface UpdateLocationRequest {
 class PhysicianService {
 	// Public consultation endpoints
 	async getSpecialties(): Promise<PhysicianSpecialty[]> {
+
 		const response = await httpClient.get<
 			ApiResponse<{ specialties: PhysicianSpecialty[] }>
-		>(API_ENDPOINTS.PHYSICIAN.SPECIALTIES);
+		>(`${API_ENDPOINTS.PHYSICIAN.SPECIALTIES}`);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch specialties");
 		}
@@ -190,9 +200,11 @@ class PhysicianService {
 	}
 
 	async getPhysiciansBySpecialty(specialtyId: string): Promise<Physician[]> {
+		const	recordedAt = new Date().toISOString()
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 		const response = await httpClient.get<
 			ApiResponse<{ physicians: Physician[] }>
-		>(API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId));
+		>(`${API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId)}?date=${recordedAt}&timeZone=${timeZone}`);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch physicians");
 		}

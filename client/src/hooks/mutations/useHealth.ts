@@ -18,6 +18,7 @@ import type {
 	QuickLogStressLevelTypeEnumValues,
 } from "@shared/schema";
 import { type } from "os";
+import { FilteredMetricResponse } from "server/src/modules/health/repository/health.repository";
 
 export const useLatestHealthMetric = () => {
 	return useQuery({
@@ -45,18 +46,7 @@ export type FilteredMetricsKey = {
 };
 export const useFilteredMetrics = (key: FilteredMetricsKey) => {
 	const { endpoint, startDate, endDate, types } = key;
-	return useQuery<{
-		bloodSugarRecords: MertricRecord[];
-		waterIntakeRecords: MertricRecord[];
-		stepsRecords: MertricRecord[];
-		heartBeatRecords: MertricRecord[];
-		pagination: {
-			bloodSugar: { total: number; limit: number; offset: number };
-			waterIntake: { total: number; limit: number; offset: number };
-			steps: { total: number; limit: number; offset: number };
-			heartBeat: { total: number; limit: number; offset: number };
-		};
-	}>({
+	return useQuery<FilteredMetricResponse>({
 		queryKey: [key],
 		queryFn: () =>
 			healthService.getFilteredMetrics(startDate!, endDate!, types),
@@ -73,18 +63,7 @@ export const useFilteredMetricsPaginated = (
 	limit: number = 30,
 	offset: number = 0,
 ) => {
-	return useQuery<{
-		bloodSugarRecords: MertricRecord[];
-		waterIntakeRecords: MertricRecord[];
-		stepsRecords: MertricRecord[];
-		heartBeatRecords: MertricRecord[];
-		pagination: {
-			bloodSugar: { total: number; limit: number; offset: number };
-			waterIntake: { total: number; limit: number; offset: number };
-			steps: { total: number; limit: number; offset: number };
-			heartBeat: { total: number; limit: number; offset: number };
-		};
-	}>({
+	return useQuery<FilteredMetricResponse>({
 		queryKey: [
 			API_ENDPOINTS.HEALTH.FILTERED,
 			startDate,

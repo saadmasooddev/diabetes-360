@@ -14,7 +14,7 @@ import type { CustomerData } from "../../auth/models/user.schema";
 import { z } from "zod";
 import { MEAL_TYPE_ENUM, insertLoggedMealSchema } from "../models/food.schema";
 import { TimeZoneService } from "server/src/shared/services/timeZone.service";
-import { DateManager } from "server/src/shared/utils/utils";
+import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
 
 export class FoodController {
 	private foodService: FoodService;
@@ -178,6 +178,43 @@ export class FoodController {
 			const result = await this.foodService.logMeal(userId, body.data, dateStr);
 			sendSuccess(res, result, "Meal logged successfully");
 		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
+	async getUserCalorieProfileBetweenDates(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
+		try {
+			const userId = req.user?.userId;
+			if (!userId) {
+				throw new BadRequestError("User not authenticated");
+			}
+			const startDate = (req.query.startDate as string)?.trim();
+			const endDate = (req.query.endDate as string)?.trim();
+			if (!startDate || isNaN(new Date(startDate).getTime())) {
+				throw new BadRequestError("Valid startDate (YYYY-MM-DD) is required");
+			}
+			if (!endDate || isNaN(new Date(endDate).getTime())) {
+				throw new BadRequestError("Valid endDate (YYYY-MM-DD) is required");
+			}
+			if (new Date(startDate) > new Date(endDate)) {
+				throw new BadRequestError("startDate must be before or equal to endDate");
+			}
+
+			const { limit, offset, page } = getPaginationParams(req);
+
+			const result =
+				await this.foodService.getUserCalorieProfileBetweenDates(
+					userId,
+					startDate,
+					endDate,
+					limit,
+					offset,
+				);
+			sendSuccess(res, result, "Calorie profile retrieved successfully");
+		} catch (error) {
 			handleError(res, error);
 		}
 	}

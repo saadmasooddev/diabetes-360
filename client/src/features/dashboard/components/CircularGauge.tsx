@@ -1,5 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import { EXERCISE_TYPE_ENUM, type MetricType } from "@shared/schema";
+import { METRIC_TYPE_ENUM, type MetricType } from "@shared/schema";
 
 interface CircularGaugeProps {
 	value: number;
@@ -30,28 +30,28 @@ export function CircularGauge({
 	// Get gradient colors based on metric type
 	const getGradientColors = () => {
 		switch (metricType) {
-			case EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE:
+			case METRIC_TYPE_ENUM.BLOOD_GLUCOSE:
 				return {
 					start: "#4CAF50",
 					end: "#66BB6A",
 					bg: "rgba(76, 175, 80, 0.1)",
 					shadow: "rgba(76, 175, 80, 0.3)",
 				};
-			case EXERCISE_TYPE_ENUM.WATER_INTAKE:
+			case METRIC_TYPE_ENUM.WATER_INTAKE:
 				return {
 					start: "#00856F",
 					end: "#00A085",
 					bg: "rgba(0, 133, 111, 0.1)",
 					shadow: "rgba(0, 133, 111, 0.3)",
 				};
-			case EXERCISE_TYPE_ENUM.STEPS:
+			case METRIC_TYPE_ENUM.STEPS:
 				return {
 					start: "#2196F3",
 					end: "#42A5F5",
 					bg: "rgba(33, 150, 243, 0.1)",
 					shadow: "rgba(33, 150, 243, 0.3)",
 				};
-			case EXERCISE_TYPE_ENUM.HEART_RATE:
+			case METRIC_TYPE_ENUM.HEART_RATE:
 				return {
 					start: "#E91E63",
 					end: "#EC407A",

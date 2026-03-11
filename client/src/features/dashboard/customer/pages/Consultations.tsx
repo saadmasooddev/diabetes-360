@@ -292,6 +292,11 @@ export function Consultations() {
 								showSeeAll={pastConsultations.length > 3}
 							/>
 						)}
+						{pastConsultations && pastConsultations.length === 0 && (
+							<Card className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">
+								No past consultations
+							</Card>
+						)}
 					</div>
 
 					{/* Recommended Experts Section */}

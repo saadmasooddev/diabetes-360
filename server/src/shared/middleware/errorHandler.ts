@@ -18,6 +18,10 @@ export function handleError(res: Response, error: any, data: any = null): void {
 		return;
 	}
 
+	if(process.env.NODE_ENV === "production") {
+		sendError(res, "Failed to process request. Please try again!", 500, data)
+		return;
+	}
 	const statusCode = error.status || error.statusCode || 500;
 	const message = error.message || "Internal Server Error";
 	sendError(res, message, statusCode, data);

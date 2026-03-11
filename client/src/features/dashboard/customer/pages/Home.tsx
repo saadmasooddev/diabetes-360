@@ -1,9 +1,16 @@
-import { ArrowRight, Heart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Image } from "@/components/ui/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+	type CarouselApi,
+} from "@/components/ui/carousel";
 import { ROUTES } from "@/config/routes";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useAuthStore } from "@/stores/authStore";
@@ -33,39 +40,44 @@ export function Home() {
 	const foodSuggestions = userDailyData?.foodSuggestions || [];
 	const personalInsights = userDailyData?.foodInsights || [];
 
-	function randomIndex(array: unknown[]) {
-		return Math.floor(Math.random() * array.length);
-	}
-
 	type MealTypeValue = (typeof MEAL_TYPE_ENUM)[keyof typeof MEAL_TYPE_ENUM];
 
-	function getCurrentMealBasedOnTimeOfDay(
+	function getMealsForCurrentTimeOfDay(
 		fs: FoodSuggestion[],
-	): { meal: MealDetails; mealType: MealTypeValue } | undefined {
+	): { meals: MealDetails[]; mealType: MealTypeValue } | undefined {
 		const currentTime = new Date().getHours();
-		let array: MealDetails[] | undefined = [];
+		let meals: MealDetails[] | undefined;
 		let mealType: MealTypeValue | undefined;
 		if (currentTime >= 6 && currentTime < 11) {
 			mealType = MEAL_TYPE_ENUM.Breakfast;
-			array = fs.find(
+			meals = fs.find(
 				(meal) => meal.mealType === MEAL_TYPE_ENUM.Breakfast,
 			)?.meals;
 		} else if (currentTime >= 11 && currentTime < 17) {
 			mealType = MEAL_TYPE_ENUM.Lunch;
-			array = fs.find((meal) => meal.mealType === MEAL_TYPE_ENUM.Lunch)?.meals;
+			meals = fs.find((meal) => meal.mealType === MEAL_TYPE_ENUM.Lunch)?.meals;
 		} else {
 			mealType = MEAL_TYPE_ENUM.Dinner;
-			array = fs.find((meal) => meal.mealType === MEAL_TYPE_ENUM.Dinner)?.meals;
+			meals = fs.find((meal) => meal.mealType === MEAL_TYPE_ENUM.Dinner)?.meals;
 		}
 
-		if (!array) return undefined;
-		return {
-			meal: array[randomIndex(array)],
-			mealType: mealType as MealTypeValue,
-		};
+		if (!meals?.length || !mealType) return undefined;
+		return { meals, mealType: mealType as MealTypeValue };
 	}
 
-	const currentMeal = getCurrentMealBasedOnTimeOfDay(foodSuggestions);
+	const mealsForTimeOfDay = getMealsForCurrentTimeOfDay(foodSuggestions);
+	const [carouselApi, setCarouselApi] = useState<CarouselApi | undefined>();
+	const [selectedIndex, setSelectedIndex] = useState(0);
+
+	useEffect(() => {
+		if (!carouselApi) return;
+		setSelectedIndex(carouselApi.selectedScrollSnap());
+		const onSelect = () => setSelectedIndex(carouselApi.selectedScrollSnap());
+		carouselApi.on("select", onSelect);
+		return () => {
+			carouselApi.off("select", onSelect);
+		};
+	}, [carouselApi]);
 
 	return (
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
@@ -179,105 +191,162 @@ export function Home() {
 											</div>
 										</div>
 									</Card>
-								) : currentMeal ? (
-									<Card
-										className="overflow-hidden"
-										style={{
-											background: "#FFFFFF",
-											border: "1px solid #EAEAEA",
-											borderRadius: "10px",
-										}}
-										data-testid="card-meal-plan"
-									>
-										<div className="flex flex-col md:flex-row">
-											<div className="relative h-48 md:h-auto md:w-48 flex-shrink-0">
-												<Image
-													src={healthyFoodImg}
-													alt={currentMeal.meal.name}
-													className="h-full w-full object-cover"
-												/>
-											</div>
-											<div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
-												<div>
-													<p
-														className="mb-2 text-sm"
-														style={{ color: "#546E7A" }}
+								) : mealsForTimeOfDay ? (
+									<div className="relative" data-testid="card-meal-plan">
+										<Carousel
+											setApi={setCarouselApi}
+											opts={{
+												align: "start",
+												loop: true,
+												dragFree: false,
+											}}
+											className="w-full"
+										>
+											<CarouselContent className="-ml-0">
+												{mealsForTimeOfDay.meals.map((meal, index) => (
+													<CarouselItem key={index} className="pl-0">
+														<Card
+															className="overflow-hidden"
+															style={{
+																background: "#FFFFFF",
+																border: "1px solid #EAEAEA",
+																borderRadius: "10px",
+															}}
+														>
+															<div className="flex flex-col md:flex-row">
+																<div className="relative h-48 md:h-auto md:w-48 flex-shrink-0">
+																	<Image
+																		src={healthyFoodImg}
+																		alt={meal.name}
+																		className="h-full w-full object-cover"
+																	/>
+																</div>
+																<div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
+																	<div>
+																		<p
+																			className="mb-2 text-sm"
+																			style={{ color: "#546E7A" }}
+																		>
+																			{mealsForTimeOfDay.mealType}
+																		</p>
+																		<h3
+																			className="mb-4 text-lg font-bold md:text-xl"
+																			style={{ color: "#00856F" }}
+																		>
+																			{meal.name}
+																		</h3>
+																		<div className="flex flex-wrap gap-2 mb-4">
+																			<span
+																				className="px-3 py-1 rounded-md text-xs font-medium"
+																				style={{
+																					background: "#DCE9E2",
+																					color: "#00856F",
+																				}}
+																			>
+																				Carbs:{" "}
+																				{parseFloat(
+																					meal.nutrition_info.carbs.toString(),
+																				).toFixed(0)}
+																				g
+																			</span>
+																			<span
+																				className="px-3 py-1 rounded-md text-xs font-medium"
+																				style={{
+																					background: "#DCE9E2",
+																					color: "#00856F",
+																				}}
+																			>
+																				Calories:{" "}
+																				{parseFloat(
+																					meal.nutrition_info.calories.toString(),
+																				).toFixed(0)}
+																			</span>
+																			<span
+																				className="px-3 py-1 rounded-md text-xs font-medium"
+																				style={{
+																					background: "#DCE9E2",
+																					color: "#00856F",
+																				}}
+																			>
+																				Proteins:{" "}
+																				{parseFloat(
+																					meal.nutrition_info.proteins.toString(),
+																				).toFixed(0)}
+																				g
+																			</span>
+																		</div>
+																	</div>
+																	<Button
+																		className="w-full md:w-auto md:ml-auto"
+																		style={{
+																			background: "#00856F",
+																			color: "#FFFFFF",
+																			borderRadius: "5px",
+																			padding: "8px 24px",
+																			fontSize: "14px",
+																			fontWeight: 600,
+																		}}
+																		onClick={() => {
+																			setMeal({
+																				meal,
+																				mealType: mealsForTimeOfDay.mealType,
+																			});
+																			setLocation(ROUTES.RECIPE_DETAIL);
+																		}}
+																		data-testid="button-view-recipe"
+																	>
+																		View Recipe
+																	</Button>
+																</div>
+															</div>
+														</Card>
+													</CarouselItem>
+												))}
+											</CarouselContent>
+											{mealsForTimeOfDay.meals.length > 1 && (
+												<>
+													<Button
+														variant="outline"
+														size="icon"
+														className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full border-[#EAEAEA] bg-white shadow-md hover:bg-[#F7F9F9] md:left-2"
+														onClick={() => carouselApi?.scrollPrev()}
+														disabled={selectedIndex === 0 && !carouselApi?.canScrollPrev()}
 													>
-														{currentMeal.mealType}
-													</p>
-													<h3
-														className="mb-4 text-lg font-bold md:text-xl"
-														style={{ color: "#00856F" }}
-													>
-														{currentMeal.meal.name}
-													</h3>
-													<div className="flex flex-wrap gap-2 mb-4">
-														<span
-															className="px-3 py-1 rounded-md text-xs font-medium"
-															style={{
-																background: "#DCE9E2",
-																color: "#00856F",
-															}}
-														>
-															Carbs:{" "}
-															{parseFloat(
-																currentMeal.meal.nutrition_info.carbs.toString(),
-															).toFixed(0)}
-															g
-														</span>
-														<span
-															className="px-3 py-1 rounded-md text-xs font-medium"
-															style={{
-																background: "#DCE9E2",
-																color: "#00856F",
-															}}
-														>
-															Calories:{" "}
-															{parseFloat(
-																currentMeal.meal.nutrition_info.calories.toString(),
-															).toFixed(0)}
-														</span>
-														<span
-															className="px-3 py-1 rounded-md text-xs font-medium"
-															style={{
-																background: "#DCE9E2",
-																color: "#00856F",
-															}}
-														>
-															Proteins:{" "}
-															{parseFloat(
-																currentMeal.meal.nutrition_info.proteins.toString(),
-															).toFixed(0)}
-															g
-														</span>
-													</div>
-												</div>
-												<Button
-													className="w-full md:w-auto md:ml-auto"
-													style={{
-														background: "#00856F",
-														color: "#FFFFFF",
-														borderRadius: "5px",
-														padding: "8px 24px",
-														fontSize: "14px",
-														fontWeight: 600,
-													}}
-													onClick={() => {
-														if (currentMeal) {
-															setMeal({
-																meal: currentMeal.meal,
-																mealType: currentMeal.mealType,
-															});
-															setLocation(ROUTES.RECIPE_DETAIL);
+														<ChevronLeft className="h-5 w-5 text-[#00856F]" />
+														<span className="sr-only">Previous meal</span>
+													</Button>
+													<Button
+														variant="outline"
+														size="icon"
+														className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full border-[#EAEAEA] bg-white shadow-md hover:bg-[#F7F9F9] md:right-2"
+														onClick={() => carouselApi?.scrollNext()}
+														disabled={
+															selectedIndex === mealsForTimeOfDay.meals.length - 1 &&
+															!carouselApi?.canScrollNext()
 														}
-													}}
-													data-testid="button-view-recipe"
-												>
-													View Recipe
-												</Button>
-											</div>
-										</div>
-									</Card>
+													>
+														<ChevronRight className="h-5 w-5 text-[#00856F]" />
+														<span className="sr-only">Next meal</span>
+													</Button>
+													<div className="flex justify-center gap-1.5 mt-3">
+														{mealsForTimeOfDay.meals.map((_, index) => (
+															<button
+																key={index}
+																type="button"
+																aria-label={`Go to meal ${index + 1}`}
+																onClick={() => carouselApi?.scrollTo(index)}
+																className={`h-2 rounded-full transition-all ${
+																	index === selectedIndex
+																		? "w-6 bg-[#00856F]"
+																		: "w-2 bg-[#DCE9E2] hover:bg-[#00856F]/70"
+																}`}
+															/>
+														))}
+													</div>
+												</>
+											)}
+										</Carousel>
+									</div>
 								) : null}
 							</div>
 

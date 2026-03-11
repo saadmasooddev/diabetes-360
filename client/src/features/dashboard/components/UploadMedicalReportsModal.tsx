@@ -165,7 +165,7 @@ export function UploadMedicalReportsModal({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
-				className=" sm:max-w-lg p-6  "
+				className=" sm:max-w-lg p-6  overflow-y-scroll "
 				style={{
 					background: "#FFFFFF",
 					borderRadius: "16px",

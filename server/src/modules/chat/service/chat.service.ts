@@ -9,7 +9,7 @@ import type {
 	OldChatMemoryPayload,
 	EmotionalStatePayload,
 } from "../../../shared/services/ai.service";
-import { EXERCISE_TYPE_ENUM } from "../../health/models/health.schema";
+import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
 import { CustomerData, DIABETES_TYPE } from "../../auth/models/user.schema";
 import {
 	CHAT_ROLES,
@@ -142,7 +142,7 @@ export class ChatService {
 				),
 				this.healthRepo.getTodaysMetricTotal(
 					userId,
-					EXERCISE_TYPE_ENUM.STEPS,
+					METRIC_TYPE_ENUM.STEPS,
 					prevDay,
 				),
 				Promise.all(
@@ -153,7 +153,7 @@ export class ChatService {
 							const [meals, metrics] = await Promise.all([
 								this.foodRepo.getLoggedMealsByDate(userId, d),
 								this.healthRepo.getFilteredMetrics(userId, d, d, [
-									EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+									METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 								]),
 							]);
 							return {
@@ -266,13 +266,13 @@ export class ChatService {
 				userId,
 				base.subtract(daysBack, "day").format("YYYY-MM-DD"),
 				dateStr,
-				[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+				[METRIC_TYPE_ENUM.BLOOD_GLUCOSE],
 			),
 			this.healthRepo.getFilteredMetrics(
 				userId,
 				base.subtract(5, "day").format("YYYY-MM-DD"),
 				dateStr,
-				[EXERCISE_TYPE_ENUM.STEPS],
+				[METRIC_TYPE_ENUM.STEPS],
 			),
 		]);
 
@@ -392,10 +392,10 @@ export class ChatService {
 	): Promise<LastDaysHealthSummaryPayload> {
 		const [metricsResult, meals] = await Promise.all([
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
-				EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
-				EXERCISE_TYPE_ENUM.STEPS,
-				EXERCISE_TYPE_ENUM.WATER_INTAKE,
-				EXERCISE_TYPE_ENUM.HEART_RATE,
+				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
+				METRIC_TYPE_ENUM.STEPS,
+				METRIC_TYPE_ENUM.WATER_INTAKE,
+				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
 		]);
@@ -494,7 +494,7 @@ export class ChatService {
 	): Promise<{ messages: ChatMessage[]; nudge?: string }> {
 		const { messages } = await this.chatRepo.getByUser(userId, dateStr, offset, limit, false);
 		const nudgeRaw =
-			messages.length === 0 ? await this.getNudge(userId, dateStr) : undefined;
+			(messages.length === 0 && offset === 0) ? await this.getNudge(userId, dateStr) : undefined;
 		const nudge = nudgeRaw ?? undefined;
 		return { messages, nudge };
 	}
@@ -521,10 +521,10 @@ export class ChatService {
 			this.customerRepo.getCustomerDataByUserId(userId),
 			this.chatRepo.getByUser(userId, dateStr),
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
-				EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
-				EXERCISE_TYPE_ENUM.STEPS,
-				EXERCISE_TYPE_ENUM.WATER_INTAKE,
-				EXERCISE_TYPE_ENUM.HEART_RATE,
+				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
+				METRIC_TYPE_ENUM.STEPS,
+				METRIC_TYPE_ENUM.WATER_INTAKE,
+				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
 			this.chatRepo.getSummariesForUserLastDays(userId, 30),

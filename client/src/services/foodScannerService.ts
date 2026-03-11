@@ -46,6 +46,28 @@ export interface DailyUserData extends NutritionProfile {
 
 export interface ConsumedNutrients extends NutritionProfile {}
 
+export interface LoggedMealRow {
+	id: string;
+	userId: string;
+	mealDate: string;
+	foodName: string;
+	carbs: string;
+	sugars: string;
+	fibres: string;
+	proteins: string;
+	fats: string;
+	calories: string;
+	recordedAt: Date;
+	createdAt?: string;
+	updatedAt?: string;
+}
+
+export interface CalorieProfileResponse {
+	meals: LoggedMealRow[];
+	total: number;
+	calorieIntake: Array<{ value: number; recordedAt: Date}>;
+}
+
 class FoodScannerService {
 	async scanFoodImage(file: File): Promise<ScanResult> {
 		const formData = new FormData();

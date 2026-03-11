@@ -28,6 +28,7 @@ import {
 	BOOKING_STATUS_ENUM,
 	SLOT_TYPE,
 	BOOKING_TYPE_ENUM,
+	SUMMARY_STATUS_ENUM,
 } from "../models/booking.schema";
 import {
 	physicianLocations,
@@ -58,6 +59,8 @@ import { alias } from "drizzle-orm/pg-core";
 import { freeTierLimits } from "../../settings/models/settings.schema";
 import { userConsultationQuotas } from "../models/consultation-quota.schema";
 import { Tx } from "../../food/models/food.schema";
+import { medications } from "../../medical/models/medical.schema";
+import { MedicalRepository, MedicineDosage } from "../../medical/repository/medical.repository";
 
 export type BookedSlotWithoutMeetingLink = {
 			bookedSlotId: string;
@@ -90,6 +93,7 @@ export type DateWithBookings = {
 
 export type SlotStartEnd = { startTime: string; endTime: string };
 export type UserConsultation = BookedSlot & {
+	medications?: MedicineDosage[]
 	slot: Slot & {
 		availability: AvailabilityDate;
 		slotSize: SlotSize;
@@ -134,6 +138,12 @@ export type SlotWithDetails = {
 	isBooked: boolean;
 };
 export class BookingRepository {
+	private medicalRepository: MedicalRepository;
+
+	constructor() {
+		this.medicalRepository = new MedicalRepository()
+	}
+
 	async getAllSlotSizes(): Promise<SlotSize[]> {
 		return await db.select().from(slotSize).orderBy(slotSize.size);
 	}
@@ -1121,13 +1131,13 @@ export class BookingRepository {
 		const {
 			type,
 			page = 1,
-			limit = 10,
+			limit,
 			skip,
 			physicianId,
 			date,
 			timeZone,
 		} = options;
-		const offset = skip ? skip : (page - 1) * limit;
+		const offset = skip || 0
 
 		let dateWithTimezone: string | null = null;
 		if (date && timeZone) {
@@ -1197,7 +1207,7 @@ export class BookingRepository {
 
 		const total = totalConsulations[0].count || 0;
 
-		const consultations: UserConsultation[] = await db
+		const consultationsPromise = db
 			.select({
 				id: bookedSlots.id,
 				customerId: bookedSlots.customerId,
@@ -1205,6 +1215,7 @@ export class BookingRepository {
 				slotTypeId: bookedSlots.slotTypeId,
 				status: bookedSlots.status,
 				summary: bookedSlots.summary,
+				medications: medications.medicines,
 				meetingLink: bookedSlots.meetingLink,
 				createdAt: bookedSlots.createdAt,
 				updatedAt: bookedSlots.updatedAt,
@@ -1272,10 +1283,18 @@ export class BookingRepository {
 				physicianLocations,
 				eq(physicianLocations.id, slotLocations.locationId),
 			)
+			.leftJoin(medications, eq(bookedSlots.id, medications.consultationId))
 			.where(and(eq(bookedSlots.customerId, customerId), statusCondition))
 			.orderBy(availabilityDate.date)
-			.limit(limit)
-			.offset(offset);
+		
+		if(limit !== undefined ) {
+			consultationsPromise.limit(limit)
+		}
+		if(offset !== undefined ){
+			consultationsPromise.offset(offset)
+		}
+
+		const consultations: UserConsultation[] = await consultationsPromise
 
 		const physicianIds = consultations.map((c) => c.slot.physician.id);
 		const ratings = await db
@@ -1309,7 +1328,7 @@ export class BookingRepository {
 			consultations: consultationsWithPhysicianRatings,
 			total,
 			page,
-			limit,
+			limit: limit || total,
 		};
 	}
 
@@ -1631,7 +1650,7 @@ export class BookingRepository {
 		const physiciansAlias = alias(users, "physicians");
 
 		const { page = 1, limit = 10, search, startDate, endDate, skip } = options;
-		const offset = skip ? skip : (page - 1) * limit;
+		const offset = skip || 0;
 
 		// When admin (hasReadAllAppointments), show all statuses; otherwise only pending/confirmed
 		const statusCondition = hasReadAllAppointments
@@ -1827,6 +1846,54 @@ export class BookingRepository {
 			}
 		})
 
+	}
+
+
+	async updateBookedSlotSummary(bookedSlotId: string, summary: string, summaryStatus: SUMMARY_STATUS_ENUM, tx?: Tx) {
+		const dbConn = tx || db
+
+		const [ bookedSlot ] = await dbConn.select()
+		  .from(bookedSlots)
+			.where(eq(bookedSlots.id, bookedSlotId)) 
+
+		if(!bookedSlot) {
+			throw new Error("Booked Slot not found")
+		}
+
+		await dbConn.update(bookedSlots).set({
+			summary: summary,
+			summaryStatus: summaryStatus
+		}).where(eq(bookedSlots.id, bookedSlotId))
+	}
+
+	async updateConsultationNotesTransaction(data: {
+		bookingId: string,
+		summary: string,
+		summaryStatus: SUMMARY_STATUS_ENUM,
+		medications: MedicineDosage[],
+		userId: string,
+		physicianId: string
+	}) {
+		return await dbUtils.transaction(async tx => {
+			await this.updateBookedSlotSummary(data.bookingId, data.summary, data.summaryStatus, tx)
+
+			const medicationData = {
+					userId: data.userId,
+					consultationId: data.bookingId,
+					physicianId: data.physicianId,
+					prescriptionDate: new Date(),
+					medicines: data.medications.map(m => ({
+						name: m.name,
+						dosage: m.dosage,
+						frequency: m.frequency,
+						duration: m.duration,
+						instructions: m.instructions
+				})),
+			}
+			await this.medicalRepository.createMedication(
+				medicationData, tx
+			)
+	  })
 	}
 }
 

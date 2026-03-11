@@ -174,6 +174,40 @@ export class EmailService {
 			return false;
 		}
 	}
+  async sendSignInCodeEmail(email: string, code: string, userName: string){
+		const msg = {
+			to: email,
+			from: {
+				email: config.email.from,
+				name: config.email.fromName,
+			},
+			subject: `Your Sign-In Code - Diabetes 360`,
+			html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #00856f;">Your Sign-In Code</h2>
+          <p>Hello ${userName},</p>
+          <p>We received a request to sign in to your Diabetes 360 account using a one-time code.</p>
+          <div style="background-color: #f7f9f9; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+            <span style="display: inline-block; font-size: 2.1em; letter-spacing: 5px; font-weight: bold; color: #00856f;">
+              ${code}
+            </span>
+            <p style="margin: 18px 0 0 0; color: #444; font-size: 15px;">
+              Enter this 6-digit code in the sign-in form to continue.<br>
+              <strong>This code will expire in 5 minutes.</strong>
+            </p>
+          </div>
+          <p>If you did not request this code, you can safely ignore this email.</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 14px;">
+            Best regards,<br>
+            The Diabetes 360 Team
+          </p>
+        </div>
+      `,
+		};
+
+		await sgMail.send(msg);
+	}
 }
 
 export const emailService = new EmailService();

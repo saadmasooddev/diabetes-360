@@ -7,6 +7,24 @@ import {
 	UserConsultation,
 } from "server/src/modules/booking/repository/booking.repository";
 import { DateManager } from "@/lib/utils";
+import { SUMMARY_STATUS_ENUM } from "@shared/schema";
+
+
+export interface ConsultationMedication {
+	name: string;
+	dosage?: string;
+	frequency?: string;
+	duration?: string;
+	instructions?: string;
+}
+
+export interface UpdateConsultationNotePayload {
+	summary: string;
+	summaryStatus: SUMMARY_STATUS_ENUM;
+	medications?: ConsultationMedication[];
+	userId: string;
+	physicianId: string;
+}
 
 export interface SlotSize {
 	id: string;
@@ -338,6 +356,33 @@ class BookingService {
 			);
 		}
 		return response.data.booking;
+	}
+
+	async updateConsultationNote(
+		bookingId: string,
+		payload: UpdateConsultationNotePayload,
+	): Promise<void> {
+		const medications =
+			payload.medications?.filter(
+				(m) =>
+					!!(m.name?.trim()),
+			) ?? [];
+		const body = {
+			summary: payload.summary,
+			summaryStatus: payload.summaryStatus,
+			medications,
+			userId: payload.userId,
+			physicianId: payload.physicianId
+		};
+		const response = await httpClient.patch<ApiResponse<unknown>>(
+			API_ENDPOINTS.BOOKING.UPDATE_CONSULTATION_NOTE(bookingId),
+			body,
+		);
+		if (!response.success) {
+			throw new Error(
+				response.message || "Failed to update consultation note",
+			);
+		}
 	}
 
 	async getAppointments(

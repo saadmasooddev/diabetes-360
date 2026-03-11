@@ -11,6 +11,7 @@ import {
 	asc,
 	type SQL,
 	inArray,
+	isNull,
 } from "drizzle-orm";
 import {
 	physicianSpecialties,
@@ -31,7 +32,16 @@ import type {
 	UpdatePhysicianLocation,
 	PhysicianLocation,
 } from "../../auth/models/user.schema";
-import { USER_ROLES } from "@shared/schema";
+import {
+	USER_ROLES,
+	availabilityDate,
+	bookedSlots,
+	slots,
+	slotType,
+	slotTypeJunction,
+	DateManager,
+} from "@shared/schema";
+import { gte } from "drizzle-orm";
 
 export class PhysicianRepository {
 	// Specialty CRUD operations
@@ -166,7 +176,7 @@ export class PhysicianRepository {
 		};
 	}> {
 		const { page, limit, search, specialtyId, skip } = params;
-		const offset = skip ? skip : (page - 1) * limit;
+		const offset = skip || 0
 
 		// Build base query conditions
 		const conditions = [
@@ -195,7 +205,8 @@ export class PhysicianRepository {
 		// Build final where conditions
 		const finalConditions: SQL<unknown>[] = [...conditions];
 		if (searchConditions.length > 0) {
-			finalConditions.push(or(...searchConditions));
+			const orExpr = or(...searchConditions);
+			if (orExpr) finalConditions.push(orExpr);
 		}
 
 		// Get total count for pagination
@@ -292,8 +303,13 @@ export class PhysicianRepository {
 		};
 	}
 
-	// Get physicians by specialty for consultation
-	async getPhysiciansBySpecialty(specialtyId: string) {
+	// Get physicians by specialty with next available slot (earliest future unbooked slot per physician)
+	async getPhysiciansBySpecialityAndNextAvailableSlot(
+		specialtyId: string,
+		timeZone: string,
+		userDateISO: string,
+		fromDate: string,
+	) {
 		const physicians = await db
 			.select({
 				id: users.id,
@@ -321,7 +337,6 @@ export class PhysicianRepository {
 				),
 			);
 
-		// Get average ratings for each physician
 		const physiciansWithRatings = await Promise.all(
 			physicians.map(async (physician) => {
 				const [avgRating] = await db
@@ -339,23 +354,90 @@ export class PhysicianRepository {
 					? parseInt(avgRating.totalRatings.toString())
 					: 0;
 
-				// Calculate years of experience
 				const startDate = new Date(physician.practiceStartDate);
 				const now = new Date();
 				const yearsExperience = Math.floor(
 					(now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365),
 				);
 
+				const nextSlotRows = await db
+					.select({
+						slotId: slots.id,
+						date: availabilityDate.date,
+						startTime: slots.startTime,
+						endTime: slots.endTime,
+						slotTypeId: slotType.id,
+						slotTypeType: slotType.type,
+					})
+					.from(slots)
+					.innerJoin(
+						availabilityDate,
+						eq(slots.availabilityId, availabilityDate.id),
+					)
+					.innerJoin(
+						slotTypeJunction,
+						eq(slotTypeJunction.slotId, slots.id),
+					)
+					.innerJoin(slotType, eq(slotType.id, slotTypeJunction.slotTypeId))
+					.leftJoin(
+						bookedSlots,
+						and(
+							eq(bookedSlots.slotId, slots.id),
+						),
+					)
+					.where(
+						and(
+							eq(availabilityDate.physicianId, physician.id),
+              sql`DATE(${availabilityDate.date}) >= DATE(${fromDate})`,
+							isNull(bookedSlots.id),
+						),
+					)
+					.orderBy(
+						asc(availabilityDate.date),
+					)
+					.limit(10);
+
+				const userTimeStamp = new Date(fromDate).getTime()
+				nextSlotRows.sort(slot => {
+					const date = DateManager.formatDate(slot.date)
+					const { utcDate } = DateManager.getLocalHours(
+						`${date} ${slot.startTime}`,
+						timeZone
+			    );
+
+					const slotTimeStamp = new Date(utcDate).getTime()
+					return slotTimeStamp - userTimeStamp
+				}).filter(slot => {
+					const date = DateManager.formatDate(slot.date)
+					const { utcDate } = DateManager.getLocalHours(
+						`${date} ${slot.startTime}`,
+						timeZone
+			    );
+
+					const slotTimeStamp = new Date(utcDate).getTime()
+					return slotTimeStamp >= userTimeStamp
+
+				})
+
+				const nextAvailableSlot = nextSlotRows.length > 0 ? {
+					slotId: nextSlotRows[0].slotId,
+					date: DateManager.formatDate(nextSlotRows[0].date),
+					startTime: nextSlotRows[0].startTime,
+					endTime: nextSlotRows[0].endTime,
+					slotTypeId: nextSlotRows[0].slotTypeId,
+				} : null
+
 				return {
 					...physician,
-					rating: rating,
-					totalRatings: totalRatings,
+					rating,
+					totalRatings,
 					experience: `${yearsExperience}+ years`,
+					nextAvailableSlot,
 				};
 			}),
 		);
 
-		return physiciansWithRatings;
+		return physiciansWithRatings.filter(p => p.nextAvailableSlot !== null);
 	}
 
 	// Get all specialties for consultation page

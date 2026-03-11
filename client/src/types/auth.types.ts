@@ -93,7 +93,9 @@ export interface SignupRequest {
 
 export interface LoginRequest {
 	email: string;
-	password: string;
+	password?: string;
+	requestSignInCode?: boolean;
+	emailSignInCode?: string;
 }
 
 export interface RefreshTokenRequest {

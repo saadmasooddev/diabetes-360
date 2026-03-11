@@ -19,7 +19,7 @@ import {
 import { USER_ROLES } from "../../auth/models/user.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
 import {
-	EXERCISE_TYPE_ENUM,
+	METRIC_TYPE_ENUM,
 	MertricRecord,
 	healthMetrics,
 } from "../../health/models/health.schema";
@@ -40,6 +40,9 @@ import {
 	PATIENT_INDICATION,
 	getDiseaseColor,
 } from "../utils/patientColors";
+import { config } from "server/src/app/config";
+import { MedicalRepository } from "../../medical/repository/medical.repository";
+import { medications } from "../../medical/models/medical.schema";
 
 export interface PatientListItem {
 	id: string;
@@ -78,6 +81,7 @@ export class PatientRepository {
 	private healthRepository: HealthRepository;
 	private bookingRepository: BookingRepository;
 	private foodRepository: FoodRepository;
+	private medicalRepository: MedicalRepository;
 	private static readonly MIN_STEPS_FOR_ACTIVITY = 500;
 	private static readonly OVER_EATING_RATIO = 1.2;
 	private static readonly UNDER_EATING_RATIO = 0.7;
@@ -167,6 +171,7 @@ export class PatientRepository {
 
 	async getPatientsPaginated(params: {
 		page: number;
+		offset: number;
 		limit: number;
 		search?: string;
 		physicianId?: string;
@@ -176,8 +181,7 @@ export class PatientRepository {
 		page: number;
 		limit: number;
 	}> {
-		const { page, limit, search, physicianId } = params;
-		const offset = (page - 1) * limit;
+		const { offset, limit, page, search, physicianId } = params;
 
 		// Build base where conditions
 		let whereCondition = eq(users.role, USER_ROLES.CUSTOMER);
@@ -416,6 +420,7 @@ export class PatientRepository {
 				summary: bookedSlots.summary,
 				date: availabilityDate.date,
 				physicianName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+				medications: medications.medicines,
 			})
 			.from(bookedSlots)
 			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
@@ -424,6 +429,7 @@ export class PatientRepository {
 				eq(slots.availabilityId, availabilityDate.id),
 			)
 			.innerJoin(users, eq(availabilityDate.physicianId, users.id))
+			.leftJoin(medications, eq(bookedSlots.id, medications.consultationId))
 			.where(and(...conditions))
 			.orderBy(desc(availabilityDate.date), desc(bookedSlots.createdAt))
 			.limit(limit);
@@ -469,6 +475,7 @@ export class PatientRepository {
 		const [
 			glucoseTrend,
 			appointments,
+			upcomingAppointments,
 			consultationSummaries,
 			hba1cTrend,
 			quickLogsWeek,
@@ -480,13 +487,23 @@ export class PatientRepository {
 				patient.id,
 				startDate,
 				endDate,
-				[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+				[METRIC_TYPE_ENUM.BLOOD_GLUCOSE],
 			),
 			this.bookingRepository.getUserConsultations(patient.id, {
-				limit: 3,
+				limit: undefined,
 				skip: 0,
 				type: BOOKING_TYPE_QUERY_ENUM.PAST,
 				physicianId,
+				date: new Date().toISOString(),
+				timeZone: config.defaults.timezone
+			}),
+			this.bookingRepository.getUserConsultations(patient.id, {
+				limit: 3,
+				skip: 0,
+				type: BOOKING_TYPE_QUERY_ENUM.UPCOMING,
+				physicianId,
+				date: new Date().toISOString(),
+				timeZone: config.defaults.timezone
 			}),
 			this.getConsultationSummaries(patient.id, physicianId, 100),
 			this.healthRepository.getHba1cTrend(patient.id, startDate, endDate),
@@ -529,6 +546,7 @@ export class PatientRepository {
 			recentNotes,
 			consultationSummaries,
 			appointments: appointments.consultations,
+			upcomingAppointments: upcomingAppointments.consultations,
 			glucoseTrend: glucoseTrend.bloodSugarRecords,
 			latestBloodGlucose,
 			hba1cTrend,
@@ -655,7 +673,7 @@ export class PatientRepository {
 			patient.id,
 			yesterdayStr,
 			todayStr,
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE],
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE],
 		);
 		const worst = this.getPatientWorstIndicationStatus(
 			glucoseData.bloodSugarRecords,
@@ -669,7 +687,7 @@ export class PatientRepository {
 			patient.id,
 			yesterdayStr,
 			todayStr,
-			[EXERCISE_TYPE_ENUM.STEPS],
+			[METRIC_TYPE_ENUM.STEPS],
 		);
 		const totalSteps = activityData.stepsRecords.reduce((sum, r) => {
 			const v =

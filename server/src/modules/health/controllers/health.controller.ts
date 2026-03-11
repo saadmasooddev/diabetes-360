@@ -7,7 +7,6 @@ import {
 	insertHealthMetricSchema,
 	insertExerciseLogSchema,
 	insertDailyQuickLogSchema,
-	insertHba1cMetricSchema,
 	batchUpsertHealthMetricTargetsSchema,
 	metricTypes,
 	type MetricType,
@@ -16,9 +15,8 @@ import {
 import { handleError } from "../../../shared/middleware/errorHandler";
 import {
 	DateManager,
-	validateLimitAndOffset,
+	getPaginationParams,
 } from "server/src/shared/utils/utils";
-import { ZodError } from "zod";
 
 export class HealthController {
 	private healthService: HealthService;
@@ -85,19 +83,12 @@ export class HealthController {
 			const startDateStr = req.query.startDate as string;
 			const endDateStr = req.query.endDate as string;
 			const typesParam = req.query.type;
-			const limit = req.query.limit
-				? parseInt(req.query.limit as string)
-				: undefined;
-			const offset = req.query.offset
-				? parseInt(req.query.offset as string)
-				: undefined;
 
 			if (!startDateStr || !endDateStr) {
 				throw new BadRequestError("startDate and endDate are required");
 			}
 
-			validateLimitAndOffset(limit, offset);
-			// Validate pagination parameters
+			const { limit, offset }  = getPaginationParams(req);
 
 			const startDate = DateManager.parseLocalDate(startDateStr);
 			const endDate = DateManager.parseLocalDate(endDateStr);
@@ -125,7 +116,7 @@ export class HealthController {
 
 			// Validate types
 			const invalidTypes = types.filter(
-				(t) => !metricTypes.includes(t as MetricType),
+				(t) => ![...metricTypes, "calorie_intake"].includes(t as MetricType),
 			);
 			if (invalidTypes.length > 0) {
 				throw new BadRequestError(

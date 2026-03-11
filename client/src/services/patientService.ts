@@ -6,6 +6,17 @@ import type { DIABETES_TYPE, MertricRecord } from "@shared/schema";
 import { UserConsultation } from "server/src/modules/booking/repository/booking.repository";
 import { PATIENT_INDICATION } from "server/src/modules/physician/utils/patientColors";
 
+/** TODO: Define and align with server when documents endpoint is created. */
+export interface PatientDocumentsResponse {
+	documents: Array<{
+		id: string;
+		name: string;
+		type?: string;
+		url: string;
+		uploadedAt: string;
+	}>;
+}
+
 export interface PatientListItem {
 	id: string;
 	name: string;
@@ -57,6 +68,7 @@ export interface PatientProfile {
 		physicianName?: string;
 	}>;
 	appointments: UserConsultation[];
+	upcomingAppointments: UserConsultation[];
 	glucoseTrend: MertricRecord[];
 	latestBloodGlucose?: number | null;
 	hba1cTrend?: Array<{ value: number; recordedAt: string }>;
@@ -212,6 +224,17 @@ class PatientService {
 			throw new Error(response.message || "Failed to fetch patient alerts");
 		}
 		return response.data;
+	}
+
+	// TODO: Backend endpoint not yet created. Replace with real API call when endpoint is ready.
+	// Expected server response type: PatientDocumentsResponse
+	async getPatientDocuments(_patientId: string): Promise<PatientDocumentsResponse> {
+		// const response = await httpClient.get<ApiResponse<PatientDocumentsResponse>>(
+		//   API_ENDPOINTS.PHYSICIAN.PATIENT_DOCUMENTS(patientId)
+		// );
+		// if (!response.success || !response.data) throw new Error(response.message);
+		// return response.data;
+		return { documents: [] };
 	}
 }
 

@@ -12,7 +12,7 @@ import { handleNumberInput } from "@/lib/utils";
 import { Activity, Footprints, Droplet, Heart } from "lucide-react";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import {
-	EXERCISE_TYPE_ENUM,
+	METRIC_TYPE_ENUM,
 	BLOOD_SUGAR_READING_TYPES_ENUM,
 	type MetricType,
 	BloodSugarReadingTypeEnumValues,
@@ -58,7 +58,7 @@ export function AddMetricDialog({
 	isSubmitting,
 }: AddMetricDialogProps) {
 	const config = {
-		[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: {
+		[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: {
 			title: "Log Blood Glucose",
 			placeholder: `Enter glucose level ${bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C ? "(0-100)%" : "(mg/dL)"}`,
 			icon: Activity,
@@ -66,7 +66,7 @@ export function AddMetricDialog({
 			iconColor: "#4CAF50",
 			description: `Record your ${bloodSugarReadingType} blood glucose reading`,
 		},
-		[EXERCISE_TYPE_ENUM.STEPS]: {
+		[METRIC_TYPE_ENUM.STEPS]: {
 			title: "Log Steps",
 			placeholder: "Enter steps count",
 			icon: Footprints,
@@ -74,7 +74,7 @@ export function AddMetricDialog({
 			iconColor: "#2196F3",
 			description: "Track your daily physical activity",
 		},
-		[EXERCISE_TYPE_ENUM.WATER_INTAKE]: {
+		[METRIC_TYPE_ENUM.WATER_INTAKE]: {
 			title: "Log Water Intake",
 			placeholder: "Enter water intake (L)",
 			icon: Droplet,
@@ -82,7 +82,7 @@ export function AddMetricDialog({
 			iconColor: "#00856F",
 			description: "Record your daily hydration",
 		},
-		[EXERCISE_TYPE_ENUM.HEART_RATE]: {
+		[METRIC_TYPE_ENUM.HEART_RATE]: {
 			title: "Log Heart Rate",
 			placeholder: "Enter heart rate (bpm)",
 			icon: Heart,
@@ -158,7 +158,7 @@ export function AddMetricDialog({
 
 				{/* Content */}
 				<div className="space-y-6 p-6">
-					{metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE &&
+					{metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE &&
 						onBloodSugarReadingTypeChange && (
 							<div className="space-y-3">
 								<Label

@@ -15,7 +15,8 @@ export class PatientService {
 	}
 
 	async getPatientsPaginated(params: {
-		page: number;
+		page: number
+		offset: number;
 		limit: number;
 		search?: string;
 		physicianId?: string;

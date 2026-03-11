@@ -3,6 +3,7 @@ import { BadRequestError } from "../errors";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
+import { Request } from "express";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -58,10 +59,11 @@ export class DateManager {
 		return dayjs.tz(date, timezone);
 	}
 
+
 	static getLocalHours(date: string | Date, timezone: string) {
 		const d = this.getLocalTime(date, timezone);
 		const localHours = d.hour();
-		return { localHours, date: d };
+		return { localHours, date: d, utcDate: d.utc().toISOString() };
 	}
 
 	/**
@@ -87,11 +89,38 @@ export const formatUserInfo = (customerData: CustomerData & { firstName?: string
 	};
 };
 
-export const validateLimitAndOffset = (limit?: number, offset?: number) => {
+export const getPaginationParams = (req: Request) => {
+	const queryPage = parseInt(req.query.page as string, 10)
+	const queryLimit = parseInt(req.query.limit as string, 10)
+	const querySkip = parseInt(req.query.skip as string, 10);
+	const queryOffset = parseInt(req.query.offset as string, 10)
+
+	const page = req.query.page ? queryPage : 1;
+	const limit = req.query.limit
+		? queryLimit 
+		: undefined;
+
+	let offset = 0
+	if(queryPage && limit) {
+		offset = (queryPage - 1) * limit
+	}
+	else if(querySkip) {
+		offset = querySkip
+	}
+	else if(queryOffset){
+		offset = queryOffset
+	}
+
+	if(page < 1) {
+		throw new BadRequestError("page must be greater than 0")
+	}
 	if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
 		throw new BadRequestError("limit must be between 1 and 100");
 	}
 	if (offset !== undefined && (isNaN(offset) || offset < 0)) {
 		throw new BadRequestError("offset must be a non-negative integer");
 	}
+
+
+	return { limit, offset, page}
 };

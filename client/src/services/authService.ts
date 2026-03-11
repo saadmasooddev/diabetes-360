@@ -36,6 +36,29 @@ class AuthService {
 		return response.data;
 	}
 
+	/** Request a sign-in code to be sent to the given email. Uses existing login endpoint. */
+	async requestSignInCode(email: string): Promise<string> {
+		const response = await httpClient.post<{ message: string }>(
+			API_ENDPOINTS.AUTH.LOGIN,
+			{ email, requestSignInCode: true },
+		);
+		if (!response.success) {
+			throw new Error(response.message || "Failed to send sign-in code");
+		}
+		return response.message || "Sign-in code sent to your email.";
+	}
+
+	async loginWithEmailCode(email: string, code: string): Promise<AuthData> {
+		const response = await httpClient.post<AuthResponse>(
+			API_ENDPOINTS.AUTH.LOGIN,
+			{ email, emailSignInCode: code },
+		);
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Login failed");
+		}
+		return response.data;
+	}
+
 	async refreshTokens(data: RefreshTokenRequest): Promise<RefreshTokenData> {
 		const response = await httpClient.post<RefreshTokenResponse>(
 			API_ENDPOINTS.AUTH.REFRESH,

@@ -20,9 +20,11 @@ import {
 	type BOOKING_TYPE_QUERY_ENUM,
 	type InsertSlot,
 	type InsertSlotTypeJunction,
+	SUMMARY_STATUS_ENUM,
 } from "../models/booking.schema";
 import { ConsultationService } from "./consultation.service";
 import { DateManager } from "server/src/shared/utils/utils";
+import { MedicineDosage } from "../../medical/repository/medical.repository";
 
 export class BookingService {
 	private bookingRepository: BookingRepository;
@@ -875,7 +877,7 @@ export class BookingService {
 			finalPrice: finalPrice.toFixed(2),
 			isFree: type === BOOKING_TYPE_ENUM.FREE,
 			isDiscounted: type === BOOKING_TYPE_ENUM.DISCOUNTED,
-			discountPercentage,
+			discountPercentage: type === BOOKING_TYPE_ENUM.FREE ? 100: discountPercentage,
 			type,
 		};
 	}
@@ -1002,5 +1004,25 @@ export class BookingService {
 
 	async getAvailabilitiesForDate(date: string) {
 		return this.bookingRepository.getAvailabilitiesForDate(date);
+	}
+
+	async updateConsultationNotes(data: {
+		bookingId: string,
+		summary: string,
+		summaryStatus: SUMMARY_STATUS_ENUM,
+		medications: MedicineDosage[],
+		physicianId:string,
+		userId:string,
+	}) {
+		const user = await this.userRepository.getUser(data.userId)
+		if(!user) {
+			throw new BadRequestError("User not found")
+		}
+		const physician = await this.userRepository.getUser(data.physicianId)
+		if(!physician) {
+			throw new BadRequestError("Pysician not found")
+		}
+
+		return await this.bookingRepository.updateConsultationNotesTransaction(data)
 	}
 }

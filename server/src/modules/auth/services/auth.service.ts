@@ -6,6 +6,7 @@ import {
 	type PhysicianData,
 	type CustomerData,
 	UserRole,
+	PROVIDERS,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
@@ -35,6 +36,7 @@ export interface AuthResponse {
 export class AuthService {
 	private authRepository: AuthRepository;
 	private twoFactorService: TwoFactorService;
+
 
 	constructor() {
 		this.authRepository = new AuthRepository();
@@ -100,6 +102,94 @@ export class AuthService {
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
 			},
 			tokens,
+		};
+	}
+
+
+	async requestSignInCode(email: string): Promise<void> {
+		const user = await this.authRepository.getUserByEmail(email);
+
+		if (!user) {
+			// Same as forgot password: don't reveal if email exists
+			return;
+		}
+
+		if (user.provider !== PROVIDERS.MANUAL) {
+			throw new BadRequestError(
+				"Sign-in codes are only available for email/password accounts. Please use your password or social login.",
+			);
+		}
+
+		const since = new Date();
+		since.setMinutes(since.getMinutes() - config.auth.signInCodeRateLimitWindowInMinutes );
+		const recentCount = await this.authRepository.countRecentSignInCodes(
+			user.id,
+			since,
+		);
+		if (recentCount >= config.auth.signInCodeMaxPerWindow ) {
+			throw new BadRequestError(
+				`Too many sign-in code requests. Please try again in ${config.auth.signInCodeRateLimitWindowInMinutes} minutes or sign in with your password.`,
+			);
+		}
+
+		const code = crypto.randomInt(100_000, 999_999).toString();
+		const expiresAt = new Date();
+		expiresAt.setMinutes(
+			expiresAt.getMinutes() + config.auth.signInCodeExpiryInMinutes,
+		);
+
+		await this.authRepository.revokeSignInCodesForUser(user.id);
+		await this.authRepository.createTokenForUser({
+			userId: user.id,
+			token: `SIC_${code}`,
+			expiresAt,
+		});
+
+		const userName =
+			`${user.firstName} ${user.lastName}`.trim() || "there";
+		await emailService.sendSignInCodeEmail(email, code, userName);
+	}
+
+	
+	async loginWithEmailCode(email: string, code: string): Promise<AuthResponse> {
+		const user = await this.authRepository.getUserByEmail(email);
+
+		if (!user) {
+			throw new UnauthorizedError("Invalid credentials");
+		}
+
+		const trimmedCode = code.trim();
+		if (trimmedCode.length !== 6 || !/^\d{6}$/.test(trimmedCode)) {
+			throw new BadRequestError("Verification code must be 6 digits");
+		}
+
+		const stored = await this.authRepository.getSignInCodeToken(
+			`SIC_${trimmedCode}`,
+		);
+		if (!stored || stored.userId !== user.id) {
+			throw new UnauthorizedError("Invalid or expired sign-in code");
+		}
+
+		await this.authRepository.markPasswordResetTokenAsUsed(`SIC_${trimmedCode}`);
+
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+		});
+
+		const { password: _, profileData, ...userWithoutPassword } = user;
+		const userRole = user.role;
+		return {
+			user: {
+				...userWithoutPassword,
+				profileData: user.profileData as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+			},
+			tokens,
+			requiresTwoFactor: false,
 		};
 	}
 
@@ -275,7 +365,7 @@ export class AuthService {
 		await this.authRepository.revokeAllPasswordResetTokens(user.id);
 
 		// Store the new reset token
-		await this.authRepository.createPasswordResetToken({
+		await this.authRepository.createTokenForUser({
 			userId: user.id,
 			token: resetToken,
 			expiresAt,

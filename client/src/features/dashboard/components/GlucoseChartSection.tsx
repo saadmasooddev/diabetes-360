@@ -7,7 +7,7 @@ import {
 import { useFilteredMetrics } from "@/hooks/mutations/useHealth";
 import { useTargetsForUser } from "@/hooks/mutations/useHealth";
 import { formatDate } from "@/lib/utils";
-import { EXERCISE_TYPE_ENUM } from "@shared/schema";
+import { METRIC_TYPE_ENUM } from "@shared/schema";
 import { API_ENDPOINTS } from "@/config/endpoints";
 
 type IntervalType = "daily" | "weekly" | "monthly";
@@ -18,7 +18,7 @@ export function GlucoseChartSection() {
 
 	const dateRange = getDateRange(interval);
 	const bloodGlucoseQueryKey = getFilteredMetricsQueryKeys(
-		EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+		METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 		dateRange,
 	);
 	const { data: glucoseMetrics, isLoading } =
@@ -53,10 +53,10 @@ export function GlucoseChartSection() {
 
 	const getTargets = () => {
 		const recommended = targets?.recommended.find(
-			(t) => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+			(t) => t.metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 		);
 		const user = targets?.user.find(
-			(t) => t.metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+			(t) => t.metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 		);
 
 		return {

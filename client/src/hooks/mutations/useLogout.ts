@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/authStore";
@@ -10,6 +10,7 @@ export const useLogout = () => {
 	const { toast } = useToast();
 	const logout = useAuthStore((state) => state.logout);
 	const [, navigate] = useLocation();
+	const queryClient = useQueryClient()
 
 	return useMutation<void, Error, void>({
 		mutationFn: async () => {
@@ -20,6 +21,7 @@ export const useLogout = () => {
 		},
 		onSuccess: () => {
 			logout();
+			queryClient.clear()
 			toast({
 				title: "Logged out",
 				description: "You have been successfully logged out.",

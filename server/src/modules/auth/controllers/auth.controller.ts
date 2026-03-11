@@ -42,10 +42,45 @@ export class AuthController {
 
 	async login(req: Request, res: Response): Promise<void> {
 		try {
-			const { email, password } = req.body;
+			const { email, password, requestSignInCode, emailSignInCode } =
+				req.body;
 
-			if (!email || !password) {
-				throw new BadRequestError("Email and password are required");
+			if (!email) {
+				throw new BadRequestError("Email is required");
+			}
+
+			// Request sign-in code (send OTP to email)
+			if (requestSignInCode === true) {
+				await this.authService.requestSignInCode(email);
+				sendSuccess(
+					res,
+					null,
+					"Sign-in code sent to your email. It expires in 5 minutes.",
+				);
+				return;
+			}
+
+			if (emailSignInCode != null && emailSignInCode !== "") {
+				if (typeof emailSignInCode !== "string") {
+					throw new BadRequestError("Sign-in code must be a string");
+				}
+				const authResponse =
+					await this.authService.loginWithEmailCode(email, emailSignInCode);
+				sendSuccess(
+					res,
+					{
+						user: authResponse.user,
+						tokens: authResponse.tokens,
+						requiresTwoFactor: false,
+					},
+					SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+				);
+				return;
+			}
+
+			// Standard password login
+			if (!password) {
+				throw new BadRequestError("Password is required");
 			}
 
 			const authResponse = await this.authService.login(email, password);

@@ -1,7 +1,7 @@
 import { useSearch } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card } from "@/components/ui/card";
-import { useMedicationsByPhysicianAndDate } from "@/hooks/mutations/useMedical";
+import { useMedicationsByConsultationId } from "@/hooks/mutations/useMedical";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Pill } from "lucide-react";
@@ -9,24 +9,19 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/config/routes";
 import type { Medicine } from "@/services/medicalService";
+import { useAppStore } from "@/stores/appStore";
 
 export function Medications() {
-	const searchString = useSearch();
-	const searchParams = new URLSearchParams(searchString);
 	const [, setLocation] = useLocation();
-	const physicianId = searchParams.get("physicianId");
-	const prescriptionDate = searchParams.get("date");
+	const { consultationId } = useAppStore(state => state.medicationInfo)
 
-	const { data, isLoading } = useMedicationsByPhysicianAndDate(
-		physicianId,
-		prescriptionDate,
-	);
+	const { data, isLoading } = useMedicationsByConsultationId(consultationId || null);
 
 	const handleBack = () => {
 		setLocation(ROUTES.MEDICAL_RECORDS);
 	};
 
-	if (!physicianId || !prescriptionDate) {
+	if (!consultationId) {
 		return (
 			<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
 				<Sidebar />

@@ -4,6 +4,7 @@ import {
 	foodScannerService,
 	type DailyUserData,
 	type ConsumedNutrients,
+	type CalorieProfileResponse,
 } from "@/services/foodScannerService";
 import { API_ENDPOINTS } from "@/config/endpoints";
 import type { ScanResult } from "@/mocks/scanResults";
@@ -91,6 +92,9 @@ export const useLogMeal = () => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({
 				queryKey: [API_ENDPOINTS.FOOD_SCANNER.NUTRITION_CONSUMED],
+			});
+			queryClient.invalidateQueries({
+				queryKey: [API_ENDPOINTS.FOOD_SCANNER.CALORIE_PROFILE],
 			});
 			toast({
 				title: "Meal Logged",

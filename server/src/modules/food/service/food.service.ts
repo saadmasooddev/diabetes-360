@@ -21,7 +21,7 @@ import {
 	aiService,
 	type RecipeGenerationResponse,
 } from "../../../shared/services/ai.service";
-import { EXERCISE_TYPE_ENUM } from "@shared/schema";
+import { METRIC_TYPE_ENUM } from "@shared/schema";
 import { dbUtils } from "server/src/app/config/db";
 import { resourceLimits } from "worker_threads";
 
@@ -428,9 +428,9 @@ export class FoodService {
 			startDate.toISOString(),
 			endDate.toISOString(),
 			[
-				EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
-				EXERCISE_TYPE_ENUM.WATER_INTAKE,
-				EXERCISE_TYPE_ENUM.STEPS,
+				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
+				METRIC_TYPE_ENUM.WATER_INTAKE,
+				METRIC_TYPE_ENUM.STEPS,
 			],
 		);
 
@@ -699,4 +699,33 @@ export class FoodService {
 			making_steps: recipeData.making_steps,
 		};
 	}
+
+	async getUserCalorieProfileBetweenDates(
+		userId: string,
+		startDateStr: string,
+		endDateStr: string,
+		limit: number = 10,
+		offset: number = 0,
+	) {
+		const [mealsResult, calorieIntake] = await Promise.all([
+			this.foodRepository.getMealsLoggedBetweenDates(
+				userId,
+				startDateStr,
+				endDateStr,
+				limit,
+				offset,
+			),
+			this.foodRepository.getCaloriesIngestedPerDayBetweenDates(
+				userId,
+				startDateStr,
+				endDateStr,
+			),
+		]);
+		return {
+			meals: mealsResult.meals,
+			total: mealsResult.total,
+			calorieIntake,
+		};
+	}
+
 }

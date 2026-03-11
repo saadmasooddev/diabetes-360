@@ -30,6 +30,7 @@ import { Menu, X } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PERMISSIONS } from "@/utils/permissions";
 import { PAYMENT_TYPE } from "@shared/schema";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface NavItem {
 	label: string;
@@ -55,6 +56,7 @@ export function Sidebar({ className }: SidebarProps) {
 	const hasReadAllAppointments = hasAnyPermission([
 		PERMISSIONS.READ_ALL_APPOINTMENTS,
 	]);
+
 	const hasReadAllPatients = hasAnyPermission([PERMISSIONS.READ_ALL_PATIENTS]);
 	const isDashboardRoute =
 		location === ROUTES.DASHBOARD ||

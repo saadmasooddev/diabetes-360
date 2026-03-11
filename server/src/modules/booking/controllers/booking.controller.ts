@@ -3,16 +3,16 @@ import { BookingService } from "../service/booking.service";
 import { sendSuccess } from "../../../app/utils/response";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
-import { BadRequestError, ForbiddenError } from "../../../shared/errors";
-import { BOOKING_TYPE_QUERY_ENUM, USER_ROLES } from "@shared/schema";
-import { DateManager } from "server/src/shared/utils/utils";
+import { BadRequestError, ForbiddenError, ValidationError } from "../../../shared/errors";
+import { BOOKING_TYPE_QUERY_ENUM, USER_ROLES, medicineSchema } from "@shared/schema";
+import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
 import { PERMISSIONS } from "@shared/schema";
-import { BOOKING_STATUS_ENUM } from "../models/booking.schema";
+import { BOOKING_STATUS_ENUM, summaryStatusEnum } from "../models/booking.schema";
 import type {
 	DateSlotCount,
 	SlotWithDetails,
 } from "../repository/booking.repository";
-import { number } from "zod";
+import z, { number } from "zod";
 
 export type DatesWithSpecifiedDateSlots = {
 	slots: SlotWithDetails[];
@@ -636,15 +636,7 @@ export class BookingController {
 				throw new BadRequestError("Invalid timezone");
 			}
 
-			const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-			const limit = req.query.limit
-				? parseInt(req.query.limit as string, 10)
-				: 10;
-			const skip = parseInt(req.query.skip as string, 10);
-
-			if (page < 1 || limit < 1 || skip < 0) {
-				throw new BadRequestError("Page and limit must be positive integers");
-			}
+			const { limit, offset , page } = getPaginationParams(req)
 
 			const result = await this.bookingService.getUserConsultations(
 				customerId,
@@ -652,7 +644,7 @@ export class BookingController {
 					type,
 					page,
 					limit,
-					skip,
+					skip: offset,
 					date,
 					timeZone,
 				},
@@ -699,7 +691,8 @@ export class BookingController {
 				throw new BadRequestError("User information not found");
 			}
 
-			const { page, limit, search, startDate, endDate, skip } = req.query;
+			const { search, startDate, endDate } = req.query;
+			const { page, limit, offset} =  getPaginationParams(req)
 
 			const options: {
 				page?: number;
@@ -708,31 +701,12 @@ export class BookingController {
 				startDate?: string;
 				endDate?: string;
 				skip?: number;
-			} = {};
+			} = {
+				page,
+				limit,
+				skip: offset
+			};
 
-			if (page) {
-				const pageNum = parseInt(page as string, 10);
-				if (isNaN(pageNum) || pageNum < 1) {
-					throw new BadRequestError("Invalid page number");
-				}
-				options.page = pageNum;
-			}
-
-			if (limit) {
-				const limitNum = parseInt(limit as string, 10);
-				if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
-					throw new BadRequestError("Invalid limit. Must be between 1 and 100");
-				}
-				options.limit = limitNum;
-			}
-
-			if (skip) {
-				const skipNum = parseInt(skip as string, 10);
-				if (isNaN(skipNum) || skipNum < 0) {
-					throw new BadRequestError("Invalid skip number");
-				}
-				options.skip = skipNum;
-			}
 
 			if (search) {
 				options.search = search as string;
@@ -983,6 +957,44 @@ export class BookingController {
 			);
 		} catch (error: unknown) {
 			handleError(res, error);
+		}
+	}
+
+	async updateConsultationNotes(req: AuthenticatedRequest, res: Response) {
+		try {
+			const bookingId = req.params.bookingId
+			const summary =  z.string().min(1).safeParse(req.body.summary)
+			if(!summary.success){
+				throw new BadRequestError("Summary not provided")
+			}
+			const summaryStatus = summaryStatusEnum.safeParse(req.body.summaryStatus)
+			if(!summaryStatus.success) {
+				throw new BadRequestError("Summary status not provided")
+			}
+			const medications = medicineSchema.array().safeParse(req.body.medications)
+			if(!medications.success) {
+				throw new ValidationError(undefined, medications.error)
+			}
+			const userId = req.body.userId
+			const physicianId = req.body.physicianId
+			if(!userId || !physicianId) {
+				throw new BadRequestError("User id or physician id not provided")
+			}
+
+			await this.bookingService.updateConsultationNotes(
+				{
+					userId,
+					physicianId,
+					bookingId,
+					summary: summary.data,
+					summaryStatus: summaryStatus.data,
+					medications: medications.data
+				}
+			)
+			
+			sendSuccess(res, {}, "consultation notes updated successfully")
+		} catch (error) {
+			handleError(res, error)
 		}
 	}
 

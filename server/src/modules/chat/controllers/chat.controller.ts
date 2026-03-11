@@ -4,7 +4,7 @@ import { sendSuccess } from "../../../app/utils/response";
 import { ChatService } from "../service/chat.service";
 import { BadRequestError } from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { DateManager, validateLimitAndOffset } from "server/src/shared/utils/utils";
+import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
 
 export class ChatController {
 	private chatService = new ChatService();
@@ -18,16 +18,8 @@ export class ChatController {
 			const dateStr = DateManager.parseAndValidateDate(
 				(req.query.date as string) ?? "",
 			);
-			const limit = req.query.limit
-				? parseInt(req.query.limit as string)
-				: undefined;
-			const skip = parseInt(req.query.skip as string, 10);
-			const offset = req.query.offset
-				? parseInt(req.query.offset as string)
-				: skip 
-				  ? skip 
-					: undefined;
-			validateLimitAndOffset(limit, offset)
+
+			const { limit, offset } = getPaginationParams(req)
 			const { messages, nudge } = await this.chatService.getChat(
 				userId,
 				dateStr,

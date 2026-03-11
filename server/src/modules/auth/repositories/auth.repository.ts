@@ -13,9 +13,12 @@ import {
 	customerData,
 	physicianSpecialties,
 } from "../models/user.schema";
-import { eq, and, getTableColumns, gt } from "drizzle-orm";
+import { eq, and, getTableColumns, gt, gte, like, sql } from "drizzle-orm";
 
 export class AuthRepository {
+
+	private static readonly SIGN_IN_CODE_PREFIX = "SIC_";
+
 	async getUser(id: string): Promise<User | undefined> {
 		const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 		return user[0];
@@ -93,7 +96,7 @@ export class AuthRepository {
 	}
 
 	// Password reset token methods
-	async createPasswordResetToken(
+	async createTokenForUser(
 		tokenData: InsertPasswordResetToken,
 	): Promise<PasswordResetToken> {
 		const newToken = await db
@@ -131,6 +134,51 @@ export class AuthRepository {
 			.update(passwordResetTokens)
 			.set({ used: true })
 			.where(eq(passwordResetTokens.userId, userId));
+	}
+
+
+	async countRecentSignInCodes(userId: string, since: Date): Promise<number> {
+		const result = await db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.userId, userId),
+					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+					gte(passwordResetTokens.createdAt, since),
+				),
+			);
+		return result[0]?.count ?? 0;
+	}
+
+	async revokeSignInCodesForUser(userId: string): Promise<void> {
+		await db
+			.delete(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.userId, userId),
+					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+				),
+			);
+	}
+
+	async getSignInCodeToken(tokenWithPrefix: string): Promise<
+		| (PasswordResetToken & { userId: string })
+		| undefined
+	> {
+		const row = await db
+			.select()
+			.from(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.token, tokenWithPrefix),
+					eq(passwordResetTokens.used, false),
+				),
+			)
+			.limit(1);
+		const t = row[0];
+		if (!t || t.expiresAt < new Date()) return undefined;
+		return t;
 	}
 
 	async updateUserPassword(

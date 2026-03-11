@@ -17,11 +17,13 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { useMedications } from "@/hooks/mutations/useMedical";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTime12 } from "@/lib/utils";
 import { ROUTES } from "@/config/routes";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ReusablePagination } from "@/components/ui/ReusablePagination";
 import type { Medication } from "@/services/medicalService";
+import { useAppStore } from "@/stores/appStore";
+import { DateManager } from "@shared/schema";
 
 interface MedicationsTableProps {
 	limit?: number;
@@ -36,6 +38,7 @@ export function MedicationsTable({
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [page, setPage] = useState(1);
 	const pageLimit = 10;
+	const { setMedicationInfo } = useAppStore()
 
 	const { data: medicationsData, isLoading } = useMedications({
 		limit,
@@ -47,12 +50,8 @@ export function MedicationsTable({
 	});
 
 	const handleRowClick = (medication: Medication) => {
-		const date = new Date(medication.prescriptionDate)
-			.toISOString()
-			.split("T")[0];
-		setLocation(
-			`${ROUTES.MEDICATIONS}?physicianId=${medication.physicianId}&date=${date}`,
-		);
+		setMedicationInfo({ consultationId: medication.consultationId })
+		setLocation(ROUTES.MEDICATIONS)
 	};
 
 	const formatPrescriptionDate = (dateString: string): string => {
@@ -160,6 +159,9 @@ export function MedicationsTable({
 									Doctor
 								</TableHead>
 								<TableHead className="text-gray-500 text-xs sm:text-sm">
+									Consultation Time
+								</TableHead>
+								<TableHead className="text-gray-500 text-xs sm:text-sm">
 									Prescription
 								</TableHead>
 							</TableRow>
@@ -181,6 +183,9 @@ export function MedicationsTable({
 										{medication.physician?.specialty && (
 											<p>{medication.physician.specialty}</p>
 										)}
+									</TableCell>
+									<TableCell className="text-gray-500 text-xs sm:text-sm">
+										{DateManager.formatDate(medication.consultation.date)}{" "}{formatTime12(medication.consultation.startTime)}
 									</TableCell>
 									<TableCell className="text-xs sm:text-sm text-gray-700">
 										{medication.medicines.length} medicine

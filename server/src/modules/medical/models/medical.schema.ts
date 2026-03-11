@@ -60,6 +60,14 @@ export const labReports = pgTable("lab_reports", {
 		.defaultNow(),
 });
 
+export const medicineSchema = z.object({
+	name: z.string().min(1),
+	dosage: z.string().optional(),
+	frequency: z.string().optional(),
+	duration: z.string().optional(),
+	instructions: z.string().optional(),
+})
+
 // Validation schemas
 export const insertMedicationSchema = createInsertSchema(medications)
 	.omit({
@@ -73,13 +81,7 @@ export const insertMedicationSchema = createInsertSchema(medications)
 		physicianId: z.string().min(1),
 		prescriptionDate: z.coerce.date(),
 		medicines: z.array(
-			z.object({
-				name: z.string().min(1),
-				dosage: z.string().optional(),
-				frequency: z.string().optional(),
-				duration: z.string().optional(),
-				instructions: z.string().optional(),
-			}),
+			medicineSchema
 		),
 	});
 

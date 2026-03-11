@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { eq, and, sql, inArray, asc, getTableColumns } from "drizzle-orm";
+import { eq, and, sql, inArray, asc, getTableColumns, desc } from "drizzle-orm";
 import {
 	dailyNutrientRecommendations,
 	foodScanNutrients,
@@ -20,7 +20,7 @@ import {
 	Tx,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
-import { PgTransaction } from "drizzle-orm/pg-core";
+import { PgTransaction, numeric } from "drizzle-orm/pg-core";
 import { timeZones } from "../models/timeZone.schema";
 
 export interface RecommendedNutrients {
@@ -633,4 +633,68 @@ export class FoodRepository {
 
 		return recipe;
 	}
+
+	async getMealsLoggedBetweenDates(
+		userId: string,
+		startDateStr: string,
+		endDateStr: string,
+		limit: number = 10,
+		offset: number = 0,
+	): Promise<{ meals: LoggedMeal[]; total: number }> {
+		const whereClause = and(
+			eq(loggedMeals.userId, userId),
+			sql`DATE(${loggedMeals.mealDate}) >= DATE(${startDateStr})`,
+			sql`DATE(${loggedMeals.mealDate}) <= DATE(${endDateStr})`,
+		);
+
+		const [meals, countResult] = await Promise.all([
+			db
+				.select()
+				.from(loggedMeals)
+				.where(whereClause)
+				.orderBy(desc(loggedMeals.mealDate), desc(loggedMeals.recordedAt))
+				.limit(limit)
+				.offset(offset),
+			db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(loggedMeals)
+				.where(whereClause),
+		]);
+
+		const total = countResult[0]?.count ?? 0;
+		return { meals, total };
+	}
+
+	async getCaloriesIngestedPerDayBetweenDates(
+		userId: string,
+		startDateStr: string,
+		endDateStr: string,
+		limit?: number,
+		offset?: number
+	) {
+		const rows = db
+			.select({
+				id: loggedMeals.id,
+				userId: loggedMeals.userId,
+				recordedAt: loggedMeals.recordedAt,
+				value: sql<number>`CAST(${loggedMeals.calories} AS DECIMAL)`,
+			})
+			.from(loggedMeals)
+			.where(
+				and(
+					eq(loggedMeals.userId, userId),
+					sql`DATE(${loggedMeals.mealDate}) >= DATE(${startDateStr})`,
+					sql`DATE(${loggedMeals.mealDate}) <= DATE(${endDateStr})`,
+				),
+			)
+			.orderBy(asc(sql`DATE(${loggedMeals.mealDate})`));
+
+		if (limit !== undefined && offset !== undefined) {
+			rows.limit(limit).offset(offset)
+		}
+
+		return rows;
+	}
+
+
 }

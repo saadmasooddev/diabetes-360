@@ -8,6 +8,28 @@ import { userService } from "@/services/userService";
 import { utils } from "@/lib/utils";
 import type { UserRole } from "@shared/schema";
 
+export const useRequestSignInCode = () => {
+	const { toast } = useToast();
+
+	return useMutation<string, Error, string>({
+		mutationFn: (email: string) => authService.requestSignInCode(email),
+		onSuccess: (message) => {
+			toast({
+				title: "Code sent",
+				description: message,
+				variant: "default",
+			});
+		},
+		onError: (error) => {
+			toast({
+				title: "Could not send code",
+				description: error.message || "Please try again or use your password.",
+				variant: "destructive",
+			});
+		},
+	});
+};
+
 export const useLogin = () => {
 	const { toast } = useToast();
 	const setAuth = useAuthStore((state) => state.setAuth);

@@ -5,7 +5,7 @@ import {
 	healthMetricTargets,
 	healthInsights,
 	metricTypes,
-	EXERCISE_TYPE_ENUM,
+	METRIC_TYPE_ENUM,
 	ACTIVITY_TYPE_ENUM,
 	hba1cMetrics,
 	dailyQuickLogs,
@@ -34,15 +34,15 @@ import type {
 	HealthInsight,
 	ExtendedHealthMetric,
 	MetricType,
-	Hba1cMetrics,
 	InsertHba1cMetric,
 	InsertDailyQuickLog,
 	DailyQuickLog,
 } from "../models/health.schema";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
-import { Tx } from "../../food/models/food.schema";
+import { LoggedMeal, Tx } from "../../food/models/food.schema";
 import { BLOOD_SUGAR_READING_TYPES_ENUM } from "../../auth/models/user.schema";
+import { FoodRepository } from "../../food/repository/food.repository";
 
 export type ChartData = {
 	value: number;
@@ -69,7 +69,30 @@ export interface HealthTips {
 	tip: string;
 }
 
+export type FilteredMetricResponse = {
+	bloodSugarRecords: MertricRecord[];
+	waterIntakeRecords: MertricRecord[];
+	stepsRecords: MertricRecord[];
+	heartBeatRecords: MertricRecord[];
+	calorieIntakeRecords: MertricRecord[]
+	meals: LoggedMeal[]
+	pagination: {
+		bloodSugar: HealthPagination;
+		waterIntake: HealthPagination;
+		steps: HealthPagination;
+		heartBeat: HealthPagination;
+		calorieIntake: HealthPagination
+	};
+}
+
 export class HealthRepository {
+
+	private readonly foodRepository: FoodRepository
+
+	constructor() {
+		this.foodRepository = new FoodRepository()
+	}
+
 	async getTodaysMetricCount(
 		userId: string,
 		startOfDay: string,
@@ -83,17 +106,19 @@ export class HealthRepository {
 		];
 
 		// If metricType is specified, filter by that specific metric
-		if (metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE) {
+		if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE) {
 			conditions.push(isNotNull(healthMetrics.bloodSugar));
-		} else if (metricType === EXERCISE_TYPE_ENUM.STEPS) {
+		} else if (metricType === METRIC_TYPE_ENUM.STEPS) {
 			table = exerciseLogs;
 			conditions = [
 				eq(exerciseLogs.userId, userId),
 				sql`DATE(${exerciseLogs.recordedAt}) between DATE(${startOfDay}) and DATE(${startOfDay})`,
 				isNotNull(exerciseLogs.steps),
 			];
-		} else if (metricType === EXERCISE_TYPE_ENUM.WATER_INTAKE) {
+		} else if (metricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
 			conditions.push(isNotNull(healthMetrics.waterIntake));
+		} else if (metricType === METRIC_TYPE_ENUM.HEART_RATE) {
+			conditions.push(isNotNull(healthMetrics.heartRate))
 		}
 
 		const result = await db
@@ -137,7 +162,7 @@ export class HealthRepository {
 		// Steps are stored in exercise_logs
 
 		const metricTypeMap: Record<MetricType, () => Promise<number>> = {
-			[EXERCISE_TYPE_ENUM.STEPS]: async () => {
+			[METRIC_TYPE_ENUM.STEPS]: async () => {
 				const result = await db
 					.select({
 						total: sql<number>`COALESCE(SUM(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
@@ -152,7 +177,7 @@ export class HealthRepository {
 					);
 				return parseFloat(result[0]?.total?.toString() || "0");
 			},
-			[EXERCISE_TYPE_ENUM.WATER_INTAKE]: async () => {
+			[METRIC_TYPE_ENUM.WATER_INTAKE]: async () => {
 				const result = await db
 					.select({
 						total: sql<number>`COALESCE(SUM(${healthMetrics.waterIntake})::numeric, 0)`,
@@ -168,12 +193,15 @@ export class HealthRepository {
 
 				return parseFloat(result[0]?.total?.toString() || "0");
 			},
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
 				return 0;
 			},
-			[EXERCISE_TYPE_ENUM.HEART_RATE]: async () => {
+			[METRIC_TYPE_ENUM.HEART_RATE]: async () => {
 				return 0;
 			},
+			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: async () => {
+				return 0
+			}
 		};
 
 		const f = metricTypeMap[metricType];
@@ -225,12 +253,12 @@ export class HealthRepository {
 		// Get today's totals for steps and water instead of latest values
 		const todaysStepsTotalPromise = this.getTodaysMetricTotal(
 			userId,
-			EXERCISE_TYPE_ENUM.STEPS,
+			METRIC_TYPE_ENUM.STEPS,
 			date,
 		);
 		const todaysWaterTotalPromise = this.getTodaysMetricTotal(
 			userId,
-			EXERCISE_TYPE_ENUM.WATER_INTAKE,
+			METRIC_TYPE_ENUM.WATER_INTAKE,
 			date,
 		);
 
@@ -643,33 +671,25 @@ export class HealthRepository {
 		types: MetricType[],
 		limit?: number,
 		offset?: number,
-	): Promise<{
-		bloodSugarRecords: MertricRecord[];
-		waterIntakeRecords: MertricRecord[];
-		stepsRecords: MertricRecord[];
-		heartBeatRecords: MertricRecord[];
-		pagination: {
-			bloodSugar: HealthPagination;
-			waterIntake: HealthPagination;
-			steps: HealthPagination;
-			heartBeat: HealthPagination;
-		};
-	}> {
+	): Promise<FilteredMetricResponse> {
 		const baseConditions = [
 			eq(healthMetrics.userId, userId),
 			sql`DATE(${healthMetrics.recordedAt}) between DATE(${startDate}) and DATE(${endDate})`,
 		];
 
-		const result = {
+		const result: FilteredMetricResponse = {
 			bloodSugarRecords: [] as MertricRecord[],
 			waterIntakeRecords: [] as MertricRecord[],
 			stepsRecords: [] as MertricRecord[],
 			heartBeatRecords: [] as MertricRecord[],
+			calorieIntakeRecords: [] as MertricRecord[],
+			meals: [] as LoggedMeal[],
 			pagination: {
 				bloodSugar: { total: 0, limit: limit || 0, offset: offset || 0 },
 				waterIntake: { total: 0, limit: limit || 0, offset: offset || 0 },
 				steps: { total: 0, limit: limit || 0, offset: offset || 0 },
 				heartBeat: { total: 0, limit: limit || 0, offset: offset || 0 },
+				calorieIntake: { total: 0, limit: limit || 0, offset: offset || 0 },
 			},
 		};
 
@@ -678,7 +698,18 @@ export class HealthRepository {
 
 		// Fetch blood sugar records
 		const metricTypeMap: Record<MetricType, () => Promise<void>> = {
-			[EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
+        // const d = () => new Date(new Date().setDate(new Date().getDate() - Math.floor(Math.random() * 365) + 1))
+				// await db.insert(healthMetrics).values(
+				// 	Array(1000).fill(0).map(() => ({
+				// 		userId: userId,
+	      //     bloodSugar: String(Math.floor(Math.random() * 600) + 70),
+				// 		waterIntake: String(Math.floor(Math.random() * 5) + 1),
+				// 		heartRate: Math.floor(Math.random() * 220) + 60,
+				// 		recordedAt: d(),
+				
+				// 	}))
+				// )
 				const bloodSugarQueryPromise = db
 					.select({
 						id: healthMetrics.id,
@@ -699,14 +730,14 @@ export class HealthRepository {
 				result.pagination.bloodSugar.total = count;
 
 				// Apply pagination if provided
-				if (limit && offset) {
+				if (limit !== undefined && offset !== undefined) {
 					bloodSugarQueryPromise.limit(limit).offset(offset);
 				}
 
 				result.bloodSugarRecords =
 					(await bloodSugarQueryPromise) as MertricRecord[];
 			},
-			[EXERCISE_TYPE_ENUM.WATER_INTAKE]: async () => {
+			[METRIC_TYPE_ENUM.WATER_INTAKE]: async () => {
 				const waterIntakeQuery = db
 					.select({
 						id: healthMetrics.id,
@@ -736,7 +767,7 @@ export class HealthRepository {
 						(await waterIntakeQuery) as MertricRecord[];
 				}
 			},
-			[EXERCISE_TYPE_ENUM.STEPS]: async () => {
+			[METRIC_TYPE_ENUM.STEPS]: async () => {
 				const stepsBaseConditions = [
 					eq(exerciseLogs.userId, userId),
 					sql`DATE(${exerciseLogs.recordedAt}) between DATE(${startDate}) and DATE(${endDate})`,
@@ -770,7 +801,7 @@ export class HealthRepository {
 					result.stepsRecords = (await stepsQuery) as MertricRecord[];
 				}
 			},
-			[EXERCISE_TYPE_ENUM.HEART_RATE]: async () => {
+			[METRIC_TYPE_ENUM.HEART_RATE]: async () => {
 				const heartBeatQuery = db
 					.select({
 						id: healthMetrics.id,
@@ -799,6 +830,19 @@ export class HealthRepository {
 					result.heartBeatRecords = (await heartBeatQuery) as MertricRecord[];
 				}
 			},
+			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: async () => {
+				const calorieIntakeRecords = await this.foodRepository.getCaloriesIngestedPerDayBetweenDates(
+					userId, startDate, endDate
+				)
+
+				const { meals, total } = await this.foodRepository.getMealsLoggedBetweenDates(
+					userId, startDate, endDate, limit, offset
+				)
+
+				result.meals = meals
+        result.pagination.calorieIntake.total = total 
+				result.calorieIntakeRecords = calorieIntakeRecords
+			}
 		};
 		await Promise.all(requestedTypes.map((t) => metricTypeMap[t]?.()));
 
@@ -1130,7 +1174,7 @@ export class HealthRepository {
 	async getDailyQuickLogForDate(
 		userId: string,
 		dateStr: string,
-	): Promise<DailyQuickLog | null> {
+	): Promise<DailyQuickLog> {
 		const dateOnly = dateStr
 		const [log] = await db
 			.select()
@@ -1142,7 +1186,17 @@ export class HealthRepository {
 				),
 			)
 			.limit(1);
-		return log ?? null;
+		return {
+			id: log?.id,
+			userId: log?.userId,
+			diet: log?.diet,
+			exercise: log?.exercise,
+			sleepDuration: log?.sleepDuration,
+			medicines: log?.medicines,
+			stressLevel: log?.stressLevel,
+			logDate: log?.logDate,
+			recordedAt: log?.recordedAt,
+		};
 	}
 
 	async createOrUpdateDailyQuickLog(

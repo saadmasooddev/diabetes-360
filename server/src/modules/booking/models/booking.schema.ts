@@ -136,6 +136,14 @@ export enum BOOKING_TYPE_ENUM {
 	PAID = "paid",
 }
 
+export enum SUMMARY_STATUS_ENUM {
+	SAVE_AS_DRAFT = "save_as_draft",
+	SIGNED = "SIGNED"
+}
+
+export const summaryStatusEnum = z.enum(Object.values(SUMMARY_STATUS_ENUM))
+export const summaryStutusEnumPg = pgEnum("summary_status_enum", Object.values(SUMMARY_STATUS_ENUM) as [string, ...string[]])
+
 export const bookedSlots = pgTable("booked_slots", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
 	customerId: varchar("customer_id")
@@ -149,6 +157,7 @@ export const bookedSlots = pgTable("booked_slots", {
 		.references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
 	status: bookedSlotsStatusEnum("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
 	summary: text("summary"), // Consultation summary added by physician
+	summaryStatus: summaryStutusEnumPg("summary_status").default(SUMMARY_STATUS_ENUM.SAVE_AS_DRAFT),
 	meetingLink: text("meeting_link"), // Zoom (or other) link for online consultations; set by cron
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),

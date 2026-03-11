@@ -15,6 +15,8 @@ import {
 	USER_ROLES,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
+import { getPaginationParams } from "server/src/shared/utils/utils";
+import { config } from "server/src/app/config";
 
 export class PhysicianController {
 	private physicianService: PhysicianService;
@@ -222,16 +224,14 @@ export class PhysicianController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const page = parseInt(req.query.page as string) || 1;
-			const limit = parseInt(req.query.limit as string) || 10;
-			const skip = parseInt(req.query.skip as string);
 			const search = req.query.search as string | undefined;
 			const specialtyId = req.query.specialtyId as string | undefined;
+			const { page, limit, offset  } = getPaginationParams(req)
 
 			const result = await this.physicianService.getPhysiciansPaginated({
 				page,
-				limit,
-				skip,
+				limit: limit || config.pagination.limit,
+				skip: offset,
 				search,
 				specialtyId,
 			});
@@ -252,8 +252,34 @@ export class PhysicianController {
 			if (!specialtyId) {
 				throw new BadRequestError("Specialty ID is required");
 			}
+			const { date, timeZone } = req.query as { date: string; timeZone: string };
+
+			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
+				throw new BadRequestError("Invalid timezone");
+			}
+
+			const numberDate = new Date(date).getTime();
+			if (isNaN(numberDate)) {
+				throw new BadRequestError("Invalid date format");
+			}
+
+			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
+				day: "numeric",
+				month: "numeric",
+				year: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+				second: "numeric",
+				timeZone,
+			}).format(Number(numberDate));
+
 			const physicians =
-				await this.physicianService.getPhysiciansBySpecialty(specialtyId);
+				await this.physicianService.getPhysiciansBySpecialty(
+					specialtyId,
+					timeZone,
+					date,
+					dateWithTimezone,
+				);
 			sendSuccess(res, { physicians }, "Physicians retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
@@ -449,15 +475,15 @@ export class PhysicianController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const page = parseInt(req.query.page as string) || 1;
-			const limit = parseInt(req.query.limit as string) || 10;
+			const { limit, offset, page } = getPaginationParams(req)
 			const search = req.query.search as string | undefined;
 			const physicianId =
 				req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined;
 
 			const result = await this.patientService.getPatientsPaginated({
 				page,
-				limit,
+				offset,
+				limit: limit || config.pagination.limit,
 				search,
 				physicianId,
 			});

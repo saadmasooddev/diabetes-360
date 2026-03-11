@@ -10,7 +10,7 @@ import { CircularGauge } from "../../components/CircularGauge";
 import { InsightSummaryCard } from "../../components/InsightSummaryCard";
 import { OverallHealthSummary } from "../../components/OverallHealthSummary";
 import { WhatToDoNext } from "../../components/WhatToDoNext";
-import { EXERCISE_TYPE_ENUM, type MetricType } from "@shared/schema";
+import { METRIC_TYPE_ENUM, type MetricType } from "@shared/schema";
 
 export function HealthAssessment() {
 	const user = useAuthStore((state) => state.user);
@@ -21,15 +21,15 @@ export function HealthAssessment() {
 	const insights = healthAssessment?.insights || [];
 
 	const waterIntakeInsight =
-		insights.find((i) => i.name === EXERCISE_TYPE_ENUM.WATER_INTAKE)?.insight ||
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.WATER_INTAKE)?.insight ||
 		"";
 	const glucoseInsight =
-		insights.find((i) => i.name === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE)
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
 			?.insight || "";
 	const stepsInsight =
-		insights.find((i) => i.name === EXERCISE_TYPE_ENUM.STEPS)?.insight || "";
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.STEPS)?.insight || "";
 	const heartRateInsight =
-		insights.find((i) => i.name === EXERCISE_TYPE_ENUM.HEART_RATE)?.insight ||
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.HEART_RATE)?.insight ||
 		"";
 	const overallHealthSummary = healthAssessment?.overallHealthSummary || "";
 	const whatToDoNext = healthAssessment?.whatToDoNext || [];
@@ -53,23 +53,23 @@ export function HealthAssessment() {
 	const glucoseDaily = statistics?.glucose.daily ?? 0;
 	const glucoseWeekly = statistics?.glucose.weekly ?? 0;
 	const glucoseMonthly = statistics?.glucose.monthly ?? 0;
-	const glucoseTargets = getTarget(EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE);
+	const glucoseTargets = getTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE);
 
 	// Water is in liters already from the API, convert to string with 1 decimal
 	const waterDaily = (statistics?.water.daily ?? 0).toFixed(1);
 	const waterWeekly = (statistics?.water.weekly ?? 0).toFixed(1);
 	const waterMonthly = (statistics?.water.monthly ?? 0).toFixed(1);
-	const waterTargets = getTarget(EXERCISE_TYPE_ENUM.WATER_INTAKE);
+	const waterTargets = getTarget(METRIC_TYPE_ENUM.WATER_INTAKE);
 
 	const stepsDaily = statistics?.steps.daily ?? 0;
 	const stepsWeekly = statistics?.steps.weekly ?? 0;
 	const stepsMonthly = statistics?.steps.monthly ?? 0;
-	const stepsTargets = getTarget(EXERCISE_TYPE_ENUM.STEPS);
+	const stepsTargets = getTarget(METRIC_TYPE_ENUM.STEPS);
 
 	const heartRateDaily = statistics?.heartRate.daily ?? 0;
 	const heartRateWeekly = statistics?.heartRate.weekly ?? 0;
 	const heartRateMonthly = statistics?.heartRate.monthly ?? 0;
-	const heartRateTargets = getTarget(EXERCISE_TYPE_ENUM.HEART_RATE);
+	const heartRateTargets = getTarget(METRIC_TYPE_ENUM.HEART_RATE);
 
 	return (
 		<div className="flex min-h-screen" style={{ background: "#F7F9F9" }}>
@@ -161,7 +161,7 @@ export function HealthAssessment() {
 									value={glucoseDaily}
 									label="Daily Average"
 									unit="mg/dL"
-									metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+									metricType={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 									size={200}
 									recommendedTarget={glucoseTargets.recommended}
 									userTarget={glucoseTargets.user}
@@ -172,7 +172,7 @@ export function HealthAssessment() {
 									value={glucoseWeekly}
 									label="Weekly Average"
 									unit="mg/dL"
-									metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+									metricType={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 									size={200}
 									recommendedTarget={glucoseTargets.recommended}
 									userTarget={glucoseTargets.user}
@@ -183,7 +183,7 @@ export function HealthAssessment() {
 									value={glucoseMonthly}
 									label="Monthly Average"
 									unit="mg/dL"
-									metricType={EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE}
+									metricType={METRIC_TYPE_ENUM.BLOOD_GLUCOSE}
 									size={200}
 									recommendedTarget={glucoseTargets.recommended}
 									userTarget={glucoseTargets.user}
@@ -237,7 +237,7 @@ export function HealthAssessment() {
 										label="Daily"
 										unit="L"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
+										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
 										recommendedTarget={waterTargets.recommended}
 										userTarget={waterTargets.user}
 									/>
@@ -248,7 +248,7 @@ export function HealthAssessment() {
 										label="Weekly"
 										unit="L"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
+										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
 										recommendedTarget={waterTargets.recommended}
 										userTarget={waterTargets.user}
 									/>
@@ -259,7 +259,7 @@ export function HealthAssessment() {
 										label="Monthly"
 										unit="L"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.WATER_INTAKE}
+										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
 										recommendedTarget={waterTargets.recommended}
 										userTarget={waterTargets.user}
 									/>
@@ -310,7 +310,7 @@ export function HealthAssessment() {
 										label="Daily"
 										unit="steps"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.STEPS}
+										metricType={METRIC_TYPE_ENUM.STEPS}
 										recommendedTarget={stepsTargets.recommended}
 										userTarget={stepsTargets.user}
 									/>
@@ -321,7 +321,7 @@ export function HealthAssessment() {
 										label="Weekly"
 										unit=" steps"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.STEPS}
+										metricType={METRIC_TYPE_ENUM.STEPS}
 										recommendedTarget={stepsTargets.recommended}
 										userTarget={stepsTargets.user}
 									/>
@@ -332,7 +332,7 @@ export function HealthAssessment() {
 										label="Monthly"
 										unit="steps"
 										size={180}
-										metricType={EXERCISE_TYPE_ENUM.STEPS}
+										metricType={METRIC_TYPE_ENUM.STEPS}
 										recommendedTarget={stepsTargets.recommended}
 										userTarget={stepsTargets.user}
 									/>
@@ -384,7 +384,7 @@ export function HealthAssessment() {
 											label="Daily"
 											unit=" BPM"
 											size={180}
-											metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
+											metricType={METRIC_TYPE_ENUM.HEART_RATE}
 											recommendedTarget={heartRateTargets.recommended}
 											userTarget={heartRateTargets.user}
 										/>
@@ -395,7 +395,7 @@ export function HealthAssessment() {
 											label="Weekly"
 											unit=" BPM"
 											size={180}
-											metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
+											metricType={METRIC_TYPE_ENUM.HEART_RATE}
 											recommendedTarget={heartRateTargets.recommended}
 											userTarget={heartRateTargets.user}
 										/>
@@ -406,7 +406,7 @@ export function HealthAssessment() {
 											label="Monthly"
 											unit=" BPM"
 											size={180}
-											metricType={EXERCISE_TYPE_ENUM.HEART_RATE}
+											metricType={METRIC_TYPE_ENUM.HEART_RATE}
 											recommendedTarget={heartRateTargets.recommended}
 											userTarget={heartRateTargets.user}
 										/>

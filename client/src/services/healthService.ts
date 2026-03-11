@@ -17,7 +17,7 @@ import type {
 } from "@shared/schema";
 import type { ApiResponse } from "@/types/auth.types";
 import type { ExtendedLimits } from "./settingsService";
-import type { ChartData } from "server/src/modules/health/repository/health.repository";
+import type { ChartData, FilteredMetricResponse } from "server/src/modules/health/repository/health.repository";
 
 export type Statistics = {
 	daily: number;
@@ -140,18 +140,7 @@ class HealthService {
 		types: MetricType[] = [],
 		limit?: number,
 		offset?: number,
-	): Promise<{
-		bloodSugarRecords: MertricRecord[];
-		waterIntakeRecords: MertricRecord[];
-		stepsRecords: MertricRecord[];
-		heartBeatRecords: MertricRecord[];
-		pagination: {
-			bloodSugar: { total: number; limit: number; offset: number };
-			waterIntake: { total: number; limit: number; offset: number };
-			steps: { total: number; limit: number; offset: number };
-			heartBeat: { total: number; limit: number; offset: number };
-		};
-	}> {
+	): Promise<FilteredMetricResponse> {
 		const params = new URLSearchParams({
 			startDate,
 			endDate,
@@ -171,18 +160,7 @@ class HealthService {
 		}
 
 		const response = await httpClient.get<
-			ApiResponse<{
-				bloodSugarRecords: MertricRecord[];
-				waterIntakeRecords: MertricRecord[];
-				stepsRecords: MertricRecord[];
-				heartBeatRecords: MertricRecord[];
-				pagination: {
-					bloodSugar: { total: number; limit: number; offset: number };
-					waterIntake: { total: number; limit: number; offset: number };
-					steps: { total: number; limit: number; offset: number };
-					heartBeat: { total: number; limit: number; offset: number };
-				};
-			}>
+			ApiResponse<FilteredMetricResponse>
 		>(`${API_ENDPOINTS.HEALTH.FILTERED}?${params.toString()}`);
 
 		if (!response.success || !response.data) {

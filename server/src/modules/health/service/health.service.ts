@@ -3,6 +3,7 @@ import {
 	type HealthInsightsData,
 	type HealthPagination,
 	HealthRepository,
+	FilteredMetricResponse,
 } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
 import {
@@ -15,7 +16,7 @@ import {
 	type HealthMetricTarget,
 	type ExtendedHealthMetric,
 	type MetricType,
-	EXERCISE_TYPE_ENUM,
+	METRIC_TYPE_ENUM,
 	type InsertDailyQuickLog,
 	type DailyQuickLog,
 } from "../models/health.schema";
@@ -88,7 +89,7 @@ export class HealthService {
 					const todaysWaterTotal =
 						await this.healthRepository.getTodaysMetricTotal(
 							data.userId,
-							EXERCISE_TYPE_ENUM.WATER_INTAKE,
+							METRIC_TYPE_ENUM.WATER_INTAKE,
 							data.recordedAt,
 						);
 					const waterValue = parseFloat(data.waterIntake.toString());
@@ -131,9 +132,9 @@ export class HealthService {
 			let metricType: MetricType | null = null;
 
 			if (data.bloodSugar) {
-				metricType = EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE;
+				metricType = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
 			} else if (data.waterIntake) {
-				metricType = EXERCISE_TYPE_ENUM.WATER_INTAKE;
+				metricType = METRIC_TYPE_ENUM.WATER_INTAKE;
 			}
 
 			if (metricType) {
@@ -147,7 +148,7 @@ export class HealthService {
 
 				if (todayCount >= limit) {
 					const metricName =
-						metricType === EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE
+						metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE
 							? "glucose"
 							: "water intake";
 					throw new BadRequestError(
@@ -187,7 +188,7 @@ export class HealthService {
 		previous: Partial<HealthMetric>;
 		limits: ExtendedLimits;
 		remainingLimits: ExtendedLimits;
-		quickLog?: {
+		quickLog: {
 			id: string;
 			exercise: string | null;
 			diet: string | null;
@@ -195,7 +196,7 @@ export class HealthService {
 			medicines: string | null;
 			stressLevel: string | null;
 			logDate: string;
-		} | null;
+		};
 	}> {
 		const userLimits = await this.getUserRemainingLimits(userId, startOfDay);
 		const latestMetrics = await this.getLatestMetric(userId, startOfDay);
@@ -256,18 +257,7 @@ export class HealthService {
 		types: MetricType[],
 		limit?: number,
 		offset?: number,
-	): Promise<{
-		bloodSugarRecords: MertricRecord[];
-		waterIntakeRecords: MertricRecord[];
-		stepsRecords: MertricRecord[];
-		heartBeatRecords: MertricRecord[];
-		pagination: {
-			bloodSugar: HealthPagination;
-			waterIntake: HealthPagination;
-			steps: HealthPagination;
-			heartBeat: HealthPagination;
-		};
-	}> {
+	): Promise<FilteredMetricResponse> {
 		return await this.healthRepository.getFilteredMetrics(
 			userId,
 			startDate,
@@ -291,7 +281,7 @@ export class HealthService {
 				const todaysStepsTotal =
 					await this.healthRepository.getTodaysMetricTotal(
 						log.userId,
-						EXERCISE_TYPE_ENUM.STEPS,
+						METRIC_TYPE_ENUM.STEPS,
 						log.recordedAt,
 					);
 				const newTotal = todaysStepsTotal + log.steps;
@@ -451,17 +441,23 @@ export class HealthService {
 		const bloodSugarLogsCount = await this.getTodaysMetricCount(
 			userId,
 			startOfDay,
-			EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE,
+			METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 		);
 		const stepsLogsCount = await this.getTodaysMetricCount(
 			userId,
 			startOfDay,
-			EXERCISE_TYPE_ENUM.STEPS,
+			METRIC_TYPE_ENUM.STEPS,
 		);
 		const waterLogsCount = await this.getTodaysMetricCount(
 			userId,
 			startOfDay,
-			EXERCISE_TYPE_ENUM.WATER_INTAKE,
+			METRIC_TYPE_ENUM.WATER_INTAKE,
+		);
+
+		const heartRateLogsCount = await this.getTodaysMetricCount(
+			userId,
+			startOfDay,
+			METRIC_TYPE_ENUM.HEART_RATE,
 		);
 		const consultationQuota =
 			await this.consultationService.getUserConsultationQuota(userId);
@@ -473,6 +469,7 @@ export class HealthService {
 		const remainingWaterLogs = limits.waterLimit - waterLogsCount;
 		const remainingFreeFoodScanLogs =
 			limits.foodScanLimits?.freeTier || 0 - foodScanLogsCount;
+		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount
 		const remainingPaidFoodScanLogs =
 			limits.foodScanLimits?.paidTier || 0 - foodScanLogsCount;
 		const remainingDiscountedConsultations =
@@ -481,6 +478,7 @@ export class HealthService {
 		const remainingFreeConsultations =
 			limits.freeConsultationQuota ||
 			0 - (consultationQuota?.freeConsultationsUsed || 0);
+		
 
 		return {
 			limits,
@@ -488,6 +486,7 @@ export class HealthService {
 				glucoseLimit: remainingBloodSugarLogs,
 				stepsLimit: remainingStepsLogs,
 				waterLimit: remainingWaterLogs,
+				heartRateLimits: remainingHeartRateLogs,
 				discountedConsultationQuota: remainingDiscountedConsultations,
 				freeConsultationQuota: remainingFreeConsultations,
 				foodScanLimits: {
@@ -586,13 +585,13 @@ export class HealthService {
 				.map((i) => {
 					let name: MetricType = "" as MetricType;
 					if (i.name === "glucose") {
-						name = EXERCISE_TYPE_ENUM.BLOOD_GLUCOSE;
+						name = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
 					} else if (i.name === "water") {
-						name = EXERCISE_TYPE_ENUM.WATER_INTAKE;
+						name = METRIC_TYPE_ENUM.WATER_INTAKE;
 					} else if (i.name === "steps") {
-						name = EXERCISE_TYPE_ENUM.STEPS;
+						name = METRIC_TYPE_ENUM.STEPS;
 					} else if (i.name === "heart_rate") {
-						name = EXERCISE_TYPE_ENUM.HEART_RATE;
+						name = METRIC_TYPE_ENUM.HEART_RATE;
 					}
 
 					return {
