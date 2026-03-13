@@ -25,15 +25,46 @@ export class AuthController {
 				provider: "manual",
 			});
 
-			const authResponse = await this.authService.signup(validatedData);
+			const signupResponse = await this.authService.signup(validatedData);
 
 			sendSuccess(
 				res,
-				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
-				},
-				SUCCESS_MESSAGES.ACCOUNT_CREATED,
+				{ emailVerificationCodeSent : signupResponse.emailVerificationCodeSent },
+				signupResponse.emailVerificationCodeSent 
+					? "Verification code sent. Please check your email."
+					: "Account created but we couldn't send the verification email. You can try again.",
+			);
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
+	async verifyEmail(req: Request, res: Response): Promise<void> {
+		try {
+			const { email, code } = req.body;
+			if (!email || !code) {
+				throw new BadRequestError("Email and verification code are required");
+			}
+			await this.authService.verifyEmail(email, code);
+			sendSuccess(res, null, "Email verified successfully. You can now sign in.");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
+
+	async resendVerificationOtp(req: Request, res: Response): Promise<void> {
+		try {
+			const { email } = req.body;
+			if (!email) {
+				throw new BadRequestError("Email is required");
+			}
+			const result = await this.authService.resendVerificationOtp(email);
+			sendSuccess(
+				res,
+				{ emailVerificationCodeSent : result.emailVerificationCodeSent },
+				result.emailVerificationCodeSent
+					? "Verification code sent. Please check your email."
+					: "We couldn't send the code. Please try again later.",
 			);
 		} catch (error: any) {
 			handleError(res, error);
@@ -51,10 +82,10 @@ export class AuthController {
 
 			// Request sign-in code (send OTP to email)
 			if (requestSignInCode === true) {
-				await this.authService.requestSignInCode(email);
+				const result = await this.authService.requestSignInCode(email);
 				sendSuccess(
 					res,
-					null,
+					result,
 					"Sign-in code sent to your email. It expires in 5 minutes.",
 				);
 				return;

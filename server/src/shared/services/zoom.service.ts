@@ -140,13 +140,12 @@ export class ZoomService {
 						}
 						// Use join URL for both parties (participants join via same link; host can use start_url if needed)
 						const meetingLink = result.joinUrl;
-
 						await emailService.sendMeetingLinkEmail({
 							to: slot.patientEmail,
 							recipientName: patientName,
 							patientName,
 							physicianName,
-							meetingLink,
+							bookingId: slot.bookedSlotId,
 							startTimeIso,
 							durationMinutes: slot.slotSizeMinutes,
 							isPhysician: false,
@@ -157,7 +156,7 @@ export class ZoomService {
 							recipientName: physicianName,
 							patientName,
 							physicianName,
-							meetingLink,
+							bookingId: slot.bookedSlotId,
 							startTimeIso,
 							durationMinutes: slot.slotSizeMinutes,
 							isPhysician: true,

@@ -228,12 +228,36 @@ export class PhysicianController {
 			const specialtyId = req.query.specialtyId as string | undefined;
 			const { page, limit, offset  } = getPaginationParams(req)
 
+			const { date, timeZone } = req.query as { date: string; timeZone: string };
+
+			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
+				throw new BadRequestError("Invalid timezone");
+			}
+
+			const numberDate = new Date(date).getTime();
+			if (isNaN(numberDate)) {
+				throw new BadRequestError("Invalid date format");
+			}
+
+			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
+				day: "numeric",
+				month: "numeric",
+				year: "numeric",
+				hour: "numeric",
+				minute: "numeric",
+				second: "numeric",
+				timeZone,
+			}).format(Number(numberDate));
+
 			const result = await this.physicianService.getPhysiciansPaginated({
 				page,
 				limit: limit || config.pagination.limit,
 				skip: offset,
 				search,
 				specialtyId,
+				date,
+				timeZone,
+				dateWithTimezone
 			});
 
 			sendSuccess(res, result, "Physicians retrieved successfully");

@@ -88,6 +88,14 @@ const authController = new AuthController();
  */
 router.post("/signup", (req, res) => authController.signup(req, res));
 
+router.post("/verify-email", (req, res) =>
+	authController.verifyEmail(req, res),
+);
+
+router.post("/resend-verification-otp", (req, res) =>
+	authController.resendVerificationOtp(req, res),
+);
+
 /**
  * @swagger
  * /api/auth/login:

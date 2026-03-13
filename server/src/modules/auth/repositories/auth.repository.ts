@@ -18,6 +18,7 @@ import { eq, and, getTableColumns, gt, gte, like, sql } from "drizzle-orm";
 export class AuthRepository {
 
 	private static readonly SIGN_IN_CODE_PREFIX = "SIC_";
+	private static readonly EMAIL_VERIFICATION_CODE_PREFIX = "EVC_";
 
 	async getUser(id: string): Promise<User | undefined> {
 		const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
@@ -181,6 +182,81 @@ export class AuthRepository {
 		return t;
 	}
 
+	// Email verification OTP (EVC) - stored in password_reset_tokens with EVC_ prefix
+	async revokeEmailVerificationCodesForUser(userId: string): Promise<void> {
+		await db
+			.delete(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.userId, userId),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.EMAIL_VERIFICATION_CODE_PREFIX}%`,
+					),
+				),
+			);
+	}
+
+	async getEmailVerificationCodeToken(
+		tokenWithPrefix: string,
+	): Promise<PasswordResetToken | undefined> {
+		const row = await db
+			.select()
+			.from(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.token, tokenWithPrefix),
+					eq(passwordResetTokens.used, false),
+				),
+			)
+			.limit(1);
+		const t = row[0];
+		if (!t || t.expiresAt < new Date()) return undefined;
+		return t;
+	}
+
+	async countRecentEmailVerificationCodes(
+		userId: string,
+		since: Date,
+	): Promise<number> {
+		const result = await db
+			.select({ count: sql<number>`count(*)::int` })
+			.from(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.userId, userId),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.EMAIL_VERIFICATION_CODE_PREFIX}%`,
+					),
+					gte(passwordResetTokens.createdAt, since),
+				),
+			);
+		return result[0]?.count ?? 0;
+	}
+
+	async getValidEmailVerificationTokenForUser(
+		userId: string,
+	): Promise<PasswordResetToken | undefined> {
+		const now = new Date();
+		const rows = await db
+			.select()
+			.from(passwordResetTokens)
+			.where(
+				and(
+					eq(passwordResetTokens.userId, userId),
+					eq(passwordResetTokens.used, false),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.EMAIL_VERIFICATION_CODE_PREFIX}%`,
+					),
+					gt(passwordResetTokens.expiresAt, now),
+				),
+			)
+			.limit(1);
+		return rows[0];
+	}
+
 	async updateUserPassword(
 		userId: string,
 		hashedPassword: string,
@@ -202,7 +278,10 @@ export class AuthRepository {
 		return user[0];
 	}
 
-	async updateUser(id: string, updateData: Partial<InsertUser>): Promise<User> {
+	async updateUser(
+		id: string,
+		updateData: Partial<InsertUser> & { emailVerified?: boolean },
+	): Promise<User> {
 		const updatedUser = await db
 			.update(users)
 			.set({ ...updateData, updatedAt: new Date() })

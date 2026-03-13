@@ -5,6 +5,8 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/api/auth/login",
     SIGNUP: "/api/auth/signup",
+    VERIFY_EMAIL: "/api/auth/verify-email",
+    RESEND_VERIFICATION_OTP: "/api/auth/resend-verification-otp",
     LOGOUT: "/api/auth/logout",
     REFRESH: "/api/auth/refresh",
     FORGOT_PASSWORD: "/api/auth/forgot-password",
@@ -59,7 +61,6 @@ export const API_ENDPOINTS = {
   PHYSICIAN: {
     SPECIALTIES: "/api/physician/specialties",
     ALL_PHYSICIANS: "/api/physician/physicians",
-    PHYSICIANS_PAGINATED: "/api/physician/physicians",
     PHYSICIANS_BY_SPECIALTY: (specialtyId: string) =>
       `/api/physician/specialties/${specialtyId}/physicians`,
     RATING: (physicianId: string) => `/api/physician/ratings/${physicianId}`,
@@ -85,6 +86,7 @@ export const API_ENDPOINTS = {
     CONSULTATION_QUOTAS: "/api/customer/consultation-quotas",
   },
   BOOKING: {
+    MEETING_LINK: (bookingId: string) => `/api/booking/${bookingId}/meeting-link`,
     SLOT_SIZES: "/api/booking/slot-sizes",
     SLOT_TYPES: "/api/booking/slot-types",
     AVAILABILITY_DATES: "/api/booking/availability-dates",

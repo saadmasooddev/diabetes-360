@@ -93,6 +93,9 @@ export class PhysicianService {
 	async getPhysiciansPaginated(params: {
 		page: number;
 		limit: number;
+		timeZone: string;
+		date: string;
+		dateWithTimezone: string;
 		skip?: number;
 		search?: string;
 		specialtyId?: string;

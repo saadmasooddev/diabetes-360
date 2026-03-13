@@ -6,12 +6,15 @@ import type {
 	UpdateUserConsultationQuota,
 	UserConsultationQuota,
 } from "../models/consultation-quota.schema";
+import { Tx } from "../../food/models/food.schema";
 
 export class ConsultationQuotaRepository {
 	async getUserConsultationQuota(
 		userId: string,
+		tx?: Tx
 	): Promise<UserConsultationQuota | null> {
-		const [quota] = await db
+		const dbConn = tx || db
+		const [quota] = await dbConn
 			.select()
 			.from(userConsultationQuotas)
 			.where(eq(userConsultationQuotas.userId, userId))
@@ -22,8 +25,10 @@ export class ConsultationQuotaRepository {
 
 	async createUserConsultationQuota(
 		data: InsertUserConsultationQuota,
+		tx?: Tx
 	): Promise<UserConsultationQuota> {
-		const [quota] = await db
+    const dbConn = tx || db
+		const [quota] = await dbConn
 			.insert(userConsultationQuotas)
 			.values({
 				...data,
@@ -92,8 +97,9 @@ export class ConsultationQuotaRepository {
 
 	async getOrCreateUserConsultationQuota(
 		userId: string,
+		tx?: Tx
 	): Promise<UserConsultationQuota> {
-		const existing = await this.getUserConsultationQuota(userId);
+		const existing = await this.getUserConsultationQuota(userId, tx);
 
 		if (existing) {
 			return existing;
@@ -103,6 +109,6 @@ export class ConsultationQuotaRepository {
 			userId,
 			discountedConsultationsUsed: 0,
 			freeConsultationsUsed: 0,
-		});
+		},tx);
 	}
 }

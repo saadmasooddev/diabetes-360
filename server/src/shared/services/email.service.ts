@@ -1,5 +1,6 @@
 import sgMail from "@sendgrid/mail";
 import { config } from "../../app/config";
+import { COMMON_PREFIX, ROUTES } from "@/config/routes";
 
 export class EmailService {
 	constructor() {
@@ -109,12 +110,13 @@ export class EmailService {
 			recipientName: string;
 			patientName: string;
 			physicianName: string;
-			meetingLink: string;
 			startTimeIso: string;
 			durationMinutes: number;
 			isPhysician: boolean;
+      bookingId: string
 		},
 	): Promise<void> {
+		const meetingLinkUrl = `${config.frontendUrl}${ROUTES.MEETING_LINK.replace(":bookingId", options.bookingId)}`;
 		const startDate = new Date(options.startTimeIso);
 		const dateStr = startDate.toLocaleDateString(undefined, {
 			weekday: "long",
@@ -146,12 +148,12 @@ export class EmailService {
           </div>
           <p>Join the video call using the link below:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${options.meetingLink}" 
+            <a href="${meetingLinkUrl}" 
                style="background-color: #00856f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
               Join Video Call
             </a>
           </div>
-          <p style="word-break: break-all; color: #6b7280; font-size: 14px;">Or copy this link: ${options.meetingLink}</p>
+          <p style="word-break: break-all; color: #6b7280; font-size: 14px;">Or copy this link: ${meetingLinkUrl}</p>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 14px;">
             Best regards,<br>
@@ -174,7 +176,7 @@ export class EmailService {
 			return false;
 		}
 	}
-  async sendSignInCodeEmail(email: string, code: string, userName: string){
+	async sendSignInCodeEmail(email: string, code: string, userName: string) {
 		const msg = {
 			to: email,
 			from: {
@@ -197,6 +199,45 @@ export class EmailService {
             </p>
           </div>
           <p>If you did not request this code, you can safely ignore this email.</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 14px;">
+            Best regards,<br>
+            The Diabetes 360 Team
+          </p>
+        </div>
+      `,
+		};
+
+		await sgMail.send(msg);
+	}
+
+	async sendEmailVerificationOtp(
+		email: string,
+		code: string,
+		userName: string,
+	): Promise<void> {
+		const msg = {
+			to: email,
+			from: {
+				email: config.email.from,
+				name: config.email.fromName,
+			},
+			subject: "Verify your email - Diabetes 360",
+			html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #00856f;">Verify your email</h2>
+          <p>Hello ${userName},</p>
+          <p>Thanks for signing up for Diabetes 360. Enter this code in the app to verify your email address.</p>
+          <div style="background-color: #f7f9f9; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+            <span style="display: inline-block; font-size: 2.1em; letter-spacing: 5px; font-weight: bold; color: #00856f;">
+              ${code}
+            </span>
+            <p style="margin: 18px 0 0 0; color: #444; font-size: 15px;">
+              Enter this 6-digit code in the verification form.<br>
+              <strong>This code will expire in 5 minutes.</strong>
+            </p>
+          </div>
+          <p>If you did not create an account, you can safely ignore this email.</p>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; font-size: 14px;">
             Best regards,<br>

@@ -94,11 +94,17 @@ export const getPaginationParams = (req: Request) => {
 	const queryLimit = parseInt(req.query.limit as string, 10)
 	const querySkip = parseInt(req.query.skip as string, 10);
 	const queryOffset = parseInt(req.query.offset as string, 10)
+	const queryTake = parseInt(req.query.take as string, 10)
 
 	const page = req.query.page ? queryPage : 1;
-	const limit = req.query.limit
-		? queryLimit 
-		: undefined;
+	let limit: number | undefined = undefined
+
+	if(queryLimit){
+		limit = queryLimit
+	}
+	if(queryTake){
+		limit = queryTake
+	}
 
 	let offset = 0
 	if(queryPage && limit) {

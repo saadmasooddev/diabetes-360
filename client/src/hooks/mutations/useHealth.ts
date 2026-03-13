@@ -7,6 +7,7 @@ import {
 import { API_ENDPOINTS } from "@/config/endpoints";
 import type {
 	ActivityType,
+	HealthMetricData,
 	InsertExerciseLog,
 	InsertHealthMetric,
 	MertricRecord,
@@ -152,7 +153,7 @@ export const useAddActivityLogsBatch = () => {
 			healthMetrics,
 		}: {
 			exercises: Array<ModifiedInsertExerciseLogs>;
-			healthMetrics?: InsertHealthMetric;
+			healthMetrics?: HealthMetricData;
 		}) => {
 			return await healthService.addActivityLogsBatch({
 				exercises,

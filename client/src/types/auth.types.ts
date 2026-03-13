@@ -1,4 +1,5 @@
 import { DIABETES_TYPE } from "@shared/schema";
+import { SignupResponse } from "server/src/modules/auth/services/auth.service";
 
 export type PaymentType = "free" | "monthly" | "annual";
 
@@ -60,7 +61,7 @@ export interface ApiResponse<T = any> {
 
 // Auth-specific response data
 export interface AuthData {
-	user: User;
+	user: User & { emailVerificationCodeSent: boolean };
 	tokens: TokenPair;
 	requiresTwoFactor?: boolean;
 }
@@ -76,6 +77,9 @@ export interface LogoutData {
 export interface ForgotPasswordData {
 	message: string;
 }
+
+
+export interface SignupRes extends ApiResponse<SignupResponse> {}
 
 // Response types for each endpoint
 export interface AuthResponse extends ApiResponse<AuthData> {}

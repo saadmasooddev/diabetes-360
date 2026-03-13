@@ -1044,4 +1044,20 @@ export class BookingController {
 			handleError(res, error);
 		}
 	}
+
+	async getMeetingLink(req: AuthenticatedRequest, res: Response): Promise<void> {
+		try {
+			const { bookingId } = req.params
+			if(!bookingId) {
+				throw new BadRequestError("Booking ID not provided")
+			}
+			console.log("The booking link is", bookingId)
+
+			const userId = req.user?.userId
+			const meetingLink = await this.bookingService.getMeetingLink(bookingId, userId!)
+			sendSuccess(res, { meetingLink}, "Meeting link retrieved successfully")
+		} catch (error) {
+			handleError(res, error)
+		}
+	}
 }

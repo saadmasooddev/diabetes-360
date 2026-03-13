@@ -61,6 +61,7 @@ import { userConsultationQuotas } from "../models/consultation-quota.schema";
 import { Tx } from "../../food/models/food.schema";
 import { medications } from "../../medical/models/medical.schema";
 import { MedicalRepository, MedicineDosage } from "../../medical/repository/medical.repository";
+import { ConsultationQuotaRepository } from "./consultation-quota.repository";
 
 export type BookedSlotWithoutMeetingLink = {
 			bookedSlotId: string;
@@ -139,9 +140,11 @@ export type SlotWithDetails = {
 };
 export class BookingRepository {
 	private medicalRepository: MedicalRepository;
+	private consultationQuotaRepository: ConsultationQuotaRepository
 
 	constructor() {
 		this.medicalRepository = new MedicalRepository()
+		this.consultationQuotaRepository = new ConsultationQuotaRepository()
 	}
 
 	async getAllSlotSizes(): Promise<SlotSize[]> {
@@ -504,13 +507,9 @@ export class BookingRepository {
 				throw new Error("System limits not found");
 			}
 
-			const [userConsultationQuota] = await tx
-				.select()
-				.from(userConsultationQuotas)
-				.where(eq(userConsultationQuotas.userId, data.customerId));
-			if (!userConsultationQuota) {
-				throw new Error("User consultation quota not found");
-			}
+			const userConsultationQuota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(
+				data.customerId, tx
+			)
 
 			switch (pricingData.type) {
 				case BOOKING_TYPE_ENUM.FREE: {
@@ -1799,7 +1798,7 @@ export class BookingRepository {
 						eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
 						eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
 					),
-					gte(availabilityDate.date, new Date()),
+					// gte(availabilityDate.date, new Date()),
 				),
 			);
 
@@ -1836,6 +1835,7 @@ export class BookingRepository {
 			try {
 				const slots = await this.getBookedSlotsWithoutMeetingLink(1000, tx);
 				if (slots.length === 0) {
+					console.log("No slots found. Cancelling the job")
 					return;
 				}
 				for (const slot of slots){

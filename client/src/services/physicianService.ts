@@ -167,7 +167,12 @@ class PhysicianService {
 			hasPrev: boolean;
 		};
 	}> {
+		const	recordedAt = new Date().toISOString()
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+
 		const queryParams = new URLSearchParams();
+		queryParams.append("date", recordedAt);
+		queryParams.append("timeZone", timeZone);
 		queryParams.append("page", params.page.toString());
 		queryParams.append("limit", params.limit.toString());
 		if (params.search) {
@@ -190,7 +195,7 @@ class PhysicianService {
 				};
 			}>
 		>(
-			`${API_ENDPOINTS.PHYSICIAN.PHYSICIANS_PAGINATED}?${queryParams.toString()}`,
+			`${API_ENDPOINTS.PHYSICIAN.ALL_PHYSICIANS}?${queryParams.toString()}`,
 		);
 
 		if (!response.success || !response.data) {

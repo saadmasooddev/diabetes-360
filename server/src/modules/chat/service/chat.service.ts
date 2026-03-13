@@ -570,7 +570,6 @@ export class ChatService {
 					confidence: data.confidence,
 				};
 			} catch (error) {
-				console.log("The error is", error);
 				emotionalStateForPayload = null;
 			}
 		}

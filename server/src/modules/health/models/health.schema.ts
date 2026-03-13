@@ -14,9 +14,21 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, bloodSugarReadingTypeSchema, users } from "../../auth/models/user.schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, BloodSugarReadingTypeEnumValues, bloodSugarReadingTypeSchema, users } from "../../auth/models/user.schema";
 
 export const bloodSugarReadingTypeEnumPg = pgEnum("blood_sugar_reading_type_enum", [ ...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM)] as [string, ...string[]]);
+
+export enum HEALTH_METRIC_SOURCE_ENUM {
+	MOBILE = 'mobile',
+	CGM = 'cgm',
+	WATCH = 'watch',
+	CUSTOM = 'custom'
+}
+export const healthMetricReadingSourceEnum = z.enum(Object.values(HEALTH_METRIC_SOURCE_ENUM))
+export const healthMetricReadingSourceEnumPg = pgEnum(
+	"health_metric_reading_source_enum",
+	 [...Object.values(HEALTH_METRIC_SOURCE_ENUM) as [string, ...string[]]]
+	)
 
 export const healthMetrics = pgTable("health_metrics", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -30,6 +42,7 @@ export const healthMetrics = pgTable("health_metrics", {
 	recordedAt: timestamp("recorded_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
+	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
 });
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
@@ -43,6 +56,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		waterIntake: z.number().nullable().optional(),
 		heartRate: z.number().int().nullable().optional(),
 		recordedAt: z.string(),
+		readingSource: healthMetricReadingSourceEnum.optional()
 	})
 	.superRefine((data, ctx) => {
 		if (data.bloodSugar && data.bloodSugarReadingType !== BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (data.bloodSugar < 70 || data.bloodSugar > 2700)) {
@@ -76,6 +90,16 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 				path: ["heartRate"],
 			});
 		}
+
+		if (
+			data.recordedAt &&
+			isNaN(new Date(data.recordedAt).getTime())
+		)
+			ctx.addIssue({
+				code: "custom",
+				message: "Invalid date format",
+				path: ["recordedAt"],
+			});
 	});
 
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
@@ -126,6 +150,7 @@ export const exerciseLogs = pgTable("exercise_logs", {
 	recordedAt: timestamp("recorded_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
+	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
 });
 
 export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
@@ -151,6 +176,7 @@ export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
 			.optional(),
 		repitition: z.string().nullable().optional(),
 		recordedAt: z.string(),
+		readingSource: healthMetricReadingSourceEnum.optional()
 	});
 
 export type InsertExerciseLog = z.infer<typeof insertExerciseLogSchema>;
@@ -428,3 +454,28 @@ export const insertDailyQuickLogSchema = createInsertSchema(dailyQuickLogs)
 
 export type InsertDailyQuickLog = z.infer<typeof insertDailyQuickLogSchema>;
 export type DailyQuickLog = typeof dailyQuickLogs.$inferSelect;
+
+
+export type HealthMetricReading = { value: number, recordedAt: string, source: HEALTH_METRIC_SOURCE_ENUM }
+
+export type HealthMetricData = {
+	userId: string,
+	bloodSugar: HealthMetricReading[] 
+	heartRate: HealthMetricReading[]
+	waterIntake: HealthMetricReading[]
+	bloodSugarReadingType: BloodSugarReadingTypeEnumValues
+}
+
+export const healthMetricReadingSchema = z.object({
+	value: z.number().min(0),
+	recordedAt: z.string(),
+	source: healthMetricReadingSourceEnum
+})
+
+export const healthMetricDataSchema = z.object({
+	userId: z.string().min(1),
+	bloodSugar: z.array(z.object(healthMetricReadingSchema)),
+	heartRate: z.array(z.object(healthMetricReadingSchema)),
+	waterIntake: z.array(z.object(healthMetricReadingSchema)),
+	bloodSugarReadingType: bloodSugarReadingTypeSchema
+})

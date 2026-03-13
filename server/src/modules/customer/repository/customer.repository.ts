@@ -85,7 +85,7 @@ export class CustomerRepository {
 	private readonly bloodSugarReadingTypeMap: 
 	  Record<BloodSugarReadingTypeEnumValues, (data: BloodSugarReadingTypeData) => Promise<void>> = {
 		[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: async (data) => {
-				await this.healthRepository.createMetric({
+				await this.healthRepository.createMetricsBatch({
 					userId: data.userId,
 					bloodSugar: parseFloat(data.bloodSugarReading!),
 					recordedAt: new Date().toISOString(),
@@ -101,14 +101,14 @@ export class CustomerRepository {
 			}, data.tx)
 		},
 		[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: async (data) =>{
-			await this.healthRepository.createMetric({
+			await this.healthRepository.createMetricsBatch({
 				userId: data.userId,
 				bloodSugar: parseFloat(data.bloodSugarReading!),
 				recordedAt: new Date().toISOString(),
 				bloodSugarReadingType: BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM
 			}, data.tx)
-
-		}
+		},
+		[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: async () => {}
 	}
 
 	async createCustomerDataAndUpdateUserProfileCompleteTransaction(userId: string, data: InsertCustomerData,  additionalData?: AdditionalProfileDataValues){

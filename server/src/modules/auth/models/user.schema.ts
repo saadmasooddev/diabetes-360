@@ -491,6 +491,7 @@ export const PERMISSIONS = {
 	READ_OWN_PROFILE: "read:own_profile",
 	UPDATE_OWN_PROFILE: "update:own_profile",
 
+	VIEW_MEETING_LINK: "view:meeting_link",
 	// Health metrics permissions
 	READ_OWN_HEALTH_METRICS: "read:own_health_metrics",
 	CREATE_OWN_HEALTH_METRICS: "create:own_health_metrics",

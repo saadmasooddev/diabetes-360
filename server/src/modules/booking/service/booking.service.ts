@@ -12,7 +12,7 @@ import {
 	ForbiddenError,
 } from "../../../shared/errors";
 import { db } from "../../../app/config/db";
-import { PAYMENT_TYPE, physicianData } from "../../auth/models/user.schema";
+import { PAYMENT_TYPE, USER_ROLES, UserRole, physicianData, userRole } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
 import {
 	BOOKING_TYPE_ENUM,
@@ -21,6 +21,7 @@ import {
 	type InsertSlot,
 	type InsertSlotTypeJunction,
 	SUMMARY_STATUS_ENUM,
+	BOOKED_SLOTS_STATUS,
 } from "../models/booking.schema";
 import { ConsultationService } from "./consultation.service";
 import { DateManager } from "server/src/shared/utils/utils";
@@ -1024,5 +1025,53 @@ export class BookingService {
 		}
 
 		return await this.bookingRepository.updateConsultationNotesTransaction(data)
+	}
+
+	async getMeetingLink(bookingId: string, userId: string){
+		const user = await this.userRepository.getUser(userId)
+		if(!user){
+			throw new BadRequestError("User not found")
+		}
+
+		const booking = await this.bookingRepository.getBookedSlotById(bookingId)
+		if(!booking){
+			throw new BadRequestError("Booking not found")
+		}
+
+		if(!booking.meetingLink){
+			throw new NotFoundError("Meeting link not found")
+		}
+
+		const slot = await this.bookingRepository.getSlotById(booking.slotId)
+		if(!slot){
+			throw new BadRequestError("Booked slot not found")
+		}
+
+		const availability = await this.bookingRepository.getAvailabilityDateById(slot.availabilityId)
+		if(!availability){
+			throw new BadRequestError("Availability date not found")
+		}
+
+
+		const bookingRoleMap: Record<UserRole, () => boolean> = {
+
+			[USER_ROLES.ADMIN]: () => true,
+			[USER_ROLES.CUSTOMER]: () => {
+				return booking.customerId === userId
+			},
+			[USER_ROLES.PHYSICIAN]: () => {
+				return availability.physicianId === userId
+			}
+		}
+
+		const isAllowed = bookingRoleMap[user.role]
+		if(!isAllowed){
+			throw new ForbiddenError("You are not allowed to access this meeting link")
+		}
+
+		await this.bookingRepository.updateBookedSlotStatus(bookingId,BOOKING_STATUS_ENUM.COMPLETED)
+
+
+		return booking.meetingLink
 	}
 }

@@ -10,6 +10,7 @@ import InvalidRoute from "@/pages/InvalidRoute";
 import { LogIn } from "@/features/auth/pages/LogIn";
 import { ForgotPassword } from "@/features/auth/pages/ForgotPassword";
 import { SignUp } from "@/features/auth/pages/SignUp";
+import { VerifyEmail } from "@/features/auth/pages/VerifyEmail";
 import ResetPassword from "@/features/auth/pages/ResetPassword";
 import { Dashboard } from "@/features/dashboard/customer/pages/Dashboard";
 import { HealthAssessment } from "@/features/dashboard/customer/pages/HealthAssessment";
@@ -37,6 +38,7 @@ import { DoctorAppointments } from "./features/dashboard/doctor/DoctorAppointmen
 import { PatientAlerts } from "./features/dashboard/doctor/PatientAlerts";
 import { AuthRedirect } from "./components/auth/AuthRedirect";
 import { PERMISSIONS } from "@shared/schema";
+import { MeetingLink } from "./components/common/MeetingLink";
 
 function Router() {
 	useAuthInit();
@@ -52,6 +54,11 @@ function Router() {
 			<Route path={ROUTES.SIGNUP}>
 				<AuthRedirect>
 					<SignUp />
+				</AuthRedirect>
+			</Route>
+			<Route path={ROUTES.VERIFY_EMAIL}>
+				<AuthRedirect>
+					<VerifyEmail />
 				</AuthRedirect>
 			</Route>
 			<Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
@@ -202,6 +209,13 @@ function Router() {
 			<Route path={ROUTES.ADMIN_PATIENTS_ALERTS}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_ALERTS]}>
 					<PatientAlerts />
+				</ProtectedRoute>
+			</Route>
+
+			// common routes
+			<Route path={ROUTES.MEETING_LINK}>
+				<ProtectedRoute permissions={[PERMISSIONS.VIEW_MEETING_LINK]}>
+					<MeetingLink />
 				</ProtectedRoute>
 			</Route>
 			{/* Fallback for invalid routes */}

@@ -12,6 +12,7 @@ import {
 	type SQL,
 	inArray,
 	isNull,
+	getTableColumns
 } from "drizzle-orm";
 import {
 	physicianSpecialties,
@@ -40,6 +41,8 @@ import {
 	slotType,
 	slotTypeJunction,
 	DateManager,
+	slotLocations,
+	SLOT_TYPE,
 } from "@shared/schema";
 import { gte } from "drizzle-orm";
 
@@ -161,6 +164,9 @@ export class PhysicianRepository {
 	async getPhysiciansPaginated(params: {
 		page: number;
 		limit: number;
+		timeZone: string;
+		date: string;
+		dateWithTimezone: string;
 		skip?: number;
 		search?: string;
 		specialtyId?: string;
@@ -175,7 +181,7 @@ export class PhysicianRepository {
 			hasPrev: boolean;
 		};
 	}> {
-		const { page, limit, search, specialtyId, skip } = params;
+		const { page, limit, search, specialtyId, skip, date, timeZone, dateWithTimezone } = params;
 		const offset = skip || 0
 
 		// Build base query conditions
@@ -255,39 +261,7 @@ export class PhysicianRepository {
 
 		// Get average ratings for each physician
 		const physiciansWithRatings = await Promise.all(
-			physicians.map(async (physician) => {
-				const [avgRating] = await db
-					.select({
-						averageRating: avg(physicianRatings.rating),
-						totalRatings: sql<number>`count(${physicianRatings.id})`,
-					})
-					.from(physicianRatings)
-					.where(eq(physicianRatings.physicianId, physician.id));
-
-				const rating = avgRating?.averageRating
-					? parseFloat(avgRating.averageRating.toString())
-					: 0;
-				const totalRatings = avgRating?.totalRatings
-					? parseInt(avgRating.totalRatings.toString())
-					: 0;
-
-				// Calculate years of experience
-				const startDate = new Date(physician.practiceStartDate);
-				const now = new Date();
-				const yearsExperience = Math.max(
-					1,
-					Math.floor(
-						(now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365),
-					),
-				);
-
-				return {
-					...physician,
-					rating: rating,
-					totalRatings: totalRatings,
-					experience: `${yearsExperience}+ years`,
-				};
-			}),
+			physicians.map(async (physician) =>  this.physicianWithRatingsAndNextAvaialbleSlot(physician, { timeZone, fromDate: dateWithTimezone })),
 		);
 
 		return {
@@ -338,7 +312,24 @@ export class PhysicianRepository {
 			);
 
 		const physiciansWithRatings = await Promise.all(
-			physicians.map(async (physician) => {
+			physicians.map(async (physician) =>  this.physicianWithRatingsAndNextAvaialbleSlot(physician, { timeZone, fromDate })),
+		);
+
+		return physiciansWithRatings.filter(p => p.nextAvailableSlot !== null);
+	}
+
+	private async physicianWithRatingsAndNextAvaialbleSlot(physician:  {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    isActive: boolean | null;
+    specialtyId: string;
+    practiceStartDate: Date;
+    consultationFee: string;
+    imageUrl: string | null;
+    specialty: string;
+},{timeZone, fromDate }: { timeZone: string, fromDate: string }) {
 				const [avgRating] = await db
 					.select({
 						averageRating: avg(physicianRatings.rating),
@@ -367,7 +358,10 @@ export class PhysicianRepository {
 						startTime: slots.startTime,
 						endTime: slots.endTime,
 						slotTypeId: slotType.id,
-						slotTypeType: slotType.type,
+						slotType: slotType.type,
+						slotLocation: {
+							...getTableColumns(physicianLocations)
+						}
 					})
 					.from(slots)
 					.innerJoin(
@@ -384,6 +378,12 @@ export class PhysicianRepository {
 						and(
 							eq(bookedSlots.slotId, slots.id),
 						),
+					)
+					.leftJoin(
+						slotLocations, eq(slotLocations.slotId, slots.id)
+					)
+					.leftJoin(
+						physicianLocations, eq(physicianLocations.id, slotLocations.locationId)
 					)
 					.where(
 						and(
@@ -425,6 +425,8 @@ export class PhysicianRepository {
 					startTime: nextSlotRows[0].startTime,
 					endTime: nextSlotRows[0].endTime,
 					slotTypeId: nextSlotRows[0].slotTypeId,
+					slotType: nextSlotRows[0].slotType === SLOT_TYPE.ONLINE ? 'Video Call' : 'In Person',
+					slotLocation: nextSlotRows[0].slotLocation
 				} : null
 
 				return {
@@ -434,10 +436,6 @@ export class PhysicianRepository {
 					experience: `${yearsExperience}+ years`,
 					nextAvailableSlot,
 				};
-			}),
-		);
-
-		return physiciansWithRatings.filter(p => p.nextAvailableSlot !== null);
 	}
 
 	// Get all specialties for consultation page

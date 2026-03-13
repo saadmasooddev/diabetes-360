@@ -3,7 +3,7 @@ import { connect, disconnect } from "extendable-media-recorder-wav-encoder";
 import { twMerge } from "tailwind-merge";
 import type { Slot } from "@/services/bookingService";
 import type { AuthData, CustomerData, User } from "@/types/auth.types";
-import { USER_ROLES, type UserRole } from "@shared/schema";
+import { HEALTH_METRIC_SOURCE_ENUM, HealthMetricReading, USER_ROLES, type UserRole } from "@shared/schema";
 import {
 	ADMIN_DASHBOARD_PREFIX,
 	AUTH_PREFIX,
@@ -276,6 +276,14 @@ class Utils {
 			navigate(ROUTES.ADMIN_HOME);
 		},
 	};
+
+	addToHealthMetricReading(array: HealthMetricReading[], value: number, recordedAt?: string, source?: HEALTH_METRIC_SOURCE_ENUM){
+		array.push({
+			value,
+			recordedAt: recordedAt || new Date().toISOString(),
+			source: source || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+		})
+	}
 }
 export function sortLocationByDistance(
 	locations: { id: string; locationName: string }[],
@@ -693,3 +701,4 @@ export class GeneralUtils {
 export const generalUtils = new GeneralUtils()
 export const calorieUtils = new CalorieUtils();
 export const utils = new Utils();
+

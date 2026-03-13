@@ -27,7 +27,7 @@ import {
 	useTargetsForUser,
 	useUploadGlucoseMeterImage,
 } from "@/hooks/mutations/useHealth";
-import { calorieUtils } from "@/lib/utils";
+import { calorieUtils, utils } from "@/lib/utils";
 import {
 	ACTIVITY_TYPE_ENUM,
 	METRIC_TYPE_ENUM,
@@ -41,6 +41,9 @@ import {
 	type QuickLogSleepDurationTypeEnumValues,
 	type QuickLogMedicinesTypeEnumValues,
 	type QuickLogStressLevelTypeEnumValues,
+	HealthMetricData,
+	HEALTH_METRIC_SOURCE_ENUM,
+	metricTypeEnum,
 } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
 import type { ModifiedInsertExerciseLogs } from "@/services/healthService";
@@ -244,41 +247,62 @@ export function Dashboard() {
 			}
 		}
 
-		const metricData: InsertHealthMetric = {
+		const metricData: HealthMetricData = {
 			userId: user.id,
-			bloodSugar: null,
+			bloodSugar: [],
 			bloodSugarReadingType: bloodSugarReadingType,
-			heartRate: null,
-			waterIntake: null,
-			recordedAt: new Date().toISOString(),
+			heartRate: [],
+			waterIntake: [],
 		};
 		const exercises: ModifiedInsertExerciseLogs[] = [];
 		const queriesToInvalidate: FilteredMetricsKey[] = [];
 
-		if (selectedMetricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE) {
-			metricData.bloodSugar = parseFloat(numericValue.toFixed(1));
-			metricData.bloodSugarReadingType = bloodSugarReadingType
-			queriesToInvalidate.push(bloodGlucoseQueryKey);
-		} else if (selectedMetricType === METRIC_TYPE_ENUM.STEPS) {
-			const calories =
-				calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue);
-			const duration = calorieUtils.getEstimatedDurationForSteps(numericValue);
-			exercises.push({
-				exerciseName: "Walk",
-				calories,
-				activityType: ACTIVITY_TYPE_ENUM.CARDIO,
-				duration,
-				steps: Math.round(numericValue),
-				recordedAt: new Date().toISOString(),
-			});
-			queriesToInvalidate.push(stepsQueryKey);
-		} else if (selectedMetricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
-			metricData.waterIntake = parseFloat(numericValue.toFixed(1));
-			queriesToInvalidate.push(waterQueryKey);
-		} else if (selectedMetricType === METRIC_TYPE_ENUM.HEART_RATE) {
-			metricData.heartRate = Math.round(numericValue);
-			queriesToInvalidate.push(heartBeatQueryKey);
+		const floadMetricValue = parseFloat(numericValue.toFixed(1))
+		const roundedMetricValue = Math.round(numericValue)
+
+		const metircTypeReadingMap: Record<MetricType, () => void> = {
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: () => {
+				utils.addToHealthMetricReading(metricData.bloodSugar, floadMetricValue)
+				metricData.bloodSugarReadingType = bloodSugarReadingType
+				queriesToInvalidate.push(bloodGlucoseQueryKey);
+			},
+			[METRIC_TYPE_ENUM.STEPS]: () => {
+				const calories =
+					calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue);
+				const duration = calorieUtils.getEstimatedDurationForSteps(numericValue);
+				exercises.push({
+					exerciseName: "Walk",
+					calories,
+					activityType: ACTIVITY_TYPE_ENUM.CARDIO,
+					duration,
+					steps: roundedMetricValue,
+					recordedAt: new Date().toISOString(),
+					source: HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+				});
+				queriesToInvalidate.push(stepsQueryKey);
+			},
+			[METRIC_TYPE_ENUM.WATER_INTAKE]: () => {
+				utils.addToHealthMetricReading(metricData.waterIntake, floadMetricValue)
+				queriesToInvalidate.push(waterQueryKey);
+			},
+			[METRIC_TYPE_ENUM.HEART_RATE]: () => {
+				utils.addToHealthMetricReading(metricData.heartRate, roundedMetricValue)
+				queriesToInvalidate.push(heartBeatQueryKey);
+			},
+			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: () => { }
 		}
+
+		const f = metircTypeReadingMap[selectedMetricType]
+		if (!f) {
+			toast({
+				title: "Invalid reading type",
+				description: "Please select a valid readingtype",
+				variant: "destructive"
+			})
+			return
+		}
+
+		f()
 
 		addActivityLogsBatch.mutate(
 			{ exercises, healthMetrics: metricData },
@@ -347,14 +371,15 @@ export function Dashboard() {
 			return;
 		}
 
-		const metricData: InsertHealthMetric = {
+		const metricData: HealthMetricData = {
 			userId: user.id,
-			bloodSugar: numericValue,
+			bloodSugar: [],
 			bloodSugarReadingType: BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
-			heartRate: null,
-			waterIntake: null,
-			recordedAt: new Date().toISOString(),
+			heartRate: [],
+			waterIntake: [],
 		};
+
+		utils.addToHealthMetricReading(metricData.bloodSugar, numericValue)
 
 		addActivityLogsBatch.mutate(
 			{ exercises: [], healthMetrics: metricData },

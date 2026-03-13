@@ -28,9 +28,13 @@ export interface AuthResponse {
 	user: Omit<
 		User & { profileData?: CustomerData | PhysicianData | null },
 		"password"
-	> & { permissions?: string[] };
-	tokens: TokenPair;
+	> & { permissions?: string[],  emailVerificationCodeSent: boolean };
+	tokens?: TokenPair;
 	requiresTwoFactor?: boolean;
+}
+
+export interface SignupResponse {
+	emailVerificationCodeSent: boolean;
 }
 
 export class AuthService {
@@ -43,12 +47,16 @@ export class AuthService {
 		this.twoFactorService = new TwoFactorService();
 	}
 
-	async signup(userData: InsertUser): Promise<AuthResponse> {
-		const existingUserByEmail = await this.authRepository.getUserByEmail(
+	async signup(userData: InsertUser): Promise<SignupResponse> {
+		const existingUser = await this.authRepository.getUserByEmail(
 			userData.email,
 		);
-		if (existingUserByEmail) {
-			throw new ConflictError("An account with this email already exists");
+
+		if (existingUser) {
+			if (existingUser.emailVerified) {
+				throw new ConflictError("An account with this email already exists");
+			}
+			return this.sendOrConfirmEmailVerificationOtp(existingUser, userData);
 		}
 
 		// Hash password
@@ -57,61 +65,159 @@ export class AuthService {
 			config.bcryptRounds,
 		);
 
-		// Create user with hashed password (profileComplete defaults to false in schema)
+		// Create user with hashed password, emailVerified defaults to false
 		const user = await this.authRepository.createUser({
 			...userData,
 			password: hashedPassword,
 		});
 
-		const userWithProfile = await this.authRepository.getUserByEmail(
-			user.email,
-		);
-
-		const tokens = await this.createTokens({
-			userId: user.id,
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			role: user.role,
-		});
-
-		// Send welcome email with credentials
-		await emailService.sendWelcomeEmail(
-			user.email,
-			`${user.firstName} ${user.lastName}`.trim(),
-			userData.password!,
-		);
-
-		// Return user without password, with profileData
-		if (!userWithProfile) {
-			throw new Error("Failed to retrieve user after creation");
+		// Send verification OTP (no welcome email until verified)
+		let emailVerificationCodeSent = false;
+		try {
+			await this.createAndSendEmailVerificationOtp(user);
+			emailVerificationCodeSent = true;
+		} catch (err) {
+			console.error("Failed to send email verification OTP:", err);
 		}
 
-		const {
-			password: _,
-			profileData,
-			...userWithoutPassword
-		} = userWithProfile;
-		const userRole = user.role;
-		return {
-			user: {
-				...userWithoutPassword,
-				profileData:
-					(profileData as CustomerData | PhysicianData | null | undefined) ||
-					null,
-				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-			},
-			tokens,
-		};
+		return { emailVerificationCodeSent };
+	}
+
+	/**
+	 * For existing unverified user: if valid OTP already exists, return otpSent true.
+	 * Otherwise send new OTP and return otpSent based on send result.
+	 */
+	private async sendOrConfirmEmailVerificationOtp(
+		user: Awaited<ReturnType<AuthRepository["getUserByEmail"]>>,
+		_userData: InsertUser,
+	): Promise<SignupResponse> {
+		if (!user) return {emailVerificationCodeSent : false };
+		const userId = user.id;
+
+		// If a valid (non-expired) OTP already exists, just return otpSent true so user can go to verify page
+		const existingValid =
+			await this.authRepository.getValidEmailVerificationTokenForUser(userId);
+		if (existingValid) {
+			return {emailVerificationCodeSent : true };
+		}
+
+		// Rate limit new sends
+		const since = new Date();
+		since.setMinutes(
+			since.getMinutes() -
+				config.auth.emailVerificationOtpRateLimitWindowInMinutes,
+		);
+		const recentCount =
+			await this.authRepository.countRecentEmailVerificationCodes(
+				userId,
+				since,
+			);
+		if (recentCount >= config.auth.emailVerificationOtpMaxPerWindow) {
+			throw new BadRequestError(
+				`Too many verification code requests. Try again in ${config.auth.emailVerificationOtpRateLimitWindowInMinutes} minutes.`,
+			);
+		}
+
+		await this.authRepository.revokeEmailVerificationCodesForUser(userId);
+		try {
+			await this.createAndSendEmailVerificationOtp(user);
+			return {emailVerificationCodeSent : true };
+		} catch (err) {
+			console.error("Failed to send email verification OTP:", err);
+			return {emailVerificationCodeSent : false };
+		}
+	}
+
+	private async createAndSendEmailVerificationOtp(
+		user: { id: string; email: string; firstName: string; lastName: string },
+	): Promise<void> {
+		const code = crypto.randomInt(100_000, 999_999).toString();
+		const expiresAt = new Date();
+		expiresAt.setMinutes(
+			expiresAt.getMinutes() +
+				config.auth.emailVerificationOtpExpiryInMinutes,
+		);
+		await this.authRepository.createTokenForUser({
+			userId: user.id,
+			token: `EVC_${code}`,
+			expiresAt,
+		});
+		const userName =
+			`${user.firstName} ${user.lastName}`.trim() || "there";
+		await emailService.sendEmailVerificationOtp(user.email, code, userName);
+	}
+
+	async verifyEmail(email: string, code: string): Promise<void> {
+		const user = await this.authRepository.getUserByEmail(email);
+		if (!user) {
+			throw new UnauthorizedError("Invalid or expired verification code");
+		}
+		if (user.emailVerified) {
+			return; // already verified
+		}
+		const trimmedCode = code.trim();
+		if (trimmedCode.length !== 6 || !/^\d{6}$/.test(trimmedCode)) {
+			throw new BadRequestError("Verification code must be 6 digits");
+		}
+		const stored = await this.authRepository.getEmailVerificationCodeToken(
+			`EVC_${trimmedCode}`,
+		);
+		if (!stored || stored.userId !== user.id) {
+			throw new UnauthorizedError("Invalid or expired verification code");
+		}
+		await this.authRepository.markPasswordResetTokenAsUsed(
+			`EVC_${trimmedCode}`,
+		);
+		await this.authRepository.updateUser(user.id, { emailVerified: true });
+	}
+
+	async resendVerificationOtp(email: string): Promise<SignupResponse> {
+		const user = await this.authRepository.getUserByEmail(email);
+		if (!user) {
+			// Don't reveal if email exists
+			return {emailVerificationCodeSent : false };
+		}
+		if (user.emailVerified) {
+			return {emailVerificationCodeSent : false };
+		}
+		const since = new Date();
+		since.setMinutes(
+			since.getMinutes() -
+				config.auth.emailVerificationOtpRateLimitWindowInMinutes,
+		);
+		const recentCount =
+			await this.authRepository.countRecentEmailVerificationCodes(
+				user.id,
+				since,
+			);
+		if (recentCount >= config.auth.emailVerificationOtpMaxPerWindow) {
+			throw new BadRequestError(
+				`Too many verification code requests. Try again in ${config.auth.emailVerificationOtpRateLimitWindowInMinutes} minutes.`,
+			);
+		}
+		await this.authRepository.revokeEmailVerificationCodesForUser(user.id);
+		try {
+			await this.createAndSendEmailVerificationOtp(user);
+			return {emailVerificationCodeSent : true };
+		} catch (err) {
+			console.error("Failed to resend verification OTP:", err);
+			return {emailVerificationCodeSent : false };
+		}
 	}
 
 
-	async requestSignInCode(email: string): Promise<void> {
+	async requestSignInCode(email: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
-			// Same as forgot password: don't reveal if email exists
-			return;
+			throw new UnauthorizedError("Invalid credentials")
+		}
+
+		if (!user.emailVerified) {
+			return {
+				user: { ...user, emailVerificationCodeSent: true},
+				requiresTwoFactor: false
+			}
 		}
 
 		if (user.provider !== PROVIDERS.MANUAL) {
@@ -148,6 +254,11 @@ export class AuthService {
 		const userName =
 			`${user.firstName} ${user.lastName}`.trim() || "there";
 		await emailService.sendSignInCodeEmail(email, code, userName);
+
+		return {
+			user: { ...user, emailVerificationCodeSent: false },
+			requiresTwoFactor: false
+		}
 	}
 
 	
@@ -156,6 +267,13 @@ export class AuthService {
 
 		if (!user) {
 			throw new UnauthorizedError("Invalid credentials");
+		}
+
+		if (!user.emailVerified) {
+			return {
+				user: {...user, emailVerificationCodeSent: true },
+				requiresTwoFactor: false
+			}
 		}
 
 		const trimmedCode = code.trim();
@@ -187,6 +305,7 @@ export class AuthService {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+				emailVerificationCodeSent: false
 			},
 			tokens,
 			requiresTwoFactor: false,
@@ -198,6 +317,13 @@ export class AuthService {
 
 		if (!user) {
 			throw new UnauthorizedError("Invalid credentials");
+		}
+
+		if (!user.emailVerified) {
+			return {
+				user: { ...user, emailVerificationCodeSent: true },
+				requiresTwoFactor: false,
+			}
 		}
 
 		// For OAuth users, password might be null
@@ -223,6 +349,7 @@ export class AuthService {
 					...userWithoutPassword,
 					profileData: profileData as CustomerData | PhysicianData,
 					permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+					emailVerificationCodeSent: false
 				},
 				tokens: {
 					accessToken: "",
@@ -260,6 +387,7 @@ export class AuthService {
 				...userWithoutPassword2,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+				emailVerificationCodeSent:false
 			},
 			tokens,
 			requiresTwoFactor: false,
@@ -298,6 +426,7 @@ export class AuthService {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
+				emailVerificationCodeSent: false
 			},
 			tokens,
 			requiresTwoFactor: false,

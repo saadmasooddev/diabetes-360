@@ -455,3 +455,11 @@ export const useUpdateSlot = () => {
 		},
 	});
 };
+
+export const useGetMeetingLink = (bookingId: string | undefined) => {
+	return useQuery({
+		queryKey: ['booking', 'meeting-link', bookingId],
+		queryFn: () => bookingService.getMeetingLink(bookingId!),
+		enabled: !!bookingId
+	})
+}

@@ -534,6 +534,16 @@ class BookingService {
 		}
 		return response.data.slot;
 	}
+
+	async getMeetingLink(bookingId: string): Promise<string> {
+		const response = await httpClient.get<ApiResponse<{ meetingLink: string}>>(
+			API_ENDPOINTS.BOOKING.MEETING_LINK(bookingId)
+		)
+		if(!response.success || !response.data) {
+			throw new Error(response.message || "Failed to get meeting link")
+		}
+		return response.data.meetingLink
+	}
 }
 
 export const bookingService = new BookingService();

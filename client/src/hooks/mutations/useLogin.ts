@@ -7,16 +7,20 @@ import { useLocation } from "wouter";
 import { userService } from "@/services/userService";
 import { utils } from "@/lib/utils";
 import type { UserRole } from "@shared/schema";
+import { ROUTES } from "@/config/routes";
 
 export const useRequestSignInCode = () => {
 	const { toast } = useToast();
+	const [, navigate] = useLocation()
 
-	return useMutation<string, Error, string>({
+	return useMutation({
 		mutationFn: (email: string) => authService.requestSignInCode(email),
-		onSuccess: (message) => {
+		onSuccess: (data) => {
+			console.log("The data is", data)
+			navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
 			toast({
 				title: "Code sent",
-				description: message,
+				description: "Code sent to your email. It will expire in 5 minutes.",
 				variant: "default",
 			});
 		},
@@ -36,9 +40,13 @@ export const useLogin = () => {
 	const [, navigate] = useLocation();
 
 	return useMutation<AuthData, Error, LoginRequest>({
-		mutationFn: authService.login,
+		mutationFn: (data) => authService.login(data),
 		onSuccess: (data) => {
-			// If 2FA is required, don't set auth or redirect yet
+			if(data?.user.emailVerificationCodeSent){
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
+				return
+			}
+
 			if (data.requiresTwoFactor) {
 				return; // Let the component handle 2FA verification
 			}

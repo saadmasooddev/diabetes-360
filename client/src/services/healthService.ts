@@ -14,6 +14,8 @@ import type {
 	QuickLogMedicinesTypeEnumValues,
 	QuickLogStressLevelTypeEnumValues,
 	QuickLogExerciseTypeEnumValues,
+	HealthMetricData,
+	HEALTH_METRIC_SOURCE_ENUM,
 } from "@shared/schema";
 import type { ApiResponse } from "@/types/auth.types";
 import type { ExtendedLimits } from "./settingsService";
@@ -32,7 +34,7 @@ export type Target = {
 	targetValue: string;
 };
 
-export type ModifiedInsertExerciseLogs = Omit<InsertExerciseLog, "userId">;
+export type ModifiedInsertExerciseLogs = Omit<InsertExerciseLog, "userId"> & { source?: HEALTH_METRIC_SOURCE_ENUM};
 
 export type AggregatedStatistics = {
 	glucose: Statistics;
@@ -211,7 +213,7 @@ class HealthService {
 		healthMetrics,
 	}: {
 		exercises: Array<ModifiedInsertExerciseLogs>;
-		healthMetrics?: InsertHealthMetric;
+		healthMetrics?: HealthMetricData;
 	}): Promise<{ logs: ExerciseLog[]; latestMetrics: LatestMetrics }> {
 		const response = await httpClient.post<
 			ApiResponse<{ logs: ExerciseLog[]; latestMetrics: LatestMetrics }>

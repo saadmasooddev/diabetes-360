@@ -8,6 +8,7 @@ export const ROUTES = {
 	// Auth Routes
 	LOGIN: `${AUTH_PREFIX}/login`,
 	SIGNUP: `${AUTH_PREFIX}/signup`,
+	VERIFY_EMAIL: `${AUTH_PREFIX}/verify-email`,
 	FORGOT_PASSWORD: `${AUTH_PREFIX}/forgot-password`,
 	RESET_PASSWORD: `${AUTH_PREFIX}/reset-password`,
 
@@ -45,6 +46,7 @@ export const ROUTES = {
 
 	SETTINGS: `${COMMON_PREFIX}/settings`,
 	BLOGS: `${COMMON_PREFIX}/blogs`,
+	MEETING_LINK: `${COMMON_PREFIX}/meeting/link/:bookingId`
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

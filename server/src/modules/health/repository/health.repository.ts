@@ -129,20 +129,24 @@ export class HealthRepository {
 		return result[0]?.count || 0;
 	}
 
-	async createMetric(data: InsertHealthMetric, tx?: Tx): Promise<HealthMetric> {
+	async createMetricsBatch(data: InsertHealthMetric | InsertHealthMetric[], tx?: Tx): Promise<HealthMetric[]> {
 		const dbConn = db || tx;
-		const [metric] = await dbConn
-			.insert(healthMetrics)
-			.values({
+		const values = Array.isArray(data) ? data : [data]
+		const valuesToInsert = values.map(data => ({
 				userId: data.userId,
 				bloodSugar: data.bloodSugar?.toString() || null,
 				bloodSugarReadingType: data.bloodSugarReadingType,
 				waterIntake: data.waterIntake?.toString() || null,
 				heartRate: data.heartRate || null,
 				recordedAt: new Date(data.recordedAt),
-			})
+				readingSource: data.readingSource || null
+			}))
+		if(valuesToInsert.length === 0) return []
+		const metrics = await dbConn
+			.insert(healthMetrics)
+			.values(valuesToInsert)
 			.returning();
-		return metric;
+		return metrics;
 	}
 
 	async createHba1cMetric(data: InsertHba1cMetric, tx?: Tx) {

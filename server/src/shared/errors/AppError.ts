@@ -49,6 +49,12 @@ export class ConflictError extends AppError {
 	}
 }
 
+export class PreconditionFailedError extends AppError {
+	constructor(message: string = "Precondition failed") {
+		super(message, HTTP_STATUS.PRECONDITION_FAILED)
+	}
+}
+
 export class BadRequestError extends AppError {
 	constructor(message: string = "Bad request") {
 		super(message, HTTP_STATUS.BAD_REQUEST);

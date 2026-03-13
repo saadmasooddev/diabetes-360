@@ -166,8 +166,14 @@ export class HealthService {
 			return
 		}
 
-		await this.healthRepository.createMetric(data);
+		await this.healthRepository.createMetricsBatch(data);
 		return
+	}
+
+	async createMetricsBatch(
+		data: InsertHealthMetric[],
+	){
+		return await this.healthRepository.createMetricsBatch(data)
 	}
 
 	async getLatestMetric(

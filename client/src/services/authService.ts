@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from "@/config/endpoints";
 import { httpClient } from "@/utils/httpClient";
 import type {
 	SignupRequest,
+	SignupRes,
 	LoginRequest,
 	AuthResponse,
 	RefreshTokenRequest,
@@ -11,18 +12,45 @@ import type {
 	ForgotPasswordResponse,
 	AuthData,
 	RefreshTokenData,
+	ApiResponse,
 } from "@/types/auth.types";
 
 class AuthService {
-	async signup(data: SignupRequest): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+	async signup(data: SignupRequest): Promise<{ otpSent: boolean }> {
+		const response = await httpClient.post<SignupRes>(
 			API_ENDPOINTS.AUTH.SIGNUP,
 			data,
 		);
-		if (!response.success || !response.data) {
+		if (!response.success) {
 			throw new Error(response.message || "Signup failed");
 		}
-		return response.data;
+		return {
+			otpSent: response.data?.emailVerificationCodeSent ?? false,
+		};
+	}
+
+	async verifyEmail(email: string, code: string): Promise<string> {
+		const response = await httpClient.post<ForgotPasswordResponse>(
+			API_ENDPOINTS.AUTH.VERIFY_EMAIL,
+			{ email, code },
+		);
+		if (!response.success) {
+			throw new Error(response.message || "Verification failed");
+		}
+		return response.message ?? "Email verified successfully.";
+	}
+
+	async resendVerificationOtp(email: string){
+		const response = await httpClient.post<SignupRes>(
+			API_ENDPOINTS.AUTH.RESEND_VERIFICATION_OTP,
+			{ email },
+		);
+		if (!response.success) {
+			throw new Error(response.message || "Failed to resend code");
+		}
+		return {
+			otpSent: response.data?.emailVerificationCodeSent ?? false,
+		};
 	}
 
 	async login(data: LoginRequest): Promise<AuthData> {
@@ -36,16 +64,15 @@ class AuthService {
 		return response.data;
 	}
 
-	/** Request a sign-in code to be sent to the given email. Uses existing login endpoint. */
-	async requestSignInCode(email: string): Promise<string> {
-		const response = await httpClient.post<{ message: string }>(
+	async requestSignInCode(email: string): Promise<AuthData> {
+		const response = await httpClient.post<ApiResponse<AuthData>>(
 			API_ENDPOINTS.AUTH.LOGIN,
 			{ email, requestSignInCode: true },
 		);
-		if (!response.success) {
+		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to send sign-in code");
 		}
-		return response.message || "Sign-in code sent to your email.";
+		return response.data
 	}
 
 	async loginWithEmailCode(email: string, code: string): Promise<AuthData> {

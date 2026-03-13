@@ -1340,4 +1340,12 @@ router.post(
 	(req, res) => bookingController.bulkDeleteSlots(req, res),
 );
 
+router.get(
+	"/:bookingId/meeting-link",
+	authenticateToken,
+	requireAnyPermission([PERMISSIONS.VIEW_MEETING_LINK]),
+	(req, res) => bookingController.getMeetingLink(req,res)
+
+)
+
 export { router as bookingRoutes };

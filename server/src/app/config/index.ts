@@ -35,6 +35,9 @@ export const config = {
 		signInCodeExpiryInMinutes: parseInt(process.env.SIGN_IN_CODE_EXPIRY_MINUTES || "5", 10),
 		signInCodeRateLimitWindowInMinutes: parseInt(process.env.SIGN_IN_CODE_RATE_LIMIT_WINDOW_MINUTES || "15", 10),
 		signInCodeMaxPerWindow: parseInt(process.env.SIGN_IN_CODE_MAX_PER_WINDOW || "5", 10),
+		emailVerificationOtpExpiryInMinutes: parseInt(process.env.EMAIL_VERIFICATION_OTP_EXPIRY_MINUTES || "5", 10),
+		emailVerificationOtpRateLimitWindowInMinutes: parseInt(process.env.EMAIL_VERIFICATION_OTP_RATE_LIMIT_WINDOW_MINUTES || "15", 10),
+		emailVerificationOtpMaxPerWindow: parseInt(process.env.EMAIL_VERIFICATION_OTP_MAX_PER_WINDOW || "5", 10),
 	},
 	pagination: {
 		limit: parseInt(process.env.PAGINATION_LIMIT || "100", 10),

@@ -11,6 +11,10 @@ import {
 	metricTypes,
 	type MetricType,
 	type InsertExerciseLog,
+	InsertHealthMetric,
+	HealthMetricData,
+	HealthMetricReading,
+	HEALTH_METRIC_SOURCE_ENUM,
 } from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import {
@@ -158,15 +162,19 @@ export class HealthController {
 			let date: string = "";
 
 			if (healthMetrics && typeof healthMetrics === "object") {
-				const validatedHealthMetricData = this.validateHealthMetric({
+				const { customMetrics, otherMetrics }= this.validateHealthMetric({
 					...healthMetrics,
 					userId,
 				});
-				await this.healthService.createMetric(
-					validatedHealthMetricData,
-					userId,
-				);
-				date = validatedHealthMetricData.recordedAt;
+				for(const customMetric of customMetrics) {
+					await this.healthService.createMetric(
+						customMetric,
+						userId,
+					);
+				}
+				await this.healthService.createMetricsBatch(otherMetrics)
+				if(customMetrics.length >0 || otherMetrics.length >0)
+					date = (customMetrics[0] || otherMetrics[0]).recordedAt;
 			}
 
 			const logsToInsert = exercises.map((ex) => ({
@@ -424,20 +432,51 @@ export class HealthController {
 	}
 
 
-	private validateHealthMetric(data: object) {
-		const validationResult = insertHealthMetricSchema.safeParse(data);
+	private validateHealthMetric(data: HealthMetricData) {
+		const customMetrics: InsertHealthMetric[] = []
+		const otherMetrics: InsertHealthMetric[] = []
+		for(const key in data) {
+			const values = data[key as keyof HealthMetricData] as HealthMetricReading[]
+			const customerUniqueMap = new Map<string, InsertHealthMetric>()
+			const otherUniqueMap = new Map<string, InsertHealthMetric>()
+			if(!Array.isArray(values)) continue
+			values.forEach(item => {
+				const uniqueKey = `${key}-${item.recordedAt}-${item.value}-${item.source}`
 
-		if (!validationResult.success) {
-			throw new ValidationError(undefined, validationResult.error);
+				const uniqueMap = item.source === HEALTH_METRIC_SOURCE_ENUM.CUSTOM ? customerUniqueMap : otherUniqueMap
+
+				if(uniqueMap .has(uniqueKey)) return
+
+				const object: InsertHealthMetric = {
+					userId: data.userId,
+					recordedAt: item.recordedAt,
+					[key]: item.value,
+					bloodSugarReadingType: data.bloodSugarReadingType,
+					readingSource: item.source
+				}
+
+				uniqueMap.set(uniqueKey, object)
+			})
+
+			customMetrics.push(...Array.from(customerUniqueMap.values()))
+			otherMetrics.push(...Array.from(otherMetrics.values()))
+
+		}
+		const validationResultCustom = insertHealthMetricSchema.array().safeParse(customMetrics);
+
+		if (!validationResultCustom.success) {
+			throw new ValidationError(undefined, validationResultCustom.error);
 		}
 
-		if (
-			validationResult.data.recordedAt &&
-			isNaN(new Date(validationResult.data.recordedAt).getTime())
-		)
-			throw new BadRequestError("Invalid date format");
+		const validationResultOther = insertHealthMetricSchema.array().safeParse(otherMetrics);
 
-		return validationResult.data;
+		if (!validationResultOther.success) {
+			throw new ValidationError(undefined, validationResultOther.error);
+		}
+		return {
+			customMetrics: validationResultCustom.data,
+			otherMetrics: validationResultOther.data,
+		};
 	}
 
 	async getCaloriesByActivityType(
