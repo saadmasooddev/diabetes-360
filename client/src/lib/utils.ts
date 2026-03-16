@@ -281,7 +281,7 @@ class Utils {
 		array.push({
 			value,
 			recordedAt: recordedAt || new Date().toISOString(),
-			source: source || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+			readingSource: source || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
 		})
 	}
 }

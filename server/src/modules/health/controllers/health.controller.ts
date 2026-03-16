@@ -172,7 +172,10 @@ export class HealthController {
 						userId,
 					);
 				}
-				await this.healthService.createMetricsBatch(otherMetrics)
+					console.log("the other metric is", otherMetrics)
+				for(const otherMetric of otherMetrics){
+					await this.healthService.createMetricsBatch([otherMetric])
+				}
 				if(customMetrics.length >0 || otherMetrics.length >0)
 					date = (customMetrics[0] || otherMetrics[0]).recordedAt;
 			}
@@ -441,9 +444,9 @@ export class HealthController {
 			const otherUniqueMap = new Map<string, InsertHealthMetric>()
 			if(!Array.isArray(values)) continue
 			values.forEach(item => {
-				const uniqueKey = `${key}-${item.recordedAt}-${item.value}-${item.source}`
+				const uniqueKey = `${key}-${item.recordedAt}-${item.value}-${item.readingSource}`
 
-				const uniqueMap = item.source === HEALTH_METRIC_SOURCE_ENUM.CUSTOM ? customerUniqueMap : otherUniqueMap
+				const uniqueMap = item.readingSource === HEALTH_METRIC_SOURCE_ENUM.CUSTOM ? customerUniqueMap : otherUniqueMap
 
 				if(uniqueMap.has(uniqueKey)) return
 
@@ -452,14 +455,14 @@ export class HealthController {
 					recordedAt: item.recordedAt,
 					[key]: item.value,
 					bloodSugarReadingType: data.bloodSugarReadingType,
-					readingSource: item.source
+					readingSource: item.readingSource
 				}
 
 				uniqueMap.set(uniqueKey, object)
 			})
 
 			customMetrics.push(...Array.from(customerUniqueMap.values()))
-			otherMetrics.push(...Array.from(otherMetrics.values()))
+			otherMetrics.push(...Array.from(otherUniqueMap.values()))
 
 		}
 		const validationResultCustom = insertHealthMetricSchema.array().safeParse(customMetrics);

@@ -460,7 +460,7 @@ export type InsertDailyQuickLog = z.infer<typeof insertDailyQuickLogSchema>;
 export type DailyQuickLog = typeof dailyQuickLogs.$inferSelect;
 
 
-export type HealthMetricReading = { value: number, recordedAt: string, source: HEALTH_METRIC_SOURCE_ENUM }
+export type HealthMetricReading = { value: number, recordedAt: string, readingSource: HEALTH_METRIC_SOURCE_ENUM }
 
 export type HealthMetricData = {
 	userId: string,
