@@ -49,8 +49,8 @@ export interface PatientListItem {
 	name: string;
 	age: number;
 	condition: string;
-	indication: "Needs Attention" | "Stable" | "High Risk";
-	indicationColor: string;
+	status: "Needs Attention" | "Stable" | "High Risk";
+	statusColor: string;
 	latestBloodGlucose?: number | null;
 }
 
@@ -81,7 +81,6 @@ export class PatientRepository {
 	private healthRepository: HealthRepository;
 	private bookingRepository: BookingRepository;
 	private foodRepository: FoodRepository;
-	private medicalRepository: MedicalRepository;
 	private static readonly MIN_STEPS_FOR_ACTIVITY = 500;
 	private static readonly OVER_EATING_RATIO = 1.2;
 	private static readonly UNDER_EATING_RATIO = 0.7;
@@ -264,8 +263,8 @@ export class PatientRepository {
 				]);
 				return {
 					...p,
-					indication: alert.status,
-					indicationColor: alert.statusColor,
+					status: alert.status,
+					statusColor: alert.statusColor,
 					latestBloodGlucose,
 				};
 			}),

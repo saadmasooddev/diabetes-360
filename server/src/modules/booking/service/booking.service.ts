@@ -1069,7 +1069,8 @@ export class BookingService {
 			throw new ForbiddenError("You are not allowed to access this meeting link")
 		}
 
-		await this.bookingRepository.updateBookedSlotStatus(bookingId,BOOKING_STATUS_ENUM.COMPLETED)
+		if(booking.status !== BOOKING_STATUS_ENUM.COMPLETED)
+			await this.bookingRepository.updateBookedSlotStatus(bookingId,BOOKING_STATUS_ENUM.COMPLETED)
 
 
 		return booking.meetingLink

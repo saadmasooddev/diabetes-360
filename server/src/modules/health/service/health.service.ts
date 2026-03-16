@@ -24,12 +24,10 @@ import { BadRequestError } from "../../../shared/errors";
 import type { ExtendedLimits } from "../../settings/models/settings.schema";
 import { ConsultationService } from "../../booking/service/consultation.service";
 import { CustomerService } from "../../customer/service/customer.service";
-import { cacheManager } from "../../../shared/utils/cacheManager";
 import { formatUserInfo } from "server/src/shared/utils/utils";
 import { BLOOD_SUGAR_READING_TYPES_ENUM, type CustomerData } from "../../auth/models/user.schema";
 import { aiService } from "../../../shared/services/ai.service";
 import { UserService } from "../../user/service/user.service";
-import { startOfDay } from "date-fns";
 
 export class HealthService {
 	private readonly healthRepository: HealthRepository;
@@ -278,6 +276,8 @@ export class HealthService {
 		data: InsertExerciseLog[],
 	): Promise<ExerciseLog[]> {
 		// Validate steps if provided
+		const logs: ExerciseLog[] = []
+		const logMap = new Map<string, ExerciseLog[]>()
 		for (const log of data) {
 			if (log.steps !== null && log.steps !== undefined) {
 				if (log.steps < 0) {
@@ -296,9 +296,19 @@ export class HealthService {
 						`Adding ${log.steps} steps would exceed the daily limit of 20,000 steps. Current total: ${Math.round(todaysStepsTotal)} steps.`,
 					);
 				}
+		    const logData = await this.healthRepository.createExerciseLogsBatch([log]);
+				if(logData.length > 0){
+					const stored = logMap.get(`${log.recordedAt}-${log.readingSource}`) || []
+					stored.push(...logData)
+					logMap.set(log.recordedAt, stored)
+				}
 			}
 		}
-		return await this.healthRepository.createExerciseLogsBatch(data);
+		for(const [_, mappedLogs] of Array.from(logMap.entries())){
+			if(mappedLogs.length === 0) continue
+			logs.push(mappedLogs[mappedLogs.length - 1])
+		}
+		return logs
 	}
 
 	async getStrengthProgress(

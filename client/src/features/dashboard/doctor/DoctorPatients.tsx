@@ -214,13 +214,13 @@ export function DoctorPatients() {
 													<span
 														className="inline-flex items-center justify-center px-4 py-1.5 rounded-full"
 														style={{
-															...getIndicationStyle(patient.indicationColor),
+															...getIndicationStyle(patient.statusColor),
 															fontSize: "12px",
 															fontWeight: 500,
 															minWidth: "120px",
 														}}
 													>
-														{patient.indication}
+														{patient.status}
 													</span>
 												</td>
 												<td className="py-4 text-center">

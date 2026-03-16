@@ -445,7 +445,7 @@ export class HealthController {
 
 				const uniqueMap = item.source === HEALTH_METRIC_SOURCE_ENUM.CUSTOM ? customerUniqueMap : otherUniqueMap
 
-				if(uniqueMap .has(uniqueKey)) return
+				if(uniqueMap.has(uniqueKey)) return
 
 				const object: InsertHealthMetric = {
 					userId: data.userId,

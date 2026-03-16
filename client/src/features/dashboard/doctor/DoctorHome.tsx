@@ -607,14 +607,14 @@ export function DoctorHome() {
 												<span
 													className="px-3 py-1.5 rounded-full text-xs font-medium"
 													style={{
-														...getIndicationStyle(patient.indicationColor),
+														...getIndicationStyle(patient.statusColor),
 														fontSize: "11px",
 														fontWeight: 500,
 													}}
 												>
-													{patient.indication === "Needs Attention"
+													{patient.status === "Needs Attention"
 														? "Needs\nAttention"
-														: patient.indication}
+														: patient.status}
 												</span>
 											</div>
 										))

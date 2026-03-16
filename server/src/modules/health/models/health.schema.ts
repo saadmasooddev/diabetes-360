@@ -43,7 +43,9 @@ export const healthMetrics = pgTable("health_metrics", {
 		.notNull()
 		.defaultNow(),
 	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
-});
+}, table => [
+	uniqueIndex("idx_health_metrics_recorded_at_reading_source").on(table.recordedAt, table.readingSource)
+]);
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 	.omit({
@@ -59,10 +61,10 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		readingSource: healthMetricReadingSourceEnum.optional()
 	})
 	.superRefine((data, ctx) => {
-		if (data.bloodSugar && data.bloodSugarReadingType !== BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (data.bloodSugar < 70 || data.bloodSugar > 2700)) {
+		if (data.bloodSugar && data.bloodSugarReadingType !== BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (data.bloodSugar < 1 || data.bloodSugar > 2700)) {
 			ctx.addIssue({
 				code: "custom",
-				message: "Blood glucose value must be between 70-600 mg/dL",
+				message: "Blood glucose value must be between 70-2700 mg/dL",
 				path: ["bloodSugar"],
 			});
 		}
@@ -151,7 +153,9 @@ export const exerciseLogs = pgTable("exercise_logs", {
 		.notNull()
 		.defaultNow(),
 	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
-});
+}, table => [
+	uniqueIndex("idx_exercise_logs_recorded_at_reading_source").on(table.recordedAt, table.readingSource)
+]);
 
 export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
 	.omit({

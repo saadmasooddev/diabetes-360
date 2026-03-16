@@ -10,6 +10,7 @@ import {
 	hba1cMetrics,
 	dailyQuickLogs,
 	QUICK_LOG_EXERCISE_TYPE_ENUM,
+	HEALTH_METRIC_SOURCE_ENUM,
 } from "../models/health.schema";
 import {
 	eq,
@@ -139,13 +140,24 @@ export class HealthRepository {
 				waterIntake: data.waterIntake?.toString() || null,
 				heartRate: data.heartRate || null,
 				recordedAt: new Date(data.recordedAt),
-				readingSource: data.readingSource || null
+				readingSource: data.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
 			}))
 		if(valuesToInsert.length === 0) return []
 		const metrics = await dbConn
 			.insert(healthMetrics)
 			.values(valuesToInsert)
-			.returning();
+			.returning()
+			.onConflictDoUpdate({
+				target: [healthMetrics.recordedAt, healthMetrics.readingSource],
+				set : { 
+					heartRate: sql.raw(`excluded.${healthMetrics.heartRate.name}`),
+					bloodSugar: sql.raw(`excluded.${healthMetrics.bloodSugar.name}`),
+					waterIntake: sql.raw(`excluded.${healthMetrics.waterIntake.name}`),
+					bloodSugarReadingType: sql.raw(`excluded.${healthMetrics.bloodSugarReadingType.name}`),
+					userId: sql.raw(`excluded.${healthMetrics.userId.name}`),
+				}
+			})
+
 		return metrics;
 	}
 
@@ -875,9 +887,27 @@ export class HealthRepository {
 					duration: Number(d.duration) || null,
 					repitition: d.repitition || null,
 					recordedAt: new Date(d.recordedAt),
+					readingSource: d.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
 				})),
 			)
-			.returning();
+			.onConflictDoUpdate({
+				target: [exerciseLogs.recordedAt, exerciseLogs.readingSource],
+				set: {
+					exerciseType: sql.raw(`excluded.${exerciseLogs.exerciseType.name}`),
+					exerciseName: sql.raw(`excluded.${exerciseLogs.exerciseName.name}`),
+					calories: sql.raw(`excluded.${exerciseLogs.calories.name}`),
+					activityType: sql.raw(`excluded.${exerciseLogs.activityType.name}`),
+					pace: sql.raw(`excluded.${exerciseLogs.pace.name}`),
+					sets: sql.raw(`excluded.${exerciseLogs.sets.name}`),
+					weight: sql.raw(`excluded.${exerciseLogs.weight.name}`),
+					steps: sql.raw(`excluded.${exerciseLogs.steps.name}`),
+					muscle: sql.raw(`excluded.${exerciseLogs.muscle.name}`),
+					duration: sql.raw(`excluded.${exerciseLogs.duration.name}`),
+					repitition: sql.raw(`excluded.${exerciseLogs.repitition.name}`),
+					userId: sql.raw(`excluded.${exerciseLogs.userId.name}`),
+				}
+			})
+			.returning()
 		return logs;
 	}
 

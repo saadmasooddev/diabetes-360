@@ -5,6 +5,7 @@ import type { DateRange } from "@/features/dashboard/components/HealthTrendChart
 import type { DIABETES_TYPE, MertricRecord } from "@shared/schema";
 import { UserConsultation } from "server/src/modules/booking/repository/booking.repository";
 import { PATIENT_INDICATION } from "server/src/modules/physician/utils/patientColors";
+import { PatientListItem } from "server/src/modules/physician/repository/patient.repository";
 
 /** TODO: Define and align with server when documents endpoint is created. */
 export interface PatientDocumentsResponse {
@@ -17,15 +18,6 @@ export interface PatientDocumentsResponse {
 	}>;
 }
 
-export interface PatientListItem {
-	id: string;
-	name: string;
-	age: number;
-	condition: string;
-	indication: "Needs Attention" | "Stable" | "High Risk";
-	indicationColor: string;
-	latestBloodGlucose?: number | null;
-}
 
 export interface PatientStats {
 	diseaseDistribution: Array<{
