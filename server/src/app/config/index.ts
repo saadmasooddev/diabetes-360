@@ -44,5 +44,9 @@ export const config = {
 	},
 	defaults: {
 		timezone: "Asia/Karachi"
+	},
+	azure: {
+		containerName: process.env.AZURE_STORAGE_CONTAINER_NAME || "",
+		connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || ""
 	}
 } as const;

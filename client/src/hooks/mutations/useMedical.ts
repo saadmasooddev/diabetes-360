@@ -119,6 +119,10 @@ export const useUploadLabReport = () => {
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
       });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          (query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
+      });
       toast({
         title: "Success",
         description: "Lab report uploaded successfully",
@@ -134,32 +138,6 @@ export const useUploadLabReport = () => {
   });
 };
 
-export const useUpdateLabReport = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ reportId, file }: { reportId: string; file: File }) =>
-      medicalService.updateLabReport(reportId, file),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
-      });
-      toast({
-        title: "Success",
-        description: "Lab report updated successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update lab report",
-        variant: "destructive",
-      });
-    },
-  });
-};
-
 export const useDeleteLabReport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -169,6 +147,10 @@ export const useDeleteLabReport = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
+      });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          (query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
       });
       toast({
         title: "Success",
@@ -202,6 +184,7 @@ export const useViewLabReport = () => {
     mutationFn: async (arg: {
       reportId: string;
       fileName: string;
+      forUserId?: string;
     }): Promise<{ url: string; isPdf: boolean }> => {
       const url = await medicalService.getLabReportViewUrl(arg.reportId);
       const isPdf = isPdfFileName(arg.fileName);
@@ -225,20 +208,18 @@ export const useDownloadLabReport = () => {
 
   return useMutation({
     mutationFn: async (reportId: string) => {
-      const { blob, fileName } =
+      const { downloadUrl, fileName } =
         await medicalService.downloadLabReport(reportId);
 
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
+      link.href = downloadUrl;
       link.download = fileName;
+      link.target = "_blank";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
-      return { blob, fileName };
+      return { downloadUrl, fileName };
     },
     onError: (error: any) => {
       toast({

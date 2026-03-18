@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { BookingService } from "../../booking/service/booking.service";
+import { SlotSize, SlotType } from "../../booking/models/booking.schema";
 export enum COMMON_DATA_TYPES {
 	SLOT_SIZES = "slotSizes",
 	SLOT_TYPES = "slotTypes",
@@ -15,7 +16,10 @@ export class CommonService {
 	}
 
 	async getCommonData(requestdData: COMMON_DATA_TYPES[]) {
-		const data = {
+		const data: {
+			slotsSizes: SlotSize[],
+			slotTypes: SlotType[]
+		}= {
 			slotsSizes: [],
 			slotTypes: [],
 		};

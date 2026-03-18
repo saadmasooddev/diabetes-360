@@ -5,7 +5,6 @@ import {
   requireAnyPermission,
   requirePermission,
 } from "../../../shared/middleware/auth";
-import { medicalRecordUpload } from "server/src/shared/config/multer.config";
 import { PERMISSIONS } from "@shared/schema";
 
 const router = Router();
@@ -152,34 +151,44 @@ router.get(
 
 /**
  * @swagger
- * /api/medical/lab-reports:
+ * /api/medical/lab-reports/request-upload:
  *   post:
- *     summary: Upload a lab report PDF
+ *     summary: Request upload URL for a lab report (Azure SAS)
  *     tags: [Medical Records]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
- *               - file
+ *               - fileName
+ *               - contentType
+ *               - fileSize
  *             properties:
- *               file:
+ *               fileName:
  *                 type: string
- *                 format: binary
+ *               contentType:
+ *                 type: string
+ *               fileSize:
+ *                 type: integer
+ *               reportName:
+ *                 type: string
+ *               reportType:
+ *                 type: string
+ *               dateOfReport:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Lab report uploaded successfully
+ *         description: Upload URL and reportId returned
  */
 router.post(
-  "/lab-reports",
+  "/lab-reports/request-upload",
   authenticateToken,
   createOwnMedicalRecords,
-  medicalRecordUpload,
-  (req, res, next) => medicalController.uploadLabReport(req, res, next),
+  (req, res) => medicalController.getLabReportAzureUploadUrl(req, res),
 );
 
 /**
@@ -240,11 +249,17 @@ router.get(
   (req, res, next) => medicalController.getLabReportsForUser(req, res, next),
 );
 
+const readLabReportForDownload = requireAnyPermission([
+  PERMISSIONS.READ_OWN_MEDICAL_RECORDS,
+  PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
+  PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
+]);
+
 /**
  * @swagger
- * /api/medical/lab-reports/{id}:
- *   put:
- *     summary: Update a lab report
+ * /api/medical/lab-reports/{id}/confirm:
+ *   post:
+ *     summary: Confirm lab report after upload to Azure
  *     tags: [Medical Records]
  *     security:
  *       - bearerAuth: []
@@ -254,28 +269,40 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - file
- *             properties:
- *               file:
- *                 type: string
- *                 format: binary
  *     responses:
  *       200:
- *         description: Lab report updated successfully
+ *         description: Lab report confirmed successfully
  */
-router.put(
-  "/lab-reports/:id",
+router.post(
+  "/lab-reports/:id/confirm",
   authenticateToken,
-  updateOwnMedicalRecords,
-  medicalRecordUpload,
-  (req, res, next) => medicalController.updateLabReport(req, res, next),
+  createOwnMedicalRecords,
+  (req, res) => medicalController.confirmLabReport(req, res),
+);
+
+/**
+ * @swagger
+ * /api/medical/lab-reports/{id}/download-url:
+ *   get:
+ *     summary: Get temporary download URL for a lab report
+ *     tags: [Medical Records]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Download URL and filename
+ */
+router.get(
+  "/lab-reports/:id/download-url",
+  authenticateToken,
+  readLabReportForDownload,
+  (req, res) => medicalController.getDownloadLabReportUrl(req, res),
 );
 
 /**
@@ -300,43 +327,7 @@ router.delete(
   "/lab-reports/:id",
   authenticateToken,
   deleteOwnMedicalRecords,
-  (req, res, next) => medicalController.deleteLabReport(req, res, next),
-);
-
-/**
- * @swagger
- * /api/medical/lab-reports/{id}/download:
- *   get:
- *     summary: Download a lab report PDF
- *     tags: [Medical Records]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: PDF file
- *         content:
- *           application/pdf:
- *             schema:
- *               type: string
- *               format: binary
- */
-const readLabReportForDownload = requireAnyPermission([
-  PERMISSIONS.READ_OWN_MEDICAL_RECORDS,
-  PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
-  PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
-]);
-
-router.get(
-  "/lab-reports/:id/download",
-  authenticateToken,
-  readLabReportForDownload,
-  (req, res, next) => medicalController.downloadLabReport(req, res, next),
+  (req, res) => medicalController.deletelabReportAzureFile(req, res),
 );
 
 export { router as medicalRoutes };

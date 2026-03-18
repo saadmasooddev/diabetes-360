@@ -1,5 +1,5 @@
 import { db } from "../../../app/config/db";
-import { medications, labReports } from "../models/medical.schema";
+import { medications, labReports, AZURE_FILE_STATUS } from "../models/medical.schema";
 import { eq, desc, and, gte, lte, sql, getTableColumns } from "drizzle-orm";
 import type {
   InsertMedication,
@@ -165,7 +165,12 @@ export class MedicalRepository {
     const results = await db
       .select()
       .from(labReports)
-      .where(eq(labReports.userId, userId))
+      .where(
+        and(
+eq(labReports.userId, userId),
+eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
+        )
+      )
       .orderBy(desc(labReports.uploadedAt));
 
     return results;
@@ -177,7 +182,7 @@ export class MedicalRepository {
     offset: number,
     search?: string,
   ): Promise<{ reports: LabReport[]; total: number }> {
-    const baseConditions = [eq(labReports.userId, userId)];
+    const baseConditions = [eq(labReports.userId, userId), eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)];
     if (search && search.trim()) {
       const searchPattern = `%${search.trim()}%`;
       baseConditions.push(
@@ -209,10 +214,14 @@ export class MedicalRepository {
   async getLabReportById(
     reportId: string,
     userId?: string,
+    status?: AZURE_FILE_STATUS
   ): Promise<LabReport | null> {
     const conditions = [eq(labReports.id, reportId)];
     if (userId) {
       conditions.push(eq(labReports.userId, userId));
+    }
+    if(status) {
+      conditions.push(eq(labReports.status, status))
     }
 
     const [report] = await db
@@ -227,7 +236,7 @@ export class MedicalRepository {
   async updateLabReport(
     reportId: string,
     userId: string,
-    data: { fileName?: string; filePath?: string; fileSize?: string },
+    data: Partial<LabReport>,
   ): Promise<LabReport> {
     const [updated] = await db
       .update(labReports)

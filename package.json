@@ -15,6 +15,7 @@
 		"seed": "tsx server/src/modules/seeding/seed.ts"
 	},
 	"dependencies": {
+		"@azure/storage-blob": "^12.31.0",
 		"@fontsource/open-sauce-sans": "^5.2.5",
 		"@hookform/resolvers": "^5.2.2",
 		"@jridgewell/trace-mapping": "^0.3.25",

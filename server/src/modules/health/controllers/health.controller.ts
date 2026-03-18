@@ -172,7 +172,6 @@ export class HealthController {
 						userId,
 					);
 				}
-					console.log("the other metric is", otherMetrics)
 				for(const otherMetric of otherMetrics){
 					await this.healthService.createMetricsBatch([otherMetric])
 				}
@@ -213,7 +212,7 @@ export class HealthController {
 			sendSuccess(
 				res,
 				{ logs, latestMetrics },
-				"Exercises logged successfully",
+				"Data logged successfully",
 			);
 		} catch (error: any) {
 			handleError(res, error);

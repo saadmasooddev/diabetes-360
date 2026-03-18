@@ -12,6 +12,7 @@ import {
 	useLabReports,
 	useUploadLabReport,
 	useViewLabReport,
+	useDeleteLabReport,
 	isImageFileName,
 } from "@/hooks/mutations/useMedical";
 import { LabReportImageLightbox } from "./LabReportImageLightbox";
@@ -65,6 +66,7 @@ export function UploadMedicalReportsModal({
 	});
 	const uploadMutation = useUploadLabReport();
 	const viewMutation = useViewLabReport();
+	const deleteMutation = useDeleteLabReport();
 
 	const reports = data?.reports ?? [];
 	const total = data?.total ?? 0;
@@ -305,8 +307,12 @@ export function UploadMedicalReportsModal({
 											<Button
 												variant="outline"
 												size="sm"
-												onClick={() => handleViewReport(report)}
-												disabled={viewMutation.isPending}
+												onClick={() =>
+													deleteMutation.mutate(report.id, {
+														onSuccess: () => {},
+													})
+												}
+												disabled={deleteMutation.isPending}
 												style={{
 													borderColor: "#00856F",
 													color: "#00856F",

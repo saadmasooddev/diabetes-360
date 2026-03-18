@@ -515,8 +515,6 @@ export class FoodService {
 
 		// Call AI service
 		const response = await aiService.getNutritionalRecommendation(payload);
-		console.log("The payload for daily data is", payload);
-		console.log("THe response received is", response);
 
 		const nutrientData: RecommendedNutrients = response.data.nutrient_intake;
 		const foodSuggestionsResponse = response.data.food_suggestions || [];

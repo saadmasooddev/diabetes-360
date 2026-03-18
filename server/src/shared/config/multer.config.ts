@@ -175,7 +175,7 @@ function createMulterConfigMultiple(
 const MAX_AUDIO_SIZE = 3 * 1024 * 1024; 
 const ALLOWED_AUDIO_WAV_TYPES = ["audio/wav", "audio/wave", "audio/x-wav"];
 
-export const memoryUpload = multer({
+export const imageMemoryUpload = multer({
 	storage: multer.memoryStorage(),
 	limits: {
 		fileSize: MAX_FILE_SIZE,

@@ -10,7 +10,8 @@ import type { Response } from "express";
 import { handleError } from "server/src/shared/middleware/errorHandler";
 
 export class CommonController {
-	private commonService: CommonService;
+	private readonly commonService: CommonService;
+
 
 	constructor() {
 		this.commonService = new CommonService();
@@ -38,4 +39,6 @@ export class CommonController {
 			handleError(res, error);
 		}
 	}
+
+
 }

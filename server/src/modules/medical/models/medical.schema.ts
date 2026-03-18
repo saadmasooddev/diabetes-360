@@ -6,6 +6,7 @@ import {
 	text,
 	jsonb,
 	date,
+	pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -38,6 +39,13 @@ export const medications = pgTable("medications", {
 });
 
 // Lab Reports Table - stores uploaded PDF lab reports
+export enum AZURE_FILE_STATUS {
+  PENDING = "pending",
+  CONFIRMED = "confirmed"
+}
+export const azureFileStatusEnum = z.enum(Object.values(AZURE_FILE_STATUS))
+export const azureFileStatusEnumPg = pgEnum("azure_file_status_enum", Object.values(AZURE_FILE_STATUS) as [string, ...string[]])
+
 export const labReports = pgTable("lab_reports", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
 	userId: varchar("user_id")
@@ -49,6 +57,7 @@ export const labReports = pgTable("lab_reports", {
 	reportName: text("report_name"), // User-provided report name
 	reportType: varchar("report_type"), // blood_test, xray, ecg, prescription, mri_ct, other
 	dateOfReport: date("date_of_report"), // Date of the report
+  status: azureFileStatusEnumPg("status").notNull().default(AZURE_FILE_STATUS.PENDING),
 	uploadedAt: timestamp("uploaded_at", { withTimezone: true })
 		.notNull()
 		.defaultNow(),
@@ -101,7 +110,18 @@ export const insertLabReportSchema = createInsertSchema(labReports)
 		dateOfReport: z.string().optional(),
 	});
 
+export const getLabReportAzureUploadUrlSchema = insertLabReportSchema.pick({
+	fileName: true,
+	dateOfReport: true,
+	reportName: true,
+	reportType: true,
+}).extend({
+	contentType: z.string().min(1),
+	fileSize: z.int(),
+});
+
 export type InsertMedication = z.infer<typeof insertMedicationSchema>;
 export type Medication = typeof medications.$inferSelect;
 export type InsertLabReport = z.infer<typeof insertLabReportSchema>;
 export type LabReport = typeof labReports.$inferSelect;
+

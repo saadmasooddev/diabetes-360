@@ -1,6 +1,6 @@
 import { MedicalRepository } from "../repository/medical.repository";
 import { BookingRepository } from "../../booking/repository/booking.repository";
-import { NotFoundError, ForbiddenError } from "../../../shared/errors";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../../../shared/errors";
 import type {
   InsertMedication,
   InsertLabReport,
@@ -10,8 +10,8 @@ import fs from "fs";
 import { PhysicianRepository } from "../../physician/repository/physician.repository";
 import { UserRepository } from "../../user/repository/user.repository";
 import { readdir } from "fs/promises";
-import NotFound from "@/pages/not-found";
-import { CHAT_ROLES, USER_ROLES, UserRole } from "@shared/schema";
+import { ALLOWED_TYPES, AZURE_FILE_STATUS, USER_ROLES, UserRole } from "@shared/schema";
+import { azureService } from "server/src/shared/services/azure.service";
 
 export class MedicalService {
   private readonly medicalRepository: MedicalRepository;
@@ -155,24 +155,14 @@ export class MedicalService {
     return report;
   }
 
+
   async getLabReportsPaginated(
     userId: string,
     limit: number,
     offset: number,
     search?: string,
   ) {
-    const userStoredReportsPath = path.join(
-      process.cwd(),
-      MedicalService.LAB_REPORT_PATH,
-      userId,
-    );
 
-    if (!fs.existsSync(userStoredReportsPath)) {
-      return {
-        reports: [],
-        total: 0,
-      };
-    }
     const result = await this.medicalRepository.getLabReportsPaginated(
       userId,
       limit,
@@ -180,14 +170,9 @@ export class MedicalService {
       search,
     );
 
-    const userStoredReports = await readdir(userStoredReportsPath);
-    const userStoredReportsDataSet = new Set(userStoredReports);
-    const filteredReports = result.reports.filter((report) =>
-      userStoredReportsDataSet.has(report.fileName),
-    );
     return {
-      reports: filteredReports,
-      total: userStoredReports.length,
+      reports: result.reports,
+      total: result.total
     };
   }
 
@@ -216,78 +201,111 @@ export class MedicalService {
     return filteredReports;
   }
 
-  async getLabReportById(reportId: string, userId: string) {
-    const report = await this.medicalRepository.getLabReportById(
-      reportId,
-      userId,
-    );
-    if (!report) {
-      throw new NotFoundError("Lab report not found");
-    }
-    return report;
+
+
+
+  private getRelativePath(filePath: string) {
+    return relative(process.cwd(), filePath);
   }
 
-  async updateLabReport(
-    reportId: string,
+  async getLabReportAzureUploadUrl(
     userId: string,
-    file: Express.Multer.File,
+    data: {
+      fileName: string;
+      contentType: string;
+      fileSize: number;
+      reportName?: string;
+      reportType?: string;
+      dateOfReport?: string;
+    },
   ) {
-    const existingReport = await this.medicalRepository.getLabReportById(
-      reportId,
-      userId,
-    );
-    if (!existingReport) {
-      throw new NotFoundError("Lab report not found");
+    const { 
+      fileName, 
+      contentType, 
+      fileSize, 
+      reportName, 
+      reportType, 
+      dateOfReport 
+    } = data;
+
+    const typeConfig = ALLOWED_TYPES[contentType as keyof typeof ALLOWED_TYPES];
+    if (!typeConfig) {
+      throw new BadRequestError("File type not allowed")
     }
 
-    const oldFilePath = path.join(process.cwd(), existingReport.filePath);
-    if (fs.existsSync(oldFilePath)) {
-      fs.unlinkSync(oldFilePath);
+    // Validate file size
+    if (Number(fileSize) > typeConfig.maxSize) {
+      throw new BadRequestError( `File size exceeds maximum of ${typeConfig.maxSize / (1024 * 1024)}MB for ${contentType}`)
     }
 
-    const relativePath = this.getRelativePath(file.path);
-    const updated = await this.medicalRepository.updateLabReport(
-      reportId,
+    const fileId = crypto.randomUUID()
+    const ext = path.extname(fileName) || `.${typeConfig.ext}`;
+    const blobName = `${fileId}${ext}`;
+    const azureKey = azureService.createKeyForLabReports(blobName , userId)
+    const sasResult = await azureService.generateUploadSAS(azureKey);
+
+    const report =await this.medicalRepository.createLabReport({
       userId,
-      {
-        fileName: file.filename,
-        filePath: relativePath,
-        fileSize: file.size.toString(),
+      fileName,
+      filePath: azureKey, 
+      fileSize: fileSize.toString(),
+      dateOfReport,
+      reportName,
+      reportType,
+      status: AZURE_FILE_STATUS.PENDING
+    })
+
+
+    const response = {
+      reportId: report.id,
+      uploadUrl: sasResult.uploadUrl,
+      blobName: sasResult.blobName,
+      expiresOn: sasResult.expiresOn,
+      headers: {
+        'x-ms-blob-type': 'BlockBlob',
+        'Content-Type': contentType,
       },
-    );
-
-    return updated;
+    }
+    return response
   }
 
-  async deleteLabReport(reportId: string, userId: string): Promise<void> {
-    const report = await this.medicalRepository.getLabReportById(
-      reportId,
-      userId,
-    );
-    if (!report) {
-      throw new NotFoundError("Lab report not found");
+  async confirmLabReport(reportId: string, userId: string){
+    const report = await this.medicalRepository.getLabReportById(reportId, userId, AZURE_FILE_STATUS.PENDING)
+    if(!report) {
+      throw new NotFoundError("Lab report not found")
+    }
+    if(report.status !== AZURE_FILE_STATUS.PENDING){
+      throw new BadRequestError("Lab report already confirmed or processed")
     }
 
-    const filePath = path.join(process.cwd(), report.filePath);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      await azureService.getBlobProperties(report.filePath);
+    } catch {
+      throw new BadRequestError("Lab report file not found in storage");
     }
 
-    await this.medicalRepository.deleteLabReport(reportId, userId);
+    const updatedReport =await this.medicalRepository.updateLabReport(reportId, userId, {
+      status: AZURE_FILE_STATUS.CONFIRMED
+    })
+
+    return updatedReport
+
   }
 
-  async downloadLabReport(
+  async getDownloadLabReportUrl(
     reportId: string,
     requesterId: string,
-    role: UserRole,
-  ): Promise<{ filePath: string; fileName: string }> {
+    role: UserRole = USER_ROLES.CUSTOMER,
+  ) {
     const report = await this.medicalRepository.getLabReportById(
       reportId,
       role === USER_ROLES.CUSTOMER ? requesterId : undefined,
     );
+
     if (!report) {
       throw new NotFoundError("Lab report not found");
     }
+
     if (role === USER_ROLES.PHYSICIAN) {
       const hasAccess = await this.verifyPhysicianPatientAccess(
         requesterId,
@@ -300,23 +318,32 @@ export class MedicalService {
       }
     }
 
-    const filePath = path.join(
-      process.cwd(),
-      MedicalService.LAB_REPORT_PATH,
-      report.userId,
-      report.fileName,
-    );
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundError("Lab report file not found");
+    if (report.status !== AZURE_FILE_STATUS.CONFIRMED) {
+      throw new BadRequestError("File not found or not yet confirmed");
     }
 
+    const sasResult = await azureService.generateDownloadSAS(report.filePath);
+
     return {
-      filePath,
+      downloadUrl: sasResult.downloadUrl,
       fileName: report.fileName,
+      expiresOn: sasResult.expiresOn,
     };
   }
 
-  private getRelativePath(filePath: string) {
-    return relative(process.cwd(), filePath);
+  async deleteLabReportAzureFile(reportId: string, userId: string) {
+    const report = await this.medicalRepository.getLabReportById(reportId, userId)
+
+    if(!report) {
+      throw new NotFoundError("Lab report not found")
+    }
+
+    if(report.status !== AZURE_FILE_STATUS.CONFIRMED){
+      throw new BadRequestError("Lab report not found")
+    }
+
+    await azureService.deleteFile(report.filePath)
+    await this.medicalRepository.deleteLabReport(reportId, userId)
   }
 }
+

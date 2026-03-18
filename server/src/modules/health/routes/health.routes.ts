@@ -5,7 +5,7 @@ import {
 	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
-import { memoryUpload } from "../../../shared/config/multer.config";
+import { imageMemoryUpload } from "../../../shared/config/multer.config";
 import { PERMISSIONS, USER_ROLES } from "@shared/schema";
 
 const router = Router();
@@ -1241,7 +1241,7 @@ router.post(
 	"/metrics/upload-glucose-image",
 	authenticateToken,
 	requirePermission(PERMISSIONS.SCAN_FOOD),
-	memoryUpload.single("image"),
+	imageMemoryUpload.single("image"),
 	(req, res) => healthController.uploadGlucoseMeterImage(req, res),
 );
 

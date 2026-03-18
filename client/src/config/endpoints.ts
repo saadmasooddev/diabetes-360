@@ -137,9 +137,11 @@ export const API_ENDPOINTS = {
     LAB_REPORTS: "/api/medical/lab-reports",
     LAB_REPORTS_BY_USER: (userId: string) =>
       `/api/medical/lab-reports/by-user/${userId}`,
-    LAB_REPORT_DOWNLOAD: (id: string) =>
-      `/api/medical/lab-reports/${id}/download`,
-    LAB_REPORT_UPDATE: (id: string) => `/api/medical/lab-reports/${id}`,
+    LAB_REPORT_REQUEST_UPLOAD: "/api/medical/lab-reports/request-upload",
+    LAB_REPORT_CONFIRM: (id: string) =>
+      `/api/medical/lab-reports/${id}/confirm`,
+    LAB_REPORT_DOWNLOAD_URL: (id: string) =>
+      `/api/medical/lab-reports/${id}/download-url`,
     LAB_REPORT_DELETE: (id: string) => `/api/medical/lab-reports/${id}`,
   },
 } as const;

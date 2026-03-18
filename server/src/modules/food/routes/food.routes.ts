@@ -5,7 +5,7 @@ import {
 	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
-import { memoryUpload } from "../../../shared/config/multer.config";
+import { imageMemoryUpload } from "../../../shared/config/multer.config";
 import { PERMISSIONS, USER_ROLES } from "../../auth/models/user.schema";
 
 const router = Router();
@@ -71,7 +71,7 @@ const foodController = new FoodController();
 router.post(
 	"/scan",
 	authenticateToken,
-	memoryUpload.single("food_image"),
+	imageMemoryUpload.single("food_image"),
 	(req, res) => foodController.scanFood(req, res),
 );
 

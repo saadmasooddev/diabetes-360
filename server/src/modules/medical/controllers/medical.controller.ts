@@ -2,14 +2,14 @@ import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
 import { sendSuccess } from "../../../app/utils/response";
 import { MedicalService } from "../service/medical.service";
-import { BadRequestError, ForbiddenError } from "../../../shared/errors";
+import { BadRequestError, ForbiddenError, ValidationError } from "../../../shared/errors";
 import {
   PERMISSIONS,
   USER_ROLES,
   UserRole,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { insertMedicationSchema } from "../models/medical.schema";
+import { getLabReportAzureUploadUrlSchema, insertMedicationSchema } from "../models/medical.schema";
 import { getPaginationParams } from "server/src/shared/utils/utils";
 
 export class MedicalController {
@@ -230,67 +230,49 @@ export class MedicalController {
     }
   }
 
-  async updateLabReport(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getLabReportAzureUploadUrl(req:AuthenticatedRequest, res: Response){
     try {
-      const userId = req.user?.userId || "";
-      if (!userId) {
-        throw new BadRequestError("User ID not found");
+       
+      const userId = req?.user?.userId
+      const validatedResult = getLabReportAzureUploadUrlSchema.safeParse(req.body) 
+      if(!validatedResult.success){
+        throw new ValidationError(undefined, validatedResult.error)
       }
 
-      const reportId = req.params.id;
-      if (!reportId) {
-        throw new BadRequestError("Report ID is required");
-      }
+      const response =await this.medicalService.getLabReportAzureUploadUrl(userId!, validatedResult.data)
+      sendSuccess(res, response, "Lab report upload url generated successfully")
 
-      if (!req.file) {
-        throw new BadRequestError("No file uploaded");
-      }
-
-      const report = await this.medicalService.updateLabReport(
-        reportId,
-        userId,
-        req.file,
-      );
-      sendSuccess(res, report, "Lab report updated successfully");
-    } catch (error: any) {
-      handleError(res, error);
+    } catch (error) {
+      handleError(res, error)
+      
     }
   }
 
-  async deleteLabReport(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async  confirmLabReport(req:AuthenticatedRequest, res:Response) {
     try {
-      const userId = req.user?.userId || "";
-      if (!userId) {
-        throw new BadRequestError("User ID not found");
+      const userId = req.user?.userId
+      if(!userId) {
+        throw new BadRequestError("User ID not found")
       }
 
-      const reportId = req.params.id;
-      if (!reportId) {
-        throw new BadRequestError("Report ID is required");
+      const reportId = req.params.id
+      if(!reportId) {
+        throw new BadRequestError("Report ID is required")
       }
 
-      await this.medicalService.deleteLabReport(reportId, userId);
-      sendSuccess(res, null, "Lab report deleted successfully");
-    } catch (error: any) {
-      handleError(res, error);
+      const report = await this.medicalService.confirmLabReport(reportId, userId)
+      sendSuccess(res, report, "Lab report confirmed successfully")
+      
+    } catch (error) {
+      handleError(res, error)
+      
     }
+
   }
 
-  async downloadLabReport(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getDownloadLabReportUrl(req: AuthenticatedRequest, res: Response) {
     try {
-      const requesterId = req.user?.userId || "";
+      const requesterId = req.user?.userId;
       const permissions = req.user?.permissions || [];
       if (!requesterId) {
         throw new BadRequestError("User ID not found");
@@ -309,46 +291,33 @@ export class MedicalController {
       ) {
         role = USER_ROLES.PHYSICIAN;
       }
-      // const forUser = req.query.userId as string | undefined;
-      // if (forUser) {
-      //   const isAdmin = permissions.includes(
-      //     PERMISSIONS.READ_ALL_MEDICAL_RECORDS,
-      //   );
-      //   const isPhysician = permissions.includes(
-      //     PERMISSIONS.READ_PATIENT_MEDICAL_RECORDS,
-      //   );
-      //   if (isAdmin || isPhysician) {
-      //     if (isPhysician && !isAdmin) {
-      //       const hasAccess =
-      //         await this.medicalService.verifyPhysicianPatientAccess(
-      //           requesterId,
-      //           forUser,
-      //         );
-      //       if (!hasAccess) {
-      //         throw new ForbiddenError(
-      //           "You do not have access to this patient's lab reports",
-      //         );
-      //       }
-      //     }
-      //     ownerUserId = forUser;
-      //   }
-      // }
 
-      const { filePath, fileName } =
-        await this.medicalService.downloadLabReport(
-          reportId,
-          requesterId,
-          role,
-        );
-
-      // Send file
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${encodeURIComponent(fileName)}"`,
+      const response = await this.medicalService.getDownloadLabReportUrl(
+        reportId,
+        requesterId,
+        role,
       );
-      res.sendFile(filePath);
-    } catch (error: any) {
+      sendSuccess(res, response, "Lab report download url generated successfully");
+    } catch (error) {
+      handleError(res, error);
+    }
+  } 
+
+  async deletelabReportAzureFile(req: AuthenticatedRequest, res: Response) {
+    try {
+      const userId = req.user?.userId
+      if(!userId) {
+        throw new BadRequestError("User ID not found")
+      }
+
+      const reportId = req.params.id
+      if(!reportId) {
+        throw new BadRequestError("Report ID is required")
+      }
+
+      await this.medicalService.deleteLabReportAzureFile(reportId, userId);
+      sendSuccess(res, null, "Lab report deleted successfully");
+    } catch (error) {
       handleError(res, error);
     }
   }
