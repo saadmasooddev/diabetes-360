@@ -4,7 +4,7 @@ import type {
 	SignupRequest,
 	SignupRes,
 	LoginRequest,
-	AuthResponse,
+	AuthApiResponse,
 	RefreshTokenRequest,
 	LogoutRequest,
 	RefreshTokenResponse,
@@ -54,7 +54,7 @@ class AuthService {
 	}
 
 	async login(data: LoginRequest): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.LOGIN,
 			data,
 		);
@@ -76,7 +76,7 @@ class AuthService {
 	}
 
 	async loginWithEmailCode(email: string, code: string): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.LOGIN,
 			{ email, emailSignInCode: code },
 		);
@@ -145,7 +145,7 @@ class AuthService {
 	}
 
 	async verify2FALogin(email: string, token: string): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.VERIFY_2FA,
 			{ email, token },
 		);

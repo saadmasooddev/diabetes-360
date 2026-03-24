@@ -16,8 +16,10 @@ export const useRequestSignInCode = () => {
 	return useMutation({
 		mutationFn: (email: string) => authService.requestSignInCode(email),
 		onSuccess: (data) => {
-			console.log("The data is", data)
-			navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
+			if(data?.emailVerificationCodeSent === true){
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
+				return
+			}
 			toast({
 				title: "Code sent",
 				description: "Code sent to your email. It will expire in 5 minutes.",
@@ -42,7 +44,7 @@ export const useLogin = () => {
 	return useMutation<AuthData, Error, LoginRequest>({
 		mutationFn: (data) => authService.login(data),
 		onSuccess: (data) => {
-			if(data?.user.emailVerificationCodeSent){
+			if(data?.emailVerificationCodeSent === true){
 				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
 				return
 			}

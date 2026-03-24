@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { insertUserSchema, type InsertUser } from "../models/user.schema";
-import { AuthService } from "../services/auth.service";
+import { AuthResponse, AuthService } from "../services/auth.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError } from "../../../shared/errors";
@@ -71,6 +71,11 @@ export class AuthController {
 		}
 	}
 
+	private loginMessage(authResponse: AuthResponse, message: string) {
+		const rotueToVerificationPage = authResponse.emailVerificationCodeSent === true
+		return rotueToVerificationPage ? "Kindly verify your email to continue." : message 
+	}
+
 	async login(req: Request, res: Response): Promise<void> {
 		try {
 			const { email, password, requestSignInCode, emailSignInCode } =
@@ -86,7 +91,7 @@ export class AuthController {
 				sendSuccess(
 					res,
 					result,
-					"Sign-in code sent to your email. It expires in 5 minutes.",
+this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5 minutes."),
 				);
 				return;
 			}
@@ -99,12 +104,8 @@ export class AuthController {
 					await this.authService.loginWithEmailCode(email, emailSignInCode);
 				sendSuccess(
 					res,
-					{
-						user: authResponse.user,
-						tokens: authResponse.tokens,
-						requiresTwoFactor: false,
-					},
-					SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+					authResponse,
+					this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
 				);
 				return;
 			}
@@ -120,23 +121,16 @@ export class AuthController {
 			if (authResponse.requiresTwoFactor) {
 				sendSuccess(
 					res,
-					{
-						user: authResponse.user,
-						requiresTwoFactor: true,
-					},
-					"Two-factor authentication required",
+					authResponse,
+this.loginMessage(authResponse, 					"Two-factor authentication required"),
 				);
 				return;
 			}
 
 			sendSuccess(
 				res,
-				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
-					requiresTwoFactor: false,
-				},
-				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+				authResponse,
+				this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
 			);
 		} catch (error: any) {
 			handleError(res, error);
@@ -159,10 +153,7 @@ export class AuthController {
 
 			sendSuccess(
 				res,
-				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
-				},
+				authResponse,
 				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
 			);
 		} catch (error: any) {

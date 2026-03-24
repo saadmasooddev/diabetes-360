@@ -28,8 +28,9 @@ export interface AuthResponse {
 	user: Omit<
 		User & { profileData?: CustomerData | PhysicianData | null },
 		"password"
-	> & { permissions?: string[],  emailVerificationCodeSent: boolean };
+	> & { permissions?: string[]};
 	tokens?: TokenPair;
+	emailVerificationCodeSent: boolean 
 	requiresTwoFactor?: boolean;
 }
 
@@ -215,7 +216,8 @@ export class AuthService {
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user, emailVerificationCodeSent: true},
+				user: { ...user},
+		emailVerificationCodeSent: true,
 				requiresTwoFactor: false
 			}
 		}
@@ -256,7 +258,8 @@ export class AuthService {
 		await emailService.sendSignInCodeEmail(email, code, userName);
 
 		return {
-			user: { ...user, emailVerificationCodeSent: false },
+			user: { ...user, },
+emailVerificationCodeSent: false ,
 			requiresTwoFactor: false
 		}
 	}
@@ -271,7 +274,8 @@ export class AuthService {
 
 		if (!user.emailVerified) {
 			return {
-				user: {...user, emailVerificationCodeSent: true },
+				user: {...user, },
+emailVerificationCodeSent: true ,
 				requiresTwoFactor: false
 			}
 		}
@@ -305,8 +309,8 @@ export class AuthService {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent: false
 			},
+				emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
@@ -321,7 +325,8 @@ export class AuthService {
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user, emailVerificationCodeSent: true },
+				user: { ...user, },
+emailVerificationCodeSent: true ,
 				requiresTwoFactor: false,
 			}
 		}
@@ -349,8 +354,8 @@ export class AuthService {
 					...userWithoutPassword,
 					profileData: profileData as CustomerData | PhysicianData,
 					permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-					emailVerificationCodeSent: false
 				},
+					emailVerificationCodeSent: false,
 				tokens: {
 					accessToken: "",
 					refreshToken: "",
@@ -387,8 +392,8 @@ export class AuthService {
 				...userWithoutPassword2,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent:false
 			},
+				emailVerificationCodeSent:false,
 			tokens,
 			requiresTwoFactor: false,
 		};
@@ -426,8 +431,8 @@ export class AuthService {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent: false
 			},
+				emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
