@@ -545,7 +545,7 @@ export function Settings() {
 							</Card>
 
 							{/* Two-Factor Authentication */}
-							<TwoFactorAuth />
+							{/* <TwoFactorAuth /> */}
 
 							{/* User Health Targets */}
 							<UserHealthTargets />

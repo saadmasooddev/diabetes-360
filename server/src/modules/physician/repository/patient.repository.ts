@@ -96,12 +96,12 @@ export class PatientRepository {
 	};
 
 	private diabetesTypeSql = (column: PgColumn) => sql<DIABETES_TYPE>`
-    CASE ${column}
+    CASE ${column.name}
       WHEN 'type1' THEN 'Diabetes Type 1'
       WHEN 'type2' THEN 'Diabetes Type 2'
       WHEN 'gestational' THEN 'Gestational Diabetes'
       WHEN 'prediabetes' THEN 'Prediabetes'
-      ELSE ${column}
+      ELSE 'other'
     END
   `;
 	private ageSql =
