@@ -29,6 +29,8 @@ import {
 	SLOT_TYPE,
 	BOOKING_TYPE_ENUM,
 	SUMMARY_STATUS_ENUM,
+	InsertSlotSize,
+	InsertSlotType,
 } from "../models/booking.schema";
 import {
 	physicianLocations,
@@ -150,6 +152,11 @@ export class BookingRepository {
 	async getAllSlotSizes(): Promise<SlotSize[]> {
 		return await db.select().from(slotSize).orderBy(slotSize.size);
 	}
+
+	async createSlotSizes(sizes: InsertSlotSize[]) {
+		return await db.insert(slotSize).values(sizes).returning()
+	}
+
 
 	async getSlotSizeById(id: string): Promise<SlotSize | null> {
 		const [size] = await db
@@ -401,6 +408,10 @@ export class BookingRepository {
 		};
 	}
 
+	async createSlotTypes(types: InsertSlotType[]) {
+		return await db.insert(slotType).values(types).returning()
+	}
+
 	// Slot Type Junction operations
 	async createSlotTypeJunction(
 		data: InsertSlotTypeJunction,
@@ -499,10 +510,13 @@ export class BookingRepository {
 	) {
 		return await dbUtils.transaction(async (tx) => {
 			const [systemLimits] = await tx.select().from(freeTierLimits).limit(1);
+			console.log("the system limits are", systemLimits)
 			if (
 				!systemLimits ||
-				!systemLimits.freeConsultationQuota ||
-				!systemLimits.discountedConsultationQuota
+				systemLimits.freeConsultationQuota === undefined ||
+				systemLimits.freeConsultationQuota === null ||
+				systemLimits.discountedConsultationQuota === undefined ||
+				systemLimits.discountedConsultationQuota === null
 			) {
 				throw new Error("System limits not found");
 			}

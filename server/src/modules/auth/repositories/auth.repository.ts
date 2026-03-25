@@ -47,7 +47,7 @@ export class AuthRepository {
 		return user[0];
 	}
 
-	async createUser(user: InsertUser): Promise<User> {
+	async createUser(user: InsertUser ): Promise<User> {
 		const newUser = await db.insert(users).values(user).returning();
 		return newUser[0];
 	}
