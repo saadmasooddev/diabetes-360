@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and Push Docker image to ACR
         run: |
-         docker build -f Dockerfile.prod miraai.azurecr.io/diabetes360dev:${{ github.run_number }} .
+         docker build -f Dockerfile.prod -t miraai.azurecr.io/diabetes360dev:${{ github.run_number }} .
          docker push miraai.azurecr.io/diabetes360dev:${{ github.run_number }}
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
