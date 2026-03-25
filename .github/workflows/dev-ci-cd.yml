@@ -1,0 +1,41 @@
+name: Dev diabetes-360 CI/CD
+
+on:
+  pull_request:  
+    branches:
+      - dev
+  push:
+    branches:
+      - dev    
+    
+
+jobs:
+  build-only:
+    runs-on: ubuntu-22
+    environment: development
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v2
+        with:
+          login-server: miraai.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and Push Docker image to ACR
+        run: |
+         docker build -t miraai.azurecr.io/diabetes360dev:${{ github.run_number }} .
+         docker push miraai.azurecr.io/diabetes360dev:${{ github.run_number }}
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: diabetes-360
+          images: miraai.azurecr.io/diabetes360dev:${{ github.run_number }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
+      - name: Done
+        run: echo " deployed to  diabetes-360 app service
