@@ -222,3 +222,9 @@ export const uploadPhysicianImage = createMulterConfig({
 	destination: join("public", "uploads", "physicians"),
 	fieldName: "image",
 });
+export const medicalRecordUpload = createMulterConfig({
+	destination: MedicalService.LAB_REPORT_PATH,
+	fieldName: "file",
+	allowedMimeTypes: ["application/pdf", ...ALLOWED_IMAGE_TYPES],
+	appendUserId: true,
+});
