@@ -110,6 +110,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
 	providerId: true,
 	role: true,
 	isActive: true,
+	emailVerified: true
+}).extend({
+	emailVerified: z.boolean().optional().default(false)
 });
 
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({

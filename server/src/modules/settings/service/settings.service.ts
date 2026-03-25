@@ -72,7 +72,6 @@ export class SettingsService {
 		return await this.settingsRepository.upsertFreeTierLimits(data);
 	}
 
-	// Food Scan Limits Methods
 	async getFoodScanLimits(): Promise<FoodScanLimits> {
 		const limits = await this.settingsRepository.getFoodScanLimits();
 

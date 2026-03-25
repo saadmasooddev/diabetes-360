@@ -87,16 +87,16 @@ export class AdminController {
 				isActive: req.body.isActive !== undefined ? req.body.isActive : true,
 			});
 
-			const authResponse = await this.authService.signup(validatedData);
+			const authResponse = await this.authService.createUserForAdmin(validatedData);
 
 			// If user is a physician, create physician data
 			if (
-				authResponse.user.role === USER_ROLES.PHYSICIAN &&
+				authResponse.role === USER_ROLES.PHYSICIAN &&
 				req.body.physicianData
 			) {
 				try {
 					const physicianDataValidation = insertPhysicianDataSchema.safeParse({
-						userId: authResponse.user.id,
+						userId: authResponse.id,
 						specialtyId: req.body.physicianData.specialtyId,
 						practiceStartDate: new Date(
 							req.body.physicianData.practiceStartDate,
@@ -118,7 +118,7 @@ export class AdminController {
 
 			// If user is a customer, create customer data (if provided)
 			if (
-				authResponse.user.role === USER_ROLES.CUSTOMER &&
+				authResponse.role === USER_ROLES.CUSTOMER &&
 				req.body.customerData
 			) {
 				try {
@@ -127,7 +127,7 @@ export class AdminController {
 						insertCustomerDataAdminSchema.safeParse(customerDataInput);
 					if (customerDataValidation.success) {
 						await this.customerService.createCustomerData(
-							authResponse.user.id,
+							authResponse.id,
 							{
 								...customerDataValidation.data,
 								diabetesType: customerDataValidation.data.diabetesType as DIABETES_TYPE
@@ -143,13 +143,15 @@ export class AdminController {
 			sendSuccess(
 				res,
 				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
+					user: authResponse,
+					tokens: {
+						accessToken: "",
+						refreshToken: ""
+					},
 				},
 				SUCCESS_MESSAGES.ACCOUNT_CREATED,
 			);
 		} catch (error: any) {
-			console.log(error);
 			handleError(res, error);
 		}
 	}
