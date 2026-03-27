@@ -38,7 +38,6 @@ export type ModifiedInsertExerciseLogs = Omit<InsertExerciseLog, "userId"> & { s
 
 export type AggregatedStatistics = {
 	glucose: Statistics;
-	water: Statistics;
 	steps: Statistics;
 	heartRate: Statistics;
 	targets: {

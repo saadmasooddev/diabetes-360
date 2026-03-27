@@ -37,7 +37,6 @@ export const healthMetrics = pgTable("health_metrics", {
 		.references(() => users.id, { onDelete: "cascade" }),
 	bloodSugar: numeric("blood_sugar"),
 	bloodSugarReadingType: bloodSugarReadingTypeEnumPg("blood_sugar_reading_type").notNull().default(BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL),
-	waterIntake: numeric("water_intake"),
 	heartRate: integer("heart_rate"),
 	recordedAt: timestamp("recorded_at", { withTimezone: true })
 		.notNull()
@@ -55,7 +54,6 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		userId: z.string().min(1),
 		bloodSugar: z.number().nullable().optional(),
 		bloodSugarReadingType: bloodSugarReadingTypeSchema.optional(),
-		waterIntake: z.number().nullable().optional(),
 		heartRate: z.number().int().nullable().optional(),
 		recordedAt: z.string(),
 		readingSource: healthMetricReadingSourceEnum.optional()
@@ -77,13 +75,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 			});
 		}
 
-		if (data.waterIntake && (data.waterIntake < 0 || data.waterIntake > 5)) {
-			ctx.addIssue({
-				code: "custom",
-				message: "Water intake value must be between 0-5 liters per day",
-				path: ["waterIntake"],
-			});
-		}
+
 
 		if (data.heartRate && (data.heartRate < 0 || data.heartRate > 220)) {
 			ctx.addIssue({
@@ -112,6 +104,11 @@ export type MertricRecord = {
 	value: number | null;
 	recordedAt: Date;
 };
+
+export type BloodSugarMetricRecord = MertricRecord & {
+	readingType: BLOOD_SUGAR_READING_TYPES_ENUM
+}
+
 export type ExtendedHealthMetric = HealthMetric & {
 	steps?: number;
 	fastingSugar?: string | null;
@@ -190,7 +187,6 @@ export type ExerciseLog = typeof exerciseLogs.$inferSelect;
 export enum METRIC_TYPE_ENUM {
 	BLOOD_GLUCOSE = "blood_glucose",
 	STEPS = "steps",
-	WATER_INTAKE = "water_intake",
 	HEART_RATE = "heart_rate",
 	CALORIE_INTAKE = "calorie_intake"
 }
@@ -227,9 +223,6 @@ const validateTargetValue = (
 		case METRIC_TYPE_ENUM.STEPS:
 			// Reasonable daily steps: 0-50,000 (very active person max)
 			return value >= 0 && value <= 50000;
-		case METRIC_TYPE_ENUM.WATER_INTAKE:
-			// Maximum 5L per day (recommended max is 3-4L, but 5L is absolute max)
-			return value >= 0 && value <= 5;
 		case METRIC_TYPE_ENUM.HEART_RATE:
 			// Normal resting: 60-100 bpm, max during exercise: ~220 - age
 			// Target range: 40-200 bpm (covers all scenarios)
@@ -259,20 +252,6 @@ export const insertHealthMetricTargetSchema = createInsertSchema(
 					ctx.addIssue({
 						code: "custom",
 						message: "Blood glucose target must be between 70-200 mg/dL",
-						path: ["targetValue"],
-					});
-					break;
-				case METRIC_TYPE_ENUM.WATER_INTAKE:
-					ctx.addIssue({
-						code: "custom",
-						message: "Water intake target must be between 0-4 liters per day",
-						path: ["targetValue"],
-					});
-					break;
-				case METRIC_TYPE_ENUM.STEPS:
-					ctx.addIssue({
-						code: "custom",
-						message: "Steps target must be between 0-50,000 steps per day",
 						path: ["targetValue"],
 					});
 					break;

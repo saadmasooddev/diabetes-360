@@ -16,7 +16,7 @@ import {
 	type ChatMessage,
 	type ChatRole,
 } from "../models/chat.schema";
-import type { MertricRecord } from "../../health/models/health.schema";
+import type { BloodSugarMetricRecord, MertricRecord } from "../../health/models/health.schema";
 import type { LoggedMeal } from "../../food/models/food.schema";
 import { DateManager, formatUserInfo } from "server/src/shared/utils/utils";
 import { PatientRepository } from "../../physician/repository/patient.repository";
@@ -65,6 +65,16 @@ export class ChatService {
 		};
 	}
 
+	private toBloodSugarRecordedValue(records: BloodSugarMetricRecord[]): AIChatPayload["health_summary"]["last_24_hours"]["blood_sugar"] {
+		return records
+			.filter((r) => r.value != null && String(r.value).trim() !== "")
+			.map((r) => ({
+				value: String(r.value),
+				recorded_at: String(r.recordedAt),
+				reading_type: r.readingType
+			}));
+	}
+
 	private toRecordedValue(
 		records: MertricRecord[],
 	): Array<{ value: string; recorded_at: string }> {
@@ -72,10 +82,7 @@ export class ChatService {
 			.filter((r) => r.value != null && String(r.value).trim() !== "")
 			.map((r) => ({
 				value: String(r.value),
-				recorded_at:
-					r.recordedAt instanceof Date
-						? r.recordedAt.toISOString()
-						: String(r.recordedAt),
+				recorded_at: String(r.recordedAt)
 			}));
 	}
 
@@ -394,7 +401,6 @@ export class ChatService {
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
 				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 				METRIC_TYPE_ENUM.STEPS,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
 				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
@@ -409,9 +415,6 @@ export class ChatService {
 					metricsResult.bloodSugarRecords,
 				),
 				steps: this.toSummaryMetricValues(metricsResult.stepsRecords),
-				water_intake: this.toSummaryMetricValues(
-					metricsResult.waterIntakeRecords,
-				),
 				heart_rate: this.toSummaryMetricValues(metricsResult.heartBeatRecords),
 				meals: meals.map((m) => ({
 					foodName: m.foodName,
@@ -523,7 +526,6 @@ export class ChatService {
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
 				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 				METRIC_TYPE_ENUM.STEPS,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
 				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
@@ -576,9 +578,8 @@ export class ChatService {
 
 		const user_info: AIChatPayload["user_info"] = formatUserInfo(customerData as unknown as CustomerData);
 
-		const blood_sugar = this.toRecordedValue(metricsResult.bloodSugarRecords);
+		const blood_sugar = this.toBloodSugarRecordedValue(metricsResult.bloodSugarRecords);
 		const steps = this.toRecordedValue(metricsResult.stepsRecords);
-		const water_intake = this.toRecordedValue(metricsResult.waterIntakeRecords);
 		const heart_rate = this.toRecordedValue(metricsResult.heartBeatRecords);
 		const mealsPayload = meals.map(this.mealToPayload);
 
@@ -599,7 +600,6 @@ export class ChatService {
 				last_24_hours: {
 					blood_sugar,
 					steps,
-					water_intake,
 					heart_rate,
 					meals: mealsPayload,
 				},

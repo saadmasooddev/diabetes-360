@@ -312,7 +312,7 @@ export class HealthController {
 			const metricType = req.params.metricType as MetricType;
 
 			if (
-				!["glucose", "steps", "water_intake", "heart_rate"].includes(metricType)
+				!["glucose", "steps", "heart_rate"].includes(metricType)
 			) {
 				throw new BadRequestError("Invalid metric type");
 			}

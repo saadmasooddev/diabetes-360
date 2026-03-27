@@ -102,10 +102,6 @@ export function Dashboard() {
 			: latestStepsValue
 				? parseInt(String(latestStepsValue))
 				: 0;
-	const latestWaterIntakeValue = latestMetric?.current?.waterIntake;
-	const latestWaterIntake = latestWaterIntakeValue
-		? parseFloat(String(latestWaterIntakeValue))
-		: 0;
 	const latestHeartRate = latestMetric?.current?.heartRate ?? 0;
 	const latestHba1c = latestMetric?.current?.hba1c ?? "-";
 	const exerciseSetsToday =
@@ -124,10 +120,6 @@ export function Dashboard() {
 			: previousStepsValue
 				? parseInt(String(previousStepsValue))
 				: 0;
-	const previousWaterIntakeValue = latestMetric?.previous?.waterIntake;
-	const previousWaterIntake = previousWaterIntakeValue
-		? parseFloat(String(previousWaterIntakeValue))
-		: 0;
 	const previousHeartRate = latestMetric?.previous?.heartRate ?? 0;
 
 	const glucoseDateRange = getDateRange(glucoseInterval);
@@ -143,10 +135,6 @@ export function Dashboard() {
 		METRIC_TYPE_ENUM.STEPS,
 		stepsDateRange,
 	);
-	const waterQueryKey = getFilteredMetricsQueryKeys(
-		METRIC_TYPE_ENUM.WATER_INTAKE,
-		waterDateRange,
-	);
 	const heartBeatQueryKey = getFilteredMetricsQueryKeys(
 		METRIC_TYPE_ENUM.HEART_RATE,
 		heartbeatDateRange,
@@ -156,7 +144,6 @@ export function Dashboard() {
 
 	const { data: stepsMetrics } = useFilteredMetrics(stepsQueryKey);
 
-	const { data: waterMetrics } = useFilteredMetrics(waterQueryKey);
 
 	const { data: heartbeatMetrics } = useFilteredMetrics(heartBeatQueryKey);
 
@@ -166,7 +153,6 @@ export function Dashboard() {
 		const metricsRemainingLimitsMap: Record<MetricType, number> = {
 			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: freeTierLimits.glucoseLimit,
 			[METRIC_TYPE_ENUM.STEPS]: freeTierLimits.stepsLimit,
-			[METRIC_TYPE_ENUM.WATER_INTAKE]: freeTierLimits.waterLimit,
 			[METRIC_TYPE_ENUM.HEART_RATE]: Infinity,
 			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: Infinity,
 		};
@@ -235,17 +221,6 @@ export function Dashboard() {
 			}
 		}
 
-		if (selectedMetricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
-			const newTotal = latestWaterIntake + numericValue;
-			if (newTotal > 4) {
-				toast({
-					title: "Daily Limit Exceeded",
-					description: `Adding ${numericValue}L would exceed the daily limit of 4L. Current total: ${newTotal}L.`,
-					variant: "destructive",
-				});
-				return;
-			}
-		}
 
 		const metricData: HealthMetricData = {
 			userId: user.id,
@@ -280,10 +255,6 @@ export function Dashboard() {
 					source: HEALTH_METRIC_SOURCE_ENUM.CUSTOM
 				});
 				queriesToInvalidate.push(stepsQueryKey);
-			},
-			[METRIC_TYPE_ENUM.WATER_INTAKE]: () => {
-				utils.addToHealthMetricReading(metricData.waterIntake, floadMetricValue)
-				queriesToInvalidate.push(waterQueryKey);
 			},
 			[METRIC_TYPE_ENUM.HEART_RATE]: () => {
 				utils.addToHealthMetricReading(metricData.heartRate, roundedMetricValue)
@@ -439,18 +410,6 @@ export function Dashboard() {
 		});
 	}, [stepsMetrics, stepsInterval]);
 
-	const waterData = useMemo(() => {
-		if (!waterMetrics?.waterIntakeRecords?.length) return [];
-
-		// Reverse the array so oldest is on left, newest on right
-		return [...waterMetrics.waterIntakeRecords].reverse().map((m) => {
-			const date = new Date(m.recordedAt);
-			return {
-				time: formatTimeLabel(date, waterInterval),
-				value: m.value || 0,
-			};
-		});
-	}, [waterMetrics, waterInterval]);
 
 	const heartbeatData = useMemo(() => {
 		if (!heartbeatMetrics?.heartBeatRecords?.length) return [];
@@ -610,17 +569,6 @@ export function Dashboard() {
 							hideUpgradeCallToAction={!isFreeUser}
 						/>
 
-						<HealthMetricCard
-							type={METRIC_TYPE_ENUM.WATER_INTAKE}
-							latestValue={latestWaterIntake}
-							trendArrow={getTrendArrow(latestWaterIntake, previousWaterIntake)}
-							onAddLog={() => handleAddLog(METRIC_TYPE_ENUM.WATER_INTAKE)}
-							onUpgrade={handleUpgrade}
-							disabled={getHasReachedLimit(METRIC_TYPE_ENUM.WATER_INTAKE)}
-							dailyLimit={freeTierLimits?.waterLimit || 0}
-							hideUpgradeCallToAction={!isFreeUser}
-						/>
-
 						{/* Heart Beat Card - Only for paid users */}
 						{user?.paymentType !== "free" && user?.paymentType && (
 							<HealthMetricCard
@@ -757,23 +705,6 @@ export function Dashboard() {
 								userTarget={getTargets(METRIC_TYPE_ENUM.STEPS).user}
 							/>
 
-							<HealthTrendChart
-								title="Water Intake Trend"
-								data={waterData}
-								gradientId="waterGradient"
-								testId="card-water-trend"
-								height={200}
-								yAxisConfig={{
-									domain: [0, 4],
-									ticks: [0, 1, 2, 3, 4],
-								}}
-								interval={waterInterval}
-								onIntervalChange={setWaterInterval}
-								recommendedTarget={
-									getTargets(METRIC_TYPE_ENUM.WATER_INTAKE).recommended
-								}
-								userTarget={getTargets(METRIC_TYPE_ENUM.WATER_INTAKE).user}
-							/>
 						</div>
 
 						{/* Heart Beat Chart - Only for paid users */}

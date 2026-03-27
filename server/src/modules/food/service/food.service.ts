@@ -429,7 +429,6 @@ export class FoodService {
 			endDate.toISOString(),
 			[
 				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
 				METRIC_TYPE_ENUM.STEPS,
 			],
 		);
@@ -494,14 +493,6 @@ export class FoodService {
 					monthly: statistics.glucose.monthly.toString(),
 				},
 				previous_days_records: bloodSugarRecords.slice(0, 10), // Ensure only 10 days
-			},
-			water_intake_history: {
-				average: {
-					daily: statistics.water.daily.toFixed(1),
-					weekly: statistics.water.weekly.toFixed(1),
-					monthly: statistics.water.monthly.toFixed(1),
-				},
-				previous_days_records: waterIntakeRecords.slice(0, 10),
 			},
 			walking_steps_history: {
 				average: {

@@ -107,13 +107,6 @@ export const getFilteredMetricsQueryKeys = (
 				endDate: dateRange.endDate,
 				types: [METRIC_TYPE_ENUM.STEPS],
 			};
-		case METRIC_TYPE_ENUM.WATER_INTAKE:
-			return {
-				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
-				startDate: dateRange.startDate,
-				endDate: dateRange.endDate,
-				types: [METRIC_TYPE_ENUM.WATER_INTAKE],
-			};
 		case METRIC_TYPE_ENUM.HEART_RATE:
 			return {
 				endpoint: API_ENDPOINTS.HEALTH.FILTERED,
