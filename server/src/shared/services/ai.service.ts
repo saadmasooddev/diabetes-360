@@ -132,7 +132,7 @@ export interface AIChatPayload {
 	};
 	health_summary: {
 		last_24_hours: {
-			blood_sugar: Array<{ value: string; recorded_at: string, reading_type: BLOOD_SUGAR_READING_TYPES_ENUM }>;
+			blood_sugar: Array<{ value: string; recorded_at: string, reading_type: string }>;
 			steps: Array<{ value: string; recorded_at: string }>;
 			heart_rate: Array<{ value: string; recorded_at: string }>;
 			meals: Array<{

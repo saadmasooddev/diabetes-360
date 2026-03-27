@@ -10,7 +10,7 @@ import type {
 	EmotionalStatePayload,
 } from "../../../shared/services/ai.service";
 import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
-import { CustomerData, DIABETES_TYPE } from "../../auth/models/user.schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, CustomerData, DIABETES_TYPE } from "../../auth/models/user.schema";
 import {
 	CHAT_ROLES,
 	type ChatMessage,
@@ -65,13 +65,20 @@ export class ChatService {
 		};
 	}
 
-	private toBloodSugarRecordedValue(records: BloodSugarMetricRecord[]): AIChatPayload["health_summary"]["last_24_hours"]["blood_sugar"] {
+	private toBloodSugarRecordedValue(records: BloodSugarMetricRecord[]) {
+		const readingTypeMap: Record<BLOOD_SUGAR_READING_TYPES_ENUM, string> = {
+			[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: "Fasting Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: "Current Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: "Random Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: "HbA1c"
+		}
+
 		return records
 			.filter((r) => r.value != null && String(r.value).trim() !== "")
 			.map((r) => ({
 				value: String(r.value),
 				recorded_at: String(r.recordedAt),
-				reading_type: r.readingType
+				reading_type: readingTypeMap[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM]
 			}));
 	}
 
