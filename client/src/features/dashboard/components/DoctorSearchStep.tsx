@@ -1,4 +1,3 @@
-import { PhysicianData } from "@shared/schema";
 import { DoctorCard } from "./DoctorCard";
 import { DoctorSearchBar } from "./DoctorSearchBar";
 import { SpecialtyTabs } from "./SpecialtyTabs";
@@ -32,6 +31,8 @@ function mapPhysicianToDoctor(physician: Physician) {
 	return {
 		id: physician.id,
 		name: physician.firstName + " " + physician.lastName || "Dr. Unknown",
+		firstName: physician.firstName ?? "",
+		lastName: physician.lastName ?? "",
 		specialty: physician.specialty || "",
 		experience: physician.experience,
 		rating: physician.rating || 0,

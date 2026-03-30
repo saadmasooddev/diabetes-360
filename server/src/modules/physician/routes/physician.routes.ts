@@ -5,7 +5,6 @@ import {
 	requireAnyPermission,
 	requirePermission,
 } from "../../../shared/middleware/auth";
-import { uploadPhysicianImage } from "server/src/shared/config/multer.config";
 import { PERMISSIONS } from "../../auth/models/user.schema";
 
 const router = Router();
@@ -515,45 +514,28 @@ router.put("/admin/physician-data/:userId", (req, res, next) =>
 
 /**
  * @swagger
- * /api/physician/admin/upload-image:
+ * /api/physician/admin/physician-data/{userId}/profile-image/upload-url:
  *   post:
- *     summary: Upload physician image (Admin only)
+ *     summary: Get SAS URL to upload physician profile image to Azure (Admin)
  *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - image
- *             properties:
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: Image file to upload (max 5MB, allowed types jpeg, jpg, png, gif, webp)
- *     responses:
- *       200:
- *         description: Image uploaded successfully
- *         content:
- *           application/json:
- *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/SuccessResponse'
- *                 - type: object
- *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         imageUrl:
- *                           type: string
- *       400:
- *         description: Invalid file or file too large
  */
-router.post("/admin/upload-image", uploadPhysicianImage, (req, res, next) =>
-	physicianController.uploadPhysicianImage(req, res, next),
+router.post(
+	"/admin/physician-data/:userId/profile-image/upload-url",
+	(req, res, next) =>
+		physicianController.requestPhysicianProfileUploadUrl(req, res, next),
+);
+
+/**
+ * @swagger
+ * /api/physician/admin/physician-data/{userId}/profile-image/confirm:
+ *   post:
+ *     summary: Confirm profile image after blob upload (Admin)
+ *     tags: [Admin]
+ */
+router.post(
+	"/admin/physician-data/:userId/profile-image/confirm",
+	(req, res, next) =>
+		physicianController.confirmPhysicianProfileUpload(req, res, next),
 );
 
 /**

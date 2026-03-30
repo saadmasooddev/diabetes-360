@@ -22,7 +22,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Image } from "@/components/ui/image";
+import { PhysicianAvatar } from "@/components/physician/PhysicianAvatar";
 import { useUpdateUser, useUser } from "@/hooks/mutations/useAdmin";
 import {
 	useSpecialtiesAdmin,
@@ -43,8 +43,7 @@ import {
 import { AdminPhysicianSlotManagement } from "./AdminPhysicianSlotManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseDateToComponents, handleNumberInput } from "@/lib/utils";
-import { useAuthStore } from "@/stores/authStore";
-
+import { USER_ROLES } from "@shared/schema";
 const updateUserSchema = z.object({
 	firstName: z.string().min(1, "First name is required").optional(),
 	lastName: z.string().min(1, "Last name is required").optional(),
@@ -115,6 +114,8 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 
 	const watchedRole = watch("role");
 	const watchedIsActive = watch("isActive");
+	const watchedFirstName = watch("firstName");
+	const watchedLastName = watch("lastName");
 
 	// Load physician data when available
 	useEffect(() => {
@@ -200,14 +201,15 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 				updateData.lastName = (user as any).lastName || "";
 			}
 
-			if (data.role === "physician" || user.role === "physician") {
+			if (data.role === USER_ROLES.PHYSICIAN || USER_ROLES.PHYSICIAN) {
 				let imageUrl = physicianFields.imageUrl;
 
-				// Upload new image if provided
 				if (physicianFields.imageFile) {
-					imageUrl = await uploadImageMutation.mutateAsync(
-						physicianFields.imageFile,
-					);
+					const pd = await uploadImageMutation.mutateAsync({
+						userId: user.id,
+						file: physicianFields.imageFile,
+					});
+					imageUrl = pd.imageUrl ?? physicianFields.imageUrl;
 				}
 
 				// Validate practice start date is not in the future
@@ -282,6 +284,10 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 		}
 	};
 
+	const isBusy =
+		isLoading ||
+		uploadImageMutation.isPending;
+
 	return (
 		<Dialog open={true} onOpenChange={onClose}>
 			<DialogContent className="w-[calc(100vw-2rem)] sm:w-full sm:max-w-[600px] max-h-[90vh] flex flex-col">
@@ -317,7 +323,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 										type="text"
 										{...register("firstName")}
 										placeholder="Enter first name"
-										disabled={isLoading}
+										disabled={isBusy}
 									/>
 									{errors.firstName && (
 										<p className="text-sm text-red-600">
@@ -333,7 +339,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 										type="text"
 										{...register("lastName")}
 										placeholder="Enter last name"
-										disabled={isLoading}
+										disabled={isBusy}
 									/>
 									{errors.lastName && (
 										<p className="text-sm text-red-600">
@@ -349,7 +355,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 										type="email"
 										{...register("email")}
 										placeholder="Enter email address"
-										disabled={isLoading}
+										disabled={isBusy}
 									/>
 									{errors.email && (
 										<p className="text-sm text-red-600">
@@ -365,7 +371,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 										type="password"
 										{...register("password")}
 										placeholder="Leave blank to keep current password"
-										disabled={isLoading}
+										disabled={isBusy}
 									/>
 									{errors.password && (
 										<p className="text-sm text-red-600">
@@ -401,7 +407,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 										id="isActive"
 										checked={watchedIsActive}
 										onCheckedChange={(checked) => setValue("isActive", checked)}
-										disabled={isLoading}
+										disabled={isBusy}
 									/>
 									<Label htmlFor="isActive">Active Account</Label>
 								</div>
@@ -422,7 +428,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 														specialtyId: value,
 													})
 												}
-												disabled={isLoading}
+												disabled={isBusy}
 											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select specialty" />
@@ -474,7 +480,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 													watchedRole === "physician" ||
 													user.role === "physician"
 												}
-												disabled={isLoading}
+												disabled={isBusy}
 											/>
 											{!physicianFields.practiceStartDate &&
 												(watchedRole === "physician" ||
@@ -511,7 +517,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 													watchedRole === "physician" ||
 													user.role === "physician"
 												}
-												disabled={isLoading}
+												disabled={isBusy}
 											/>
 											{!physicianFields.consultationFee &&
 												(watchedRole === "physician" ||
@@ -529,23 +535,19 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 												type="file"
 												accept="image/*"
 												onChange={handleImageChange}
-												disabled={isLoading}
+												disabled={isBusy}
 											/>
-											{(physicianFields.imagePreview ||
-												physicianFields.imageUrl) && (
-													<Image
-														src={
-															physicianFields.imagePreview ||
-															physicianFields.imageUrl
-														}
-														alt="Preview"
-														className="w-24 h-24 rounded-full object-cover border"
-														pointToServer={
-															!!physicianFields.imageUrl &&
-															!physicianFields.imagePreview
-														}
-													/>
-												)}
+											<PhysicianAvatar
+												firstName={watchedFirstName}
+												lastName={watchedLastName}
+												imageUrl={
+													physicianFields.imagePreview ||
+													physicianData?.profileImageUrl ||
+													physicianFields.imageUrl
+												}
+												className="h-24 w-24"
+												imgClassName="border"
+											/>
 										</div>
 									</div>
 								)}
@@ -566,7 +568,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 														gender: value as "male" | "female",
 													})
 												}
-												disabled={isLoading}
+												disabled={isBusy}
 											>
 												<SelectTrigger>
 													<SelectValue />
@@ -592,7 +594,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 															birthDay: value,
 														})
 													}
-													disabled={isLoading}
+													disabled={isBusy}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="DD" />
@@ -616,7 +618,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 															birthMonth: value,
 														})
 													}
-													disabled={isLoading}
+													disabled={isBusy}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="MM" />
@@ -640,7 +642,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 															birthYear: value,
 														})
 													}
-													disabled={isLoading}
+													disabled={isBusy}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="YYYY" />
@@ -671,7 +673,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 															weight: value,
 														})
 													}
-													disabled={isLoading}
+													disabled={isBusy}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="Select weight" />
@@ -698,7 +700,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 															height: value,
 														})
 													}
-													disabled={isLoading}
+													disabled={isBusy}
 												>
 													<SelectTrigger>
 														<SelectValue placeholder="Select height" />
@@ -729,7 +731,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 														diabetesType: value as any,
 													})
 												}
-												disabled={isLoading}
+												disabled={isBusy}
 											>
 												<SelectTrigger>
 													<SelectValue placeholder="Select diabetes type" />
@@ -765,7 +767,7 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 						type="button"
 						variant="outline"
 						onClick={onClose}
-						disabled={isLoading}
+						disabled={isBusy}
 					>
 						Cancel
 					</Button>
@@ -773,10 +775,10 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 						<Button
 							type="submit"
 							form="edit-user-form"
-							disabled={isLoading}
+							disabled={isBusy}
 							className="bg-teal-600 hover:bg-teal-700"
 						>
-							{isLoading ? (
+							{isBusy ? (
 								<>
 									<ButtonSpinner className="mr-2" />
 									Updating...

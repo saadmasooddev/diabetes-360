@@ -50,6 +50,8 @@ function mapPhysicianToDoctor(physician: Physician) {
 	return {
 		id: physician.id,
 		name: physician.firstName + " " + physician.lastName || "Dr. Unknown",
+		firstName: physician.firstName ?? "",
+		lastName: physician.lastName ?? "",
 		specialty: physician.specialty || "",
 		experience: physician.experience || "1+ years",
 		rating: physician.rating || 0,

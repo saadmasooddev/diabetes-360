@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Image } from "@/components/ui/image";
+import { PhysicianAvatar } from "@/components/physician/PhysicianAvatar";
 import { Star } from "lucide-react";
 import type { Doctor } from "@/mocks/doctors";
 
@@ -51,16 +51,20 @@ export function DoctorCard({
 				<div
 					className={`relative ${isCompact ? "w-24 h-24 mx-auto sm:mx-0" : "w-32 h-32 sm:w-36 sm:h-36 mx-auto sm:mx-0"}`}
 				>
-					<Image
-						src={doctor.image}
-						alt={doctor.name}
-						className="w-full h-full rounded-full object-cover"
-						pointToServer={true}
-						style={{
-							border: "4px solid #E0F2F1",
-						}}
-						data-testid={`img-doctor-${doctor.id}`}
-					/>
+					<div data-testid={`img-doctor-${doctor.id}`}>
+						<PhysicianAvatar
+							firstName={doctor.firstName}
+							lastName={doctor.lastName}
+							name={doctor.name}
+							imageUrl={doctor.image || undefined}
+							className={
+								isCompact
+									? "h-24 w-24 mx-auto sm:mx-0"
+									: "h-32 w-32 sm:h-36 sm:w-36 mx-auto sm:mx-0"
+							}
+							imgClassName="border-4 border-[#E0F2F1]"
+						/>
+					</div>
 					<div
 						className={`absolute ${isCompact ? "top-0 left-0" : "top-2 left-2"} flex items-center gap-1.5 px-2 py-1 rounded-full`}
 						style={{

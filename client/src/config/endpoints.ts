@@ -76,7 +76,10 @@ export const API_ENDPOINTS = {
       SPECIALTY_BY_ID: (id: string) => `/api/physician/admin/specialties/${id}`,
       PHYSICIAN_DATA: (userId: string) =>
         `/api/physician/admin/physician-data/${userId}`,
-      UPLOAD_IMAGE: "/api/physician/admin/upload-image",
+      PROFILE_IMAGE_UPLOAD_URL: (userId: string) =>
+        `/api/physician/admin/physician-data/${userId}/profile-image/upload-url`,
+      PROFILE_IMAGE_CONFIRM: (userId: string) =>
+        `/api/physician/admin/physician-data/${userId}/profile-image/confirm`,
       LOCATIONS: (physicianId: string) =>
         `/api/physician/admin/locations/${physicianId}`,
     },

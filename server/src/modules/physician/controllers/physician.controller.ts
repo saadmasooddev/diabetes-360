@@ -137,7 +137,8 @@ export class PhysicianController {
 			if (!userId) {
 				throw new BadRequestError("User ID is required");
 			}
-			const data = await this.physicianService.getPhysicianDataByUserId(userId);
+			const data =
+				await this.physicianService.getPhysicianDataWithProfileReadUrl(userId);
 			sendSuccess(
 				res,
 				{ physicianData: data },
@@ -351,22 +352,64 @@ export class PhysicianController {
 		}
 	}
 
-	// Image upload endpoint using multer
-	async uploadPhysicianImage(
+	async requestPhysicianProfileUploadUrl(
 		req: AuthenticatedRequest,
 		res: Response,
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const file = req.file;
-			if (!file) {
-				throw new BadRequestError("Image file is required");
+			const { userId } = req.params;
+			if (!userId) {
+				throw new BadRequestError("User ID is required");
 			}
+			const body = req.body as {
+				fileName?: string;
+				contentType?: string;
+				fileSize?: number;
+			};
+			if (!body.fileName || !body.contentType || body.fileSize == null) {
+				throw new BadRequestError(
+					"fileName, contentType, and fileSize are required",
+				);
+			}
+			const result = await this.physicianService.getPhysicianProfileUploadUrl(
+				userId,
+				{
+					fileName: body.fileName,
+					contentType: body.contentType,
+					fileSize: Number(body.fileSize),
+				},
+			);
+			sendSuccess(res, result, "Upload URL issued");
+		} catch (error: any) {
+			handleError(res, error);
+		}
+	}
 
-			// Get the relative URL path for the uploaded file
-			const imageUrl = await this.physicianService.getImageUrlFromFile(file);
-
-			sendSuccess(res, { imageUrl }, "Image uploaded successfully");
+	async confirmPhysicianProfileUpload(
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		try {
+			const { userId } = req.params;
+			if (!userId) {
+				throw new BadRequestError("User ID is required");
+			}
+			const body = req.body as { blobPath?: string };
+			if (!body.blobPath) {
+				throw new BadRequestError("blobPath is required");
+			}
+			const physicianData =
+				await this.physicianService.confirmPhysicianProfileUpload(
+					userId,
+					body.blobPath,
+				);
+			sendSuccess(
+				res,
+				{ physicianData },
+				"Profile image confirmed",
+			);
 		} catch (error: any) {
 			handleError(res, error);
 		}

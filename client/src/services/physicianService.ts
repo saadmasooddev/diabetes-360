@@ -1,6 +1,7 @@
 import { API_ENDPOINTS } from "@/config/endpoints";
 import type { ApiResponse } from "@/types/auth.types";
 import { httpClient } from "@/utils/httpClient";
+import axios from "axios";
 
 export interface PhysicianSpecialty {
 	id: string;
@@ -44,6 +45,8 @@ export interface PhysicianData {
 	practiceStartDate: string;
 	consultationFee: string;
 	imageUrl: string | null;
+	/** Resolved read URL (e.g. SAS) for display; raw blob path remains in imageUrl */
+	profileImageUrl?: string | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -321,17 +324,62 @@ class PhysicianService {
 		return response.data.physicianData;
 	}
 
-	async uploadImage(file: File): Promise<string> {
-		const formData = new FormData();
-		formData.append("image", file);
-		const response = await httpClient.post<ApiResponse<{ imageUrl: string }>>(
-			API_ENDPOINTS.PHYSICIAN.ADMIN.UPLOAD_IMAGE,
-			formData,
-		);
+	async requestPhysicianProfileUploadUrl(
+		userId: string,
+		body: { fileName: string; contentType: string; fileSize: number },
+	): Promise<{
+		uploadUrl: string;
+		blobPath: string;
+		expiresOn: string;
+		headers: { "x-ms-blob-type": string; "Content-Type": string };
+	}> {
+		const response = await httpClient.post<
+			ApiResponse<{
+				uploadUrl: string;
+				blobPath: string;
+				expiresOn: string;
+				headers: { "x-ms-blob-type": string; "Content-Type": string };
+			}>
+		>(API_ENDPOINTS.PHYSICIAN.ADMIN.PROFILE_IMAGE_UPLOAD_URL(userId), body);
 		if (!response.success || !response.data) {
-			throw new Error(response.message || "Failed to upload image");
+			throw new Error(response.message || "Failed to get upload URL");
 		}
-		return response.data.imageUrl;
+		return response.data;
+	}
+
+	async confirmPhysicianProfileUpload(
+		userId: string,
+		blobPath: string,
+	): Promise<PhysicianData> {
+		const response = await httpClient.post<
+			ApiResponse<{ physicianData: PhysicianData }>
+		>(API_ENDPOINTS.PHYSICIAN.ADMIN.PROFILE_IMAGE_CONFIRM(userId), {
+			blobPath,
+		});
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to confirm profile image");
+		}
+		return response.data.physicianData;
+	}
+
+	/** Request SAS URL, upload to Azure, confirm — same pattern as lab reports. */
+	async uploadPhysicianProfileImage(
+		userId: string,
+		file: File,
+	): Promise<PhysicianData> {
+		const { uploadUrl, blobPath, headers } =
+			await this.requestPhysicianProfileUploadUrl(userId, {
+				fileName: file.name,
+				contentType: file.type || "image/jpeg",
+				fileSize: file.size,
+			});
+		await axios.put(uploadUrl, file, {
+			headers: {
+				"x-ms-blob-type": headers["x-ms-blob-type"],
+				"Content-Type": headers["Content-Type"],
+			},
+		});
+		return await this.confirmPhysicianProfileUpload(userId, blobPath);
 	}
 
 	// Location endpoints

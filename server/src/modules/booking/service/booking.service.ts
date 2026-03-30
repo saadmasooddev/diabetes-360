@@ -26,6 +26,7 @@ import {
 import { ConsultationService } from "./consultation.service";
 import { DateManager } from "server/src/shared/utils/utils";
 import { MedicineDosage } from "../../medical/repository/medical.repository";
+import { resolvePhysicianImageUrlForDisplay } from "../../physician/utils/resolve-physician-image-url";
 
 export class BookingService {
 	private bookingRepository: BookingRepository;
@@ -897,10 +898,25 @@ export class BookingService {
 			timeZone?: string;
 		} = {},
 	) {
-		return await this.bookingRepository.getUserConsultations(
+		const result = await this.bookingRepository.getUserConsultations(
 			customerId,
 			options,
 		);
+		const consultations = await Promise.all(
+			result.consultations.map(async (c) => ({
+				...c,
+				slot: {
+					...c.slot,
+					physician: {
+						...c.slot.physician,
+						imageUrl: await resolvePhysicianImageUrlForDisplay(
+							c.slot.physician.imageUrl,
+						),
+					},
+				},
+			})),
+		);
+		return { ...result, consultations };
 	}
 
 	/**

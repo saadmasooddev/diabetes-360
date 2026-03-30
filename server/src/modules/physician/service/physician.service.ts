@@ -10,6 +10,12 @@ import type {
 } from "../../auth/models/user.schema";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import path from "path";
+import { ALLOWED_TYPES } from "@shared/schema";
+import { azureService } from "server/src/shared/services/azure.service";
+import {
+	isStoredPhysicianBlobKey,
+	resolvePhysicianImageUrlForDisplay,
+} from "../utils/resolve-physician-image-url";
 
 export class PhysicianService {
 	private physicianRepository: PhysicianRepository;
@@ -111,7 +117,15 @@ export class PhysicianService {
 			}
 		}
 
-		return await this.physicianRepository.getPhysiciansPaginated(params);
+		const result =
+			await this.physicianRepository.getPhysiciansPaginated(params);
+		const physicians = await Promise.all(
+			result.physicians.map(async (p) => ({
+				...p,
+				imageUrl: await resolvePhysicianImageUrlForDisplay(p.imageUrl),
+			})),
+		);
+		return { ...result, physicians };
 	}
 
 	async getPhysiciansBySpecialty(
@@ -125,11 +139,18 @@ export class PhysicianService {
 		if (!specialty) {
 			throw new NotFoundError("Specialty not found");
 		}
-		return await this.physicianRepository.getPhysiciansBySpecialityAndNextAvailableSlot(
-			specialtyId,
-			timeZone,
-			userDateISO,
-			fromDate
+		const physicians =
+			await this.physicianRepository.getPhysiciansBySpecialityAndNextAvailableSlot(
+				specialtyId,
+				timeZone,
+				userDateISO,
+				fromDate,
+			);
+		return await Promise.all(
+			physicians.map(async (p) => ({
+				...p,
+				imageUrl: await resolvePhysicianImageUrlForDisplay(p.imageUrl),
+			})),
 		);
 	}
 
@@ -146,21 +167,97 @@ export class PhysicianService {
 		);
 	}
 
-	async getImageUrlFromFile(file: Express.Multer.File): Promise<string> {
-		if (!file) {
-			throw new BadRequestError("File is required");
+	/**
+	 * SAS upload URL for admin; blob path is `${userId}/profile-picture/{uuid}.{ext}`.
+	 */
+	async getPhysicianProfileUploadUrl(
+		targetUserId: string,
+		data: { fileName: string; contentType: string; fileSize: number },
+	) {
+		const existing =
+			await this.physicianRepository.getPhysicianDataByUserId(targetUserId);
+		if (!existing) {
+			throw new BadRequestError("Physician data not found");
 		}
 
-		const relativePath = path.relative(
-			path.join(process.cwd(), "public"),
-			file.path,
-		);
+		const imageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+		const typeConfig =
+			ALLOWED_TYPES[data.contentType as keyof typeof ALLOWED_TYPES];
+		if (
+			!typeConfig ||
+			!imageTypes.includes(
+				data.contentType as (typeof imageTypes)[number],
+			)
+		) {
+			throw new BadRequestError("File type not allowed for profile images");
+		}
+		if (Number(data.fileSize) > typeConfig.maxSize) {
+			throw new BadRequestError(
+				`File size exceeds maximum of ${typeConfig.maxSize / (1024 * 1024)}MB for ${data.contentType}`,
+			);
+		}
 
-		return relativePath;
+		const fileId = crypto.randomUUID();
+		const ext = path.extname(data.fileName) || `.${typeConfig.ext}`;
+		const blobFileName = `${fileId}${ext}`;
+		const azureKey = azureService.createKeyForProfilePicture(
+			blobFileName,
+			targetUserId,
+		);
+		const sasResult = await azureService.generateUploadSAS(azureKey);
+
+		return {
+			uploadUrl: sasResult.uploadUrl,
+			blobPath: azureKey,
+			expiresOn: sasResult.expiresOn,
+			headers: {
+				"x-ms-blob-type": "BlockBlob",
+				"Content-Type": data.contentType,
+			},
+		};
 	}
 
-	async setImageUrlFromFile(path: string, userId: string) {
-		return await this.physicianRepository.setImageUrlFromFile(path, userId);
+	async confirmPhysicianProfileUpload(targetUserId: string, blobPath: string) {
+		const existing =
+			await this.physicianRepository.getPhysicianDataByUserId(targetUserId);
+		if (!existing) {
+			throw new NotFoundError("Physician data not found");
+		}
+		const expectedPrefix = `${targetUserId}/profile-picture/`;
+		if (!blobPath.startsWith(expectedPrefix)) {
+			throw new BadRequestError("Invalid profile image path");
+		}
+
+		try {
+			await azureService.getBlobProperties(blobPath);
+		} catch {
+			throw new BadRequestError("Profile image not found in storage");
+		}
+
+		const oldUrl = existing.imageUrl;
+		if (
+			oldUrl &&
+			isStoredPhysicianBlobKey(oldUrl) &&
+			oldUrl !== blobPath
+		) {
+			try {
+				await azureService.deleteFile(oldUrl);
+			} catch {
+				// best-effort cleanup
+			}
+		}
+
+		return await this.physicianRepository.updatePhysicianData(targetUserId, {
+			imageUrl: blobPath,
+		});
+	}
+
+	async getPhysicianDataWithProfileReadUrl(userId: string) {
+		const data = await this.getPhysicianDataByUserId(userId);
+		const profileImageUrl = await resolvePhysicianImageUrlForDisplay(
+			data.imageUrl,
+		);
+		return { ...data, profileImageUrl };
 	}
 
 	private validatePracticeStartDate(practiceStartDate: string) {

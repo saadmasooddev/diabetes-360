@@ -21,11 +21,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Image } from "@/components/ui/image";
+import { PhysicianAvatar } from "@/components/physician/PhysicianAvatar";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCreateUser } from "@/hooks/mutations/useAdmin";
 import { useSpecialtiesAdmin } from "@/hooks/mutations/usePhysician";
-import { useUploadPhysicianImage } from "@/hooks/mutations/usePhysician";
 import { useToast } from "@/hooks/use-toast";
+import { physicianService } from "@/services/physicianService";
 import {
 	genderOptions,
 	diabetesTypeOptions,
@@ -54,6 +55,7 @@ interface CreateUserDialogProps {
 
 export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 	const { toast } = useToast();
+	const queryClient = useQueryClient();
 	const [physicianFields, setPhysicianFields] = useState({
 		specialtyId: "",
 		practiceStartDate: "",
@@ -73,9 +75,11 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 	const createUserMutation = useCreateUser();
 	const { data: specialties = [], isLoading: isLoadingSpecialties } =
 		useSpecialtiesAdmin();
-	const uploadImageMutation = useUploadPhysicianImage();
+	const [isProfileImageUploading, setIsProfileImageUploading] = useState(false);
 	const isLoading =
-		createUserMutation.isPending || uploadImageMutation.isPending;
+		createUserMutation.isPending ||
+		isLoadingSpecialties ||
+		isProfileImageUploading;
 
 	const {
 		register,
@@ -94,6 +98,8 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 
 	const watchedRole = watch("role");
 	const watchedIsActive = watch("isActive");
+	const watchedFirstName = watch("firstName");
+	const watchedLastName = watch("lastName");
 
 	const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -115,17 +121,8 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 		try {
 			const userData: any = { ...data };
 
-			// If physician role, include physician data
+			// If physician role, include physician data (image uploaded to Azure after user exists)
 			if (data.role === "physician") {
-				let imageUrl = "";
-
-				// Upload image if provided (upload before creating user)
-				if (physicianFields.imageFile) {
-					imageUrl = await uploadImageMutation.mutateAsync(
-						physicianFields.imageFile,
-					);
-				}
-
 				// Validate practice start date is not in the future
 				if (physicianFields.practiceStartDate) {
 					const practiceDate = new Date(physicianFields.practiceStartDate);
@@ -146,7 +143,7 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 						? new Date(physicianFields.practiceStartDate).toISOString()
 						: new Date().toISOString(),
 					consultationFee: physicianFields.consultationFee || "0",
-					imageUrl: imageUrl || null,
+					imageUrl: null,
 				};
 			}
 
@@ -177,7 +174,27 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 				userData.customerData = customerData;
 			}
 
-			await createUserMutation.mutateAsync(userData);
+			const createdUser = await createUserMutation.mutateAsync(userData);
+
+			if (
+				data.role === "physician" &&
+				physicianFields.imageFile &&
+				createdUser?.id
+			) {
+				setIsProfileImageUploading(true);
+				try {
+					await physicianService.uploadPhysicianProfileImage(
+						createdUser.id,
+						physicianFields.imageFile,
+					);
+					await queryClient.invalidateQueries({
+						queryKey: ["physician", "admin", "physician-data", createdUser.id],
+					});
+					await queryClient.invalidateQueries({ queryKey: ["physician"] });
+				} finally {
+					setIsProfileImageUploading(false);
+				}
+			}
 
 			// Reset form state after successful creation
 			reset({
@@ -419,13 +436,13 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 									accept="image/*"
 									onChange={handleImageChange}
 								/>
-								{physicianFields.imagePreview && (
-									<Image
-										src={physicianFields.imagePreview}
-										alt="Preview"
-										className="w-24 h-24 rounded-full object-cover border"
-									/>
-								)}
+								<PhysicianAvatar
+									firstName={watchedFirstName}
+									lastName={watchedLastName}
+									imageUrl={physicianFields.imagePreview || undefined}
+									className="h-24 w-24"
+									imgClassName="border"
+								/>
 							</div>
 						</div>
 					)}

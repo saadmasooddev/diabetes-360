@@ -272,14 +272,23 @@ export const useUploadPhysicianImage = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (file: File) => physicianService.uploadImage(file),
-		onSuccess: () => {
+		mutationFn: ({
+			userId,
+			file,
+		}: {
+			userId: string;
+			file: File;
+		}) => physicianService.uploadPhysicianProfileImage(userId, file),
+		onSuccess: (_, { userId }) => {
 			queryClient.invalidateQueries({
 				queryKey: ["physician", "admin", "physician-data"],
 			});
+			queryClient.invalidateQueries({
+				queryKey: ["physician", "admin", "physician-data", userId],
+			});
 			toast({
 				title: "Image Uploaded",
-				description: "Image has been uploaded successfully.",
+				description: "Profile image has been saved to storage.",
 				variant: "default",
 			});
 		},

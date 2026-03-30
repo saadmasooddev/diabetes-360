@@ -22,7 +22,7 @@ import { usePhysiciansPaginated } from "@/hooks/mutations/usePhysician";
 import { formatDate, formatTime12 } from "@/lib/utils";
 import { ROUTES } from "@/config/routes";
 import { Star, Calendar, MapPin, Clock, ChevronRight } from "lucide-react";
-import { Image } from "@/components/ui/image";
+import { PhysicianAvatar } from "@/components/physician/PhysicianAvatar";
 import { ReusablePagination } from "@/components/ui/ReusablePagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Physician } from "@/services/physicianService";
@@ -326,13 +326,13 @@ export function Consultations() {
 										}}
 									>
 										<div className="flex flex-col items-center text-center">
-											<div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-2 sm:mb-3">
-												<Image
-													src={physician.imageUrl || ""}
-													alt={`${physician.firstName} ${physician.lastName}`}
-													className="w-full h-full rounded-full object-cover"
-													pointToServer={true}
-													style={{ border: "3px solid #E0F2F1" }}
+											<div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-2 sm:mb-3 mx-auto">
+												<PhysicianAvatar
+													firstName={physician.firstName}
+													lastName={physician.lastName}
+													imageUrl={physician.imageUrl || undefined}
+													className="h-16 w-16 sm:h-20 sm:w-20"
+													imgClassName="border-[3px] border-[#E0F2F1]"
 												/>
 											</div>
 											<h3

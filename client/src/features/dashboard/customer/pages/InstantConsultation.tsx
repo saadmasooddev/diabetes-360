@@ -16,9 +16,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { Physician } from "@/services/physicianService";
 import type { Doctor } from "@/mocks/doctors";
-import doctorImage from "@assets/stock_images/professional_female__7f02b2b3.jpg";
 import { formatDate, formatTime12 } from "@/lib/utils";
-import { Image } from "@/components/ui/image";
+import { PhysicianAvatar } from "@/components/physician/PhysicianAvatar";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import dayjs from "dayjs";
 
@@ -28,11 +27,13 @@ function mapPhysicianToDoctor(physician: Physician): Doctor {
 	return {
 		id: physician.id,
 		name: [physician.firstName, physician.lastName].filter(Boolean).join(" ") || "Dr. Unknown",
+		firstName: physician.firstName ?? "",
+		lastName: physician.lastName ?? "",
 		specialty: physician.specialty,
 		experience: physician.experience,
 		rating: physician.rating || 0,
 		isOnline: true,
-		image: physician.imageUrl || physician.avatar || doctorImage,
+		image: physician.imageUrl || physician.avatar || "",
 		consultationFee: parseFloat(physician.consultationFee) || 0,
 	};
 }
@@ -296,15 +297,16 @@ export function InstantConsultation() {
 										Consulting Doctor
 									</p>
 									<div className="flex items-center gap-3">
-										<Image
-											src={
+										<PhysicianAvatar
+											firstName={selectedPhysician.firstName}
+											lastName={selectedPhysician.lastName}
+											imageUrl={
 												selectedPhysician.imageUrl ||
 												selectedPhysician.avatar ||
-												doctorImage
+												undefined
 											}
-											alt={selectedPhysician.firstName ?? ""}
-											className="w-12 h-12 rounded-full object-cover border-2 border-[#E0F2F1]"
-											pointToServer={true}
+											className="h-12 w-12"
+											imgClassName="border-2 border-[#E0F2F1]"
 										/>
 										<div>
 											<h4 className="font-semibold text-[#00453A]">
