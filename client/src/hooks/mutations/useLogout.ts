@@ -20,7 +20,8 @@ export const useLogout = () => {
 			if (refreshToken) {
 				await authService.logout({ refreshToken });
 			}
-			await kc.logout({redirectUri: getSsoLoginRedirectUri() })
+			if(kc)
+				await kc.logout({redirectUri: getSsoLoginRedirectUri() })
 		},
 		onSuccess: () => {
 			logout();

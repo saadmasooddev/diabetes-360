@@ -127,6 +127,7 @@ export const LogIn = (): JSX.Element => {
 	const emailValue = watch("email");
 	useEffect(() => {
 		const kc = getKeycloakInstance()
+		if (!kc) return
 		kc.init({
 			onLoad: "check-sso",
 			pkceMethod: "S256"
@@ -157,8 +158,8 @@ export const LogIn = (): JSX.Element => {
 	}, [])
 
 	const handleKeyClockSSOLogin = async () => {
-		if (!isKeycloakSsoConfigured()) return;
 		const kc = getKeycloakInstance();
+		if (!kc) return
 		kc
 			.login({ redirectUri: getSsoLoginRedirectUri() })
 	}

@@ -7,12 +7,13 @@ export function isKeycloakSsoConfigured(): boolean {
 	const url = import.meta.env.VITE_KEYCLOAK_URL?.trim();
 	const realm = import.meta.env.VITE_KEYCLOAK_REALM?.trim();
 	const clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID?.trim();
+	console.log("url", url, realm, clientId)
 	return Boolean(url && realm && clientId);
 }
 
-export function getKeycloakInstance(): Keycloak {
+export function getKeycloakInstance(): Keycloak | null {
 	if (!isKeycloakSsoConfigured()) {
-		throw new Error("Keycloak environment variables are not set");
+		return null
 	}
 	if (!instance) {
 		instance = new Keycloak({
@@ -30,5 +31,6 @@ export function getSsoLoginRedirectUri(): string {
 
 export function redirectToKeycloakLogin(): void {
 	const kc = getKeycloakInstance();
-	kc.login({ redirectUri: getSsoLoginRedirectUri() });
+	if(kc)
+		kc.login({ redirectUri: getSsoLoginRedirectUri() });
 }
