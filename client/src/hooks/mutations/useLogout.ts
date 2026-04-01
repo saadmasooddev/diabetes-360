@@ -5,12 +5,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/config/routes";
 import { TokenManager } from "@/utils/tokenManager";
+import { getKeycloakInstance, getSsoLoginRedirectUri } from "@/integrations/keycloak/keycloakClient";
 
 export const useLogout = () => {
 	const { toast } = useToast();
 	const logout = useAuthStore((state) => state.logout);
 	const [, navigate] = useLocation();
 	const queryClient = useQueryClient()
+	const kc= getKeycloakInstance()
 
 	return useMutation<void, Error, void>({
 		mutationFn: async () => {
@@ -18,6 +20,7 @@ export const useLogout = () => {
 			if (refreshToken) {
 				await authService.logout({ refreshToken });
 			}
+			await kc.logout({redirectUri: getSsoLoginRedirectUri() })
 		},
 		onSuccess: () => {
 			logout();

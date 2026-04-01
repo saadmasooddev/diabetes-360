@@ -30,7 +30,7 @@ import { Menu, X } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PERMISSIONS } from "@/utils/permissions";
 import { PAYMENT_TYPE } from "@shared/schema";
-import { useQueryClient } from "@tanstack/react-query";
+import { useLogout } from "@/hooks/mutations/useLogout";
 
 interface NavItem {
 	label: string;
@@ -49,7 +49,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
 	const [location, setLocation] = useLocation();
 	const user = useAuthStore((state) => state.user);
-	const logout = useAuthStore((state) => state.logout);
+	const { mutate: logout } = useLogout()
 	const { hasAnyPermission } = usePermissions();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isDashboardExpanded, setIsDashboardExpanded] = useState(false);

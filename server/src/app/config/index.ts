@@ -43,6 +43,12 @@ export const config = {
 		limit: parseInt(process.env.PAGINATION_LIMIT || "100", 10),
 	},
 	defaults: {
-		timezone: "Asia/Karachi"
-	}
+		timezone: "Asia/Karachi",
+	},
+	keycloak: {
+		issuerUrl: process.env.KEYCLOAK_ISSUER_URL?.trim() ?? "",
+		clientId: process.env.KEYCLOAK_CLIENT_ID?.trim() ?? "",
+		clientSecret: process.env.KEYCLOAK_CLIENT_SECRET?.trim() ?? "",
+		isConfigured: Boolean((process.env.KEYCLOAK_ISSUER_URL?.trim() ?? "") && (process.env.KEYCLOAK_CLIENT_ID?.trim() ?? ""))
+	},
 } as const;

@@ -25,8 +25,8 @@ export class AuthRepository {
 		return user[0];
 	}
 
-	async getUserByEmail(email: string) {
-		const user = await db
+	private userWithProfileQuery() {
+		return db
 			.select({
 				...getTableColumns(users),
 				profileData: {
@@ -36,14 +36,25 @@ export class AuthRepository {
 				},
 			})
 			.from(users)
-			.where(eq(users.email, email))
-			.limit(1)
 			.leftJoin(customerData, eq(users.id, customerData.userId))
 			.leftJoin(physicianData, eq(users.id, physicianData.userId))
 			.leftJoin(
 				physicianSpecialties,
 				eq(physicianData.specialtyId, physicianSpecialties.id),
 			);
+	}
+
+	async getUserByEmail(email: string) {
+		const user = await this.userWithProfileQuery()
+			.where(eq(users.email, email))
+			.limit(1);
+		return user[0];
+	}
+
+	async getUserWithProfileById(id: string) {
+		const user = await this.userWithProfileQuery()
+			.where(eq(users.id, id))
+			.limit(1);
 		return user[0];
 	}
 

@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { connect, disconnect } from "extendable-media-recorder-wav-encoder";
 import { twMerge } from "tailwind-merge";
 import type { Slot } from "@/services/bookingService";
-import type { AuthData, CustomerData, User } from "@/types/auth.types";
+import type { CustomerData, TokenPair, User } from "@/types/auth.types";
 import { HEALTH_METRIC_SOURCE_ENUM, HealthMetricReading, USER_ROLES, type UserRole } from "@shared/schema";
 import {
 	ADMIN_DASHBOARD_PREFIX,
@@ -260,7 +260,13 @@ class Utils {
 
 	readonly roleAfterAuthNavigationMap: Record<
 		UserRole,
-		(data: AuthData, navigate: (p: string) => void) => void
+		(
+			data: {
+				user: { role: UserRole; profileComplete?: boolean | null };
+				tokens?: TokenPair;
+			},
+			navigate: (p: string) => void,
+		) => void
 	> = {
 		[USER_ROLES.CUSTOMER]: (data, navigate) => {
 			if (!data.user.profileComplete) {

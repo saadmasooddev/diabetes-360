@@ -5,11 +5,12 @@ import {
 	ArrowLeft,
 	Loader2,
 	Mail,
+	KeyRound,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Image } from "@/components/ui/image";
@@ -32,29 +33,18 @@ import {
 	useVerify2FALogin,
 	useRequestSignInCode,
 } from "@/hooks/mutations/useLogin";
+import { useKeycloakSsoLogin } from "@/hooks/mutations/useKeycloakSsoLogin";
+import {
+	getKeycloakInstance,
+	getSsoLoginRedirectUri,
+	isKeycloakSsoConfigured,
+	redirectToKeycloakLogin,
+} from "@/integrations/keycloak/keycloakClient";
 import { ROUTES } from "@/config/routes";
 
 const SIGN_IN_CODE_EXPIRY_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
 const MAX_RESENDS = 3;
-
-const socialButtons = [
-	{
-		icon: "/figmaAssets/social-icon---facebook.svg",
-		alt: "Facebook",
-		name: "Facebook",
-	},
-	{
-		icon: "/figmaAssets/social-icon---google.svg",
-		alt: "Google",
-		name: "Google",
-	},
-	{
-		icon: "/figmaAssets/social-icon---apple.svg",
-		alt: "Apple",
-		name: "Apple",
-	},
-];
 
 function useResendCooldown(cooldownEnd: number | null) {
 	const [secondsLeft, setSecondsLeft] = useState(0);
@@ -116,6 +106,9 @@ export const LogIn = (): JSX.Element => {
 	const { mutate: verify2FA, isPending: isVerifying2FA } = useVerify2FALogin();
 	const { mutate: requestSignInCode, isPending: isSendingCode } =
 		useRequestSignInCode();
+	const { mutate: exchangeKeycloakToken, isPending: isSsoExchanging } =
+		useKeycloakSsoLogin();
+	const ssoCallbackHandled = useRef(false);
 
 	const {
 		register,
@@ -132,6 +125,43 @@ export const LogIn = (): JSX.Element => {
 	});
 
 	const emailValue = watch("email");
+	useEffect(() => {
+		const kc = getKeycloakInstance()
+		kc.init({
+			onLoad: "check-sso",
+			pkceMethod: "S256"
+		})
+			.then((authenticated) => {
+				console.log("The autne", authenticated, kc.token)
+				if (
+					!authenticated ||
+					!kc.token ||
+					ssoCallbackHandled.current
+				) {
+					return;
+				}
+				ssoCallbackHandled.current = true;
+				console.log("The kc object is", kc)
+				exchangeKeycloakToken(
+					{ ssoAccessToken: kc.token, ssoSubject: kc.subject || "" }, {
+					onSuccess: (response) => {
+					},
+					onError: () => {
+						ssoCallbackHandled.current = false;
+					},
+				});
+			})
+			.catch(() => {
+				// Silent: SSO is optional; user can still use email/password
+			});
+	}, [])
+
+	const handleKeyClockSSOLogin = async () => {
+		if (!isKeycloakSsoConfigured()) return;
+		const kc = getKeycloakInstance();
+		kc
+			.login({ redirectUri: getSsoLoginRedirectUri() })
+	}
 
 	const onSubmit = (data: LoginFormData) => {
 		login(data, {
@@ -201,10 +231,6 @@ export const LogIn = (): JSX.Element => {
 			return;
 		}
 		verify2FA({ email: userEmail, token: verificationCode });
-	};
-
-	const handleSocialLogin = (platform: string) => {
-		// Social login functionality to be implemented
 	};
 
 	const isEmailValid = emailValue && !errors.email;
@@ -497,32 +523,35 @@ export const LogIn = (): JSX.Element => {
 									<Mail className="mr-2 h-4 w-4" />
 									Sign in with email
 								</Button>
+								{isKeycloakSsoConfigured() ? (
+									<>
+										<div className="flex items-center gap-2 w-full lg:w-[353px] my-3">
+											<div className="flex-1 h-px bg-[#d8dadc]" />
+											<span className="[font-family:'Inter',Helvetica] text-xs text-[#000000b2]">
+												or
+											</span>
+											<div className="flex-1 h-px bg-[#d8dadc]" />
+										</div>
+										<Button
+											type="button"
+											variant="outline"
+											onClick={() => handleKeyClockSSOLogin()}
+											disabled={isSsoExchanging || isPending}
+											className="w-full lg:w-[353px] h-12 border-[#00856f] text-[#00856f] hover:bg-[#00856f]/5 rounded-[10px]"
+											data-testid="button-login-sso"
+										>
+											{isSsoExchanging ? (
+												<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+											) : (
+												<KeyRound className="mr-2 h-4 w-4" />
+											)}
+											Login with SSO
+										</Button>
+									</>
+								) : null}
 							</>
 						)}
 					</form>
-
-					{/* <div className="flex items-center gap-[9px] w-full lg:w-[353px] mb-[22px]">
-						<Separator className="flex-1 bg-[#d8dadc]" />
-						<span className="[font-family:'Inter',Helvetica] font-normal text-[#000000b2] text-sm tracking-[0] leading-[17.5px]">
-							Or Login with
-						</span>
-						<Separator className="flex-1 bg-[#d8dadc]" />
-					</div> */}
-
-					{/* <div className="flex gap-[15px] mb-12 lg:mb-[117px] justify-center lg:justify-start">
-						{socialButtons.map((social, index) => (
-							<Button
-								key={index}
-								type="button"
-								variant="outline"
-								onClick={() => handleSocialLogin(social.name)}
-								className="w-[108px] h-auto px-[45px] py-[18px] bg-white rounded-[10px] border border-solid border-[#00856f] hover:bg-[#00856f]/5"
-								data-testid={`button-social-${social.name.toLowerCase()}`}
-							>
-								<Image className="w-5 h-5" alt={social.alt} src={social.icon} />
-							</Button>
-						))}
-					</div> */}
 
 					<div className="flex justify-center w-full lg:w-[353px]">
 						<p className="[font-family:'Inter',Helvetica] font-normal text-sm tracking-[0] leading-[17.5px]">

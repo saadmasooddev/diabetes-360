@@ -1,5 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser } from "../models/user.schema";
+import {
+	insertUserSchema,
+	type InsertUser,
+	PROVIDERS,
+} from "../models/user.schema";
 import { AuthResponse, AuthService } from "../services/auth.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
@@ -78,8 +82,43 @@ export class AuthController {
 
 	async login(req: Request, res: Response): Promise<void> {
 		try {
-			const { email, password, requestSignInCode, emailSignInCode } =
-				req.body;
+			const {
+				email,
+				password,
+				requestSignInCode,
+				emailSignInCode,
+				ssoProvider,
+				ssoAccessToken,
+				ssoSubject
+			} = req.body;
+
+			if (
+				typeof ssoAccessToken === "string" &&
+				ssoAccessToken.length > 0 &&
+				ssoProvider === PROVIDERS.KEYCLOAK &&
+				typeof ssoSubject === "string" &&
+				ssoSubject.length > 0
+			) {
+				const authResponse =
+					await this.authService.loginWithKeycloakAccessToken(ssoAccessToken,ssoSubject);
+				if (authResponse.requiresTwoFactor) {
+					sendSuccess(
+						res,
+						authResponse,
+						this.loginMessage(
+							authResponse,
+							"Two-factor authentication required",
+						),
+					);
+					return;
+				}
+				sendSuccess(
+					res,
+					authResponse,
+					this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
+				);
+				return;
+			}
 
 			if (!email) {
 				throw new BadRequestError("Email is required");

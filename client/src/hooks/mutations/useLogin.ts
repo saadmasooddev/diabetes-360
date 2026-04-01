@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { authService } from "@/services/authService";
-import type { LoginRequest, AuthData } from "@/types/auth.types";
+import type { LoginRequest, AuthData, User } from "@/types/auth.types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { useLocation } from "wouter";
@@ -53,7 +53,7 @@ export const useLogin = () => {
 				return; // Let the component handle 2FA verification
 			}
 
-			setAuth(data.user, data.tokens);
+			setAuth(data.user as unknown as User, data.tokens!);
 			toast({
 				title: "Welcome back!",
 				description: "You have successfully logged in.",
@@ -61,7 +61,10 @@ export const useLogin = () => {
 			});
 
 			const role = data.user.role;
-			utils.roleAfterAuthNavigationMap[role]?.(data, navigate);
+			utils.roleAfterAuthNavigationMap[role]?.(
+				{ user: data.user, tokens: data.tokens },
+				navigate,
+			);
 		},
 		onError: (error) => {
 			toast({
@@ -81,7 +84,7 @@ export const useVerify2FALogin = () => {
 	return useMutation<AuthData, Error, { email: string; token: string }>({
 		mutationFn: ({ email, token }) => authService.verify2FALogin(email, token),
 		onSuccess: (data) => {
-			setAuth(data.user, data.tokens);
+			setAuth(data.user as unknown as User, data.tokens!);
 			toast({
 				title: "Welcome back!",
 				description: "You have successfully logged in.",
@@ -89,7 +92,10 @@ export const useVerify2FALogin = () => {
 			});
 
 			const role: UserRole = data.user.role;
-			utils.roleAfterAuthNavigationMap[role]?.(data, navigate);
+			utils.roleAfterAuthNavigationMap[role]?.(
+				{ user: data.user, tokens: data.tokens },
+				navigate,
+			);
 		},
 		onError: (error) => {
 			toast({

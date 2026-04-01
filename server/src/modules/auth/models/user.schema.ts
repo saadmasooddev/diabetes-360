@@ -27,6 +27,7 @@ export const PROVIDERS = {
 	GOOGLE: "google",
 	APPLE: "apple",
 	FACEBOOK: "facebook",
+	KEYCLOAK: "keycloak",
 } as const;
 
 export const userRoleEnum = z.enum([
@@ -44,12 +45,14 @@ export const provider = pgEnum("provider_enum", [
 	PROVIDERS.GOOGLE,
 	PROVIDERS.APPLE,
 	PROVIDERS.FACEBOOK,
+	PROVIDERS.KEYCLOAK,
 ]);
 export const providerEnum = z.enum([
 	PROVIDERS.MANUAL,
 	PROVIDERS.GOOGLE,
 	PROVIDERS.APPLE,
 	PROVIDERS.FACEBOOK,
+	PROVIDERS.KEYCLOAK,
 ]);
 
 export enum PAYMENT_TYPE {
@@ -70,8 +73,8 @@ export const users = pgTable("users", {
 	password: text("password"), // Made optional for OAuth providers
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").default(false),
-	provider: provider("provider").notNull().default(PROVIDERS.MANUAL), // manual, google, apple, facebook
-	providerId: text("provider_id"), // External provider ID
+	provider: provider("provider").notNull().default(PROVIDERS.MANUAL), 
+	providerId: text("provider_id"), 
 	role: userRole("role").default(USER_ROLES.CUSTOMER).notNull(), // customer, admin, physician
 	paymentType: paymentType("payment_type").default("free").notNull(), // 'monthly', 'annual', or 'free'
 	isActive: boolean("is_active").default(true),

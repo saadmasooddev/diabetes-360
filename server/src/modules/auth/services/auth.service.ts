@@ -20,9 +20,11 @@ import {
 	UnauthorizedError,
 	BadRequestError,
 } from "../../../shared/errors";
+import { KeycloakSsoRepository } from "../../../integrations/keycloak/keycloak-sso.repository";
 import { emailService } from "../../../shared/services/email.service";
 import { ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
+import { keyClockOidcService } from "server/src/integrations/keycloak/keycloak-oidc.service";
 
 export interface AuthResponse {
 	user: Omit<
@@ -41,11 +43,91 @@ export interface SignupResponse {
 export class AuthService {
 	private authRepository: AuthRepository;
 	private twoFactorService: TwoFactorService;
-
+	private keycloakSsoRepository: KeycloakSsoRepository;
 
 	constructor() {
 		this.authRepository = new AuthRepository();
 		this.twoFactorService = new TwoFactorService();
+		this.keycloakSsoRepository = new KeycloakSsoRepository();
+	}
+
+	/**
+	 * Exchanges a Keycloak access token for application JWTs.
+	 * Isolated from password login; disable by clearing Keycloak env vars.
+	 */
+	async loginWithKeycloakAccessToken(
+		accessToken: string,
+expectedSub: string
+	): Promise<AuthResponse> {
+		if (!config.keycloak.isConfigured) {
+			throw new BadRequestError("SSO is not configured on this server");
+		}
+
+		const claims = await keyClockOidcService.getKeycloakUserInfoFromAccessToken(accessToken, expectedSub );
+
+		let user = await this.keycloakSsoRepository.getUserWithProfileByKeycloakSub(
+			claims.sub,
+		);
+
+		if (!user) {
+			const byEmail = await this.authRepository.getUserByEmail(claims.email);
+			if (byEmail) {
+				await this.keycloakSsoRepository.linkKeycloakSubject(
+					byEmail.id,
+					claims.sub,
+				);
+				if (!byEmail.emailVerified) {
+					await this.authRepository.updateUser(byEmail.id, {
+						emailVerified: true,
+					});
+				}
+				user = await this.authRepository.getUserWithProfileById(byEmail.id);
+			} else {
+				try {
+					const userId =
+						await this.keycloakSsoRepository.createKeycloakProvisionedUser({
+							firstName: claims.givenName,
+							lastName: claims.familyName,
+							email: claims.email,
+							keycloakSub: claims.sub,
+						});
+					user = await this.authRepository.getUserWithProfileById(userId);
+				} catch {
+					throw new ConflictError(
+						"Could not create your account. The email may already be in use — try signing in with email or SSO again.",
+					);
+				}
+			}
+		}
+
+		if (!user) {
+			throw new UnauthorizedError("Could not load user after SSO");
+		}
+
+		const tokens = await this.createTokens({
+			userId: user.id,
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			role: user.role,
+		});
+
+		const {
+			password: __,
+			profileData: profileData2,
+			...userWithoutPassword2
+		} = user;
+		const userRole2 = user.role as UserRole;
+		return {
+			user: {
+				...userWithoutPassword2,
+				profileData: profileData2 as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[userRole2] || [])],
+			},
+			emailVerificationCodeSent: false,
+			tokens,
+			requiresTwoFactor: false,
+		};
 	}
 
 	async createUserForAdmin(userData: InsertUser) {

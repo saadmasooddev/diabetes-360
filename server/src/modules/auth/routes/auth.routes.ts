@@ -108,9 +108,9 @@ router.post("/resend-verification-otp", (req, res) =>
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - email
- *               - password
+ *             description: |
+ *               Standard login requires `email` (and `password`, or sign-in code fields).
+ *               Keycloak SSO: send `ssoProvider` = `keycloak` and `ssoAccessToken` (Keycloak access token from the SPA) — no email/password required.
  *             properties:
  *               email:
  *                 type: string
@@ -120,6 +120,19 @@ router.post("/resend-verification-otp", (req, res) =>
  *                 type: string
  *                 format: password
  *                 example: SecurePass123!
+ *               requestSignInCode:
+ *                 type: boolean
+ *                 description: Request a one-time email sign-in code
+ *               emailSignInCode:
+ *                 type: string
+ *                 description: 6-digit email sign-in code
+ *               ssoProvider:
+ *                 type: string
+ *                 enum: [keycloak]
+ *                 description: When set with ssoAccessToken, performs Keycloak SSO login
+ *               ssoAccessToken:
+ *                 type: string
+ *                 description: Keycloak OIDC access token (validated via UserInfo)
  *     responses:
  *       200:
  *         description: Login successful

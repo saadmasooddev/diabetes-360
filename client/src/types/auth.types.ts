@@ -1,4 +1,4 @@
-import { DIABETES_TYPE } from "@shared/schema";
+import { DIABETES_TYPE, PROVIDERS, UserRole } from "@shared/schema";
 import { AuthResponse, SignupResponse } from "server/src/modules/auth/services/auth.service";
 
 export type PaymentType = "free" | "monthly" | "annual";
@@ -32,11 +32,11 @@ export interface User {
 	firstName: string;
 	lastName: string;
 	email: string;
-	emailVerified: boolean;
-	provider: string;
+	emailVerified: boolean | null;
+	provider: typeof PROVIDERS[keyof typeof PROVIDERS];
 	providerId?: string;
 	avatar?: string;
-	role: "customer" | "admin" | "physician";
+	role: UserRole;
 	paymentType?: PaymentType;
 	isActive: boolean;
 	profileComplete: boolean;
@@ -96,6 +96,12 @@ export interface LoginRequest {
 	password?: string;
 	requestSignInCode?: boolean;
 	emailSignInCode?: string;
+}
+
+export interface KeycloakSsoLoginRequest {
+	ssoProvider: typeof PROVIDERS.KEYCLOAK;
+	ssoAccessToken: string;
+	ssoSubject: string
 }
 
 export interface RefreshTokenRequest {

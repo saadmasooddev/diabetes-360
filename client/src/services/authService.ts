@@ -4,6 +4,7 @@ import type {
 	SignupRequest,
 	SignupRes,
 	LoginRequest,
+	KeycloakSsoLoginRequest,
 	AuthApiResponse,
 	RefreshTokenRequest,
 	LogoutRequest,
@@ -60,6 +61,17 @@ class AuthService {
 		);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Login failed");
+		}
+		return response.data;
+	}
+
+	async loginWithKeycloak(data: KeycloakSsoLoginRequest): Promise<AuthData> {
+		const response = await httpClient.post<AuthApiResponse>(
+			API_ENDPOINTS.AUTH.LOGIN,
+			data,
+		);
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "SSO login failed");
 		}
 		return response.data;
 	}
