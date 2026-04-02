@@ -36,7 +36,7 @@ import {
 import { useKeycloakSsoLogin } from "@/hooks/mutations/useKeycloakSsoLogin";
 import {
 	getKeycloakInstance,
-	initKeycloakCheckSso,
+	// initKeycloakCheckSso,
 	redirectToKeycloakLogin,
 } from "@/integrations/keycloak/keycloakClient";
 import { ROUTES } from "@/config/routes";
@@ -128,30 +128,33 @@ export const LogIn = (): JSX.Element => {
 		const kc = getKeycloakInstance();
 		if (!kc) return;
 
-		const p = initKeycloakCheckSso();
-		if (!p) return;
+		// const p = initKeycloakCheckSso();
+		// if (!p) return;
 
-		p.then((authenticated) => {
-				if (
-					!authenticated ||
-					!kc.token ||
-					ssoCallbackHandled.current
-				) {
-					return;
-				}
-				ssoCallbackHandled.current = true;
-				exchangeKeycloakToken(
-					{ ssoAccessToken: kc.token, ssoSubject: kc.subject || "" }, {
-					onSuccess: (response) => {
-					},
-					onError: () => {
-						ssoCallbackHandled.current = false;
-					},
-				});
-			})
+		kc.init({ onLoad: "check-sso", pkceMethod: "S256" }).then((authenticated) => {
+			if (
+				!authenticated ||
+				!kc.token ||
+				ssoCallbackHandled.current
+			) {
+				return;
+			}
+			ssoCallbackHandled.current = true;
+			exchangeKeycloakToken(
+				{ ssoAccessToken: kc.token, ssoSubject: kc.subject || "" }, {
+				onSuccess: (response) => {
+				},
+				onError: () => {
+					ssoCallbackHandled.current = false;
+				},
+			});
+		})
 			.catch(() => {
 				// Silent: SSO is optional; user can still use email/password
 			});
+		return () => {
+
+		}
 	}, []);
 
 	const handleKeyClockSSOLogin = () => {
