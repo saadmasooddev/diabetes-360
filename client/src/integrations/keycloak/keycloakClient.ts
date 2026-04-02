@@ -3,9 +3,9 @@ import { ROUTES } from "@/config/routes";
 
 let instance: Keycloak | null = null;
 
-const url = import.meta.env.VITE_KEYCLOAK_URL?.trim() || "https://keycloak-app-acdpe5bkgnbjcacs.southeastasia-01.azurewebsites.net"
-const realm = import.meta.env.VITE_KEYCLOAK_REALM?.trim() || "mycompany-sso"
-const clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID?.trim() || "echo360-dev"
+const url = "https://keycloak-app-acdpe5bkgnbjcacs.southeastasia-01.azurewebsites.net"
+const realm = "mycompany-sso"
+const clientId = "echo360-dev"
 
 export function isKeycloakSsoConfigured(): boolean {
 	return Boolean(url && realm && clientId);
