@@ -38,7 +38,6 @@ import {
 	getKeycloakInstance,
 	getSsoLoginRedirectUri,
 	isKeycloakSsoConfigured,
-	redirectToKeycloakLogin,
 } from "@/integrations/keycloak/keycloakClient";
 import { ROUTES } from "@/config/routes";
 
@@ -159,6 +158,7 @@ export const LogIn = (): JSX.Element => {
 
 	const handleKeyClockSSOLogin = async () => {
 		const kc = getKeycloakInstance();
+		console.log("is keyclock configured", isKeycloakSsoConfigured())
 		if (!kc) return
 		kc
 			.login({ redirectUri: getSsoLoginRedirectUri() })
@@ -524,7 +524,7 @@ export const LogIn = (): JSX.Element => {
 									<Mail className="mr-2 h-4 w-4" />
 									Sign in with email
 								</Button>
-								{isKeycloakSsoConfigured() ? (
+								{(
 									<>
 										<div className="flex items-center gap-2 w-full lg:w-[353px] my-3">
 											<div className="flex-1 h-px bg-[#d8dadc]" />
@@ -549,7 +549,7 @@ export const LogIn = (): JSX.Element => {
 											Login with SSO
 										</Button>
 									</>
-								) : null}
+								)}
 							</>
 						)}
 					</form>
