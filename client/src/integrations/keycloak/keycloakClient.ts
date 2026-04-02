@@ -4,9 +4,9 @@ import { ROUTES } from "@/config/routes";
 let instance: Keycloak | null = null;
 
 export function isKeycloakSsoConfigured(): boolean {
-	const url = import.meta.env.VITE_KEYCLOAK_URL?.trim();
-	const realm = import.meta.env.VITE_KEYCLOAK_REALM?.trim();
-	const clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID?.trim();
+	const url = import.meta.env.VITE_KEYCLOAK_URL?.trim() || "https://keycloak-app-acdpe5bkgnbjcacs.southeastasia-01.azurewebsites.net";
+	const realm = import.meta.env.VITE_KEYCLOAK_REALM?.trim() || "mycompany-sso";
+	const clientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID?.trim() || "echo360-dev";
 	return Boolean(url && realm && clientId);
 }
 
