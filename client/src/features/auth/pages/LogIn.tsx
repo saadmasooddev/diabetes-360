@@ -36,6 +36,7 @@ import {
 import { useKeycloakSsoLogin } from "@/hooks/mutations/useKeycloakSsoLogin";
 import {
 	getKeycloakInstance,
+	isKeycloakSsoConfigured,
 	// initKeycloakCheckSso,
 	redirectToKeycloakLogin,
 } from "@/integrations/keycloak/keycloakClient";
@@ -126,6 +127,7 @@ export const LogIn = (): JSX.Element => {
 	const emailValue = watch("email");
 	useEffect(() => {
 		const kc = getKeycloakInstance();
+		console.log(" is keyclock configured ", kc, isKeycloakSsoConfigured())
 		if (!kc) return;
 
 		// const p = initKeycloakCheckSso();
