@@ -3,7 +3,7 @@ import FormData from "form-data";
 import { config } from "../../app/config";
 import { BadRequestError } from "../errors";
 import type { MealDetails } from "server/src/modules/food/repository/food.repository";
-import { CHAT_ROLES } from "@shared/schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, CHAT_ROLES } from "@shared/schema";
 
 /**
  * AI Service Response Types
@@ -95,6 +95,30 @@ export interface HealthAssessmentInsightsResponse {
 	what_to_do_next: Array<{ name: string; tip: string }>;
 }
 
+export interface HealthAssessmentPreviousHistory {
+	daily: string;
+	weekly: string;
+	monthly: string;
+	targets: {
+		recommended_target: string;
+		user_target: string;
+	}
+}
+export interface HealthAssessmentInsightsPayload {
+	user_info: {
+		name: string;
+		gender: string;
+		birthday: string;
+		weight: string;
+		height: string;
+		diabetesType: string;
+		diagnosisDate?: string
+	}
+	glucose_history: HealthAssessmentPreviousHistory
+	walking_steps_history: HealthAssessmentPreviousHistory
+	heartRate_history: HealthAssessmentPreviousHistory
+}
+
 /** Payload for AI /chat/ endpoint (DiaBot) */
 export interface AIChatPayload {
 	user_info: {
@@ -108,9 +132,8 @@ export interface AIChatPayload {
 	};
 	health_summary: {
 		last_24_hours: {
-			blood_sugar: Array<{ value: string; recorded_at: string }>;
+			blood_sugar: Array<{ value: string; recorded_at: string, reading_type: string }>;
 			steps: Array<{ value: string; recorded_at: string }>;
-			water_intake: Array<{ value: string; recorded_at: string }>;
 			heart_rate: Array<{ value: string; recorded_at: string }>;
 			meals: Array<{
 				mealDate: string;
@@ -148,13 +171,11 @@ export interface AIChatResponse {
 	reply?: string;
 }
 
-/** Payload for AI POST /api/chat/last-days-health-summary/ */
 export interface LastDaysHealthSummaryPayload {
 	today_data: {
 		recorded_at: string;
 		blood_sugar: Array<{ value: string }>;
 		steps: Array<{ value: string }>;
-		water_intake: Array<{ value: string }>;
 		heart_rate: Array<{ value: string }>;
 		meals: Array<{
 			foodName: string;
@@ -332,11 +353,8 @@ class AIService {
 		return response.data;
 	}
 
-	/**
-	 * Get health assessment insights
-	 */
 	async getHealthAssessmentInsights(
-		payload: Record<string, any>,
+		payload: HealthAssessmentInsightsPayload,
 	): Promise<AIBaseResponse<HealthAssessmentInsightsResponse>> {
 		const response = await axios.post<
 			AIBaseResponse<HealthAssessmentInsightsResponse>

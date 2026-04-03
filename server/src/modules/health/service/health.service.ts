@@ -59,8 +59,6 @@ export class HealthService {
 
 		if (data.bloodSugar) {
 			key = "glucoseLimit";
-		} else if (data.waterIntake) {
-			key = "waterLimit";
 		} else if (data.heartRate) {
 			key = "heartRateLimits";
 		}
@@ -75,28 +73,6 @@ export class HealthService {
 					throw new BadRequestError(
 						"You have already reached the daily limit for blood sugar",
 					);
-				}
-			},
-			waterLimit: async () => {
-				if (data.waterIntake !== null && data.waterIntake !== undefined) {
-					if (userLimits.remainingLimits.waterLimit <= 0) {
-						throw new BadRequestError(
-							"You have already reached the daily limit for water",
-						);
-					}
-					const todaysWaterTotal =
-						await this.healthRepository.getTodaysMetricTotal(
-							data.userId,
-							METRIC_TYPE_ENUM.WATER_INTAKE,
-							data.recordedAt,
-						);
-					const waterValue = parseFloat(data.waterIntake.toString());
-					const newTotal = todaysWaterTotal + waterValue;
-					if (newTotal > 4) {
-						throw new BadRequestError(
-							`Adding ${waterValue}L would exceed the daily limit of 4L. Current total: ${todaysWaterTotal.toFixed(2)}L.`,
-						);
-					}
 				}
 			},
 			heartRateLimits: async () => {
@@ -131,9 +107,7 @@ export class HealthService {
 
 			if (data.bloodSugar) {
 				metricType = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-			} else if (data.waterIntake) {
-				metricType = METRIC_TYPE_ENUM.WATER_INTAKE;
-			}
+			} 
 
 			if (metricType) {
 				const limit =
@@ -233,7 +207,6 @@ export class HealthService {
 		total: boolean = false,
 	): Promise<{
 		glucose: { daily: number; weekly: number; monthly: number };
-		water: { daily: number; weekly: number; monthly: number };
 		steps: { daily: number; weekly: number; monthly: number };
 		heartRate: { daily: number; weekly: number; monthly: number };
 		targets: {
@@ -464,11 +437,6 @@ export class HealthService {
 			startOfDay,
 			METRIC_TYPE_ENUM.STEPS,
 		);
-		const waterLogsCount = await this.getTodaysMetricCount(
-			userId,
-			startOfDay,
-			METRIC_TYPE_ENUM.WATER_INTAKE,
-		);
 
 		const heartRateLogsCount = await this.getTodaysMetricCount(
 			userId,
@@ -482,7 +450,6 @@ export class HealthService {
 
 		const remainingBloodSugarLogs = limits.glucoseLimit - bloodSugarLogsCount;
 		const remainingStepsLogs = limits.stepsLimit - stepsLogsCount;
-		const remainingWaterLogs = limits.waterLimit - waterLogsCount;
 		const remainingFreeFoodScanLogs =
 			limits.foodScanLimits?.freeTier || 0 - foodScanLogsCount;
 		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount
@@ -501,7 +468,6 @@ export class HealthService {
 			remainingLimits: {
 				glucoseLimit: remainingBloodSugarLogs,
 				stepsLimit: remainingStepsLogs,
-				waterLimit: remainingWaterLogs,
 				heartRateLimits: remainingHeartRateLogs,
 				discountedConsultationQuota: remainingDiscountedConsultations,
 				freeConsultationQuota: remainingFreeConsultations,
@@ -550,20 +516,6 @@ export class HealthService {
 						)?.targetValue || "",
 				},
 			},
-			water_intake_history: {
-				daily: statistics.water.daily.toFixed(1),
-				weekly: statistics.water.weekly.toFixed(1),
-				monthly: statistics.water.monthly.toFixed(1),
-				targets: {
-					recommended_target:
-						statistics.targets.recommended.find(
-							(t) => t.metricType === "water_intake",
-						)?.targetValue || "",
-					user_target:
-						statistics.targets.user.find((t) => t.metricType === "water_intake")
-							?.targetValue || "",
-				},
-			},
 			walking_steps_history: {
 				daily: statistics.steps.daily.toFixed(0),
 				weekly: statistics.steps.weekly.toFixed(0),
@@ -602,9 +554,8 @@ export class HealthService {
 					let name: MetricType = "" as MetricType;
 					if (i.name === "glucose") {
 						name = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-					} else if (i.name === "water") {
-						name = METRIC_TYPE_ENUM.WATER_INTAKE;
-					} else if (i.name === "steps") {
+					}
+					else if (i.name === "steps") {
 						name = METRIC_TYPE_ENUM.STEPS;
 					} else if (i.name === "heart_rate") {
 						name = METRIC_TYPE_ENUM.HEART_RATE;

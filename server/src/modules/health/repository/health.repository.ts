@@ -39,6 +39,7 @@ import type {
 	InsertHba1cMetric,
 	InsertDailyQuickLog,
 	DailyQuickLog,
+	BloodSugarMetricRecord,
 } from "../models/health.schema";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
@@ -74,7 +75,7 @@ export interface HealthTips {
 }
 
 export type FilteredMetricResponse = {
-	bloodSugarRecords: MertricRecord[];
+	bloodSugarRecords: BloodSugarMetricRecord[];
 	waterIntakeRecords: MertricRecord[];
 	stepsRecords: MertricRecord[];
 	heartBeatRecords: MertricRecord[];
@@ -122,9 +123,8 @@ export class HealthRepository {
 				sql`DATE(${exerciseLogs.recordedAt}) between DATE(${startOfDay}) and DATE(${startOfDay})`,
 				isNotNull(exerciseLogs.steps),
 			];
-		} else if (metricType === METRIC_TYPE_ENUM.WATER_INTAKE) {
-			conditions.push(isNotNull(healthMetrics.waterIntake));
-		} else if (metricType === METRIC_TYPE_ENUM.HEART_RATE) {
+		} 
+			 else if (metricType === METRIC_TYPE_ENUM.HEART_RATE) {
 			conditions.push(isNotNull(healthMetrics.heartRate))
 		}
 
@@ -143,7 +143,6 @@ export class HealthRepository {
 				userId: data.userId,
 				bloodSugar: data.bloodSugar?.toString() || null,
 				bloodSugarReadingType: data.bloodSugarReadingType,
-				waterIntake: data.waterIntake?.toString() || null,
 				heartRate: data.heartRate || null,
 				recordedAt: new Date(data.recordedAt),
 				readingSource: data.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
@@ -158,7 +157,6 @@ export class HealthRepository {
 				set : { 
 					heartRate: sql.raw(`excluded.${healthMetrics.heartRate.name}`),
 					bloodSugar: sql.raw(`excluded.${healthMetrics.bloodSugar.name}`),
-					waterIntake: sql.raw(`excluded.${healthMetrics.waterIntake.name}`),
 					bloodSugarReadingType: sql.raw(`excluded.${healthMetrics.bloodSugarReadingType.name}`),
 					userId: sql.raw(`excluded.${healthMetrics.userId.name}`),
 				}
@@ -197,22 +195,6 @@ export class HealthRepository {
 							isNotNull(exerciseLogs.steps),
 						),
 					);
-				return parseFloat(result[0]?.total?.toString() || "0");
-			},
-			[METRIC_TYPE_ENUM.WATER_INTAKE]: async () => {
-				const result = await db
-					.select({
-						total: sql<number>`COALESCE(SUM(${healthMetrics.waterIntake})::numeric, 0)`,
-					})
-					.from(healthMetrics)
-					.where(
-						and(
-							eq(healthMetrics.userId, userId),
-							sql`DATE(${healthMetrics.recordedAt}) between DATE(${date}) and DATE(${date})`,
-							isNotNull(healthMetrics.waterIntake),
-						),
-					);
-
 				return parseFloat(result[0]?.total?.toString() || "0");
 			},
 			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
@@ -278,11 +260,6 @@ export class HealthRepository {
 			METRIC_TYPE_ENUM.STEPS,
 			date,
 		);
-		const todaysWaterTotalPromise = this.getTodaysMetricTotal(
-			userId,
-			METRIC_TYPE_ENUM.WATER_INTAKE,
-			date,
-		);
 
 		// Get previous day totals for comparison
 		const yesterday = new Date(date);
@@ -305,18 +282,6 @@ export class HealthRepository {
 				),
 			);
 
-		const previousWaterPromise = db
-			.select({
-				total: sql<number>`COALESCE(SUM(${healthMetrics.waterIntake})::numeric, 0)`,
-			})
-			.from(healthMetrics)
-			.where(
-				and(
-					eq(healthMetrics.userId, userId),
-					sql`DATE(${healthMetrics.recordedAt}) between DATE(${yesterday}) and DATE(${endOfYesterday})`,
-					isNotNull(healthMetrics.waterIntake),
-				),
-			);
 
 		const latestHeartRatePromise = db
 			.select()
@@ -342,9 +307,7 @@ export class HealthRepository {
 			latestFastingSugar,
 			latestRandomSugar,
 			todaysStepsTotal,
-			todaysWaterTotal,
 			previousSteps,
-			previousWater,
 			latestHeartRate,
 			latestHba1c,
 		] = await Promise.all([
@@ -352,9 +315,7 @@ export class HealthRepository {
 			latestFastingSugarPromise,
 			latestRandomSugarPromise,
 			todaysStepsTotalPromise,
-			todaysWaterTotalPromise,
 			previousStepsPromise,
-			previousWaterPromise,
 			latestHeartRatePromise,
 			latestHba1cPromise,
 		]);
@@ -362,10 +323,6 @@ export class HealthRepository {
 		const previousStepsTotal = parseFloat(
 			previousSteps[0]?.total?.toString() || "0",
 		);
-		const previousWaterTotal = parseFloat(
-			previousWater[0]?.total?.toString() || "0",
-		);
-
 		const exerciseSetsPromise = this.getTodaysExerciseSetsCount(userId, date);
 
 		const exerciseSets = await exerciseSetsPromise;
@@ -375,7 +332,6 @@ export class HealthRepository {
 				bloodSugar: latestNormalSugar[0]?.bloodSugar || null,
 				fastingSugar: latestFastingSugar[0]?.bloodSugar?.toString() ?? "0",
 				randomSugar: latestRandomSugar[0]?.bloodSugar?.toString() ?? "0",
-				waterIntake: todaysWaterTotal.toString(),
 				heartRate: latestHeartRate[0]?.heartRate || null,
 				steps: Math.round(todaysStepsTotal),
 				exerciseSets,
@@ -385,7 +341,6 @@ export class HealthRepository {
 				bloodSugar: latestNormalSugar[1]?.bloodSugar || null,
 				fastingSugar: latestFastingSugar[1]?.bloodSugar?.toString() ?? "0",
 				randomSugar: latestFastingSugar[1]?.bloodSugar?.toString() ?? "0",
-				waterIntake: previousWaterTotal.toString(),
 				heartRate: latestHeartRate[1]?.heartRate || null,
 				steps: Math.round(previousStepsTotal),
 			},
@@ -398,7 +353,6 @@ export class HealthRepository {
 		date: string,
 	): Promise<{
 		glucose: { daily: number; weekly: number; monthly: number };
-		water: { daily: number; weekly: number; monthly: number };
 		steps: { daily: number; weekly: number; monthly: number };
 		heartRate: { daily: number; weekly: number; monthly: number };
 	}> {
@@ -419,19 +373,6 @@ export class HealthRepository {
 					eq(healthMetrics.userId, userId),
 					sql`DATE(${healthMetrics.recordedAt}) between DATE(${date}) and DATE(${date})`,
 					isNotNull(healthMetrics.bloodSugar),
-				),
-			);
-
-		const dailyWaterPromise = db
-			.select({
-				avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
-			})
-			.from(healthMetrics)
-			.where(
-				and(
-					eq(healthMetrics.userId, userId),
-					sql`DATE(${healthMetrics.recordedAt}) between DATE(${date}) and DATE(${date})`,
-					isNotNull(healthMetrics.waterIntake),
 				),
 			);
 
@@ -476,18 +417,6 @@ export class HealthRepository {
 				),
 			);
 
-		const weeklyWaterPromise = db
-			.select({
-				avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
-			})
-			.from(healthMetrics)
-			.where(
-				and(
-					eq(healthMetrics.userId, userId),
-					sql`DATE(${healthMetrics.recordedAt}) between DATE(${weekStart}) and DATE(${date})`,
-					isNotNull(healthMetrics.waterIntake),
-				),
-			);
 
 		// Steps are in exercise_logs
 		const weeklyStepsPromise = db
@@ -530,18 +459,6 @@ export class HealthRepository {
 				),
 			);
 
-		const monthlyWaterPromise = db
-			.select({
-				avg: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
-			})
-			.from(healthMetrics)
-			.where(
-				and(
-					eq(healthMetrics.userId, userId),
-					sql`DATE(${healthMetrics.recordedAt}) between DATE(${monthStart}) and DATE(${date})`,
-					isNotNull(healthMetrics.waterIntake),
-				),
-			);
 
 		// Steps are in exercise_logs
 		const monthlyStepsPromise = db
@@ -572,28 +489,22 @@ export class HealthRepository {
 
 		const [
 			dailyGlucose,
-			dailyWater,
 			dailySteps,
 			dailyHeartRate,
 			weeklyGlucose,
-			weeklyWater,
 			weeklySteps,
 			weeklyHeartRate,
 			monthlyGlucose,
-			monthlyWater,
 			monthlySteps,
 			monthlyHeartRate,
 		] = await Promise.all([
 			dailyGlucosePromise,
-			dailyWaterPromise,
 			dailyStepsPromise,
 			dailyHeartRatePromise,
 			weeklyGlucosePromise,
-			weeklyWaterPromise,
 			weeklyStepsPromise,
 			weeklyHeartRatePromise,
 			monthlyGlucosePromise,
-			monthlyWaterPromise,
 			monthlyStepsPromise,
 			monthlyHeartRatePromise,
 		]);
@@ -602,12 +513,6 @@ export class HealthRepository {
 				daily: Math.round(Number(dailyGlucose[0]?.avg || 0)),
 				weekly: Math.round(Number(weeklyGlucose[0]?.avg || 0)),
 				monthly: Math.round(Number(monthlyGlucose[0]?.avg || 0)),
-				total: 0,
-			},
-			water: {
-				daily: Number(dailyWater[0]?.avg || 0),
-				weekly: Number(weeklyWater[0]?.avg || 0),
-				monthly: Number(monthlyWater[0]?.avg || 0),
 				total: 0,
 			},
 			steps: {
@@ -636,19 +541,7 @@ export class HealthRepository {
 					),
 				);
 
-			const totalWaterPromise = db
-				.select({
-					total: sql<number>`COALESCE(AVG(CAST(${healthMetrics.waterIntake} AS DECIMAL)), 0)`,
-				})
-				.from(healthMetrics)
-				.where(
-					and(
-						eq(healthMetrics.userId, userId),
-						isNotNull(healthMetrics.waterIntake),
-					),
-				);
-
-			// Steps are in exercise_logs
+						// Steps are in exercise_logs
 			const totalStepsPromise = db
 				.select({
 					total: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
@@ -670,15 +563,13 @@ export class HealthRepository {
 					),
 				);
 
-			const [totalGlucose, totalWater, totalSteps, totalHeartRate] =
+			const [totalGlucose, totalSteps, totalHeartRate] =
 				await Promise.all([
 					totalGlucosePromise,
-					totalWaterPromise,
 					totalStepsPromise,
 					totalHeartRatePromise,
 				]);
 			result.glucose.total = Number(totalGlucose[0]?.total);
-			result.water.total = Number(totalWater[0]?.total);
 			result.steps.total = Number(totalSteps[0]?.total || 0);
 			result.heartRate.total = Number(totalHeartRate[0]?.total || 0);
 		}
@@ -700,7 +591,7 @@ export class HealthRepository {
 		];
 
 		const result: FilteredMetricResponse = {
-			bloodSugarRecords: [] as MertricRecord[],
+			bloodSugarRecords: [] as BloodSugarMetricRecord[],
 			waterIntakeRecords: [] as MertricRecord[],
 			stepsRecords: [] as MertricRecord[],
 			heartBeatRecords: [] as MertricRecord[],
@@ -738,6 +629,7 @@ export class HealthRepository {
 						userId: healthMetrics.userId,
 						value: healthMetrics.bloodSugar,
 						recordedAt: healthMetrics.recordedAt,
+						readingType: healthMetrics.bloodSugarReadingType
 					})
 					.from(healthMetrics)
 					.where(and(...baseConditions, isNotNull(healthMetrics.bloodSugar)))
@@ -756,38 +648,7 @@ export class HealthRepository {
 					bloodSugarQueryPromise.limit(limit).offset(offset);
 				}
 
-				result.bloodSugarRecords =
-					(await bloodSugarQueryPromise) as MertricRecord[];
-			},
-			[METRIC_TYPE_ENUM.WATER_INTAKE]: async () => {
-				const waterIntakeQuery = db
-					.select({
-						id: healthMetrics.id,
-						userId: healthMetrics.userId,
-						value: healthMetrics.waterIntake,
-						recordedAt: healthMetrics.recordedAt,
-					})
-					.from(healthMetrics)
-					.where(and(...baseConditions, isNotNull(healthMetrics.waterIntake)))
-					.orderBy(desc(healthMetrics.recordedAt));
-
-				// Get total count
-				const [{ count }] = await db
-					.select({ count: sql<number>`count(*)::int` })
-					.from(healthMetrics)
-					.where(and(...baseConditions, isNotNull(healthMetrics.waterIntake)));
-
-				result.pagination.waterIntake.total = count;
-
-				// Apply pagination if provided
-				if (limit !== undefined && offset !== undefined) {
-					result.waterIntakeRecords = (await waterIntakeQuery
-						.limit(limit)
-						.offset(offset)) as MertricRecord[];
-				} else {
-					result.waterIntakeRecords =
-						(await waterIntakeQuery) as MertricRecord[];
-				}
+				result.bloodSugarRecords = await bloodSugarQueryPromise as BloodSugarMetricRecord[]
 			},
 			[METRIC_TYPE_ENUM.STEPS]: async () => {
 				const stepsBaseConditions = [

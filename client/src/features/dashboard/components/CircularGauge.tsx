@@ -37,13 +37,6 @@ export function CircularGauge({
 					bg: "rgba(76, 175, 80, 0.1)",
 					shadow: "rgba(76, 175, 80, 0.3)",
 				};
-			case METRIC_TYPE_ENUM.WATER_INTAKE:
-				return {
-					start: "#00856F",
-					end: "#00A085",
-					bg: "rgba(0, 133, 111, 0.1)",
-					shadow: "rgba(0, 133, 111, 0.3)",
-				};
 			case METRIC_TYPE_ENUM.STEPS:
 				return {
 					start: "#2196F3",

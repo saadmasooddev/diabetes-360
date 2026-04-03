@@ -74,14 +74,6 @@ export function AddMetricDialog({
 			iconColor: "#2196F3",
 			description: "Track your daily physical activity",
 		},
-		[METRIC_TYPE_ENUM.WATER_INTAKE]: {
-			title: "Log Water Intake",
-			placeholder: "Enter water intake (L)",
-			icon: Droplet,
-			gradient: "linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
-			iconColor: "#00856F",
-			description: "Record your daily hydration",
-		},
 		[METRIC_TYPE_ENUM.HEART_RATE]: {
 			title: "Log Heart Rate",
 			placeholder: "Enter heart rate (bpm)",
