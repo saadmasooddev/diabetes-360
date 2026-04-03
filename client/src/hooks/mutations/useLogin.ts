@@ -8,6 +8,8 @@ import { userService } from "@/services/userService";
 import { utils } from "@/lib/utils";
 import type { UserRole } from "@shared/schema";
 import { ROUTES } from "@/config/routes";
+import { tryGetWebFcmRegistration } from "@/lib/fcm/webFcm";
+import { saveFcmRegistration } from "@/lib/fcm/fcmTokenStorage";
 
 export const useRequestSignInCode = () => {
 	const { toast } = useToast();
@@ -42,7 +44,17 @@ export const useLogin = () => {
 	const [, navigate] = useLocation();
 
 	return useMutation<AuthData, Error, LoginRequest>({
-		mutationFn: (data) => authService.login(data),
+		mutationFn: async (data) => {
+			const fcm = await tryGetWebFcmRegistration();
+			const result = await authService.login({
+				...data,
+				...(fcm ? { fcm } : {}),
+			});
+			if (fcm && result.tokens?.refreshToken) {
+				saveFcmRegistration(fcm);
+			}
+			return result;
+		},
 		onSuccess: (data) => {
 			if(data?.emailVerificationCodeSent === true){
 				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
@@ -79,7 +91,14 @@ export const useVerify2FALogin = () => {
 	const [, navigate] = useLocation();
 
 	return useMutation<AuthData, Error, { email: string; token: string }>({
-		mutationFn: ({ email, token }) => authService.verify2FALogin(email, token),
+		mutationFn: async ({ email, token }) => {
+			const fcm = await tryGetWebFcmRegistration();
+			const result = await authService.verify2FALogin(email, token, fcm);
+			if (fcm && result.tokens?.refreshToken) {
+				saveFcmRegistration(fcm);
+			}
+			return result;
+		},
 		onSuccess: (data) => {
 			setAuth(data.user, data.tokens);
 			toast({

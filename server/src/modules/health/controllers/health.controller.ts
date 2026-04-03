@@ -17,6 +17,7 @@ import {
 	HEALTH_METRIC_SOURCE_ENUM,
 } from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
+import { GlucoseAlertService } from "../../notifications/services/glucose-alert.service";
 import {
 	DateManager,
 	getPaginationParams,
@@ -24,9 +25,11 @@ import {
 
 export class HealthController {
 	private healthService: HealthService;
+	private glucoseAlertService: GlucoseAlertService;
 
 	constructor() {
 		this.healthService = new HealthService();
+		this.glucoseAlertService = new GlucoseAlertService();
 	}
 
 	async getLatestMetric(
@@ -162,7 +165,7 @@ export class HealthController {
 			let date: string = "";
 
 			if (healthMetrics && typeof healthMetrics === "object") {
-				const { customMetrics, otherMetrics }= this.validateHealthMetric({
+				const { customMetrics, otherMetrics, hadBloodSugarInMetrics }= this.validateHealthMetric({
 					...healthMetrics,
 					userId,
 				});
@@ -177,6 +180,14 @@ export class HealthController {
 				}
 				if(customMetrics.length >0 || otherMetrics.length >0)
 					date = (customMetrics[0] || otherMetrics[0]).recordedAt;
+
+				if (hadBloodSugarInMetrics) {
+					void this.glucoseAlertService
+						.checkAndNotifyIfNeeded(userId)
+						.catch((err) =>
+							console.error("[GlucoseAlertService]", err),
+						);
+				}
 			}
 
 			const logsToInsert = exercises.map((ex) => ({
@@ -437,6 +448,8 @@ export class HealthController {
 	private validateHealthMetric(data: HealthMetricData) {
 		const customMetrics: InsertHealthMetric[] = []
 		const otherMetrics: InsertHealthMetric[] = []
+		let hadBloodSugarInMetrics = false
+
 		for(const key in data) {
 			const values = data[key as keyof HealthMetricData] as HealthMetricReading[]
 			const customerUniqueMap = new Map<string, InsertHealthMetric>()
@@ -458,6 +471,7 @@ export class HealthController {
 				}
 
 				uniqueMap.set(uniqueKey, object)
+				if(key === "bloodSugar") hadBloodSugarInMetrics = true
 			})
 
 			customMetrics.push(...Array.from(customerUniqueMap.values()))
@@ -478,6 +492,7 @@ export class HealthController {
 		return {
 			customMetrics: validationResultCustom.data,
 			otherMetrics: validationResultOther.data,
+			hadBloodSugarInMetrics
 		};
 	}
 

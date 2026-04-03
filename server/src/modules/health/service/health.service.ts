@@ -680,4 +680,8 @@ export class HealthService {
 		);
 		return response.data;
 	}
+
+ async runInactivityNotificationJob() {
+	await this.healthRepository.runInactivityNotificationJob()
+ }
 }

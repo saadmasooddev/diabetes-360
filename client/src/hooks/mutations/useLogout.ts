@@ -5,6 +5,10 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/config/routes";
 import { TokenManager } from "@/utils/tokenManager";
+import {
+	clearFcmRegistration,
+	readFcmRegistration,
+} from "@/lib/fcm/fcmTokenStorage";
 
 export const useLogout = () => {
 	const { toast } = useToast();
@@ -15,9 +19,14 @@ export const useLogout = () => {
 	return useMutation<void, Error, void>({
 		mutationFn: async () => {
 			const refreshToken = TokenManager.getRefreshToken();
+			const fcm = readFcmRegistration();
 			if (refreshToken) {
-				await authService.logout({ refreshToken });
+				await authService.logout({
+					refreshToken,
+					...(fcm ? { fcm } : {}),
+				});
 			}
+			clearFcmRegistration();
 		},
 		onSuccess: () => {
 			logout();
@@ -30,6 +39,7 @@ export const useLogout = () => {
 			navigate(ROUTES.HOME);
 		},
 		onError: () => {
+			clearFcmRegistration();
 			logout();
 			toast({
 				title: "Logged out",

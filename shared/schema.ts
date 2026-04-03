@@ -8,4 +8,5 @@ export * from "../server/src/modules/medical/models/medical.schema";
 export * from "../server/src/modules/booking/models/consultation-quota.schema";
 export * from "../server/src/modules/chat/models/chat.schema";
 export * from "../server/src/modules/food/models/timeZone.schema";
+export * from "../server/src/modules/notifications/models/fcm.schema";
 export * from "../server/src/shared/utils/utils";

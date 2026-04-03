@@ -14,6 +14,7 @@ import type {
 	RefreshTokenData,
 	ApiResponse,
 } from "@/types/auth.types";
+import type { FcmRegistrationInput } from "@shared/schema";
 
 class AuthService {
 	async signup(data: SignupRequest): Promise<{ otpSent: boolean }> {
@@ -144,10 +145,14 @@ class AuthService {
 		return response.message || "Password changed successfully";
 	}
 
-	async verify2FALogin(email: string, token: string): Promise<AuthData> {
+	async verify2FALogin(
+		email: string,
+		token: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<AuthData> {
 		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.VERIFY_2FA,
-			{ email, token },
+			{ email, token, ...(fcm ? { fcm } : {}) },
 		);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "2FA verification failed");

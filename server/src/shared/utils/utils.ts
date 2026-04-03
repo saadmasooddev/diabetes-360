@@ -22,7 +22,7 @@ export class DateManager {
 		return hours * 60 + minutes;
 	}
 
-	static date(date: string) {
+	static date(date: string | Date | null) {
 		return dayjs(date).toDate();
 	}
 	static startOfDay(date: Date) {

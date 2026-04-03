@@ -518,6 +518,7 @@ router.get(
  * /api/health/exercises/add/batch:
  *   post:
  *     summary: Log multiple exercises at once (including steps and activities)
+ *     description: When healthMetrics includes blood glucose readings, the server may enqueue a data-only push if the latest glucose is outside configured thresholds (FCM).
  *     tags: [Health Exercises]
  *     security:
  *       - bearerAuth: []

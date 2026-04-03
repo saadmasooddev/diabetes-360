@@ -44,5 +44,8 @@ export const config = {
 	},
 	defaults: {
 		timezone: "Asia/Karachi"
-	}
+	},
+	firebase: {
+		adminSdkPrivateKey: process.env.FIREBASE_ADMIN_SDK_PRIVATE_KEY || "{}"
+	},
 } as const;

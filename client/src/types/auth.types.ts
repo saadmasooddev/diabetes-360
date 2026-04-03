@@ -1,4 +1,4 @@
-import { DIABETES_TYPE } from "@shared/schema";
+import { DIABETES_TYPE, type FcmRegistrationInput } from "@shared/schema";
 import { AuthResponse, SignupResponse } from "server/src/modules/auth/services/auth.service";
 
 export type PaymentType = "free" | "monthly" | "annual";
@@ -96,6 +96,7 @@ export interface LoginRequest {
 	password?: string;
 	requestSignInCode?: boolean;
 	emailSignInCode?: string;
+	fcm?: FcmRegistrationInput;
 }
 
 export interface RefreshTokenRequest {
@@ -104,6 +105,7 @@ export interface RefreshTokenRequest {
 
 export interface LogoutRequest {
 	refreshToken: string;
+	fcm?: FcmRegistrationInput;
 }
 
 export interface AuthError {

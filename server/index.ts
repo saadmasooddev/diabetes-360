@@ -8,6 +8,7 @@ import { CronJobService } from "./src/shared/services/cron-job.service";
 import { ChatService } from "./src/modules/chat/service/chat.service";
 import { zoomService } from "./src/shared/services/zoom.service";
 import { DateManager } from "./src/shared/utils/utils";
+import { HealthService } from "./src/modules/health/service/health.service";
 
 const app = createApp();
 
@@ -43,8 +44,16 @@ const app = createApp();
 			name: "meeting-link",
 			schedule: "*/1 * * * *",
 			handler: async () => {
-				zoomService.processMeetingLinksJob()
+				await zoomService.processMeetingLinksJob()
 
+			},
+		},
+		{
+			name: "inactivity-push-notifications",
+			schedule: "15 8 * * *",
+			handler: async () => {
+				const healthService = new HealthService()
+				await healthService.runInactivityNotificationJob()
 			},
 		},
 	]);

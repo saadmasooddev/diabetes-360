@@ -23,6 +23,7 @@ import {
 	sql,
 	isNotNull,
 	isNull,
+	max,
 } from "drizzle-orm";
 import type {
 	InsertHealthMetric,
@@ -42,8 +43,10 @@ import type {
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
 import { LoggedMeal, Tx } from "../../food/models/food.schema";
-import { BLOOD_SUGAR_READING_TYPES_ENUM } from "../../auth/models/user.schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, USER_ROLES, users } from "../../auth/models/user.schema";
 import { FoodRepository } from "../../food/repository/food.repository";
+import { DateManager, PUSH_MESSAGE_TYPE_ENUM, userPushNotifications } from "@shared/schema";
+import { PushNotificationService } from "../../notifications/services/push-notification.service";
 
 export type ChartData = {
 	value: number;
@@ -88,7 +91,10 @@ export type FilteredMetricResponse = {
 
 export class HealthRepository {
 
+ private readonly INACTIVITY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 	private readonly foodRepository: FoodRepository
+	private readonly pushNotificationService = new PushNotificationService();
 
 	constructor() {
 		this.foodRepository = new FoodRepository()
@@ -1360,4 +1366,97 @@ export class HealthRepository {
 			.limit(1);
 		return row?.bloodSugar ? parseFloat(row.bloodSugar.toString()) : null;
 	}
+
+	async getLatestBloodGlucoseForAlerts(userId: string): Promise<number | null> {
+		const [row] = await db
+			.select({ bloodSugar: healthMetrics.bloodSugar })
+			.from(healthMetrics)
+			.where(
+				and(
+					eq(healthMetrics.userId, userId),
+					ne(
+						healthMetrics.bloodSugarReadingType,
+						BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C,
+					),
+					isNotNull(healthMetrics.bloodSugar),
+				),
+			)
+			.orderBy(desc(healthMetrics.recordedAt))
+			.limit(1);
+		return row?.bloodSugar ? parseFloat(row.bloodSugar.toString()) : null;
+	}
+
+ async getLastActivityAt(userId: string): Promise<Date | null> {
+	const [ex] = await db
+		.select({ m: max(exerciseLogs.recordedAt) })
+		.from(exerciseLogs)
+		.where(eq(exerciseLogs.userId, userId));
+	const [hm] = await db
+		.select({ m: max(healthMetrics.recordedAt) })
+		.from(healthMetrics)
+		.where(eq(healthMetrics.userId, userId));
+	const [dq] = await db
+		.select({ m: max(dailyQuickLogs.recordedAt) })
+		.from(dailyQuickLogs)
+		.where(eq(dailyQuickLogs.userId, userId));
+
+	const times = [DateManager.date(ex?.m), DateManager.date(hm?.m), DateManager.date(dq?.m)].filter(
+		(d): d is Date => d != null,
+	);
+
+	if (times.length === 0) return null;
+	return new Date(Math.max(...times.map((d) => d.getTime())));
+}
+
+async runInactivityNotificationJob(): Promise<void> {
+	const sinceCooldown = new Date(Date.now() - this.INACTIVITY_COOLDOWN_MS);
+	const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+	const customerIds = await db
+		.select({ id: users.id })
+		.from(users)
+		.where(
+			and(eq(users.role, USER_ROLES.CUSTOMER), eq(users.isActive, true)),
+		);
+
+	for (const { id: userId } of customerIds) {
+		const lastAt = await this.getLastActivityAt(userId);
+		if (lastAt !== null && lastAt >= cutoff) {
+			continue;
+		}
+
+		const [recent] = await db
+			.select({ id: userPushNotifications.id })
+			.from(userPushNotifications)
+			.where(
+				and(
+					eq(userPushNotifications.userId, userId),
+					eq(
+						userPushNotifications.messageType,
+						PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
+					),
+					gte(userPushNotifications.createdAt, sinceCooldown),
+				),
+			)
+			.orderBy(desc(userPushNotifications.createdAt))
+			.limit(1);
+		if (recent) continue;
+
+		const lastIso = lastAt ? lastAt.toISOString() : null;
+
+		try {
+			await this.pushNotificationService.sendDataOnlyToUser(userId, {
+				type: PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
+				title: "We miss you",
+				body: "You have not logged any activity in the last day. A quick check-in helps you stay on track.",
+				data: { lastActivityAtIso: lastIso },
+			});
+		} catch (e) {
+			console.error(
+				`[InactivityNotificationJob] Failed for user ${userId}:`,
+				e,
+			);
+		}
+	}
+}
 }

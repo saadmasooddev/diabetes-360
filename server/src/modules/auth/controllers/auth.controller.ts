@@ -3,9 +3,11 @@ import { insertUserSchema, type InsertUser } from "../models/user.schema";
 import { AuthResponse, AuthService } from "../services/auth.service";
 import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
-import { BadRequestError } from "../../../shared/errors";
+import { BadRequestError, ValidationError } from "../../../shared/errors";
+import { fcmRegistrationSchema } from "@shared/schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "server/src/shared/middleware/auth";
+
 
 export class AuthController {
 	private authService: AuthService;
@@ -13,6 +15,17 @@ export class AuthController {
 	constructor() {
 		this.authService = new AuthService();
 	}
+
+private parseOptionalFcmFromBody(fcm?: unknown) {
+	if (!fcm) {
+		return undefined;
+	}
+	const parsed = fcmRegistrationSchema.safeParse(fcm);
+	if (!parsed.success) {
+		throw new ValidationError(undefined, parsed.error);
+	}
+	return parsed.data;
+}
 
 	async signup(req: Request, res: Response): Promise<void> {
 		try {
@@ -80,6 +93,7 @@ export class AuthController {
 		try {
 			const { email, password, requestSignInCode, emailSignInCode } =
 				req.body;
+			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
 
 			if (!email) {
 				throw new BadRequestError("Email is required");
@@ -100,8 +114,11 @@ this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5
 				if (typeof emailSignInCode !== "string") {
 					throw new BadRequestError("Sign-in code must be a string");
 				}
-				const authResponse =
-					await this.authService.loginWithEmailCode(email, emailSignInCode);
+				const authResponse = await this.authService.loginWithEmailCode(
+					email,
+					emailSignInCode,
+					fcm,
+				);
 				sendSuccess(
 					res,
 					authResponse,
@@ -115,7 +132,7 @@ this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5
 				throw new BadRequestError("Password is required");
 			}
 
-			const authResponse = await this.authService.login(email, password);
+			const authResponse = await this.authService.login(email, password, fcm);
 
 			// If 2FA is required, return response without tokens
 			if (authResponse.requiresTwoFactor) {
@@ -140,6 +157,7 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 	async verify2FALogin(req: Request, res: Response): Promise<void> {
 		try {
 			const { email, token } = req.body;
+			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
 
 			if (!email || !token) {
 				throw new BadRequestError("Email and verification token are required");
@@ -149,7 +167,11 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 				throw new BadRequestError("Verification token must be 6 digits");
 			}
 
-			const authResponse = await this.authService.verify2FALogin(email, token);
+			const authResponse = await this.authService.verify2FALogin(
+				email,
+				token,
+				fcm,
+			);
 
 			sendSuccess(
 				res,
@@ -180,12 +202,13 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 	async logout(req: Request, res: Response): Promise<void> {
 		try {
 			const { refreshToken } = req.body;
+			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
 
 			if (!refreshToken) {
 				throw new BadRequestError("Refresh token is required");
 			}
 
-			await this.authService.logout(refreshToken);
+			await this.authService.logout(refreshToken, fcm);
 
 			sendSuccess(res, null, "Logged out successfully");
 		} catch (error: any) {

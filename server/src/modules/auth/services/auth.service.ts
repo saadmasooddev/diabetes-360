@@ -23,6 +23,8 @@ import {
 import { emailService } from "../../../shared/services/email.service";
 import { ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
+import { FcmTokenRepository } from "../../notifications/repositories/fcm-token.repository";
+import type { FcmRegistrationInput } from "../../notifications/models/fcm.schema";
 
 export interface AuthResponse {
 	user: Omit<
@@ -41,11 +43,25 @@ export interface SignupResponse {
 export class AuthService {
 	private authRepository: AuthRepository;
 	private twoFactorService: TwoFactorService;
-
+	private fcmTokenRepository: FcmTokenRepository;
 
 	constructor() {
 		this.authRepository = new AuthRepository();
 		this.twoFactorService = new TwoFactorService();
+		this.fcmTokenRepository = new FcmTokenRepository();
+	}
+
+	private async persistFcmIfPresent(
+		userId: string,
+		fcm: FcmRegistrationInput | undefined,
+		tokens: TokenPair | undefined,
+	): Promise<void> {
+		if (!fcm || !tokens?.accessToken || !tokens?.refreshToken) return;
+		await this.fcmTokenRepository.upsertToken(
+			userId,
+			fcm.token,
+			fcm.deviceType,
+		);
 	}
 
 	async createUserForAdmin(userData: InsertUser) {
@@ -287,7 +303,11 @@ emailVerificationCodeSent: false ,
 	}
 
 	
-	async loginWithEmailCode(email: string, code: string): Promise<AuthResponse> {
+	async loginWithEmailCode(
+		email: string,
+		code: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
@@ -297,7 +317,7 @@ emailVerificationCodeSent: false ,
 		if (!user.emailVerified) {
 			return {
 				user: {...user, },
-emailVerificationCodeSent: true ,
+        emailVerificationCodeSent: true ,
 				requiresTwoFactor: false
 			}
 		}
@@ -326,19 +346,25 @@ emailVerificationCodeSent: true ,
 
 		const { password: _, profileData, ...userWithoutPassword } = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
 			},
-				emailVerificationCodeSent: false,
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		await this.persistFcmIfPresent(user.id, fcm, tokens);
+		return response;
 	}
 
-	async login(email: string, password: string): Promise<AuthResponse> {
+	async login(
+		email: string,
+		password: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
@@ -409,22 +435,28 @@ emailVerificationCodeSent: true ,
 			...userWithoutPassword2
 		} = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword2,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
 			},
-				emailVerificationCodeSent:false,
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		await this.persistFcmIfPresent(user.id, fcm, tokens);
+		return response;
 	}
 
 	/**
 	 * Verify 2FA token and complete login
 	 */
-	async verify2FALogin(email: string, token: string): Promise<AuthResponse> {
+	async verify2FALogin(
+		email: string,
+		token: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
@@ -448,16 +480,18 @@ emailVerificationCodeSent: true ,
 
 		const { password: _, profileData, ...userWithoutPassword } = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword,
-				profileData: user.profileData as CustomerData | PhysicianData,
+				profileData: profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
 			},
-				emailVerificationCodeSent: false,
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		await this.persistFcmIfPresent(user.id, fcm, tokens);
+		return response;
 	}
 
 	async refreshTokens(refreshToken: string): Promise<TokenPair> {
@@ -492,12 +526,22 @@ emailVerificationCodeSent: true ,
 		return tokens;
 	}
 
-	async logout(refreshToken: string): Promise<void> {
+	async logout(
+		refreshToken: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<void> {
 		const payload = JWTService.verifyAccessToken(refreshToken);
 		if (!payload.tokenId) {
 			throw new BadRequestError("invalid refresh token");
 		}
 		await this.authRepository.revokeRefreshToken(payload.tokenId);
+		if (fcm) {
+			await this.fcmTokenRepository.deleteToken(
+				payload.userId,
+				fcm.token,
+				fcm.deviceType,
+			);
+		}
 	}
 
 	async logoutAll(userId: string): Promise<void> {
