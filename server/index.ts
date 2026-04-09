@@ -9,6 +9,7 @@ import { ChatService } from "./src/modules/chat/service/chat.service";
 import { zoomService } from "./src/shared/services/zoom.service";
 import { DateManager } from "./src/shared/utils/utils";
 import { HealthService } from "./src/modules/health/service/health.service";
+import { BookingService } from "./src/modules/booking/service/booking.service";
 
 const app = createApp();
 
@@ -20,8 +21,11 @@ const app = createApp();
 	const startTimeIso = DateManager.slotTimeToISO(
 	  '2026-01-13 00:00:00',
 		'22:30:00',
+		config.defaults.timezone
 	);
-	console.log("THe the start time iso log is", startTimeIso)
+
+	console.log("THe the start time iso log is", startTimeIso, "the local time is", Date(startTimeIso))
+
 	const cronJobService = new CronJobService();
 	cronJobService.registerAll([
 		{
@@ -42,7 +46,7 @@ const app = createApp();
 		},
 		{
 			name: "meeting-link",
-			schedule: "*/1 * * * *",
+			schedule: "*/5 * * * *",
 			handler: async () => {
 				await zoomService.processMeetingLinksJob()
 
@@ -56,6 +60,15 @@ const app = createApp();
 				await healthService.runInactivityNotificationJob()
 			},
 		},
+		{
+			name: "meeting-reminder",
+			schedule: "*/5 * * * *",
+			handler: async () => {
+				const bookingService = new BookingService()
+				await bookingService.sendMeetingReminderJob(10)
+
+			}
+		}
 	]);
 	cronJobService.start();
 

@@ -70,7 +70,7 @@ export class DateManager {
 	 * Builds an ISO 8601 start time from an availability date and a time string (HH:MM or HH:MM:SS).
 	 * Treats the combined date+time as UTC.
 	 */
-	static slotTimeToISO(date: Date | string, timeStr: string, timeZone = "Asia/Karachi"): string {
+	static slotTimeToISO(date: Date | string, timeStr: string, timeZone: string): string {
 		const datePart = dayjs(date).utc().format("YYYY-MM-DD");
 		const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
 		const dateTime = `${datePart} ${normalized}`

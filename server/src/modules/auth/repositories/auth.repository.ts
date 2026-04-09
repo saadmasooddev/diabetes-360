@@ -1,3 +1,4 @@
+import { TimeZoneRepository } from "server/src/shared/repository/timeZone.repository";
 import { db } from "../../../app/config/db";
 import {
 	type User,
@@ -14,9 +15,12 @@ import {
 	physicianSpecialties,
 } from "../models/user.schema";
 import { eq, and, getTableColumns, gt, gte, like, sql } from "drizzle-orm";
+import { BadRequestError } from "server/src/shared/errors";
+import { config } from "server/src/app/config";
 
 export class AuthRepository {
 
+	private readonly timezoneRepository = new TimeZoneRepository()
 	private static readonly SIGN_IN_CODE_PREFIX = "SIC_";
 	private static readonly EMAIL_VERIFICATION_CODE_PREFIX = "EVC_";
 
@@ -48,7 +52,15 @@ export class AuthRepository {
 	}
 
 	async createUser(user: InsertUser ): Promise<User> {
-		const newUser = await db.insert(users).values(user).returning();
+		const defaultTimeZone = await this.timezoneRepository.getTimeZone(config.defaults.timezone)
+		if(!defaultTimeZone){
+			throw new BadRequestError("Default timezone not found")
+		}
+
+		const newUser = await db.insert(users).values({
+			...user,
+			timeZoneId: defaultTimeZone.id
+		}).returning();
 		return newUser[0];
 	}
 

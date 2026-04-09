@@ -1,3 +1,5 @@
+alter table health_metrics drop column water_intake;
+
 CREATE TYPE "public"."fcm_device_type_enum" AS ENUM('ios', 'android', 'web');
 CREATE TYPE "public"."push_message_type_enum" AS ENUM('glucose_alert', 'inactivity_alert');
 

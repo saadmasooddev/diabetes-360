@@ -26,12 +26,12 @@ export function getFirebasePublicConfig(): FirebasePublicConfig {
 
 
 export function isFirebaseMessagingConfigured(): boolean {
-	const c = getFirebasePublicConfig();
+	const c = getFireBaseCredentials();
 	return Boolean(
 		c.apiKey &&
 			c.projectId &&
 			c.messagingSenderId &&
 			c.appId &&
-			import.meta.env.VITE_FIREBASE_VAPID_KEY,
+			c.vapidKey,
 	);
 }

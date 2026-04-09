@@ -2,9 +2,6 @@ import { BookingRepository } from "server/src/modules/booking/repository/booking
 import { config } from "../../app/config";
 import { emailService } from "../services/email.service";
 import { DateManager } from "../utils/utils";
-import { db } from "../../app/config/db";
-import { eq } from "drizzle-orm";
-import { bookedSlots } from "../../modules/booking/models/booking.schema";
 
 
 export type CreateMeetingOptions = {
@@ -125,10 +122,7 @@ export class ZoomService {
 					try {
 						const patientName = `${slot.patientFirstName} ${slot.patientLastName}`;
 						const physicianName = `${slot.physicianFirstName} ${slot.physicianLastName}`;
-						const startTimeIso = DateManager.slotTimeToISO(
-							slot.availabilityDate,
-							slot.slotStartTime,
-						);
+						const startTimeIso = this.bookingRepository.getStartTimeISO(slot.availabilityDate, slot.slotStartTime)
 						const result = await zoomService.createMeeting({
 							startTime: startTimeIso,
 							durationMinutes: slot.slotSizeMinutes,

@@ -8,8 +8,6 @@ import { userService } from "@/services/userService";
 import { utils } from "@/lib/utils";
 import type { UserRole } from "@shared/schema";
 import { ROUTES } from "@/config/routes";
-import { tryGetWebFcmRegistration } from "@/lib/fcm/webFcm";
-import { saveFcmRegistration } from "@/lib/fcm/fcmTokenStorage";
 
 export const useRequestSignInCode = () => {
 	const { toast } = useToast();
@@ -45,14 +43,9 @@ export const useLogin = () => {
 
 	return useMutation<AuthData, Error, LoginRequest>({
 		mutationFn: async (data) => {
-			const fcm = await tryGetWebFcmRegistration();
 			const result = await authService.login({
 				...data,
-				...(fcm ? { fcm } : {}),
 			});
-			if (fcm && result.tokens?.refreshToken) {
-				saveFcmRegistration(fcm);
-			}
 			return result;
 		},
 		onSuccess: (data) => {
@@ -92,11 +85,7 @@ export const useVerify2FALogin = () => {
 
 	return useMutation<AuthData, Error, { email: string; token: string }>({
 		mutationFn: async ({ email, token }) => {
-			const fcm = await tryGetWebFcmRegistration();
-			const result = await authService.verify2FALogin(email, token, fcm);
-			if (fcm && result.tokens?.refreshToken) {
-				saveFcmRegistration(fcm);
-			}
+			const result = await authService.verify2FALogin(email, token);
 			return result;
 		},
 		onSuccess: (data) => {

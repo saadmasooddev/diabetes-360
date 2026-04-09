@@ -148,11 +148,10 @@ class AuthService {
 	async verify2FALogin(
 		email: string,
 		token: string,
-		fcm?: FcmRegistrationInput,
 	): Promise<AuthData> {
 		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.VERIFY_2FA,
-			{ email, token, ...(fcm ? { fcm } : {}) },
+			{ email, token,  },
 		);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "2FA verification failed");

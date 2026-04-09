@@ -16,16 +16,6 @@ export class AuthController {
 		this.authService = new AuthService();
 	}
 
-private parseOptionalFcmFromBody(fcm?: unknown) {
-	if (!fcm) {
-		return undefined;
-	}
-	const parsed = fcmRegistrationSchema.safeParse(fcm);
-	if (!parsed.success) {
-		throw new ValidationError(undefined, parsed.error);
-	}
-	return parsed.data;
-}
 
 	async signup(req: Request, res: Response): Promise<void> {
 		try {
@@ -93,7 +83,6 @@ private parseOptionalFcmFromBody(fcm?: unknown) {
 		try {
 			const { email, password, requestSignInCode, emailSignInCode } =
 				req.body;
-			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
 
 			if (!email) {
 				throw new BadRequestError("Email is required");
@@ -117,7 +106,6 @@ this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5
 				const authResponse = await this.authService.loginWithEmailCode(
 					email,
 					emailSignInCode,
-					fcm,
 				);
 				sendSuccess(
 					res,
@@ -132,7 +120,7 @@ this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5
 				throw new BadRequestError("Password is required");
 			}
 
-			const authResponse = await this.authService.login(email, password, fcm);
+			const authResponse = await this.authService.login(email, password);
 
 			// If 2FA is required, return response without tokens
 			if (authResponse.requiresTwoFactor) {
@@ -157,7 +145,6 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 	async verify2FALogin(req: Request, res: Response): Promise<void> {
 		try {
 			const { email, token } = req.body;
-			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
 
 			if (!email || !token) {
 				throw new BadRequestError("Email and verification token are required");
@@ -170,7 +157,6 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 			const authResponse = await this.authService.verify2FALogin(
 				email,
 				token,
-				fcm,
 			);
 
 			sendSuccess(
@@ -199,10 +185,21 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 		}
 	}
 
+	private parseOptionalFcmFromBody(fcm?: unknown) {
+		if(!fcm) {
+			return
+		}
+		const parsed = fcmRegistrationSchema.safeParse(fcm)
+		if(!parsed.success){
+			return
+		}
+		return parsed.data
+	}
+
 	async logout(req: Request, res: Response): Promise<void> {
 		try {
-			const { refreshToken } = req.body;
-			const fcm = this.parseOptionalFcmFromBody(req.body.fcm);
+			const { refreshToken, fcmToken,  deviceType } = req.body;
+			const fcm = this.parseOptionalFcmFromBody({ token: fcmToken, deviceType });
 
 			if (!refreshToken) {
 				throw new BadRequestError("Refresh token is required");

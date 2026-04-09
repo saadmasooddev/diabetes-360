@@ -142,4 +142,7 @@ export const API_ENDPOINTS = {
     LAB_REPORT_UPDATE: (id: string) => `/api/medical/lab-reports/${id}`,
     LAB_REPORT_DELETE: (id: string) => `/api/medical/lab-reports/${id}`,
   },
+  NOTIFICATIONS: {
+    STORE_FCM_TOKEN: "/api/notifications/fcm-token"
+  }
 } as const;

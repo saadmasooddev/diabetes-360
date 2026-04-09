@@ -182,11 +182,7 @@ export class HealthController {
 					date = (customMetrics[0] || otherMetrics[0]).recordedAt;
 
 				if (hadBloodSugarInMetrics) {
-					void this.glucoseAlertService
-						.checkAndNotifyIfNeeded(userId)
-						.catch((err) =>
-							console.error("[GlucoseAlertService]", err),
-						);
+					this.glucoseAlertService.checkAndNotifyIfNeeded(userId).then().catch(console.error)
 				}
 			}
 

@@ -39,6 +39,7 @@ export class PushNotificationLogRepository {
 			)
 			.orderBy(desc(userPushNotifications.createdAt))
 			.limit(1);
-		return Boolean(row);
+		// return Boolean(row);
+		return false
 	}
 }

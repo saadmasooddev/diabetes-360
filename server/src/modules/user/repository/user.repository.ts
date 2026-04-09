@@ -10,6 +10,8 @@ import {
 } from "../../auth/models/user.schema";
 import { eq, inArray } from "drizzle-orm";
 import { NotFoundError } from "server/src/shared/errors";
+import { Tx } from "../../food/models/food.schema";
+import { timeZones } from "../../food/models/timeZone.schema";
 
 export class UserRepository {
 	async getUser(userId: string) {
@@ -58,5 +60,20 @@ export class UserRepository {
 			.from(users)
 			.where(inArray(users.id, userIds));
 		return usersData;
+	}
+
+	async getUserTimeZone(userId: string, tx?: Tx) {
+		const dbConn = tx || db
+		const [user] = await dbConn
+			.select()
+			.from(users)
+			.innerJoin(timeZones, eq(users.timeZoneId, timeZones.id))
+			.where(eq(users.id, userId))
+			.limit(1)
+		if(!user) {
+			throw new NotFoundError("User not found")
+		}
+
+		return user.time_zones.name
 	}
 }

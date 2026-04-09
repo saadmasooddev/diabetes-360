@@ -23,7 +23,8 @@ export const useLogout = () => {
 			if (refreshToken) {
 				await authService.logout({
 					refreshToken,
-					...(fcm ? { fcm } : {}),
+					fcmToken: fcm?.token,
+					deviceType: fcm?.deviceType
 				});
 			}
 			clearFcmRegistration();

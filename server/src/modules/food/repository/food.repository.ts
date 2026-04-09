@@ -22,6 +22,7 @@ import {
 import { sql as rawSql } from "drizzle-orm";
 import { PgTransaction, numeric } from "drizzle-orm/pg-core";
 import { timeZones } from "../models/timeZone.schema";
+import { users } from "../../auth/models/user.schema";
 
 export interface RecommendedNutrients {
 	carbs: {
@@ -340,7 +341,8 @@ export class FoodRepository {
 				timeZone: timeZones.name,
 			})
 			.from(loggedMeals)
-			.innerJoin(timeZones, eq(loggedMeals.timeZoneId, timeZones.id))
+			.innerJoin(users, eq(users.id, loggedMeals.userId))
+			.innerJoin(timeZones, eq(timeZones.id, users.timeZoneId))
 			.where(
 				and(
 					eq(loggedMeals.userId, userId),
@@ -370,7 +372,6 @@ export class FoodRepository {
 				fats: meal.fats.toString(),
 				calories: meal.calories.toString(),
 				recordedAt: meal.recordedAt,
-				timeZoneId: meal.timeZoneId,
 			})
 			.returning();
 

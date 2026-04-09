@@ -9,10 +9,10 @@ export const config = {
 	databaseUrl: process.env.DATABASE_URL || "",
 	email: {
 		apiKey: process.env.SENDGRID_API_KEY || "",
-		from: process.env.EMAIL_FROM || "noreply@diabetes360.com",
+		from: process.env.EMAIL_FROM || "",
 		fromName: process.env.EMAIL_FROM_NAME || "Diabetes 360",
 	},
-	frontendUrl: process.env.FRONTEND_URL || process.env.VITE_REACT_API_BASE_URL || "http://localhost:5000",
+	frontendUrl: process.env.FRONTEND_URL || process.env.VITE_REACT_API_BASE_URL || "",
 	accessTokenExpiresIn: Math.floor(
 		Number(process.env.ACCESS_TOKEN_EXPIRES_IN || "0") * 60 || 15 * 60,
 	),

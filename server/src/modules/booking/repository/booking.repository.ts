@@ -15,6 +15,7 @@ import {
 	notInArray,
 	gt,
 	isNull,
+	desc,
 } from "drizzle-orm";
 import {
 	slotSize,
@@ -64,6 +65,22 @@ import { Tx } from "../../food/models/food.schema";
 import { medications } from "../../medical/models/medical.schema";
 import { MedicalRepository, MedicineDosage } from "../../medical/repository/medical.repository";
 import { ConsultationQuotaRepository } from "./consultation-quota.repository";
+import { config } from "server/src/app/config";
+import { DateManager, timeZones, usersFcmTokens } from "@shared/schema";
+import { UserRepository } from "../../user/repository/user.repository";
+import { toCamelCase } from "drizzle-orm/casing";
+
+type BookedSlotReminder = {
+	to: string;
+	recipientName: string;
+	patientName: string;
+	physicianName: string;
+	startTimeIso: string;
+	durationMinutes: number;
+	isPhysician: boolean;
+	bookingId: string;
+	userId: string
+}
 
 export type BookedSlotWithoutMeetingLink = {
 			bookedSlotId: string;
@@ -143,10 +160,12 @@ export type SlotWithDetails = {
 export class BookingRepository {
 	private medicalRepository: MedicalRepository;
 	private consultationQuotaRepository: ConsultationQuotaRepository
+	private userRepository: UserRepository
 
 	constructor() {
 		this.medicalRepository = new MedicalRepository()
 		this.consultationQuotaRepository = new ConsultationQuotaRepository()
+		this.userRepository = new UserRepository()
 	}
 
 	async getAllSlotSizes(): Promise<SlotSize[]> {
@@ -492,16 +511,13 @@ export class BookingRepository {
 			.where(eq(slotPrice.slotId, slotId));
 	}
 
-	// Booked Slot operations
-	async createBookedSlot(data: InsertBookedSlot): Promise<BookedSlot> {
-		const [booked] = await db
-			.insert(bookedSlots)
-			.values({
-				...data,
-				updatedAt: new Date(),
-			})
-			.returning();
-		return booked;
+	getStartTimeISO(availabilityDate: Date, slotStartTime: string, timeZone?: string ) {
+		const startTimeIso = DateManager.slotTimeToISO(
+			availabilityDate,
+			slotStartTime,
+			timeZone || config.defaults.timezone
+		);
+		return startTimeIso
 	}
 
 	async createBookedSlotTransaction(
@@ -510,7 +526,6 @@ export class BookingRepository {
 	) {
 		return await dbUtils.transaction(async (tx) => {
 			const [systemLimits] = await tx.select().from(freeTierLimits).limit(1);
-			console.log("the system limits are", systemLimits)
 			if (
 				!systemLimits ||
 				systemLimits.freeConsultationQuota === undefined ||
@@ -1121,6 +1136,36 @@ export class BookingRepository {
 			)
 			.limit(1);
 		return !!result;
+	}
+
+	async getLatestPhysicianTrackingPatient(patientId: string) {
+		const { password, ...userColumns } = getTableColumns(users)
+		const [result ] = await db
+		  .select({
+				...userColumns 
+			})
+			.from(bookedSlots)
+			.innerJoin(slots, eq(slots.id, bookedSlots.slotId))
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.innerJoin(users, eq(availabilityDate.physicianId, users.id))
+			.where(
+				and(
+					eq(bookedSlots.customerId, patientId),
+					or(
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.PENDING),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.CONFIRMED),
+						eq(bookedSlots.status, BOOKING_STATUS_ENUM.COMPLETED),
+					),
+				),
+			)
+			.orderBy(desc(availabilityDate.date), desc(bookedSlots.updatedAt))
+			.limit(1)
+
+			return result
+
 	}
 
 	// Get user consultations (upcoming and past)
@@ -1859,7 +1904,112 @@ export class BookingRepository {
 				throw error
 			}
 		})
+	}
 
+	async getBookedSlotsForReminder(minutesToSendReminderBefore: number, f: ( data: BookedSlotReminder[]) => Promise<void>){
+		return await dbUtils.transaction(async tx => {
+			try {
+				
+			const storedTime = sql`${bookedSlots.meetingTimeUtc} AT TIME ZONE ${timeZones.name} `
+			const currentUserTime = sql`(NOW() - (
+			  ${minutesToSendReminderBefore} * INTERVAL '1 minute')
+			) AT TIME ZONE ${timeZones.name} `
+			const timeDiff =  sql`
+				(EXTRACT(EPOCH FROM ((${storedTime}) - (${currentUserTime}))) / 60)
+			`
+			const conditions = and(
+				isNull(bookedSlots.reminderSentAt),
+				sql`${minutesToSendReminderBefore}::int >= ${timeDiff}::int`,
+				sql`${timeDiff}::int > 0`
+			)
+
+
+			const physicianAlias = alias(users, "physician")
+			const patientAlias = alias(users, 'patient')
+
+			const bookedSlotsForUserReminderPromise = tx
+				.select({
+					to: patientAlias.email, 
+					recipientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+					patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+					physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+					userId: patientAlias.id,
+					durationMinutes: slotSize.size,
+					bookingId: bookedSlots.id,
+					availabilityDate: availabilityDate.date,
+					startTime: slots.startTime,
+					timeZone: timeZones.name
+				})
+				.from(bookedSlots)
+				.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+				.innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+				.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
+				.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
+				.innerJoin(physicianAlias, eq(availabilityDate.physicianId, physicianAlias.id))
+				.innerJoin(timeZones, eq(patientAlias.timeZoneId, timeZones.id))
+				.where(conditions)
+				.for("update", { skipLocked: true})
+
+				
+			const bookedSlotsForPhysicianReminderPromise = tx
+				.select({
+					to: physicianAlias.email, 
+					recipientName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+					patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+					physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+					userId: physicianAlias.id,
+					durationMinutes: slotSize.size,
+					bookingId: bookedSlots.id,
+					availabilityDate: availabilityDate.date,
+					startTime: slots.startTime,
+					timeZone: timeZones.name
+				})
+				.from(bookedSlots)
+				.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+				.innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
+				.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
+				.innerJoin(physicianAlias, eq(availabilityDate.physicianId, physicianAlias.id))
+				.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
+				.innerJoin(timeZones, eq(physicianAlias.timeZoneId, timeZones.id))
+				.where(conditions)
+				.for("update", { skipLocked: true})
+
+				const [ physiciansToRemind, usersToRemind] = await Promise.all([
+					bookedSlotsForPhysicianReminderPromise,
+					bookedSlotsForUserReminderPromise
+				])
+
+
+				const reminderData: BookedSlotReminder[] = []
+
+				physiciansToRemind.forEach(p => {
+					reminderData.push({
+						...p,
+						isPhysician: true,
+						startTimeIso: this.getStartTimeISO(p.availabilityDate, p.startTime, p.timeZone),
+					})
+				})
+				usersToRemind.forEach(u => {
+					reminderData.push({
+						...u,
+						isPhysician: false,
+						startTimeIso: this.getStartTimeISO(u.availabilityDate, u.startTime, u.timeZone)
+					})
+				})
+
+				await f(reminderData)
+
+				await tx.
+					update(bookedSlots)
+					.set({ reminderSentAt: new Date()})
+					.where(inArray(bookedSlots.id, reminderData.map(r => r.bookingId)))
+
+			} catch (error) {
+				console.log(error)
+				throw error
+			}
+
+		})
 	}
 
 

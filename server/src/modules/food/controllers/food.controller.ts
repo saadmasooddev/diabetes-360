@@ -167,7 +167,6 @@ export class FoodController {
 			const tz = await this.timeZoneService.getTimeZone(timeZone);
 			const body = insertLoggedMealSchema.safeParse({
 				...req.body,
-				timeZoneId: tz.id,
 				mealDate: dateStr,
 				userId,
 			});

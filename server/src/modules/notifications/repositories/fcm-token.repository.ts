@@ -18,7 +18,6 @@ export class FcmTokenRepository {
 				userId,
 				token,
 				deviceType,
-				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [
@@ -28,9 +27,6 @@ export class FcmTokenRepository {
 				],
 				set: { 
 					updatedAt: new Date(), 
-					deviceType: sql`excluded.${usersFcmTokens.deviceType}`,
-					token: sql`excluded.${usersFcmTokens.token}`,
-					userId: sql`excluded.${usersFcmTokens.userId}`
 				},
 			});
 	}

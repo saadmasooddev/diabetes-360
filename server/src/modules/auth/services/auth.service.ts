@@ -5,7 +5,6 @@ import {
 	type InsertUser,
 	type PhysicianData,
 	type CustomerData,
-	UserRole,
 	PROVIDERS,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
@@ -51,18 +50,6 @@ export class AuthService {
 		this.fcmTokenRepository = new FcmTokenRepository();
 	}
 
-	private async persistFcmIfPresent(
-		userId: string,
-		fcm: FcmRegistrationInput | undefined,
-		tokens: TokenPair | undefined,
-	): Promise<void> {
-		if (!fcm || !tokens?.accessToken || !tokens?.refreshToken) return;
-		await this.fcmTokenRepository.upsertToken(
-			userId,
-			fcm.token,
-			fcm.deviceType,
-		);
-	}
 
 	async createUserForAdmin(userData: InsertUser) {
 		const existingUser = await this.authRepository.getUserByEmail(
@@ -86,6 +73,7 @@ export class AuthService {
 
 		return user
 	}
+
 	async signup(userData: InsertUser): Promise<SignupResponse> {
 		const existingUser = await this.authRepository.getUserByEmail(
 			userData.email,
@@ -306,7 +294,6 @@ emailVerificationCodeSent: false ,
 	async loginWithEmailCode(
 		email: string,
 		code: string,
-		fcm?: FcmRegistrationInput,
 	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
@@ -356,14 +343,12 @@ emailVerificationCodeSent: false ,
 			tokens,
 			requiresTwoFactor: false,
 		};
-		await this.persistFcmIfPresent(user.id, fcm, tokens);
 		return response;
 	}
 
 	async login(
 		email: string,
 		password: string,
-		fcm?: FcmRegistrationInput,
 	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
@@ -445,7 +430,6 @@ emailVerificationCodeSent: true ,
 			tokens,
 			requiresTwoFactor: false,
 		};
-		await this.persistFcmIfPresent(user.id, fcm, tokens);
 		return response;
 	}
 
@@ -455,7 +439,6 @@ emailVerificationCodeSent: true ,
 	async verify2FALogin(
 		email: string,
 		token: string,
-		fcm?: FcmRegistrationInput,
 	): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
@@ -490,7 +473,6 @@ emailVerificationCodeSent: true ,
 			tokens,
 			requiresTwoFactor: false,
 		};
-		await this.persistFcmIfPresent(user.id, fcm, tokens);
 		return response;
 	}
 

@@ -1,21 +1,19 @@
+import { BookingService } from "../../booking/service/booking.service";
 import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
 import {
+	GlucoseAlertPushPayload,
 	PUSH_MESSAGE_TYPE_ENUM,
 } from "../models/fcm.schema";
-import { PushNotificationLogRepository } from "../repositories/push-notification-log.repository";
 import { PushNotificationService } from "./push-notification.service";
 
-
 export class GlucoseAlertService {
-private readonly GLUCOSE_ALERT_COOLDOWN_MS = 60 * 60 * 1000;
-
-private readonly DEFAULT_GLUCOSE_LOW_MG_DL = 70;
-private  readonly DEFAULT_GLUCOSE_HIGH_MG_DL = 180;
+	private readonly DEFAULT_GLUCOSE_LOW_MG_DL = 70;
+	private readonly DEFAULT_GLUCOSE_HIGH_MG_DL = 180;
 	constructor(
 		private readonly healthRepository = new HealthRepository(),
 		private readonly pushService = new PushNotificationService(),
-		private readonly logRepository = new PushNotificationLogRepository(),
+		private readonly bookingService = new BookingService()
 	) {}
 
 
@@ -69,14 +67,6 @@ evaluateGlucoseDirection(
 		const direction = this.evaluateGlucoseDirection(latest, highTh, lowTh);
 		if (!direction) return;
 
-		const since = new Date(Date.now() - this.GLUCOSE_ALERT_COOLDOWN_MS);
-		const recent = await this.logRepository.hasRecentByType(
-			userId,
-			PUSH_MESSAGE_TYPE_ENUM.GLUCOSE_ALERT,
-			since,
-		);
-		if (recent) return;
-
 		const title =
 			direction === "high" ? "Glucose above your target" : "Glucose below range";
 		const body =
@@ -84,16 +74,30 @@ evaluateGlucoseDirection(
 				? `Your latest reading is ${latest} mg/dL, above your high threshold (${highTh} mg/dL).`
 				: `Your latest reading is ${latest} mg/dL, below your low threshold (${lowTh} mg/dL).`;
 
-		await this.pushService.sendDataOnlyToUser(userId, {
+		const notificationPayload: GlucoseAlertPushPayload = {
+			glucoseMgDl: latest,
+			direction,
+			lowThresholdMgDl: lowTh,
+			highThresholdMgDl: highTh,
+		}
+
+		const physician = await this.bookingService.getLatestPhysicianTrackingPatient(userId)
+		if(physician) {
+			this.pushService.sendDataOnlyToUser(physician.id, {
+				type: PUSH_MESSAGE_TYPE_ENUM.GLUCOSE_ALERT,
+				title: "Patient Glucose Alert",
+				body: direction === "high" 
+				  ? `${physician.firstName} ${physician.lastName} is experiencing a high glucose level of ${latest} mg/dL`
+					: `${physician.firstName} ${physician.lastName} is experiencing a low glucose level of ${latest} mg/dL`,
+				data: notificationPayload
+			}).then().catch(console.error)
+		}
+
+		this.pushService.sendDataOnlyToUser(userId, {
 			type: PUSH_MESSAGE_TYPE_ENUM.GLUCOSE_ALERT,
 			title,
 			body,
-			data: {
-				glucoseMgDl: latest,
-				direction,
-				lowThresholdMgDl: lowTh,
-				highThresholdMgDl: highTh,
-			},
-		});
+			data: notificationPayload 
+		}).then().catch(console.error)
 	}
 }

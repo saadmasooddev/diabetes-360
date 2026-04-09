@@ -11,6 +11,7 @@ import {
 	primaryKey,
 	PrimaryKey,
 	uniqueIndex,
+	index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -159,9 +160,14 @@ export const bookedSlots = pgTable("booked_slots", {
 	summary: text("summary"), // Consultation summary added by physician
 	summaryStatus: summaryStutusEnumPg("summary_status").default(SUMMARY_STATUS_ENUM.SAVE_AS_DRAFT),
 	meetingLink: text("meeting_link"), // Zoom (or other) link for online consultations; set by cron
+	meetingTimeUtc: timestamp("meeting_time_utc", {withTimezone : true }).notNull(),
+	reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, table => [
+	index("idx_booked_slots_reminder_sent_at").on(table.reminderSentAt),
+	index("idx_booked_slots_meeting_time_utc").on(table.meetingTimeUtc),
+]);
 
 // Junction table linking slots to physician locations for offline consultations
 export const slotLocations = pgTable("slot_locations", {

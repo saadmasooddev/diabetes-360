@@ -13,6 +13,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 
 import { z } from "zod";
+import { timeZones } from "../../food/models/timeZone.schema";
 
 export const USER_ROLES = {
 	CUSTOMER: "customer",
@@ -76,6 +77,9 @@ export const users = pgTable("users", {
 	paymentType: paymentType("payment_type").default("free").notNull(), // 'monthly', 'annual', or 'free'
 	isActive: boolean("is_active").default(true),
 	profileComplete: boolean("profile_complete").default(false),
+	timeZoneId: uuid("time_zone_id")
+		.notNull()
+		.references(() => timeZones.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
