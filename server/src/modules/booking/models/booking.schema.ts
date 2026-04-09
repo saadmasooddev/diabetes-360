@@ -139,35 +139,46 @@ export enum BOOKING_TYPE_ENUM {
 
 export enum SUMMARY_STATUS_ENUM {
 	SAVE_AS_DRAFT = "save_as_draft",
-	SIGNED = "SIGNED"
+	SIGNED = "SIGNED",
 }
 
-export const summaryStatusEnum = z.enum(Object.values(SUMMARY_STATUS_ENUM))
-export const summaryStutusEnumPg = pgEnum("summary_status_enum", Object.values(SUMMARY_STATUS_ENUM) as [string, ...string[]])
+export const summaryStatusEnum = z.enum(Object.values(SUMMARY_STATUS_ENUM));
+export const summaryStutusEnumPg = pgEnum(
+	"summary_status_enum",
+	Object.values(SUMMARY_STATUS_ENUM) as [string, ...string[]],
+);
 
-export const bookedSlots = pgTable("booked_slots", {
-	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-	customerId: varchar("customer_id")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	slotId: varchar("slot_id")
-		.notNull()
-		.references(() => slots.id, { onDelete: "restrict" }),
-	slotTypeId: varchar("slot_type_id")
-		.notNull()
-		.references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
-	status: bookedSlotsStatusEnum("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
-	summary: text("summary"), // Consultation summary added by physician
-	summaryStatus: summaryStutusEnumPg("summary_status").default(SUMMARY_STATUS_ENUM.SAVE_AS_DRAFT),
-	meetingLink: text("meeting_link"), // Zoom (or other) link for online consultations; set by cron
-	meetingTimeUtc: timestamp("meeting_time_utc", {withTimezone : true }).notNull(),
-	reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, table => [
-	index("idx_booked_slots_reminder_sent_at").on(table.reminderSentAt),
-	index("idx_booked_slots_meeting_time_utc").on(table.meetingTimeUtc),
-]);
+export const bookedSlots = pgTable(
+	"booked_slots",
+	{
+		id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+		customerId: varchar("customer_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		slotId: varchar("slot_id")
+			.notNull()
+			.references(() => slots.id, { onDelete: "restrict" }),
+		slotTypeId: varchar("slot_type_id")
+			.notNull()
+			.references(() => slotType.id, { onDelete: "restrict" }), // The selected booking type (online/onsite)
+		status: bookedSlotsStatusEnum("status").notNull().default("pending"), // 'pending', 'confirmed', 'cancelled', 'completed'
+		summary: text("summary"), // Consultation summary added by physician
+		summaryStatus: summaryStutusEnumPg("summary_status").default(
+			SUMMARY_STATUS_ENUM.SAVE_AS_DRAFT,
+		),
+		meetingLink: text("meeting_link"), // Zoom (or other) link for online consultations; set by cron
+		meetingTimeUtc: timestamp("meeting_time_utc", {
+			withTimezone: true,
+		}).notNull(),
+		reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("idx_booked_slots_reminder_sent_at").on(table.reminderSentAt),
+		index("idx_booked_slots_meeting_time_utc").on(table.meetingTimeUtc),
+	],
+);
 
 // Junction table linking slots to physician locations for offline consultations
 export const slotLocations = pgTable("slot_locations", {

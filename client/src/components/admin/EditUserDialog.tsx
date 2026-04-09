@@ -263,7 +263,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 						customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
 					}
 
-
 					updateData.customerData = customerData;
 				}
 			}
@@ -533,19 +532,19 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											/>
 											{(physicianFields.imagePreview ||
 												physicianFields.imageUrl) && (
-													<Image
-														src={
-															physicianFields.imagePreview ||
-															physicianFields.imageUrl
-														}
-														alt="Preview"
-														className="w-24 h-24 rounded-full object-cover border"
-														pointToServer={
-															!!physicianFields.imageUrl &&
-															!physicianFields.imagePreview
-														}
-													/>
-												)}
+												<Image
+													src={
+														physicianFields.imagePreview ||
+														physicianFields.imageUrl
+													}
+													alt="Preview"
+													className="w-24 h-24 rounded-full object-cover border"
+													pointToServer={
+														!!physicianFields.imageUrl &&
+														!physicianFields.imagePreview
+													}
+												/>
+											)}
 										</div>
 									</div>
 								)}
@@ -658,7 +657,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 												</Select>
 											</div>
 										</div>
-
 
 										<div className="grid grid-cols-2 gap-4">
 											<div className="space-y-2">

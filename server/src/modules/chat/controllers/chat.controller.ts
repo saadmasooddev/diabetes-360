@@ -4,7 +4,10 @@ import { sendSuccess } from "../../../app/utils/response";
 import { ChatService } from "../service/chat.service";
 import { BadRequestError } from "../../../shared/errors";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
+import {
+	DateManager,
+	getPaginationParams,
+} from "server/src/shared/utils/utils";
 
 export class ChatController {
 	private chatService = new ChatService();
@@ -19,14 +22,18 @@ export class ChatController {
 				(req.query.date as string) ?? "",
 			);
 
-			const { limit, offset } = getPaginationParams(req)
+			const { limit, offset } = getPaginationParams(req);
 			const { messages, nudge } = await this.chatService.getChat(
 				userId,
 				dateStr,
 				offset,
-				limit
+				limit,
 			);
-			sendSuccess(res, { messages, nudge: nudge || null }, "Chat retrieved successfully");
+			sendSuccess(
+				res,
+				{ messages, nudge: nudge || null },
+				"Chat retrieved successfully",
+			);
 		} catch (error: unknown) {
 			handleError(res, error);
 		}

@@ -25,7 +25,10 @@ import type { ExtendedLimits } from "../../settings/models/settings.schema";
 import { ConsultationService } from "../../booking/service/consultation.service";
 import { CustomerService } from "../../customer/service/customer.service";
 import { formatUserInfo } from "server/src/shared/utils/utils";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, type CustomerData } from "../../auth/models/user.schema";
+import {
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	type CustomerData,
+} from "../../auth/models/user.schema";
 import { aiService } from "../../../shared/services/ai.service";
 import { UserService } from "../../user/service/user.service";
 
@@ -44,10 +47,7 @@ export class HealthService {
 		this.userService = new UserService();
 	}
 
-	async createMetric(
-		data: InsertHealthMetric,
-		userId: string,
-	){
+	async createMetric(data: InsertHealthMetric, userId: string) {
 		const userLimits = await this.getUserRemainingLimits(
 			data.userId,
 			data.recordedAt,
@@ -107,7 +107,7 @@ export class HealthService {
 
 			if (data.bloodSugar) {
 				metricType = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-			} 
+			}
 
 			if (metricType) {
 				const limit =
@@ -130,22 +130,20 @@ export class HealthService {
 			}
 		}
 
-    if(data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C) {
-			const result =await this.createHba1cMetric(data.userId, {
+		if (data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C) {
+			const result = await this.createHba1cMetric(data.userId, {
 				hba1c: data.bloodSugar!.toString(),
-				recordedAt: data.recordedAt
-			})
-			return
+				recordedAt: data.recordedAt,
+			});
+			return;
 		}
 
 		await this.healthRepository.createMetricsBatch(data);
-		return
+		return;
 	}
 
-	async createMetricsBatch(
-		data: InsertHealthMetric[],
-	){
-		return await this.healthRepository.createMetricsBatch(data)
+	async createMetricsBatch(data: InsertHealthMetric[]) {
+		return await this.healthRepository.createMetricsBatch(data);
 	}
 
 	async getLatestMetric(
@@ -178,14 +176,16 @@ export class HealthService {
 	}> {
 		const userLimits = await this.getUserRemainingLimits(userId, startOfDay);
 		const latestMetrics = await this.getLatestMetric(userId, startOfDay);
-		const quickLog =
-			await this.healthRepository.getDailyQuickLogForDate(userId, startOfDay);
+		const quickLog = await this.healthRepository.getDailyQuickLogForDate(
+			userId,
+			startOfDay,
+		);
 		return {
 			current: latestMetrics.current,
 			previous: latestMetrics.previous,
 			limits: userLimits.limits,
 			remainingLimits: userLimits.remainingLimits,
-			quickLog: quickLog
+			quickLog: quickLog,
 		};
 	}
 
@@ -249,8 +249,8 @@ export class HealthService {
 		data: InsertExerciseLog[],
 	): Promise<ExerciseLog[]> {
 		// Validate steps if provided
-		const logs: ExerciseLog[] = []
-		const logMap = new Map<string, ExerciseLog[]>()
+		const logs: ExerciseLog[] = [];
+		const logMap = new Map<string, ExerciseLog[]>();
 		for (const log of data) {
 			if (log.steps !== null && log.steps !== undefined) {
 				if (log.steps < 0) {
@@ -269,19 +269,22 @@ export class HealthService {
 						`Adding ${log.steps} steps would exceed the daily limit of 20,000 steps. Current total: ${Math.round(todaysStepsTotal)} steps.`,
 					);
 				}
-		    const logData = await this.healthRepository.createExerciseLogsBatch([log]);
-				if(logData.length > 0){
-					const stored = logMap.get(`${log.recordedAt}-${log.readingSource}`) || []
-					stored.push(...logData)
-					logMap.set(log.recordedAt, stored)
+				const logData = await this.healthRepository.createExerciseLogsBatch([
+					log,
+				]);
+				if (logData.length > 0) {
+					const stored =
+						logMap.get(`${log.recordedAt}-${log.readingSource}`) || [];
+					stored.push(...logData);
+					logMap.set(log.recordedAt, stored);
 				}
 			}
 		}
-		for(const [_, mappedLogs] of Array.from(logMap.entries())){
-			if(mappedLogs.length === 0) continue
-			logs.push(mappedLogs[mappedLogs.length - 1])
+		for (const [_, mappedLogs] of Array.from(logMap.entries())) {
+			if (mappedLogs.length === 0) continue;
+			logs.push(mappedLogs[mappedLogs.length - 1]);
 		}
-		return logs
+		return logs;
 	}
 
 	async getStrengthProgress(
@@ -452,7 +455,7 @@ export class HealthService {
 		const remainingStepsLogs = limits.stepsLimit - stepsLogsCount;
 		const remainingFreeFoodScanLogs =
 			limits.foodScanLimits?.freeTier || 0 - foodScanLogsCount;
-		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount
+		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount;
 		const remainingPaidFoodScanLogs =
 			limits.foodScanLimits?.paidTier || 0 - foodScanLogsCount;
 		const remainingDiscountedConsultations =
@@ -461,7 +464,6 @@ export class HealthService {
 		const remainingFreeConsultations =
 			limits.freeConsultationQuota ||
 			0 - (consultationQuota?.freeConsultationsUsed || 0);
-		
 
 		return {
 			limits,
@@ -554,8 +556,7 @@ export class HealthService {
 					let name: MetricType = "" as MetricType;
 					if (i.name === "glucose") {
 						name = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-					}
-					else if (i.name === "steps") {
+					} else if (i.name === "steps") {
 						name = METRIC_TYPE_ENUM.STEPS;
 					} else if (i.name === "heart_rate") {
 						name = METRIC_TYPE_ENUM.HEART_RATE;
@@ -632,7 +633,7 @@ export class HealthService {
 		return response.data;
 	}
 
- async runInactivityNotificationJob() {
-	await this.healthRepository.runInactivityNotificationJob()
- }
+	async runInactivityNotificationJob() {
+		await this.healthRepository.runInactivityNotificationJob();
+	}
 }

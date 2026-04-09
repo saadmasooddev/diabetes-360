@@ -3,10 +3,7 @@ import { getMessaging, isSupported, onMessage } from "firebase/messaging";
 import { isFirebaseMessagingConfigured } from "@/config/firebasePublicConfig";
 import { useAuthStore } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
-import {
-	ensureForegroundMessagingReady,
-	getOrInitApp,
-} from "@/lib/fcm/webFcm";
+import { ensureForegroundMessagingReady, getOrInitApp } from "@/lib/fcm/webFcm";
 
 import { tryGetWebFcmRegistration } from "@/lib/fcm/webFcm";
 import { saveFcmRegistration } from "@/lib/fcm/fcmTokenStorage";
@@ -26,10 +23,10 @@ export function FcmForegroundListener(): null {
 	const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 	const user = useAuthStore((s) => s.user);
 	const { toast } = useToast();
-	const { mutate: saveFcmToken } = useSaveFcmToken()
+	const { mutate: saveFcmToken } = useSaveFcmToken();
 
 	useEffect(() => {
-		console.log("is autneticated", isAuthenticated)
+		console.log("is autneticated", isAuthenticated);
 		if (!isAuthenticated || !user?.role) {
 			return;
 		}
@@ -47,11 +44,11 @@ export function FcmForegroundListener(): null {
 
 			const fcm = await tryGetWebFcmRegistration();
 			if (!fcm) {
-				return
+				return;
 			}
 
 			saveFcmRegistration(fcm);
-			saveFcmToken(fcm)
+			saveFcmToken(fcm);
 
 			const ready = await ensureForegroundMessagingReady();
 			if (cancelled || !ready) {

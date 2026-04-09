@@ -95,7 +95,7 @@ export class HealthController {
 				throw new BadRequestError("startDate and endDate are required");
 			}
 
-			const { limit, offset }  = getPaginationParams(req);
+			const { limit, offset } = getPaginationParams(req);
 
 			const startDate = DateManager.parseLocalDate(startDateStr);
 			const endDate = DateManager.parseLocalDate(endDateStr);
@@ -165,24 +165,25 @@ export class HealthController {
 			let date: string = "";
 
 			if (healthMetrics && typeof healthMetrics === "object") {
-				const { customMetrics, otherMetrics, hadBloodSugarInMetrics }= this.validateHealthMetric({
-					...healthMetrics,
-					userId,
-				});
-				for(const customMetric of customMetrics) {
-					await this.healthService.createMetric(
-						customMetric,
+				const { customMetrics, otherMetrics, hadBloodSugarInMetrics } =
+					this.validateHealthMetric({
+						...healthMetrics,
 						userId,
-					);
+					});
+				for (const customMetric of customMetrics) {
+					await this.healthService.createMetric(customMetric, userId);
 				}
-				for(const otherMetric of otherMetrics){
-					await this.healthService.createMetricsBatch([otherMetric])
+				for (const otherMetric of otherMetrics) {
+					await this.healthService.createMetricsBatch([otherMetric]);
 				}
-				if(customMetrics.length >0 || otherMetrics.length >0)
+				if (customMetrics.length > 0 || otherMetrics.length > 0)
 					date = (customMetrics[0] || otherMetrics[0]).recordedAt;
 
 				if (hadBloodSugarInMetrics) {
-					this.glucoseAlertService.checkAndNotifyIfNeeded(userId).then().catch(console.error)
+					this.glucoseAlertService
+						.checkAndNotifyIfNeeded(userId)
+						.then()
+						.catch(console.error);
 				}
 			}
 
@@ -196,7 +197,7 @@ export class HealthController {
 			for (const log of logsToInsert) {
 				const validationResult = insertExerciseLogSchema.safeParse(log);
 				if (!validationResult.success) {
-				  throw new ValidationError(undefined, validationResult.error)
+					throw new ValidationError(undefined, validationResult.error);
 				}
 
 				if (
@@ -216,11 +217,7 @@ export class HealthController {
 				userId,
 				date,
 			);
-			sendSuccess(
-				res,
-				{ logs, latestMetrics },
-				"Data logged successfully",
-			);
+			sendSuccess(res, { logs, latestMetrics }, "Data logged successfully");
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -318,9 +315,7 @@ export class HealthController {
 			const userId = req.user?.userId || "";
 			const metricType = req.params.metricType as MetricType;
 
-			if (
-				!["glucose", "steps", "heart_rate"].includes(metricType)
-			) {
+			if (!["glucose", "steps", "heart_rate"].includes(metricType)) {
 				throw new BadRequestError("Invalid metric type");
 			}
 
@@ -422,12 +417,18 @@ export class HealthController {
 			if (!validation.success) {
 				throw new ValidationError(undefined, validation.error);
 			}
-			
-			const { data } = validation
-		  if (!data.exercise && !data.diet && !data.sleepDuration && !data.medicines && !data.stressLevel) {
+
+			const { data } = validation;
+			if (
+				!data.exercise &&
+				!data.diet &&
+				!data.sleepDuration &&
+				!data.medicines &&
+				!data.stressLevel
+			) {
 				throw new BadRequestError("At least one field must be filled");
 			}
-			if(!data.logDate || isNaN(new Date(data.logDate).getTime())) {
+			if (!data.logDate || isNaN(new Date(data.logDate).getTime())) {
 				throw new BadRequestError("Invalid date format");
 			}
 			const log = await this.healthService.createDailyQuickLog(userId, {
@@ -440,47 +441,54 @@ export class HealthController {
 		}
 	}
 
-
 	private validateHealthMetric(data: HealthMetricData) {
-		const customMetrics: InsertHealthMetric[] = []
-		const otherMetrics: InsertHealthMetric[] = []
-		let hadBloodSugarInMetrics = false
+		const customMetrics: InsertHealthMetric[] = [];
+		const otherMetrics: InsertHealthMetric[] = [];
+		let hadBloodSugarInMetrics = false;
 
-		for(const key in data) {
-			const values = data[key as keyof HealthMetricData] as HealthMetricReading[]
-			const customerUniqueMap = new Map<string, InsertHealthMetric>()
-			const otherUniqueMap = new Map<string, InsertHealthMetric>()
-			if(!Array.isArray(values)) continue
-			values.forEach(item => {
-				const uniqueKey = `${key}-${item.recordedAt}-${item.value}-${item.readingSource}`
+		for (const key in data) {
+			const values = data[
+				key as keyof HealthMetricData
+			] as HealthMetricReading[];
+			const customerUniqueMap = new Map<string, InsertHealthMetric>();
+			const otherUniqueMap = new Map<string, InsertHealthMetric>();
+			if (!Array.isArray(values)) continue;
+			values.forEach((item) => {
+				const uniqueKey = `${key}-${item.recordedAt}-${item.value}-${item.readingSource}`;
 
-				const uniqueMap = item.readingSource === HEALTH_METRIC_SOURCE_ENUM.CUSTOM ? customerUniqueMap : otherUniqueMap
+				const uniqueMap =
+					item.readingSource === HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+						? customerUniqueMap
+						: otherUniqueMap;
 
-				if(uniqueMap.has(uniqueKey)) return
+				if (uniqueMap.has(uniqueKey)) return;
 
 				const object: InsertHealthMetric = {
 					userId: data.userId,
 					recordedAt: item.recordedAt,
 					[key]: item.value,
 					bloodSugarReadingType: data.bloodSugarReadingType,
-					readingSource: item.readingSource
-				}
+					readingSource: item.readingSource,
+				};
 
-				uniqueMap.set(uniqueKey, object)
-				if(key === "bloodSugar") hadBloodSugarInMetrics = true
-			})
+				uniqueMap.set(uniqueKey, object);
+				if (key === "bloodSugar") hadBloodSugarInMetrics = true;
+			});
 
-			customMetrics.push(...Array.from(customerUniqueMap.values()))
-			otherMetrics.push(...Array.from(otherUniqueMap.values()))
-
+			customMetrics.push(...Array.from(customerUniqueMap.values()));
+			otherMetrics.push(...Array.from(otherUniqueMap.values()));
 		}
-		const validationResultCustom = insertHealthMetricSchema.array().safeParse(customMetrics);
+		const validationResultCustom = insertHealthMetricSchema
+			.array()
+			.safeParse(customMetrics);
 
 		if (!validationResultCustom.success) {
 			throw new ValidationError(undefined, validationResultCustom.error);
 		}
 
-		const validationResultOther = insertHealthMetricSchema.array().safeParse(otherMetrics);
+		const validationResultOther = insertHealthMetricSchema
+			.array()
+			.safeParse(otherMetrics);
 
 		if (!validationResultOther.success) {
 			throw new ValidationError(undefined, validationResultOther.error);
@@ -488,7 +496,7 @@ export class HealthController {
 		return {
 			customMetrics: validationResultCustom.data,
 			otherMetrics: validationResultOther.data,
-			hadBloodSugarInMetrics
+			hadBloodSugarInMetrics,
 		};
 	}
 

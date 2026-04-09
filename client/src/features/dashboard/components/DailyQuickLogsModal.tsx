@@ -7,12 +7,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import { ChevronLeft } from "lucide-react";
-import { QUICK_LOG_DIET_TYPE_ENUM, QUICK_LOG_EXERCISE_TYPE_ENUM, QUICK_LOG_MEDICINES_TYPE_ENUM, QUICK_LOG_SLEEP_DURATION_TYPE_ENUM, QUICK_LOG_STRESS_LEVEL_TYPE_ENUM, QuickLogDietTypeEnumValues, QuickLogExerciseTypeEnumValues, QuickLogMedicinesTypeEnumValues, QuickLogSleepDurationTypeEnumValues, QuickLogStressLevelTypeEnumValues } from "@shared/schema";
+import {
+	QUICK_LOG_DIET_TYPE_ENUM,
+	QUICK_LOG_EXERCISE_TYPE_ENUM,
+	QUICK_LOG_MEDICINES_TYPE_ENUM,
+	QUICK_LOG_SLEEP_DURATION_TYPE_ENUM,
+	QUICK_LOG_STRESS_LEVEL_TYPE_ENUM,
+	QuickLogDietTypeEnumValues,
+	QuickLogExerciseTypeEnumValues,
+	QuickLogMedicinesTypeEnumValues,
+	QuickLogSleepDurationTypeEnumValues,
+	QuickLogStressLevelTypeEnumValues,
+} from "@shared/schema";
 
 type ExerciseOption = {
-	value: QuickLogExerciseTypeEnumValues
-	label: string
-}
+	value: QuickLogExerciseTypeEnumValues;
+	label: string;
+};
 const EXERCISE_OPTIONS: ExerciseOption[] = [
 	{ value: QUICK_LOG_EXERCISE_TYPE_ENUM.NONE, label: "None" },
 	{ value: QUICK_LOG_EXERCISE_TYPE_ENUM.LIGHT, label: "Light" },
@@ -21,19 +32,25 @@ const EXERCISE_OPTIONS: ExerciseOption[] = [
 ];
 
 type DietOption = {
-	value: QuickLogDietTypeEnumValues
-	label: string
-}
+	value: QuickLogDietTypeEnumValues;
+	label: string;
+};
 const DIET_OPTIONS: DietOption[] = [
-	{ value: QUICK_LOG_DIET_TYPE_ENUM.MOSTLY_HOME_COOKED, label: "Mostly home-cooked" },
+	{
+		value: QUICK_LOG_DIET_TYPE_ENUM.MOSTLY_HOME_COOKED,
+		label: "Mostly home-cooked",
+	},
 	{ value: QUICK_LOG_DIET_TYPE_ENUM.MIXED, label: "Mixed" },
-	{ value: QUICK_LOG_DIET_TYPE_ENUM.HIGH_CARB_OUTSIDE, label: "High-carb-outside" },
+	{
+		value: QUICK_LOG_DIET_TYPE_ENUM.HIGH_CARB_OUTSIDE,
+		label: "High-carb-outside",
+	},
 ];
 
 type SleepOption = {
-	value: QuickLogSleepDurationTypeEnumValues
-	label: string
-}
+	value: QuickLogSleepDurationTypeEnumValues;
+	label: string;
+};
 const SLEEP_OPTIONS: SleepOption[] = [
 	{ value: QUICK_LOG_SLEEP_DURATION_TYPE_ENUM.LESS_5, label: "<5" },
 	{ value: QUICK_LOG_SLEEP_DURATION_TYPE_ENUM.FIVE_SEVEN, label: "5-7" },
@@ -41,18 +58,18 @@ const SLEEP_OPTIONS: SleepOption[] = [
 ];
 
 type MedicinesOption = {
-	value: QuickLogMedicinesTypeEnumValues
-	label: string
-}
+	value: QuickLogMedicinesTypeEnumValues;
+	label: string;
+};
 const MEDICINES_OPTIONS: MedicinesOption[] = [
 	{ value: QUICK_LOG_MEDICINES_TYPE_ENUM.TAKEN, label: "Taken" },
 	{ value: QUICK_LOG_MEDICINES_TYPE_ENUM.MISSED, label: "Missed" },
 ];
 
 type StressOption = {
-	value: QuickLogStressLevelTypeEnumValues
-	label: string
-}
+	value: QuickLogStressLevelTypeEnumValues;
+	label: string;
+};
 const STRESS_OPTIONS: StressOption[] = [
 	{ value: QUICK_LOG_STRESS_LEVEL_TYPE_ENUM.LOW, label: "Low" },
 	{ value: QUICK_LOG_STRESS_LEVEL_TYPE_ENUM.MODERATE, label: "Moderate" },
@@ -91,9 +108,13 @@ export function DailyQuickLogsModal({
 		const data = {
 			exercise: formData.get("exercise") as QuickLogExerciseTypeEnumValues,
 			diet: formData.get("diet") as QuickLogDietTypeEnumValues,
-			sleepDuration: formData.get("sleepDuration") as QuickLogSleepDurationTypeEnumValues,
+			sleepDuration: formData.get(
+				"sleepDuration",
+			) as QuickLogSleepDurationTypeEnumValues,
 			medicines: formData.get("medicines") as QuickLogMedicinesTypeEnumValues,
-			stressLevel: formData.get("stressLevel") as QuickLogStressLevelTypeEnumValues,
+			stressLevel: formData.get(
+				"stressLevel",
+			) as QuickLogStressLevelTypeEnumValues,
 		};
 		onSubmit({ ...data, logDate });
 	};

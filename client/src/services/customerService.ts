@@ -14,7 +14,7 @@ export interface CustomerData {
 	height: string;
 	diabetesType: DIABETES_TYPE;
 	mainGoal?: string;
-	medicationInfo?: string
+	medicationInfo?: string;
 	createdAt: string;
 	updatedAt: string;
 }

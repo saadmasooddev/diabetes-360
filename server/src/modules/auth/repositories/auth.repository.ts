@@ -19,8 +19,7 @@ import { BadRequestError } from "server/src/shared/errors";
 import { config } from "server/src/app/config";
 
 export class AuthRepository {
-
-	private readonly timezoneRepository = new TimeZoneRepository()
+	private readonly timezoneRepository = new TimeZoneRepository();
 	private static readonly SIGN_IN_CODE_PREFIX = "SIC_";
 	private static readonly EMAIL_VERIFICATION_CODE_PREFIX = "EVC_";
 
@@ -51,16 +50,21 @@ export class AuthRepository {
 		return user[0];
 	}
 
-	async createUser(user: InsertUser ): Promise<User> {
-		const defaultTimeZone = await this.timezoneRepository.getTimeZone(config.defaults.timezone)
-		if(!defaultTimeZone){
-			throw new BadRequestError("Default timezone not found")
+	async createUser(user: InsertUser): Promise<User> {
+		const defaultTimeZone = await this.timezoneRepository.getTimeZone(
+			config.defaults.timezone,
+		);
+		if (!defaultTimeZone) {
+			throw new BadRequestError("Default timezone not found");
 		}
 
-		const newUser = await db.insert(users).values({
-			...user,
-			timeZoneId: defaultTimeZone.id
-		}).returning();
+		const newUser = await db
+			.insert(users)
+			.values({
+				...user,
+				timeZoneId: defaultTimeZone.id,
+			})
+			.returning();
 		return newUser[0];
 	}
 
@@ -149,7 +153,6 @@ export class AuthRepository {
 			.where(eq(passwordResetTokens.userId, userId));
 	}
 
-
 	async countRecentSignInCodes(userId: string, since: Date): Promise<number> {
 		const result = await db
 			.select({ count: sql<number>`count(*)::int` })
@@ -157,7 +160,10 @@ export class AuthRepository {
 			.where(
 				and(
 					eq(passwordResetTokens.userId, userId),
-					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.SIGN_IN_CODE_PREFIX}%`,
+					),
 					gte(passwordResetTokens.createdAt, since),
 				),
 			);
@@ -170,15 +176,17 @@ export class AuthRepository {
 			.where(
 				and(
 					eq(passwordResetTokens.userId, userId),
-					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.SIGN_IN_CODE_PREFIX}%`,
+					),
 				),
 			);
 	}
 
-	async getSignInCodeToken(tokenWithPrefix: string): Promise<
-		| (PasswordResetToken & { userId: string })
-		| undefined
-	> {
+	async getSignInCodeToken(
+		tokenWithPrefix: string,
+	): Promise<(PasswordResetToken & { userId: string }) | undefined> {
 		const row = await db
 			.select()
 			.from(passwordResetTokens)

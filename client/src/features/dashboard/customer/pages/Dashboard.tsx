@@ -58,7 +58,8 @@ export function Dashboard() {
 	const [selectedMetricType, setSelectedMetricType] = useState<MetricType>(
 		METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 	);
-	const [bloodSugarReadingType, setBloodSugarReadingType] = useState<BloodSugarReadingTypeEnumValues>("normal");
+	const [bloodSugarReadingType, setBloodSugarReadingType] =
+		useState<BloodSugarReadingTypeEnumValues>("normal");
 	const [metricValue, setMetricValue] = useState("");
 	const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("daily");
 	const [stepsInterval, setStepsInterval] = useState<IntervalType>("daily");
@@ -144,7 +145,6 @@ export function Dashboard() {
 
 	const { data: stepsMetrics } = useFilteredMetrics(stepsQueryKey);
 
-
 	const { data: heartbeatMetrics } = useFilteredMetrics(heartBeatQueryKey);
 
 	const getHasReachedLimit = (metricType: MetricType): boolean => {
@@ -162,7 +162,8 @@ export function Dashboard() {
 
 	const handleAddLog = (
 		metricType: MetricType,
-		readingType: BloodSugarReadingTypeEnumValues = BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL) => {
+		readingType: BloodSugarReadingTypeEnumValues = BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+	) => {
 		if (getHasReachedLimit(metricType)) {
 			setLimitDialogOpen(true);
 			return;
@@ -196,16 +197,16 @@ export function Dashboard() {
 		}
 
 		if (
-			selectedMetricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE
-			&& bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C
-			&& (numericValue < 0 || numericValue > 100)
+			selectedMetricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE &&
+			bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C &&
+			(numericValue < 0 || numericValue > 100)
 		) {
 			toast({
 				title: "Invalid Value",
 				description: "HbA1c value must be between 0 and 100",
-				variant: "destructive"
-			})
-			return
+				variant: "destructive",
+			});
+			return;
 		}
 
 		// Validate maximum limits for steps and water
@@ -221,7 +222,6 @@ export function Dashboard() {
 			}
 		}
 
-
 		const metricData: HealthMetricData = {
 			userId: user.id,
 			bloodSugar: [],
@@ -232,19 +232,20 @@ export function Dashboard() {
 		const exercises: ModifiedInsertExerciseLogs[] = [];
 		const queriesToInvalidate: FilteredMetricsKey[] = [];
 
-		const floadMetricValue = parseFloat(numericValue.toFixed(1))
-		const roundedMetricValue = Math.round(numericValue)
+		const floadMetricValue = parseFloat(numericValue.toFixed(1));
+		const roundedMetricValue = Math.round(numericValue);
 
 		const metircTypeReadingMap: Record<MetricType, () => void> = {
 			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: () => {
-				utils.addToHealthMetricReading(metricData.bloodSugar, floadMetricValue)
-				metricData.bloodSugarReadingType = bloodSugarReadingType
+				utils.addToHealthMetricReading(metricData.bloodSugar, floadMetricValue);
+				metricData.bloodSugarReadingType = bloodSugarReadingType;
 				queriesToInvalidate.push(bloodGlucoseQueryKey);
 			},
 			[METRIC_TYPE_ENUM.STEPS]: () => {
 				const calories =
 					calorieUtils.getEstimatedCaloriesBurnedForSteps(numericValue);
-				const duration = calorieUtils.getEstimatedDurationForSteps(numericValue);
+				const duration =
+					calorieUtils.getEstimatedDurationForSteps(numericValue);
 				exercises.push({
 					exerciseName: "Walk",
 					calories,
@@ -252,28 +253,31 @@ export function Dashboard() {
 					duration,
 					steps: roundedMetricValue,
 					recordedAt: new Date().toISOString(),
-					source: HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+					source: HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
 				});
 				queriesToInvalidate.push(stepsQueryKey);
 			},
 			[METRIC_TYPE_ENUM.HEART_RATE]: () => {
-				utils.addToHealthMetricReading(metricData.heartRate, roundedMetricValue)
+				utils.addToHealthMetricReading(
+					metricData.heartRate,
+					roundedMetricValue,
+				);
 				queriesToInvalidate.push(heartBeatQueryKey);
 			},
-			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: () => { }
-		}
+			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: () => {},
+		};
 
-		const f = metircTypeReadingMap[selectedMetricType]
+		const f = metircTypeReadingMap[selectedMetricType];
 		if (!f) {
 			toast({
 				title: "Invalid reading type",
 				description: "Please select a valid readingtype",
-				variant: "destructive"
-			})
-			return
+				variant: "destructive",
+			});
+			return;
 		}
 
-		f()
+		f();
 
 		addActivityLogsBatch.mutate(
 			{ exercises, healthMetrics: metricData },
@@ -350,7 +354,7 @@ export function Dashboard() {
 			waterIntake: [],
 		};
 
-		utils.addToHealthMetricReading(metricData.bloodSugar, numericValue)
+		utils.addToHealthMetricReading(metricData.bloodSugar, numericValue);
 
 		addActivityLogsBatch.mutate(
 			{ exercises: [], healthMetrics: metricData },
@@ -409,7 +413,6 @@ export function Dashboard() {
 			};
 		});
 	}, [stepsMetrics, stepsInterval]);
-
 
 	const heartbeatData = useMemo(() => {
 		if (!heartbeatMetrics?.heartBeatRecords?.length) return [];
@@ -480,7 +483,10 @@ export function Dashboard() {
 							latestValue={latestBloodSugar.toString()}
 							trendArrow={getTrendArrow(latestBloodSugar, previousBloodSugar)}
 							onAddLog={() =>
-								handleAddLog(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)
+								handleAddLog(
+									METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
+									BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+								)
 							}
 							onUploadPicture={handleUploadPicture}
 							isUploading={isUploadingGlucoseImage}
@@ -704,7 +710,6 @@ export function Dashboard() {
 								}
 								userTarget={getTargets(METRIC_TYPE_ENUM.STEPS).user}
 							/>
-
 						</div>
 
 						{/* Heart Beat Chart - Only for paid users */}
@@ -798,20 +803,17 @@ export function Dashboard() {
 					});
 				}}
 				isSubmitting={createDailyQuickLog.isPending}
-				initialData={
-					{
-						exercise:
-							latestMetric?.quickLog?.exercise as QuickLogExerciseTypeEnumValues,
-						diet:
-							latestMetric?.quickLog?.diet as QuickLogDietTypeEnumValues,
-						sleepDuration:
-							latestMetric?.quickLog?.sleepDuration as QuickLogSleepDurationTypeEnumValues,
-						medicines:
-							latestMetric?.quickLog?.medicines as QuickLogMedicinesTypeEnumValues,
-						stressLevel:
-							latestMetric?.quickLog?.stressLevel as QuickLogStressLevelTypeEnumValues,
-					}
-				}
+				initialData={{
+					exercise: latestMetric?.quickLog
+						?.exercise as QuickLogExerciseTypeEnumValues,
+					diet: latestMetric?.quickLog?.diet as QuickLogDietTypeEnumValues,
+					sleepDuration: latestMetric?.quickLog
+						?.sleepDuration as QuickLogSleepDurationTypeEnumValues,
+					medicines: latestMetric?.quickLog
+						?.medicines as QuickLogMedicinesTypeEnumValues,
+					stressLevel: latestMetric?.quickLog
+						?.stressLevel as QuickLogStressLevelTypeEnumValues,
+				}}
 				logDate={new Date().toISOString().split("T")[0]}
 			/>
 

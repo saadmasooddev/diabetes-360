@@ -105,19 +105,21 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 	used: boolean("used").default(false),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-	firstName: true,
-	lastName: true,
-	password: true,
-	email: true,
-	provider: true,
-	providerId: true,
-	role: true,
-	isActive: true,
-	emailVerified: true
-}).extend({
-	emailVerified: z.boolean().optional().default(false)
-});
+export const insertUserSchema = createInsertSchema(users)
+	.pick({
+		firstName: true,
+		lastName: true,
+		password: true,
+		email: true,
+		provider: true,
+		providerId: true,
+		role: true,
+		isActive: true,
+		emailVerified: true,
+	})
+	.extend({
+		emailVerified: z.boolean().optional().default(false),
+	});
 
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
 	id: true,
@@ -257,12 +259,15 @@ export enum DIABETES_TYPE {
 	PREDIABETES = "prediabetes",
 }
 
-export const diabetesTypeEnum = z.enum([
-	DIABETES_TYPE.TYPE1,
-	DIABETES_TYPE.TYPE2,
-	DIABETES_TYPE.GESTATIONAL,
-	DIABETES_TYPE.PREDIABETES,
-], { error: "Invalid diabetes type"});
+export const diabetesTypeEnum = z.enum(
+	[
+		DIABETES_TYPE.TYPE1,
+		DIABETES_TYPE.TYPE2,
+		DIABETES_TYPE.GESTATIONAL,
+		DIABETES_TYPE.PREDIABETES,
+	],
+	{ error: "Invalid diabetes type" },
+);
 
 export const diabetesTypePgEnum = pgEnum("diabetes_type_enum", [
 	DIABETES_TYPE.TYPE1,
@@ -640,7 +645,6 @@ type NewPermission<T, Prefix extends string = ""> = T extends object
 		}[keyof T]
 	: never;
 
-
 export enum YES_NO_NOT_SURE_VALUES {
 	YES = "yes",
 	NO = "no",
@@ -651,12 +655,14 @@ export enum BLOOD_SUGAR_READING_TYPES_ENUM {
 	FASTING = "fasting",
 	RANDOM = "random",
 	HBA1C = "hba1c",
-	NORMAL = "normal"
+	NORMAL = "normal",
 }
-const yesNoNotSureEnum = z.enum(Object.values(YES_NO_NOT_SURE_VALUES) as [string, ...string[]] );
+const yesNoNotSureEnum = z.enum(
+	Object.values(YES_NO_NOT_SURE_VALUES) as [string, ...string[]],
+);
 export const bloodSugarReadingTypeSchema = z.enum([
-		...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM),
-	] as [string, ...string[]]);
+	...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM),
+] as [string, ...string[]]);
 
 export const profileDataSchema = z
 	.object({
@@ -742,26 +748,29 @@ export const profileDataSchema = z
 						path: ["bloodSugarReading"],
 					});
 				}
-				if(data.bloodSugarType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (num < 0 || num > 100)){
+				if (
+					data.bloodSugarType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C &&
+					(num < 0 || num > 100)
+				) {
 					ctx.addIssue({
 						code: "custom",
 						message: "HbA1c value must be between 0-100",
 						path: ["bloodSugarReading"],
 					});
-				} 
+				}
 			}
 		}
 	});
 
-export const additionalProfileDataSchema = 
-	profileDataSchema.pick({ 
-		knowsBloodSugarValue: true, 
-		bloodSugarReading: true, 
-		bloodSugarType: true, 
-	})
-
-
+export const additionalProfileDataSchema = profileDataSchema.pick({
+	knowsBloodSugarValue: true,
+	bloodSugarReading: true,
+	bloodSugarType: true,
+});
 
 export type ProfileDataFormValues = z.infer<typeof profileDataSchema>;
-export type AdditionalProfileDataValues = z.infer<typeof additionalProfileDataSchema>
-export type BloodSugarReadingTypeEnumValues = `${BLOOD_SUGAR_READING_TYPES_ENUM}`
+export type AdditionalProfileDataValues = z.infer<
+	typeof additionalProfileDataSchema
+>;
+export type BloodSugarReadingTypeEnumValues =
+	`${BLOOD_SUGAR_READING_TYPES_ENUM}`;

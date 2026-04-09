@@ -59,7 +59,6 @@ export class DateManager {
 		return dayjs.tz(date, timezone);
 	}
 
-
 	static getLocalHours(date: string | Date, timezone: string) {
 		const d = this.getLocalTime(date, timezone);
 		const localHours = d.hour();
@@ -70,17 +69,26 @@ export class DateManager {
 	 * Builds an ISO 8601 start time from an availability date and a time string (HH:MM or HH:MM:SS).
 	 * Treats the combined date+time as UTC.
 	 */
-	static slotTimeToISO(date: Date | string, timeStr: string, timeZone: string): string {
+	static slotTimeToISO(
+		date: Date | string,
+		timeStr: string,
+		timeZone: string,
+	): string {
 		const datePart = dayjs(date).utc().format("YYYY-MM-DD");
 		const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
-		const dateTime = `${datePart} ${normalized}`
-		return this.getLocalHours(dateTime, timeZone).date.toISOString()
+		const dateTime = `${datePart} ${normalized}`;
+		return this.getLocalHours(dateTime, timeZone).date.toISOString();
 	}
 }
 
-export const formatUserInfo = (customerData: CustomerData & { firstName?: string; lastName?: string}) => {
+export const formatUserInfo = (
+	customerData: CustomerData & { firstName?: string; lastName?: string },
+) => {
 	return {
-		name: customerData.lastName && customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : "User",
+		name:
+			customerData.lastName && customerData.firstName
+				? `${customerData.firstName} ${customerData.lastName}`
+				: "User",
 		gender: customerData.gender,
 		birthday: DateManager.formatDate(customerData.birthday),
 		weight: `${customerData.weight}kg`,
@@ -90,35 +98,33 @@ export const formatUserInfo = (customerData: CustomerData & { firstName?: string
 };
 
 export const getPaginationParams = (req: Request) => {
-	const queryPage = parseInt(req.query.page as string, 10)
-	const queryLimit = parseInt(req.query.limit as string, 10)
+	const queryPage = parseInt(req.query.page as string, 10);
+	const queryLimit = parseInt(req.query.limit as string, 10);
 	const querySkip = parseInt(req.query.skip as string, 10);
-	const queryOffset = parseInt(req.query.offset as string, 10)
-	const queryTake = parseInt(req.query.take as string, 10)
+	const queryOffset = parseInt(req.query.offset as string, 10);
+	const queryTake = parseInt(req.query.take as string, 10);
 
 	const page = req.query.page ? queryPage : 1;
-	let limit: number | undefined = undefined
+	let limit: number | undefined = undefined;
 
-	if(queryLimit){
-		limit = queryLimit
+	if (queryLimit) {
+		limit = queryLimit;
 	}
-	if(queryTake){
-		limit = queryTake
-	}
-
-	let offset = 0
-	if(queryPage && limit) {
-		offset = (queryPage - 1) * limit
-	}
-	else if(querySkip) {
-		offset = querySkip
-	}
-	else if(queryOffset){
-		offset = queryOffset
+	if (queryTake) {
+		limit = queryTake;
 	}
 
-	if(page < 1) {
-		throw new BadRequestError("page must be greater than 0")
+	let offset = 0;
+	if (queryPage && limit) {
+		offset = (queryPage - 1) * limit;
+	} else if (querySkip) {
+		offset = querySkip;
+	} else if (queryOffset) {
+		offset = queryOffset;
+	}
+
+	if (page < 1) {
+		throw new BadRequestError("page must be greater than 0");
 	}
 	if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
 		throw new BadRequestError("limit must be between 1 and 100");
@@ -127,6 +133,5 @@ export const getPaginationParams = (req: Request) => {
 		throw new BadRequestError("offset must be a non-negative integer");
 	}
 
-
-	return { limit, offset, page}
+	return { limit, offset, page };
 };

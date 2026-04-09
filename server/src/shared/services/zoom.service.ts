@@ -3,7 +3,6 @@ import { config } from "../../app/config";
 import { emailService } from "../services/email.service";
 import { DateManager } from "../utils/utils";
 
-
 export type CreateMeetingOptions = {
 	/** ISO 8601 start time (e.g. 2024-01-15T09:00:00.000Z) */
 	startTime: string;
@@ -18,8 +17,7 @@ export type CreateMeetingResult = {
 };
 
 export class ZoomService {
-
-	private readonly bookingRepository: BookingRepository
+	private readonly bookingRepository: BookingRepository;
 
 	private readonly ZOOM_TOKEN_URL = "https://zoom.us/oauth/token";
 	private readonly ZOOM_API_BASE = "https://api.zoom.us/v2";
@@ -27,7 +25,7 @@ export class ZoomService {
 	private tokenExpiresAt = 0;
 
 	constructor() {
-	  this.bookingRepository = new BookingRepository();
+		this.bookingRepository = new BookingRepository();
 	}
 	private isConfigured(): boolean {
 		return !!(
@@ -84,7 +82,7 @@ export class ZoomService {
 		const token = await this.getAccessToken();
 		const body = {
 			topic: options.topic ?? "Diabetes 360 Consultation",
-			type: 2, 
+			type: 2,
 			start_time: options.startTime,
 			duration: options.durationMinutes,
 			timezone: "UTC",
@@ -116,56 +114,63 @@ export class ZoomService {
 	}
 
 	async processMeetingLinksJob(): Promise<void> {
-
 		await this.bookingRepository.updateBookedSlotMeetingLinkTransaction(
 			async (tx, slot) => {
-					try {
-						const patientName = `${slot.patientFirstName} ${slot.patientLastName}`;
-						const physicianName = `${slot.physicianFirstName} ${slot.physicianLastName}`;
-						const startTimeIso = this.bookingRepository.getStartTimeISO(slot.availabilityDate, slot.slotStartTime)
-						const result = await zoomService.createMeeting({
-							startTime: startTimeIso,
-							durationMinutes: slot.slotSizeMinutes,
-							topic: `Diabetes 360 - ${physicianName} & ${patientName}`,
-						});
+				try {
+					const patientName = `${slot.patientFirstName} ${slot.patientLastName}`;
+					const physicianName = `${slot.physicianFirstName} ${slot.physicianLastName}`;
+					const startTimeIso = this.bookingRepository.getStartTimeISO(
+						slot.availabilityDate,
+						slot.slotStartTime,
+					);
+					const result = await zoomService.createMeeting({
+						startTime: startTimeIso,
+						durationMinutes: slot.slotSizeMinutes,
+						topic: `Diabetes 360 - ${physicianName} & ${patientName}`,
+					});
 
-						if (!result) {
-							throw new Error(`Zoom not configured; skipping booked slot ${slot.bookedSlotId}`);
-						}
-						// Use join URL for both parties (participants join via same link; host can use start_url if needed)
-						const meetingLink = result.joinUrl;
-						await emailService.sendMeetingLinkEmail({
-							to: slot.patientEmail,
-							recipientName: patientName,
-							patientName,
-							physicianName,
-							bookingId: slot.bookedSlotId,
-							startTimeIso,
-							durationMinutes: slot.slotSizeMinutes,
-							isPhysician: false,
-						});
-
-						await emailService.sendMeetingLinkEmail({
-							to: slot.physicianEmail,
-							recipientName: physicianName,
-							patientName,
-							physicianName,
-							bookingId: slot.bookedSlotId,
-							startTimeIso,
-							durationMinutes: slot.slotSizeMinutes,
-							isPhysician: true,
-						});
-
-						await this.bookingRepository.updateBookedSlotMeetingLink(slot.bookedSlotId, meetingLink, tx)
-
-					} catch (err) {
-						console.error(
-							`[meeting-link-job] Failed for booked slot ${slot.bookedSlotId}:`,
-							err instanceof Error ? err.message : err,
+					if (!result) {
+						throw new Error(
+							`Zoom not configured; skipping booked slot ${slot.bookedSlotId}`,
 						);
 					}
-			}
-		)
+					// Use join URL for both parties (participants join via same link; host can use start_url if needed)
+					const meetingLink = result.joinUrl;
+					await emailService.sendMeetingLinkEmail({
+						to: slot.patientEmail,
+						recipientName: patientName,
+						patientName,
+						physicianName,
+						bookingId: slot.bookedSlotId,
+						startTimeIso,
+						durationMinutes: slot.slotSizeMinutes,
+						isPhysician: false,
+					});
+
+					await emailService.sendMeetingLinkEmail({
+						to: slot.physicianEmail,
+						recipientName: physicianName,
+						patientName,
+						physicianName,
+						bookingId: slot.bookedSlotId,
+						startTimeIso,
+						durationMinutes: slot.slotSizeMinutes,
+						isPhysician: true,
+					});
+
+					await this.bookingRepository.updateBookedSlotMeetingLink(
+						slot.bookedSlotId,
+						meetingLink,
+						tx,
+					);
+				} catch (err) {
+					console.error(
+						`[meeting-link-job] Failed for booked slot ${slot.bookedSlotId}:`,
+						err instanceof Error ? err.message : err,
+					);
+				}
+			},
+		);
 	}
 }
 

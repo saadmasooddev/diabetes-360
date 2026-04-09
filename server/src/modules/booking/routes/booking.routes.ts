@@ -1033,12 +1033,14 @@ router.patch(
 	(req, res) => bookingController.updateConsultationStatus(req, res),
 );
 
-
 router.patch(
 	"/consultations/:bookingId/note",
 	authenticateToken,
-	requireAnyPermission([PERMISSIONS.UPDATE_OWN_APPOINTMENTS, PERMISSIONS.UPDATE_ALL_BOOKINGS]),
-	(req, res) => bookingController. updateConsultationNotes(req, res),
+	requireAnyPermission([
+		PERMISSIONS.UPDATE_OWN_APPOINTMENTS,
+		PERMISSIONS.UPDATE_ALL_BOOKINGS,
+	]),
+	(req, res) => bookingController.updateConsultationNotes(req, res),
 );
 
 /**
@@ -1344,8 +1346,7 @@ router.get(
 	"/:bookingId/meeting-link",
 	authenticateToken,
 	requireAnyPermission([PERMISSIONS.VIEW_MEETING_LINK]),
-	(req, res) => bookingController.getMeetingLink(req,res)
-
-)
+	(req, res) => bookingController.getMeetingLink(req, res),
+);
 
 export { router as bookingRoutes };

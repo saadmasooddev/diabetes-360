@@ -108,17 +108,23 @@ export function PatientProfile() {
 	const [matchAdmin, paramsAdmin] = useRoute<{ profileId: string }>(
 		ROUTES.ADMIN_PATIENT_PROFILE,
 	);
-	const [glucoseInterval, setGlucoseInterval] = useState<IntervalType>("weekly");
+	const [glucoseInterval, setGlucoseInterval] =
+		useState<IntervalType>("weekly");
 	const [hba1cInterval, setHba1cInterval] = useState<IntervalType>("weekly");
-	const [isAllSummariesDialogOpen, setIsAllSummariesDialogOpen] = useState(false);
+	const [isAllSummariesDialogOpen, setIsAllSummariesDialogOpen] =
+		useState(false);
 	const glucoseDateRange = getDateRange(glucoseInterval);
 	const hba1cDateRange = getDateRange(hba1cInterval);
 	const isAdmin = !!matchAdmin;
 
 	const patientId =
 		(matchDoctor ? paramsDoctor?.profileId : paramsAdmin?.profileId) || null;
-	const { data: patient, isLoading, error, refetch: refetchPatient } =
-		usePatientById(patientId, glucoseDateRange);
+	const {
+		data: patient,
+		isLoading,
+		error,
+		refetch: refetchPatient,
+	} = usePatientById(patientId, glucoseDateRange);
 
 	const glucoseData = useMemo(() => {
 		if (!patient?.glucoseTrend || patient.glucoseTrend.length === 0) return [];
@@ -126,8 +132,7 @@ export function PatientProfile() {
 			const date = new Date(m.recordedAt);
 			return {
 				time: formatTimeLabel(date, glucoseInterval),
-				value:
-					typeof m.value === "string" ? parseFloat(m.value) : m.value || 0,
+				value: typeof m.value === "string" ? parseFloat(m.value) : m.value || 0,
 			};
 		});
 	}, [patient?.glucoseTrend, glucoseInterval]);
@@ -200,9 +205,7 @@ export function PatientProfile() {
 
 	const dietTrend = patient.dietTrend;
 	const macros = patient.macros;
-	const recommendedTotal = Math.round(
-		dietTrend?.avgRecommendedCalories ?? 0,
-	);
+	const recommendedTotal = Math.round(dietTrend?.avgRecommendedCalories ?? 0);
 	const totalLogged = dietTrend?.totalLogged ?? 0;
 	const exceeded =
 		totalLogged > recommendedTotal ? totalLogged - recommendedTotal : 0;
@@ -349,7 +352,7 @@ export function PatientProfile() {
 					</DialogHeader>
 					<div className="overflow-y-auto flex-1 pr-2">
 						{patient.consultationSummaries &&
-							patient.consultationSummaries.length > 0 ? (
+						patient.consultationSummaries.length > 0 ? (
 							<ul className="space-y-4">
 								{patient.consultationSummaries.map((summary, index) => (
 									<li
@@ -436,7 +439,9 @@ function OverviewTab({
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
 					<div>
 						<p className="text-xs text-[#94a3b8] mb-0.5">Contact</p>
-						<p className="text-sm font-medium text-[#0f172a]">{patient.email || "—"}</p>
+						<p className="text-sm font-medium text-[#0f172a]">
+							{patient.email || "—"}
+						</p>
 					</div>
 					<div>
 						<p className="text-xs text-[#94a3b8] mb-0.5">Address</p>
@@ -462,26 +467,44 @@ function OverviewTab({
 			</Card>
 
 			{/* Glucose Summary */}
-			<Card className="p-5 lg:p-6 bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]" data-testid="card-glucose-summary">
+			<Card
+				className="p-5 lg:p-6 bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+				data-testid="card-glucose-summary"
+			>
 				<h3 className="text-xs font-semibold uppercase tracking-wider text-[#64748b] mb-4">
 					Glucose Summary
 				</h3>
 				<div className="grid grid-cols-3 gap-6">
 					<div className="text-center">
-						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">Highs</p>
-						<p className="text-2xl font-semibold tabular-nums text-[#00856F]" data-testid="text-highs">
+						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">
+							Highs
+						</p>
+						<p
+							className="text-2xl font-semibold tabular-nums text-[#00856F]"
+							data-testid="text-highs"
+						>
 							{patient.glucoseSummary?.highs ?? 0}%
 						</p>
 					</div>
 					<div className="text-center border-x border-[#e2e8f0]">
-						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">Lows</p>
-						<p className="text-2xl font-semibold tabular-nums text-[#00856F]" data-testid="text-lows">
+						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">
+							Lows
+						</p>
+						<p
+							className="text-2xl font-semibold tabular-nums text-[#00856F]"
+							data-testid="text-lows"
+						>
 							{patient.glucoseSummary?.lows ?? 0}%
 						</p>
 					</div>
 					<div className="text-center">
-						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">Time in range</p>
-						<p className="text-2xl font-semibold tabular-nums text-[#00856F]" data-testid="text-time-in-range">
+						<p className="text-[11px] uppercase tracking-wider text-[#94a3b8] mb-1">
+							Time in range
+						</p>
+						<p
+							className="text-2xl font-semibold tabular-nums text-[#00856F]"
+							data-testid="text-time-in-range"
+						>
 							{patient.glucoseSummary?.timeInRange ?? 0}%
 						</p>
 					</div>
@@ -534,16 +557,23 @@ function OverviewTab({
 								{label}
 							</span>
 							<div
-								className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${icon === "tick"
-									? "bg-[#00856F]/12 text-[#00856F]"
-									: icon === "cross"
-										? "bg-red-500/10 text-red-500"
-										: "bg-[#f1f5f9] text-[#94a3b8]"
-									}`}
+								className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+									icon === "tick"
+										? "bg-[#00856F]/12 text-[#00856F]"
+										: icon === "cross"
+											? "bg-red-500/10 text-red-500"
+											: "bg-[#f1f5f9] text-[#94a3b8]"
+								}`}
 							>
-								{icon === "tick" && <Check className="w-4 h-4" strokeWidth={2.5} />}
-								{icon === "cross" && <X className="w-4 h-4" strokeWidth={2.5} />}
-								{icon === "neutral" && <Circle className="w-3 h-3" strokeWidth={2} />}
+								{icon === "tick" && (
+									<Check className="w-4 h-4" strokeWidth={2.5} />
+								)}
+								{icon === "cross" && (
+									<X className="w-4 h-4" strokeWidth={2.5} />
+								)}
+								{icon === "neutral" && (
+									<Circle className="w-3 h-3" strokeWidth={2} />
+								)}
 							</div>
 						</div>
 					))}
@@ -562,7 +592,9 @@ function OverviewTab({
 							<span className="font-medium text-[#0f172a] tabular-nums">
 								{totalLogged} / {recommendedTotal} kcal
 								{exceeded > 0 && (
-									<span className="text-red-500 font-normal ml-1">+{exceeded} over</span>
+									<span className="text-red-500 font-normal ml-1">
+										+{exceeded} over
+									</span>
 								)}
 							</span>
 						</div>
@@ -572,7 +604,9 @@ function OverviewTab({
 								style={{
 									width: `${Math.min(
 										100,
-										recommendedTotal > 0 ? (totalLogged / recommendedTotal) * 100 : 0,
+										recommendedTotal > 0
+											? (totalLogged / recommendedTotal) * 100
+											: 0,
 									)}%`,
 								}}
 							/>
@@ -582,7 +616,9 @@ function OverviewTab({
 									style={{
 										width: `${Math.min(
 											100,
-											recommendedTotal > 0 ? (exceeded / recommendedTotal) * 100 : 0,
+											recommendedTotal > 0
+												? (exceeded / recommendedTotal) * 100
+												: 0,
 										)}%`,
 									}}
 								/>
@@ -590,9 +626,24 @@ function OverviewTab({
 						</div>
 					</div>
 					<div className="flex items-center gap-6 text-sm text-[#64748b]">
-						<span>Carbs <strong className="text-[#0f172a] font-medium">{macros?.carbsPercent ?? 0}%</strong></span>
-						<span>Protein <strong className="text-[#0f172a] font-medium">{macros?.proteinPercent ?? 0}%</strong></span>
-						<span>Fat <strong className="text-[#0f172a] font-medium">{macros?.fatPercent ?? 0}%</strong></span>
+						<span>
+							Carbs{" "}
+							<strong className="text-[#0f172a] font-medium">
+								{macros?.carbsPercent ?? 0}%
+							</strong>
+						</span>
+						<span>
+							Protein{" "}
+							<strong className="text-[#0f172a] font-medium">
+								{macros?.proteinPercent ?? 0}%
+							</strong>
+						</span>
+						<span>
+							Fat{" "}
+							<strong className="text-[#0f172a] font-medium">
+								{macros?.fatPercent ?? 0}%
+							</strong>
+						</span>
 					</div>
 				</div>
 			</Card>
@@ -633,7 +684,10 @@ function formatAppointmentDate(date: Date | string): string {
 	return `${m}-${day}-${y}`;
 }
 
-function formatAppointmentTimeRange(startTime: string, endTime: string): string {
+function formatAppointmentTimeRange(
+	startTime: string,
+	endTime: string,
+): string {
 	return `${formatTime12(startTime)} - ${formatTime12(endTime)}`;
 }
 
@@ -644,7 +698,6 @@ function getAppointmentTypeLabel(apt: UserConsultation): string {
 	}
 	return "Consultation";
 }
-
 
 function AppointmentCard({ apt }: { apt: UserConsultation }) {
 	const slot = apt.slot;
@@ -686,8 +739,14 @@ function AppointmentCard({ apt }: { apt: UserConsultation }) {
 			</p>
 			{(hasLocation || physicianName) && (
 				<p className="text-xs text-[#64748b]">
-					{hasLocation && location?.locationName && `Center: ${location.locationName}`}
-					{hasLocation && locationLine && (location?.locationName ? ` · ${locationLine}` : `Location: ${locationLine}`)}
+					{hasLocation &&
+						location?.locationName &&
+						`Center: ${location.locationName}`}
+					{hasLocation &&
+						locationLine &&
+						(location?.locationName
+							? ` · ${locationLine}`
+							: `Location: ${locationLine}`)}
 					{!hasLocation && physicianName && `Physician: ${physicianName}`}
 				</p>
 			)}
@@ -696,8 +755,8 @@ function AppointmentCard({ apt }: { apt: UserConsultation }) {
 }
 
 function AppointmentsTab({ patient }: { patient: PatientProfileType }) {
-	const past = patient.appointments
-	const upcoming = patient.upcomingAppointments
+	const past = patient.appointments;
+	const upcoming = patient.upcomingAppointments;
 
 	return (
 		<div className="space-y-8">
@@ -707,7 +766,9 @@ function AppointmentsTab({ patient }: { patient: PatientProfileType }) {
 				</h3>
 				{upcoming.length === 0 ? (
 					<Card className="p-8 bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-						<p className="text-center text-[#94a3b8] text-sm">No upcoming appointments.</p>
+						<p className="text-center text-[#94a3b8] text-sm">
+							No upcoming appointments.
+						</p>
 					</Card>
 				) : (
 					<div className="space-y-2">
@@ -723,7 +784,9 @@ function AppointmentsTab({ patient }: { patient: PatientProfileType }) {
 				</h3>
 				{past.length === 0 ? (
 					<Card className="p-8 bg-white rounded-2xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-						<p className="text-center text-[#94a3b8] text-sm">No past appointments.</p>
+						<p className="text-center text-[#94a3b8] text-sm">
+							No past appointments.
+						</p>
 					</Card>
 				) : (
 					<div className="space-y-2">
@@ -737,7 +800,6 @@ function AppointmentsTab({ patient }: { patient: PatientProfileType }) {
 	);
 }
 
-
 function NotesTab({
 	patient,
 	isAdmin,
@@ -749,8 +811,8 @@ function NotesTab({
 	onSeeAllSummaries: () => void;
 	onRefetchPatient?: () => void;
 }) {
-	const appointments = patient.appointments ?? []
-	const completedConsultations = appointments
+	const appointments = patient.appointments ?? [];
+	const completedConsultations = appointments;
 
 	const [soapNoteConsultation, setSoapNoteConsultation] =
 		useState<UserConsultation | null>(null);
@@ -789,7 +851,7 @@ function NotesTab({
 							const dateStr = consultation.slot.availability.date;
 							const summaryPreview = consultation.summary
 								? consultation.summary.slice(0, 120) +
-								(consultation.summary.length > 120 ? "…" : "")
+									(consultation.summary.length > 120 ? "…" : "")
 								: "No summary yet";
 							return (
 								<li
@@ -814,7 +876,11 @@ function NotesTab({
 										<div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs text-[#94a3b8]">
 											<span>
 												{formatDate(
-													new Date(typeof dateStr === "string" ? dateStr : (dateStr as Date)),
+													new Date(
+														typeof dateStr === "string"
+															? dateStr
+															: (dateStr as Date),
+													),
 													"MMM d, yyyy",
 												)}
 											</span>
@@ -824,7 +890,8 @@ function NotesTab({
 											</span>
 										</div>
 										<span className="text-xs text-[#475569] leading-snug blockm mt-1.5 ">
-											<span className=" text-[#94a3b8] ">Start Time:</span> {formatTime12(consultation.slot.startTime)}
+											<span className=" text-[#94a3b8] ">Start Time:</span>{" "}
+											{formatTime12(consultation.slot.startTime)}
 										</span>
 									</div>
 								</li>
@@ -832,7 +899,6 @@ function NotesTab({
 						})}
 					</ul>
 				)}
-
 			</Card>
 
 			<SoapNoteModal
@@ -879,12 +945,15 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 	const reportsToShow =
 		category === "all"
 			? allReports
-			: allReports.filter((r) => normalizeReportType(r.reportType) === category);
+			: allReports.filter(
+					(r) => normalizeReportType(r.reportType) === category,
+				);
 
 	const getCount = (filter: ReportTypeFilter) =>
 		filter === "all"
 			? total
-			: allReports.filter((r) => normalizeReportType(r.reportType) === filter).length;
+			: allReports.filter((r) => normalizeReportType(r.reportType) === filter)
+					.length;
 
 	const handleViewReport = (report: LabReport) => {
 		viewMutation.mutate(
@@ -923,11 +992,15 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 			<div className="flex flex-wrap gap-2 mb-4">
 				<button
 					type="button"
-					onClick={() => { setCategory("all"); setPage(1); }}
-					className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${category === "all"
-						? "bg-[#00856F] text-white"
-						: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
-						}`}
+					onClick={() => {
+						setCategory("all");
+						setPage(1);
+					}}
+					className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
+						category === "all"
+							? "bg-[#00856F] text-white"
+							: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+					}`}
 				>
 					All ({getCount("all")})
 				</button>
@@ -935,11 +1008,15 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 					<button
 						key={t.value}
 						type="button"
-						onClick={() => { setCategory(t.value as ReportTypeFilter); setPage(1); }}
-						className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${category === t.value
-							? "bg-[#00856F] text-white"
-							: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
-							}`}
+						onClick={() => {
+							setCategory(t.value as ReportTypeFilter);
+							setPage(1);
+						}}
+						className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
+							category === t.value
+								? "bg-[#00856F] text-white"
+								: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+						}`}
 					>
 						{t.label} ({getCount(t.value as ReportTypeFilter)})
 					</button>
@@ -994,7 +1071,10 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 										</td>
 										<td className="py-3 px-3 text-sm text-[#64748b] tabular-nums">
 											{report.dateOfReport
-												? formatDate(new Date(report.dateOfReport), "MMM d, yyyy")
+												? formatDate(
+														new Date(report.dateOfReport),
+														"MMM d, yyyy",
+													)
 												: "—"}
 										</td>
 										<td className="py-3 px-3 text-sm text-[#64748b] tabular-nums">

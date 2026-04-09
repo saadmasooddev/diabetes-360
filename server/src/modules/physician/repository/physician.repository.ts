@@ -12,7 +12,7 @@ import {
 	type SQL,
 	inArray,
 	isNull,
-	getTableColumns
+	getTableColumns,
 } from "drizzle-orm";
 import {
 	physicianSpecialties,
@@ -181,8 +181,17 @@ export class PhysicianRepository {
 			hasPrev: boolean;
 		};
 	}> {
-		const { page, limit, search, specialtyId, skip, date, timeZone, dateWithTimezone } = params;
-		const offset = skip || 0
+		const {
+			page,
+			limit,
+			search,
+			specialtyId,
+			skip,
+			date,
+			timeZone,
+			dateWithTimezone,
+		} = params;
+		const offset = skip || 0;
 
 		// Build base query conditions
 		const conditions = [
@@ -261,7 +270,12 @@ export class PhysicianRepository {
 
 		// Get average ratings for each physician
 		const physiciansWithRatings = await Promise.all(
-			physicians.map(async (physician) =>  this.physicianWithRatingsAndNextAvaialbleSlot(physician, { timeZone, fromDate: dateWithTimezone })),
+			physicians.map(async (physician) =>
+				this.physicianWithRatingsAndNextAvaialbleSlot(physician, {
+					timeZone,
+					fromDate: dateWithTimezone,
+				}),
+			),
 		);
 
 		return {
@@ -312,130 +326,134 @@ export class PhysicianRepository {
 			);
 
 		const physiciansWithRatings = await Promise.all(
-			physicians.map(async (physician) =>  this.physicianWithRatingsAndNextAvaialbleSlot(physician, { timeZone, fromDate })),
+			physicians.map(async (physician) =>
+				this.physicianWithRatingsAndNextAvaialbleSlot(physician, {
+					timeZone,
+					fromDate,
+				}),
+			),
 		);
 
-		return physiciansWithRatings.filter(p => p.nextAvailableSlot !== null);
+		return physiciansWithRatings.filter((p) => p.nextAvailableSlot !== null);
 	}
 
-	private async physicianWithRatingsAndNextAvaialbleSlot(physician:  {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    isActive: boolean | null;
-    specialtyId: string;
-    practiceStartDate: Date;
-    consultationFee: string;
-    imageUrl: string | null;
-    specialty: string;
-},{timeZone, fromDate }: { timeZone: string, fromDate: string }) {
-				const [avgRating] = await db
-					.select({
-						averageRating: avg(physicianRatings.rating),
-						totalRatings: sql<number>`count(${physicianRatings.id})`,
-					})
-					.from(physicianRatings)
-					.where(eq(physicianRatings.physicianId, physician.id));
+	private async physicianWithRatingsAndNextAvaialbleSlot(
+		physician: {
+			id: string;
+			firstName: string;
+			lastName: string;
+			email: string;
+			isActive: boolean | null;
+			specialtyId: string;
+			practiceStartDate: Date;
+			consultationFee: string;
+			imageUrl: string | null;
+			specialty: string;
+		},
+		{ timeZone, fromDate }: { timeZone: string; fromDate: string },
+	) {
+		const [avgRating] = await db
+			.select({
+				averageRating: avg(physicianRatings.rating),
+				totalRatings: sql<number>`count(${physicianRatings.id})`,
+			})
+			.from(physicianRatings)
+			.where(eq(physicianRatings.physicianId, physician.id));
 
-				const rating = avgRating?.averageRating
-					? parseFloat(avgRating.averageRating.toString())
-					: 0;
-				const totalRatings = avgRating?.totalRatings
-					? parseInt(avgRating.totalRatings.toString())
-					: 0;
+		const rating = avgRating?.averageRating
+			? parseFloat(avgRating.averageRating.toString())
+			: 0;
+		const totalRatings = avgRating?.totalRatings
+			? parseInt(avgRating.totalRatings.toString())
+			: 0;
 
-				const startDate = new Date(physician.practiceStartDate);
-				const now = new Date();
-				const yearsExperience = Math.floor(
-					(now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365),
+		const startDate = new Date(physician.practiceStartDate);
+		const now = new Date();
+		const yearsExperience = Math.floor(
+			(now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365),
+		);
+
+		const nextSlotRows = await db
+			.select({
+				slotId: slots.id,
+				date: availabilityDate.date,
+				startTime: slots.startTime,
+				endTime: slots.endTime,
+				slotTypeId: slotType.id,
+				slotType: slotType.type,
+				slotLocation: {
+					...getTableColumns(physicianLocations),
+				},
+			})
+			.from(slots)
+			.innerJoin(
+				availabilityDate,
+				eq(slots.availabilityId, availabilityDate.id),
+			)
+			.innerJoin(slotTypeJunction, eq(slotTypeJunction.slotId, slots.id))
+			.innerJoin(slotType, eq(slotType.id, slotTypeJunction.slotTypeId))
+			.leftJoin(bookedSlots, and(eq(bookedSlots.slotId, slots.id)))
+			.leftJoin(slotLocations, eq(slotLocations.slotId, slots.id))
+			.leftJoin(
+				physicianLocations,
+				eq(physicianLocations.id, slotLocations.locationId),
+			)
+			.where(
+				and(
+					eq(availabilityDate.physicianId, physician.id),
+					sql`DATE(${availabilityDate.date}) >= DATE(${fromDate})`,
+					isNull(bookedSlots.id),
+				),
+			)
+			.orderBy(asc(availabilityDate.date))
+			.limit(10);
+
+		const userTimeStamp = new Date(fromDate).getTime();
+		nextSlotRows
+			.sort((slot) => {
+				const date = DateManager.formatDate(slot.date);
+				const { utcDate } = DateManager.getLocalHours(
+					`${date} ${slot.startTime}`,
+					timeZone,
 				);
 
-				const nextSlotRows = await db
-					.select({
-						slotId: slots.id,
-						date: availabilityDate.date,
-						startTime: slots.startTime,
-						endTime: slots.endTime,
-						slotTypeId: slotType.id,
-						slotType: slotType.type,
-						slotLocation: {
-							...getTableColumns(physicianLocations)
-						}
-					})
-					.from(slots)
-					.innerJoin(
-						availabilityDate,
-						eq(slots.availabilityId, availabilityDate.id),
-					)
-					.innerJoin(
-						slotTypeJunction,
-						eq(slotTypeJunction.slotId, slots.id),
-					)
-					.innerJoin(slotType, eq(slotType.id, slotTypeJunction.slotTypeId))
-					.leftJoin(
-						bookedSlots,
-						and(
-							eq(bookedSlots.slotId, slots.id),
-						),
-					)
-					.leftJoin(
-						slotLocations, eq(slotLocations.slotId, slots.id)
-					)
-					.leftJoin(
-						physicianLocations, eq(physicianLocations.id, slotLocations.locationId)
-					)
-					.where(
-						and(
-							eq(availabilityDate.physicianId, physician.id),
-              sql`DATE(${availabilityDate.date}) >= DATE(${fromDate})`,
-							isNull(bookedSlots.id),
-						),
-					)
-					.orderBy(
-						asc(availabilityDate.date),
-					)
-					.limit(10);
+				const slotTimeStamp = new Date(utcDate).getTime();
+				return slotTimeStamp - userTimeStamp;
+			})
+			.filter((slot) => {
+				const date = DateManager.formatDate(slot.date);
+				const { utcDate } = DateManager.getLocalHours(
+					`${date} ${slot.startTime}`,
+					timeZone,
+				);
 
-				const userTimeStamp = new Date(fromDate).getTime()
-				nextSlotRows.sort(slot => {
-					const date = DateManager.formatDate(slot.date)
-					const { utcDate } = DateManager.getLocalHours(
-						`${date} ${slot.startTime}`,
-						timeZone
-			    );
+				const slotTimeStamp = new Date(utcDate).getTime();
+				return slotTimeStamp >= userTimeStamp;
+			});
 
-					const slotTimeStamp = new Date(utcDate).getTime()
-					return slotTimeStamp - userTimeStamp
-				}).filter(slot => {
-					const date = DateManager.formatDate(slot.date)
-					const { utcDate } = DateManager.getLocalHours(
-						`${date} ${slot.startTime}`,
-						timeZone
-			    );
+		const nextAvailableSlot =
+			nextSlotRows.length > 0
+				? {
+						slotId: nextSlotRows[0].slotId,
+						date: DateManager.formatDate(nextSlotRows[0].date),
+						startTime: nextSlotRows[0].startTime,
+						endTime: nextSlotRows[0].endTime,
+						slotTypeId: nextSlotRows[0].slotTypeId,
+						slotType:
+							nextSlotRows[0].slotType === SLOT_TYPE.ONLINE
+								? "Video Call"
+								: "In Person",
+						slotLocation: nextSlotRows[0].slotLocation,
+					}
+				: null;
 
-					const slotTimeStamp = new Date(utcDate).getTime()
-					return slotTimeStamp >= userTimeStamp
-
-				})
-
-				const nextAvailableSlot = nextSlotRows.length > 0 ? {
-					slotId: nextSlotRows[0].slotId,
-					date: DateManager.formatDate(nextSlotRows[0].date),
-					startTime: nextSlotRows[0].startTime,
-					endTime: nextSlotRows[0].endTime,
-					slotTypeId: nextSlotRows[0].slotTypeId,
-					slotType: nextSlotRows[0].slotType === SLOT_TYPE.ONLINE ? 'Video Call' : 'In Person',
-					slotLocation: nextSlotRows[0].slotLocation
-				} : null
-
-				return {
-					...physician,
-					rating,
-					totalRatings,
-					experience: `${yearsExperience}+ years`,
-					nextAvailableSlot,
-				};
+		return {
+			...physician,
+			rating,
+			totalRatings,
+			experience: `${yearsExperience}+ years`,
+			nextAvailableSlot,
+		};
 	}
 
 	// Get all specialties for consultation page

@@ -11,14 +11,14 @@ import { ROUTES } from "@/config/routes";
 
 export const useRequestSignInCode = () => {
 	const { toast } = useToast();
-	const [, navigate] = useLocation()
+	const [, navigate] = useLocation();
 
 	return useMutation({
 		mutationFn: (email: string) => authService.requestSignInCode(email),
 		onSuccess: (data) => {
-			if(data?.emailVerificationCodeSent === true){
-				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
-				return
+			if (data?.emailVerificationCodeSent === true) {
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`);
+				return;
 			}
 			toast({
 				title: "Code sent",
@@ -49,9 +49,9 @@ export const useLogin = () => {
 			return result;
 		},
 		onSuccess: (data) => {
-			if(data?.emailVerificationCodeSent === true){
-				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
-				return
+			if (data?.emailVerificationCodeSent === true) {
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`);
+				return;
 			}
 
 			if (data.requiresTwoFactor) {

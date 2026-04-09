@@ -63,7 +63,10 @@ import { freeTierLimits } from "../../settings/models/settings.schema";
 import { userConsultationQuotas } from "../models/consultation-quota.schema";
 import { Tx } from "../../food/models/food.schema";
 import { medications } from "../../medical/models/medical.schema";
-import { MedicalRepository, MedicineDosage } from "../../medical/repository/medical.repository";
+import {
+	MedicalRepository,
+	MedicineDosage,
+} from "../../medical/repository/medical.repository";
 import { ConsultationQuotaRepository } from "./consultation-quota.repository";
 import { config } from "server/src/app/config";
 import { DateManager, timeZones, usersFcmTokens } from "@shared/schema";
@@ -79,22 +82,22 @@ type BookedSlotReminder = {
 	durationMinutes: number;
 	isPhysician: boolean;
 	bookingId: string;
-	userId: string
-}
+	userId: string;
+};
 
 export type BookedSlotWithoutMeetingLink = {
-			bookedSlotId: string;
-			slotStartTime: string;
-			slotEndTime: string;
-			availabilityDate: Date;
-			slotSizeMinutes: number;
-			patientEmail: string;
-			patientFirstName: string;
-			patientLastName: string;
-			physicianEmail: string;
-			physicianFirstName: string;
-			physicianLastName: string;
-		}
+	bookedSlotId: string;
+	slotStartTime: string;
+	slotEndTime: string;
+	availabilityDate: Date;
+	slotSizeMinutes: number;
+	patientEmail: string;
+	patientFirstName: string;
+	patientLastName: string;
+	physicianEmail: string;
+	physicianFirstName: string;
+	physicianLastName: string;
+};
 export type BookingPriceCalculation = {
 	type: BOOKING_TYPE_ENUM;
 	originalFee: string;
@@ -113,7 +116,7 @@ export type DateWithBookings = {
 
 export type SlotStartEnd = { startTime: string; endTime: string };
 export type UserConsultation = BookedSlot & {
-	medications?: MedicineDosage[]
+	medications?: MedicineDosage[];
 	slot: Slot & {
 		availability: AvailabilityDate;
 		slotSize: SlotSize;
@@ -159,13 +162,13 @@ export type SlotWithDetails = {
 };
 export class BookingRepository {
 	private medicalRepository: MedicalRepository;
-	private consultationQuotaRepository: ConsultationQuotaRepository
-	private userRepository: UserRepository
+	private consultationQuotaRepository: ConsultationQuotaRepository;
+	private userRepository: UserRepository;
 
 	constructor() {
-		this.medicalRepository = new MedicalRepository()
-		this.consultationQuotaRepository = new ConsultationQuotaRepository()
-		this.userRepository = new UserRepository()
+		this.medicalRepository = new MedicalRepository();
+		this.consultationQuotaRepository = new ConsultationQuotaRepository();
+		this.userRepository = new UserRepository();
 	}
 
 	async getAllSlotSizes(): Promise<SlotSize[]> {
@@ -173,9 +176,8 @@ export class BookingRepository {
 	}
 
 	async createSlotSizes(sizes: InsertSlotSize[]) {
-		return await db.insert(slotSize).values(sizes).returning()
+		return await db.insert(slotSize).values(sizes).returning();
 	}
-
 
 	async getSlotSizeById(id: string): Promise<SlotSize | null> {
 		const [size] = await db
@@ -428,7 +430,7 @@ export class BookingRepository {
 	}
 
 	async createSlotTypes(types: InsertSlotType[]) {
-		return await db.insert(slotType).values(types).returning()
+		return await db.insert(slotType).values(types).returning();
 	}
 
 	// Slot Type Junction operations
@@ -511,13 +513,17 @@ export class BookingRepository {
 			.where(eq(slotPrice.slotId, slotId));
 	}
 
-	getStartTimeISO(availabilityDate: Date, slotStartTime: string, timeZone?: string ) {
+	getStartTimeISO(
+		availabilityDate: Date,
+		slotStartTime: string,
+		timeZone?: string,
+	) {
 		const startTimeIso = DateManager.slotTimeToISO(
 			availabilityDate,
 			slotStartTime,
-			timeZone || config.defaults.timezone
+			timeZone || config.defaults.timezone,
 		);
-		return startTimeIso
+		return startTimeIso;
 	}
 
 	async createBookedSlotTransaction(
@@ -536,9 +542,11 @@ export class BookingRepository {
 				throw new Error("System limits not found");
 			}
 
-			const userConsultationQuota = await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(
-				data.customerId, tx
-			)
+			const userConsultationQuota =
+				await this.consultationQuotaRepository.getOrCreateUserConsultationQuota(
+					data.customerId,
+					tx,
+				);
 
 			switch (pricingData.type) {
 				case BOOKING_TYPE_ENUM.FREE: {
@@ -1139,10 +1147,10 @@ export class BookingRepository {
 	}
 
 	async getLatestPhysicianTrackingPatient(patientId: string) {
-		const { password, ...userColumns } = getTableColumns(users)
-		const [result ] = await db
-		  .select({
-				...userColumns 
+		const { password, ...userColumns } = getTableColumns(users);
+		const [result] = await db
+			.select({
+				...userColumns,
 			})
 			.from(bookedSlots)
 			.innerJoin(slots, eq(slots.id, bookedSlots.slotId))
@@ -1162,10 +1170,9 @@ export class BookingRepository {
 				),
 			)
 			.orderBy(desc(availabilityDate.date), desc(bookedSlots.updatedAt))
-			.limit(1)
+			.limit(1);
 
-			return result
-
+		return result;
 	}
 
 	// Get user consultations (upcoming and past)
@@ -1195,7 +1202,7 @@ export class BookingRepository {
 			date,
 			timeZone,
 		} = options;
-		const offset = skip || 0
+		const offset = skip || 0;
 
 		let dateWithTimezone: string | null = null;
 		if (date && timeZone) {
@@ -1343,16 +1350,16 @@ export class BookingRepository {
 			)
 			.leftJoin(medications, eq(bookedSlots.id, medications.consultationId))
 			.where(and(eq(bookedSlots.customerId, customerId), statusCondition))
-			.orderBy(availabilityDate.date)
-		
-		if(limit !== undefined ) {
-			consultationsPromise.limit(limit)
+			.orderBy(availabilityDate.date);
+
+		if (limit !== undefined) {
+			consultationsPromise.limit(limit);
 		}
-		if(offset !== undefined ){
-			consultationsPromise.offset(offset)
+		if (offset !== undefined) {
+			consultationsPromise.offset(offset);
 		}
 
-		const consultations: UserConsultation[] = await consultationsPromise
+		const consultations: UserConsultation[] = await consultationsPromise;
 
 		const physicianIds = consultations.map((c) => c.slot.physician.id);
 		const ratings = await db
@@ -1816,12 +1823,13 @@ export class BookingRepository {
 			.where(sql`DATE(${availabilityDate.date}) = DATE(${date})`);
 	}
 
-	async getBookedSlotsWithoutMeetingLink(limit?: number, tx?: Tx): Promise<
-		BookedSlotWithoutMeetingLink []
-	> {
+	async getBookedSlotsWithoutMeetingLink(
+		limit?: number,
+		tx?: Tx,
+	): Promise<BookedSlotWithoutMeetingLink[]> {
 		const patientsAlias = alias(users, "patients_meeting");
 		const physiciansAlias = alias(users, "physicians_meeting");
-		const dbConn = tx || db
+		const dbConn = tx || db;
 
 		const rows = dbConn
 			.select({
@@ -1861,13 +1869,13 @@ export class BookingRepository {
 				),
 			);
 
-			if(limit){
-				rows.limit(limit)
-			}
+		if (limit) {
+			rows.limit(limit);
+		}
 
-			if(tx) {
-				rows.for("update", { skipLocked: true })
-			}
+		if (tx) {
+			rows.for("update", { skipLocked: true });
+		}
 
 		return await rows;
 	}
@@ -1875,9 +1883,9 @@ export class BookingRepository {
 	async updateBookedSlotMeetingLink(
 		bookedSlotId: string,
 		meetingLink: string,
-		tx?: Tx
+		tx?: Tx,
 	): Promise<void> {
-		const dbConn = tx || db
+		const dbConn = tx || db;
 		await dbConn
 			.update(bookedSlots)
 			.set({
@@ -1887,177 +1895,209 @@ export class BookingRepository {
 			.where(eq(bookedSlots.id, bookedSlotId));
 	}
 
-
-	async updateBookedSlotMeetingLinkTransaction(f: (tx: Tx, slots: BookedSlotWithoutMeetingLink) => Promise<void>){
-
+	async updateBookedSlotMeetingLinkTransaction(
+		f: (tx: Tx, slots: BookedSlotWithoutMeetingLink) => Promise<void>,
+	) {
 		await dbUtils.transaction(async (tx) => {
 			try {
 				const slots = await this.getBookedSlotsWithoutMeetingLink(1000, tx);
 				if (slots.length === 0) {
-					console.log("No slots found. Cancelling the job")
+					console.log("No slots found. Cancelling the job");
 					return;
 				}
-				for (const slot of slots){
-					await f(tx, slot)
+				for (const slot of slots) {
+					await f(tx, slot);
 				}
 			} catch (error) {
-				throw error
+				throw error;
 			}
-		})
+		});
 	}
 
-	async getBookedSlotsForReminder(minutesToSendReminderBefore: number, f: ( data: BookedSlotReminder[]) => Promise<void>){
-		return await dbUtils.transaction(async tx => {
+	async getBookedSlotsForReminder(
+		minutesToSendReminderBefore: number,
+		f: (data: BookedSlotReminder[]) => Promise<void>,
+	) {
+		return await dbUtils.transaction(async (tx) => {
 			try {
-				
-			const storedTime = sql`${bookedSlots.meetingTimeUtc} AT TIME ZONE ${timeZones.name} `
-			const currentUserTime = sql`(NOW() - (
+				const storedTime = sql`${bookedSlots.meetingTimeUtc} AT TIME ZONE ${timeZones.name} `;
+				const currentUserTime = sql`(NOW() - (
 			  ${minutesToSendReminderBefore} * INTERVAL '1 minute')
-			) AT TIME ZONE ${timeZones.name} `
-			const timeDiff =  sql`
+			) AT TIME ZONE ${timeZones.name} `;
+				const timeDiff = sql`
 				(EXTRACT(EPOCH FROM ((${storedTime}) - (${currentUserTime}))) / 60)
-			`
-			const conditions = and(
-				isNull(bookedSlots.reminderSentAt),
-				sql`${minutesToSendReminderBefore}::int >= ${timeDiff}::int`,
-				sql`${timeDiff}::int > 0`
-			)
+			`;
+				const conditions = and(
+					isNull(bookedSlots.reminderSentAt),
+					sql`${minutesToSendReminderBefore}::int >= ${timeDiff}::int`,
+					sql`${timeDiff}::int > 0`,
+				);
 
+				const physicianAlias = alias(users, "physician");
+				const patientAlias = alias(users, "patient");
 
-			const physicianAlias = alias(users, "physician")
-			const patientAlias = alias(users, 'patient')
+				const bookedSlotsForUserReminderPromise = tx
+					.select({
+						to: patientAlias.email,
+						recipientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+						patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+						physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+						userId: patientAlias.id,
+						durationMinutes: slotSize.size,
+						bookingId: bookedSlots.id,
+						availabilityDate: availabilityDate.date,
+						startTime: slots.startTime,
+						timeZone: timeZones.name,
+					})
+					.from(bookedSlots)
+					.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+					.innerJoin(
+						availabilityDate,
+						eq(slots.availabilityId, availabilityDate.id),
+					)
+					.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
+					.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
+					.innerJoin(
+						physicianAlias,
+						eq(availabilityDate.physicianId, physicianAlias.id),
+					)
+					.innerJoin(timeZones, eq(patientAlias.timeZoneId, timeZones.id))
+					.where(conditions)
+					.for("update", { skipLocked: true });
 
-			const bookedSlotsForUserReminderPromise = tx
-				.select({
-					to: patientAlias.email, 
-					recipientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
-					patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
-					physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
-					userId: patientAlias.id,
-					durationMinutes: slotSize.size,
-					bookingId: bookedSlots.id,
-					availabilityDate: availabilityDate.date,
-					startTime: slots.startTime,
-					timeZone: timeZones.name
-				})
-				.from(bookedSlots)
-				.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
-				.innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
-				.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
-				.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
-				.innerJoin(physicianAlias, eq(availabilityDate.physicianId, physicianAlias.id))
-				.innerJoin(timeZones, eq(patientAlias.timeZoneId, timeZones.id))
-				.where(conditions)
-				.for("update", { skipLocked: true})
+				const bookedSlotsForPhysicianReminderPromise = tx
+					.select({
+						to: physicianAlias.email,
+						recipientName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+						patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
+						physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
+						userId: physicianAlias.id,
+						durationMinutes: slotSize.size,
+						bookingId: bookedSlots.id,
+						availabilityDate: availabilityDate.date,
+						startTime: slots.startTime,
+						timeZone: timeZones.name,
+					})
+					.from(bookedSlots)
+					.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+					.innerJoin(
+						availabilityDate,
+						eq(slots.availabilityId, availabilityDate.id),
+					)
+					.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
+					.innerJoin(
+						physicianAlias,
+						eq(availabilityDate.physicianId, physicianAlias.id),
+					)
+					.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
+					.innerJoin(timeZones, eq(physicianAlias.timeZoneId, timeZones.id))
+					.where(conditions)
+					.for("update", { skipLocked: true });
 
-				
-			const bookedSlotsForPhysicianReminderPromise = tx
-				.select({
-					to: physicianAlias.email, 
-					recipientName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
-					patientName: sql<string>`CONCAT(${patientAlias.firstName}, ' ', ${patientAlias.lastName})`,
-					physicianName: sql<string>`CONCAT(${physicianAlias.firstName}, ' ', ${physicianAlias.lastName})`,
-					userId: physicianAlias.id,
-					durationMinutes: slotSize.size,
-					bookingId: bookedSlots.id,
-					availabilityDate: availabilityDate.date,
-					startTime: slots.startTime,
-					timeZone: timeZones.name
-				})
-				.from(bookedSlots)
-				.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
-				.innerJoin(availabilityDate, eq(slots.availabilityId, availabilityDate.id))
-				.innerJoin(slotSize, eq(slots.slotSizeId, slotSize.id))
-				.innerJoin(physicianAlias, eq(availabilityDate.physicianId, physicianAlias.id))
-				.innerJoin(patientAlias, eq(bookedSlots.customerId, patientAlias.id))
-				.innerJoin(timeZones, eq(physicianAlias.timeZoneId, timeZones.id))
-				.where(conditions)
-				.for("update", { skipLocked: true})
-
-				const [ physiciansToRemind, usersToRemind] = await Promise.all([
+				const [physiciansToRemind, usersToRemind] = await Promise.all([
 					bookedSlotsForPhysicianReminderPromise,
-					bookedSlotsForUserReminderPromise
-				])
+					bookedSlotsForUserReminderPromise,
+				]);
 
+				const reminderData: BookedSlotReminder[] = [];
 
-				const reminderData: BookedSlotReminder[] = []
-
-				physiciansToRemind.forEach(p => {
+				physiciansToRemind.forEach((p) => {
 					reminderData.push({
 						...p,
 						isPhysician: true,
-						startTimeIso: this.getStartTimeISO(p.availabilityDate, p.startTime, p.timeZone),
-					})
-				})
-				usersToRemind.forEach(u => {
+						startTimeIso: this.getStartTimeISO(
+							p.availabilityDate,
+							p.startTime,
+							p.timeZone,
+						),
+					});
+				});
+				usersToRemind.forEach((u) => {
 					reminderData.push({
 						...u,
 						isPhysician: false,
-						startTimeIso: this.getStartTimeISO(u.availabilityDate, u.startTime, u.timeZone)
-					})
-				})
+						startTimeIso: this.getStartTimeISO(
+							u.availabilityDate,
+							u.startTime,
+							u.timeZone,
+						),
+					});
+				});
 
-				await f(reminderData)
+				await f(reminderData);
 
-				await tx.
-					update(bookedSlots)
-					.set({ reminderSentAt: new Date()})
-					.where(inArray(bookedSlots.id, reminderData.map(r => r.bookingId)))
-
+				await tx
+					.update(bookedSlots)
+					.set({ reminderSentAt: new Date() })
+					.where(
+						inArray(
+							bookedSlots.id,
+							reminderData.map((r) => r.bookingId),
+						),
+					);
 			} catch (error) {
-				console.log(error)
-				throw error
+				console.log(error);
+				throw error;
 			}
-
-		})
+		});
 	}
 
+	async updateBookedSlotSummary(
+		bookedSlotId: string,
+		summary: string,
+		summaryStatus: SUMMARY_STATUS_ENUM,
+		tx?: Tx,
+	) {
+		const dbConn = tx || db;
 
-	async updateBookedSlotSummary(bookedSlotId: string, summary: string, summaryStatus: SUMMARY_STATUS_ENUM, tx?: Tx) {
-		const dbConn = tx || db
+		const [bookedSlot] = await dbConn
+			.select()
+			.from(bookedSlots)
+			.where(eq(bookedSlots.id, bookedSlotId));
 
-		const [ bookedSlot ] = await dbConn.select()
-		  .from(bookedSlots)
-			.where(eq(bookedSlots.id, bookedSlotId)) 
-
-		if(!bookedSlot) {
-			throw new Error("Booked Slot not found")
+		if (!bookedSlot) {
+			throw new Error("Booked Slot not found");
 		}
 
-		await dbConn.update(bookedSlots).set({
-			summary: summary,
-			summaryStatus: summaryStatus
-		}).where(eq(bookedSlots.id, bookedSlotId))
+		await dbConn
+			.update(bookedSlots)
+			.set({
+				summary: summary,
+				summaryStatus: summaryStatus,
+			})
+			.where(eq(bookedSlots.id, bookedSlotId));
 	}
 
 	async updateConsultationNotesTransaction(data: {
-		bookingId: string,
-		summary: string,
-		summaryStatus: SUMMARY_STATUS_ENUM,
-		medications: MedicineDosage[],
-		userId: string,
-		physicianId: string
+		bookingId: string;
+		summary: string;
+		summaryStatus: SUMMARY_STATUS_ENUM;
+		medications: MedicineDosage[];
+		userId: string;
+		physicianId: string;
 	}) {
-		return await dbUtils.transaction(async tx => {
-			await this.updateBookedSlotSummary(data.bookingId, data.summary, data.summaryStatus, tx)
+		return await dbUtils.transaction(async (tx) => {
+			await this.updateBookedSlotSummary(
+				data.bookingId,
+				data.summary,
+				data.summaryStatus,
+				tx,
+			);
 
 			const medicationData = {
-					userId: data.userId,
-					consultationId: data.bookingId,
-					physicianId: data.physicianId,
-					prescriptionDate: new Date(),
-					medicines: data.medications.map(m => ({
-						name: m.name,
-						dosage: m.dosage,
-						frequency: m.frequency,
-						duration: m.duration,
-						instructions: m.instructions
+				userId: data.userId,
+				consultationId: data.bookingId,
+				physicianId: data.physicianId,
+				prescriptionDate: new Date(),
+				medicines: data.medications.map((m) => ({
+					name: m.name,
+					dosage: m.dosage,
+					frequency: m.frequency,
+					duration: m.duration,
+					instructions: m.instructions,
 				})),
-			}
-			await this.medicalRepository.createMedication(
-				medicationData, tx
-			)
-	  })
+			};
+			await this.medicalRepository.createMedication(medicationData, tx);
+		});
 	}
 }
-

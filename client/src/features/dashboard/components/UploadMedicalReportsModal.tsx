@@ -16,7 +16,15 @@ import {
 } from "@/hooks/mutations/useMedical";
 import { LabReportImageLightbox } from "./LabReportImageLightbox";
 import { ReusablePagination } from "@/components/ui/ReusablePagination";
-import { ChevronLeft, Upload, Plus, Eye, Loader2, X, Trash2 } from "lucide-react";
+import {
+	ChevronLeft,
+	Upload,
+	Plus,
+	Eye,
+	Loader2,
+	X,
+	Trash2,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { LabReport } from "@/services/medicalService";
 
@@ -179,10 +187,7 @@ export function UploadMedicalReportsModal({
 						onClick={handleBack}
 						className="p-1 rounded-lg hover:bg-gray-100"
 					>
-						<ChevronLeft
-							className="w-5 h-5"
-							style={{ color: "#00856F" }}
-						/>
+						<ChevronLeft className="w-5 h-5" style={{ color: "#00856F" }} />
 					</button>
 					<DialogTitle
 						style={{
@@ -240,9 +245,7 @@ export function UploadMedicalReportsModal({
 									background: "#F7F9F9",
 								}}
 							>
-								<p className="text-gray-600 mb-4">
-									No reports uploaded yet
-								</p>
+								<p className="text-gray-600 mb-4">No reports uploaded yet</p>
 								<Button
 									onClick={() => setStep(2)}
 									style={{
@@ -282,9 +285,7 @@ export function UploadMedicalReportsModal({
 															border: "1px solid rgba(0, 133, 111, 0.3)",
 														}}
 													>
-														{getReportTypeLabel(
-															report.reportType,
-														)}
+														{getReportTypeLabel(report.reportType)}
 													</span>
 												</p>
 											</div>
@@ -364,17 +365,13 @@ export function UploadMedicalReportsModal({
 										className="w-16 h-16 rounded-full flex items-center justify-center mb-3"
 										style={{ background: "#E0F2F1" }}
 									>
-										<Plus
-											className="w-8 h-8"
-											style={{ color: "#00856F" }}
-										/>
+										<Plus className="w-8 h-8" style={{ color: "#00856F" }} />
 									</div>
 									<p className="font-medium text-gray-700">
 										Tap to Select File
 									</p>
 									<p className="text-sm text-gray-500">
-										Choose from gallery, camera or file
-										manager
+										Choose from gallery, camera or file manager
 									</p>
 									<div className="flex gap-2 mt-2">
 										{["PDF", "JPG", "PNG"].map((ext) => (
@@ -418,26 +415,15 @@ export function UploadMedicalReportsModal({
 									<Button
 										key={t.value}
 										type="button"
-										variant={
-											reportType === t.value
-												? "default"
-												: "outline"
-										}
+										variant={reportType === t.value ? "default" : "outline"}
 										size="sm"
 										onClick={() => setReportType(t.value)}
 										style={{
 											background:
-												reportType === t.value
-													? "#E0F2F1"
-													: undefined,
+												reportType === t.value ? "#E0F2F1" : undefined,
 											borderColor:
-												reportType === t.value
-													? "#00856F"
-													: "rgba(0,0,0,0.1)",
-											color:
-												reportType === t.value
-													? "#00453A"
-													: undefined,
+												reportType === t.value ? "#00856F" : "rgba(0,0,0,0.1)",
+											color: reportType === t.value ? "#00453A" : undefined,
 										}}
 									>
 										{t.label}
@@ -453,9 +439,7 @@ export function UploadMedicalReportsModal({
 							<Input
 								type="date"
 								value={dateOfReport}
-								onChange={(e) =>
-									setDateOfReport(e.target.value)
-								}
+								onChange={(e) => setDateOfReport(e.target.value)}
 								className="border-gray-200"
 							/>
 						</div>

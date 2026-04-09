@@ -14,7 +14,10 @@ import type { CustomerData } from "../../auth/models/user.schema";
 import { z } from "zod";
 import { MEAL_TYPE_ENUM, insertLoggedMealSchema } from "../models/food.schema";
 import { TimeZoneService } from "server/src/shared/services/timeZone.service";
-import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
+import {
+	DateManager,
+	getPaginationParams,
+} from "server/src/shared/utils/utils";
 
 export class FoodController {
 	private foodService: FoodService;
@@ -199,19 +202,20 @@ export class FoodController {
 				throw new BadRequestError("Valid endDate (YYYY-MM-DD) is required");
 			}
 			if (new Date(startDate) > new Date(endDate)) {
-				throw new BadRequestError("startDate must be before or equal to endDate");
+				throw new BadRequestError(
+					"startDate must be before or equal to endDate",
+				);
 			}
 
 			const { limit, offset, page } = getPaginationParams(req);
 
-			const result =
-				await this.foodService.getUserCalorieProfileBetweenDates(
-					userId,
-					startDate,
-					endDate,
-					limit,
-					offset,
-				);
+			const result = await this.foodService.getUserCalorieProfileBetweenDates(
+				userId,
+				startDate,
+				endDate,
+				limit,
+				offset,
+			);
 			sendSuccess(res, result, "Calorie profile retrieved successfully");
 		} catch (error) {
 			handleError(res, error);

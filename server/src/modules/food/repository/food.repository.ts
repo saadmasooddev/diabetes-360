@@ -671,7 +671,7 @@ export class FoodRepository {
 		startDateStr: string,
 		endDateStr: string,
 		limit?: number,
-		offset?: number
+		offset?: number,
 	) {
 		const rows = db
 			.select({
@@ -691,11 +691,9 @@ export class FoodRepository {
 			.orderBy(asc(sql`DATE(${loggedMeals.mealDate})`));
 
 		if (limit !== undefined && offset !== undefined) {
-			rows.limit(limit).offset(offset)
+			rows.limit(limit).offset(offset);
 		}
 
 		return rows;
 	}
-
-
 }

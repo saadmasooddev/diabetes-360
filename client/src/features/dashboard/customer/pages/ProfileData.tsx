@@ -38,7 +38,12 @@ import { useState, useEffect } from "react";
 import { parseDateToComponents } from "@/lib/utils";
 import { ButtonSpinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
-import { DIABETES_TYPE, ProfileDataFormValues, YES_NO_NOT_SURE_VALUES, profileDataSchema } from "@shared/schema";
+import {
+	DIABETES_TYPE,
+	ProfileDataFormValues,
+	YES_NO_NOT_SURE_VALUES,
+	profileDataSchema,
+} from "@shared/schema";
 
 export function ProfileData() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,13 +91,16 @@ export function ProfileData() {
 				birthYear: birthYear,
 				weight: data.weight,
 				height: data.height,
-				diabetesType: data.diabetesType as DIABETES_TYPE || DIABETES_TYPE.PREDIABETES,
+				diabetesType:
+					(data.diabetesType as DIABETES_TYPE) || DIABETES_TYPE.PREDIABETES,
 				knowsBloodSugarValue: undefined,
 				bloodSugarType: undefined,
 				bloodSugarReading: "",
 				onDiabetesMedicationOrInsulin: data.medicationInfo || "",
 				mainGoal: data.mainGoal || "",
-				doctorToldDiabetes: data.diabetesType ? YES_NO_NOT_SURE_VALUES.YES : undefined
+				doctorToldDiabetes: data.diabetesType
+					? YES_NO_NOT_SURE_VALUES.YES
+					: undefined,
 			});
 		}
 	}, [existingData, form]);
@@ -178,7 +186,6 @@ export function ProfileData() {
 								</h2>
 
 								<div className="space-y-6">
-
 									{/* Gender and Date of Birth Row */}
 									<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 										<FormField
@@ -443,8 +450,6 @@ export function ProfileData() {
 								</h2>
 
 								<div className="space-y-6">
-
-
 									{/* Type of Diabetes */}
 									<div className="grid grid-cols-2 sm:grid-cols-2 gap-6">
 										<FormField
@@ -584,7 +589,9 @@ export function ProfileData() {
 																<FormItem>
 																	<FormLabel
 																		className="text-[16px] font-normal"
-																		style={{ fontFamily: "'Inter', sans-serif" }}
+																		style={{
+																			fontFamily: "'Inter', sans-serif",
+																		}}
 																	>
 																		Type
 																	</FormLabel>
@@ -626,7 +633,9 @@ export function ProfileData() {
 																<FormItem>
 																	<FormLabel
 																		className="text-[16px] font-normal"
-																		style={{ fontFamily: "'Inter', sans-serif" }}
+																		style={{
+																			fontFamily: "'Inter', sans-serif",
+																		}}
 																	>
 																		Reading
 																	</FormLabel>
@@ -704,7 +713,6 @@ export function ProfileData() {
 											</FormItem>
 										)}
 									/>
-
 								</div>
 							</div>
 

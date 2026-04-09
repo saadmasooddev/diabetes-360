@@ -121,9 +121,7 @@ export function BookingConfirmationDialog({
 											<span className="font-medium text-green-600">
 												{bookingPrice.discountPercentage} %
 											</span>
-
 										)}
-
 									</div>
 								)}
 								{bookingPrice.isFree && (

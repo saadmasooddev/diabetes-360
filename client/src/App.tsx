@@ -212,7 +212,6 @@ function Router() {
 					<PatientAlerts />
 				</ProtectedRoute>
 			</Route>
-
 			// common routes
 			<Route path={ROUTES.MEETING_LINK}>
 				<ProtectedRoute permissions={[PERMISSIONS.VIEW_MEETING_LINK]}>

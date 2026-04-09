@@ -101,10 +101,7 @@ export function PatientLabReportsModal({
 						onClick={handleBack}
 						className="p-1 rounded-lg hover:bg-gray-100"
 					>
-						<ChevronLeft
-							className="w-5 h-5"
-							style={{ color: "#00856F" }}
-						/>
+						<ChevronLeft className="w-5 h-5" style={{ color: "#00856F" }} />
 					</button>
 					<DialogTitle
 						style={{

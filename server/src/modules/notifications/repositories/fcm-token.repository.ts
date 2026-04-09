@@ -25,8 +25,8 @@ export class FcmTokenRepository {
 					usersFcmTokens.token,
 					usersFcmTokens.deviceType,
 				],
-				set: { 
-					updatedAt: new Date(), 
+				set: {
+					updatedAt: new Date(),
 				},
 			});
 	}

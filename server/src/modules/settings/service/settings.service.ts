@@ -29,7 +29,7 @@ export class SettingsService {
 
 		return {
 			...limits,
-		 // TODO: make heart rate limits dynamic
+			// TODO: make heart rate limits dynamic
 			heartRateLimits: 100,
 			foodScanLimits: {
 				freeTier: foodScanLimits.freeUserLimit,

@@ -214,9 +214,7 @@ export function DoctorCard({
 						height: "auto",
 					}}
 					data-testid={`button-consult-${doctor.id}`}
-					disabled={
-						nextSlotLabel !== undefined && !nextSlotLabel
-					}
+					disabled={nextSlotLabel !== undefined && !nextSlotLabel}
 				>
 					Consult Now
 				</Button>

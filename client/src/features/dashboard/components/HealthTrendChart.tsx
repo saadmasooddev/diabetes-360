@@ -65,7 +65,11 @@ export const formatTimeLabel = (date: Date, interval: IntervalType): string => {
 };
 
 export type DateRange = { startDate: string; endDate: string };
-export const getDateRange = (interval: IntervalType, start?: string, end?: string): DateRange => {
+export const getDateRange = (
+	interval: IntervalType,
+	start?: string,
+	end?: string,
+): DateRange => {
 	const today = new Date();
 	today.setHours(23, 59, 59, 999);
 	let endDate = today.toISOString().split("T")[0];
@@ -80,8 +84,8 @@ export const getDateRange = (interval: IntervalType, start?: string, end?: strin
 		startDate.setDate(today.getDate() - 30);
 		startDate.setHours(0, 0, 0, 0);
 	} else if (interval === "custom" && start && end) {
-		startDate = new Date(start)
-		endDate = DateManager.formatDate(end)
+		startDate = new Date(start);
+		endDate = DateManager.formatDate(end);
 	}
 	return {
 		startDate: DateManager.formatDate(startDate),
@@ -120,7 +124,7 @@ export const getFilteredMetricsQueryKeys = (
 				startDate: dateRange.startDate,
 				endDate: dateRange.endDate,
 				types: [METRIC_TYPE_ENUM.CALORIE_INTAKE],
-			}
+			};
 	}
 };
 
@@ -261,11 +265,11 @@ export function HealthTrendChart({
 							label={
 								yAxisConfig?.label
 									? {
-										value: yAxisConfig.label,
-										position: "insideLeft",
-										fill: "#546E7A",
-										fontSize: 11,
-									}
+											value: yAxisConfig.label,
+											position: "insideLeft",
+											fill: "#546E7A",
+											fontSize: 11,
+										}
 									: undefined
 							}
 						/>

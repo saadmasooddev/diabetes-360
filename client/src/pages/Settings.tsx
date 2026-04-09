@@ -363,7 +363,8 @@ export function Settings() {
 															</Label>
 															<div className="mt-1 p-3 bg-gray-50 rounded-lg">
 																<p className="text-sm text-gray-900 overflow-y-scroll  max-h-[100px]">
-																	{customerData.customerData.mainGoal || 'No goal provided'}
+																	{customerData.customerData.mainGoal ||
+																		"No goal provided"}
 																</p>
 															</div>
 														</div>
@@ -373,11 +374,11 @@ export function Settings() {
 															</Label>
 															<div className="mt-1 p-3 bg-gray-50 rounded-lg">
 																<p className="text-sm text-gray-900 overflow-y-scroll max-h-[100px]">
-																	{customerData.customerData.medicationInfo || 'No medication info'}
+																	{customerData.customerData.medicationInfo ||
+																		"No medication info"}
 																</p>
 															</div>
 														</div>
-
 													</div>
 												</div>
 											</div>

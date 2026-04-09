@@ -50,7 +50,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
 	const [location, setLocation] = useLocation();
 	const user = useAuthStore((state) => state.user);
-	const { mutate: logout } = useLogout()
+	const { mutate: logout } = useLogout();
 	const { hasAnyPermission } = usePermissions();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isDashboardExpanded, setIsDashboardExpanded] = useState(false);

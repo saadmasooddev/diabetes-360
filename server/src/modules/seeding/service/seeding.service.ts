@@ -6,7 +6,7 @@ import { SLOT_TYPE, slotSize } from "../../booking/models/booking.schema";
 export class SeedingService {
 	settingsRepository: SettingsRepository;
 	timeZoneRepository: TimeZoneRepository;
-	bookingRepository: BookingRepository
+	bookingRepository: BookingRepository;
 
 	private readonly DEFAULT_LIMITS = {
 		glucoseLimit: 2,
@@ -21,18 +21,18 @@ export class SeedingService {
 	};
 
 	private readonly DEFAULT_SLOT_SIZES = [
-		{ size: 10},
-		{ size: 15},
-		{ size: 30},
-		{ size: 45},
-		{size: 60},
-		{size: 90},
-	]
+		{ size: 10 },
+		{ size: 15 },
+		{ size: 30 },
+		{ size: 45 },
+		{ size: 60 },
+		{ size: 90 },
+	];
 
 	constructor() {
 		this.timeZoneRepository = new TimeZoneRepository();
 		this.settingsRepository = new SettingsRepository();
-		this.bookingRepository = new BookingRepository()
+		this.bookingRepository = new BookingRepository();
 	}
 
 	async seedSettings() {
@@ -58,27 +58,27 @@ export class SeedingService {
 		}
 		console.log("General limits seeded successfully");
 
-		const slotSizes = await this.bookingRepository.getAllSlotSizes()
-		const missingSlotSizes = this.DEFAULT_SLOT_SIZES.filter(ds => !slotSizes.some(sz => ds.size === sz.size))
-		if(missingSlotSizes.length > 0) {
-			await this.bookingRepository.createSlotSizes(missingSlotSizes)
+		const slotSizes = await this.bookingRepository.getAllSlotSizes();
+		const missingSlotSizes = this.DEFAULT_SLOT_SIZES.filter(
+			(ds) => !slotSizes.some((sz) => ds.size === sz.size),
+		);
+		if (missingSlotSizes.length > 0) {
+			await this.bookingRepository.createSlotSizes(missingSlotSizes);
 		}
-		console.log("the slot sizes are successfully seeded")
+		console.log("the slot sizes are successfully seeded");
 
-		const slotTypes = await this.bookingRepository.getAllSlotTypes()
-		if(slotTypes.length === 0) {
-			await this.bookingRepository.createSlotTypes(
-				[				
-					{
-						type: SLOT_TYPE.ONLINE,
-					},
-					{
-						type:SLOT_TYPE.ONSITE
-					}
-        ]
-			)
+		const slotTypes = await this.bookingRepository.getAllSlotTypes();
+		if (slotTypes.length === 0) {
+			await this.bookingRepository.createSlotTypes([
+				{
+					type: SLOT_TYPE.ONLINE,
+				},
+				{
+					type: SLOT_TYPE.ONSITE,
+				},
+			]);
 		}
-		console.log("The slot type are successfully seeded")
+		console.log("The slot type are successfully seeded");
 
 		const timeZones = Intl.supportedValuesOf("timeZone");
 		const existingTimeZones = await this.timeZoneRepository.getTimeZones();
@@ -89,5 +89,4 @@ export class SeedingService {
 		console.log("Time zones seeded successfully");
 		return "Seedinng completed successfully";
 	}
-
 }

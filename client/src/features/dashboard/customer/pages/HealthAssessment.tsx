@@ -21,13 +21,12 @@ export function HealthAssessment() {
 	const insights = healthAssessment?.insights || [];
 
 	const glucoseInsight =
-		insights.find((i) => i.name === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
-			?.insight || "";
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)?.insight ||
+		"";
 	const stepsInsight =
 		insights.find((i) => i.name === METRIC_TYPE_ENUM.STEPS)?.insight || "";
 	const heartRateInsight =
-		insights.find((i) => i.name === METRIC_TYPE_ENUM.HEART_RATE)?.insight ||
-		"";
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.HEART_RATE)?.insight || "";
 	const overallHealthSummary = healthAssessment?.overallHealthSummary || "";
 	const whatToDoNext = healthAssessment?.whatToDoNext || [];
 	// Helper to get target for a metric type
@@ -187,7 +186,6 @@ export function HealthAssessment() {
 					<div className="flex flex-col gap-6 mb-8">
 						{/* Hydration Analysis */}
 
-
 						{/* Activity Analysis */}
 						<Card
 							className="p-6 transition-all duration-300 hover:shadow-xl"
@@ -341,7 +339,6 @@ export function HealthAssessment() {
 					<div
 						className={`grid grid-cols-1 md:grid-cols-2 ${isPaidUser ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-6 mb-8`}
 					>
-
 						<InsightSummaryCard
 							title="Glucose Summary"
 							icon={Activity}

@@ -100,7 +100,6 @@ export class PhysicianService {
 		search?: string;
 		specialtyId?: string;
 	}) {
-
 		// Validate specialty if provided
 		if (params.specialtyId) {
 			const specialty = await this.physicianRepository.getSpecialtyById(
@@ -129,7 +128,7 @@ export class PhysicianService {
 			specialtyId,
 			timeZone,
 			userDateISO,
-			fromDate
+			fromDate,
 		);
 	}
 

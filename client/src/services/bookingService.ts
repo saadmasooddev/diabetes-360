@@ -9,7 +9,6 @@ import {
 import { DateManager } from "@/lib/utils";
 import { SUMMARY_STATUS_ENUM } from "@shared/schema";
 
-
 export interface ConsultationMedication {
 	name: string;
 	dosage?: string;
@@ -363,25 +362,20 @@ class BookingService {
 		payload: UpdateConsultationNotePayload,
 	): Promise<void> {
 		const medications =
-			payload.medications?.filter(
-				(m) =>
-					!!(m.name?.trim()),
-			) ?? [];
+			payload.medications?.filter((m) => !!m.name?.trim()) ?? [];
 		const body = {
 			summary: payload.summary,
 			summaryStatus: payload.summaryStatus,
 			medications,
 			userId: payload.userId,
-			physicianId: payload.physicianId
+			physicianId: payload.physicianId,
 		};
 		const response = await httpClient.patch<ApiResponse<unknown>>(
 			API_ENDPOINTS.BOOKING.UPDATE_CONSULTATION_NOTE(bookingId),
 			body,
 		);
 		if (!response.success) {
-			throw new Error(
-				response.message || "Failed to update consultation note",
-			);
+			throw new Error(response.message || "Failed to update consultation note");
 		}
 	}
 
@@ -536,13 +530,13 @@ class BookingService {
 	}
 
 	async getMeetingLink(bookingId: string): Promise<string> {
-		const response = await httpClient.get<ApiResponse<{ meetingLink: string}>>(
-			API_ENDPOINTS.BOOKING.MEETING_LINK(bookingId)
-		)
-		if(!response.success || !response.data) {
-			throw new Error(response.message || "Failed to get meeting link")
+		const response = await httpClient.get<ApiResponse<{ meetingLink: string }>>(
+			API_ENDPOINTS.BOOKING.MEETING_LINK(bookingId),
+		);
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to get meeting link");
 		}
-		return response.data.meetingLink
+		return response.data.meetingLink;
 	}
 }
 

@@ -27,20 +27,17 @@ export function getOrInitApp(): FirebaseApp | null {
 export async function tryGetWebFcmRegistration(): Promise<
 	FcmRegistrationInput | undefined
 > {
-
 	try {
-	if (!(await isSupported())) {
-		throw new Error("FCM is not supported");
-	}
-	const firebaseApp = getOrInitApp();
-	if (!firebaseApp) throw new Error("Firebase app is not initialized");
+		if (!(await isSupported())) {
+			throw new Error("FCM is not supported");
+		}
+		const firebaseApp = getOrInitApp();
+		if (!firebaseApp) throw new Error("Firebase app is not initialized");
 
-
-	const perm =
-	 await Notification.requestPermission();
-	if (perm !== "granted") {
-		throw new Error("Notifications permission not granted");
-	}
+		const perm = await Notification.requestPermission();
+		if (perm !== "granted") {
+			throw new Error("Notifications permission not granted");
+		}
 
 		const registration = await navigator.serviceWorker.register(
 			"/firebase-messaging-sw.js",

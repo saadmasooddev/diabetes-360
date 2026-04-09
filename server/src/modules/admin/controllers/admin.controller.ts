@@ -87,7 +87,8 @@ export class AdminController {
 				isActive: req.body.isActive !== undefined ? req.body.isActive : true,
 			});
 
-			const authResponse = await this.authService.createUserForAdmin(validatedData);
+			const authResponse =
+				await this.authService.createUserForAdmin(validatedData);
 
 			// If user is a physician, create physician data
 			if (
@@ -117,22 +118,17 @@ export class AdminController {
 			}
 
 			// If user is a customer, create customer data (if provided)
-			if (
-				authResponse.role === USER_ROLES.CUSTOMER &&
-				req.body.customerData
-			) {
+			if (authResponse.role === USER_ROLES.CUSTOMER && req.body.customerData) {
 				try {
 					const customerDataInput = { ...req.body.customerData };
 					const customerDataValidation =
 						insertCustomerDataAdminSchema.safeParse(customerDataInput);
 					if (customerDataValidation.success) {
-						await this.customerService.createCustomerData(
-							authResponse.id,
-							{
-								...customerDataValidation.data,
-								diabetesType: customerDataValidation.data.diabetesType as DIABETES_TYPE
-						}
-						);
+						await this.customerService.createCustomerData(authResponse.id, {
+							...customerDataValidation.data,
+							diabetesType: customerDataValidation.data
+								.diabetesType as DIABETES_TYPE,
+						});
 					}
 				} catch (customerError) {
 					// Log error but don't fail user creation
@@ -146,7 +142,7 @@ export class AdminController {
 					user: authResponse,
 					tokens: {
 						accessToken: "",
-						refreshToken: ""
+						refreshToken: "",
 					},
 				},
 				SUCCESS_MESSAGES.ACCOUNT_CREATED,

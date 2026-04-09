@@ -104,18 +104,16 @@ export class EmailService {
 		await sgMail.send(msg);
 	}
 
-  async sendMeetingLinkReminderEmail(
-		options: {
-			to: string;
-			recipientName: string;
-			patientName: string;
-			physicianName: string;
-			startTimeIso: string;
-			durationMinutes: number;
-			isPhysician: boolean;
-      bookingId: string
-		},
-  ){
+	async sendMeetingLinkReminderEmail(options: {
+		to: string;
+		recipientName: string;
+		patientName: string;
+		physicianName: string;
+		startTimeIso: string;
+		durationMinutes: number;
+		isPhysician: boolean;
+		bookingId: string;
+	}) {
 		const meetingLinkUrl = `${config.frontendUrl}${ROUTES.MEETING_LINK.replace(":bookingId", options.bookingId)}`;
 		const startDate = new Date(options.startTimeIso);
 		const dateStr = startDate.toLocaleDateString(undefined, {
@@ -161,24 +159,21 @@ export class EmailService {
           </p>
         </div>
       `,
- 
 		};
 
 		await sgMail.send(msg);
-  }
+	}
 
-	async sendMeetingLinkEmail(
-		options: {
-			to: string;
-			recipientName: string;
-			patientName: string;
-			physicianName: string;
-			startTimeIso: string;
-			durationMinutes: number;
-			isPhysician: boolean;
-      bookingId: string
-		},
-	): Promise<void> {
+	async sendMeetingLinkEmail(options: {
+		to: string;
+		recipientName: string;
+		patientName: string;
+		physicianName: string;
+		startTimeIso: string;
+		durationMinutes: number;
+		isPhysician: boolean;
+		bookingId: string;
+	}): Promise<void> {
 		const meetingLinkUrl = `${config.frontendUrl}${ROUTES.MEETING_LINK.replace(":bookingId", options.bookingId)}`;
 		const startDate = new Date(options.startTimeIso);
 		const dateStr = startDate.toLocaleDateString(undefined, {

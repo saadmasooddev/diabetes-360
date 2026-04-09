@@ -44,9 +44,17 @@ import type {
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
 import { LoggedMeal, Tx } from "../../food/models/food.schema";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, USER_ROLES, users } from "../../auth/models/user.schema";
+import {
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	USER_ROLES,
+	users,
+} from "../../auth/models/user.schema";
 import { FoodRepository } from "../../food/repository/food.repository";
-import { DateManager, PUSH_MESSAGE_TYPE_ENUM, userPushNotifications } from "@shared/schema";
+import {
+	DateManager,
+	PUSH_MESSAGE_TYPE_ENUM,
+	userPushNotifications,
+} from "@shared/schema";
 import { PushNotificationService } from "../../notifications/services/push-notification.service";
 
 export type ChartData = {
@@ -79,26 +87,25 @@ export type FilteredMetricResponse = {
 	waterIntakeRecords: MertricRecord[];
 	stepsRecords: MertricRecord[];
 	heartBeatRecords: MertricRecord[];
-	calorieIntakeRecords: MertricRecord[]
-	meals: LoggedMeal[]
+	calorieIntakeRecords: MertricRecord[];
+	meals: LoggedMeal[];
 	pagination: {
 		bloodSugar: HealthPagination;
 		waterIntake: HealthPagination;
 		steps: HealthPagination;
 		heartBeat: HealthPagination;
-		calorieIntake: HealthPagination
+		calorieIntake: HealthPagination;
 	};
-}
+};
 
 export class HealthRepository {
+	private readonly INACTIVITY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
- private readonly INACTIVITY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-
-	private readonly foodRepository: FoodRepository
+	private readonly foodRepository: FoodRepository;
 	private readonly pushNotificationService = new PushNotificationService();
 
 	constructor() {
-		this.foodRepository = new FoodRepository()
+		this.foodRepository = new FoodRepository();
 	}
 
 	async getTodaysMetricCount(
@@ -123,9 +130,8 @@ export class HealthRepository {
 				sql`DATE(${exerciseLogs.recordedAt}) between DATE(${startOfDay}) and DATE(${startOfDay})`,
 				isNotNull(exerciseLogs.steps),
 			];
-		} 
-			 else if (metricType === METRIC_TYPE_ENUM.HEART_RATE) {
-			conditions.push(isNotNull(healthMetrics.heartRate))
+		} else if (metricType === METRIC_TYPE_ENUM.HEART_RATE) {
+			conditions.push(isNotNull(healthMetrics.heartRate));
 		}
 
 		const result = await db
@@ -136,42 +142,50 @@ export class HealthRepository {
 		return result[0]?.count || 0;
 	}
 
-	async createMetricsBatch(data: InsertHealthMetric | InsertHealthMetric[], tx?: Tx): Promise<HealthMetric[]> {
+	async createMetricsBatch(
+		data: InsertHealthMetric | InsertHealthMetric[],
+		tx?: Tx,
+	): Promise<HealthMetric[]> {
 		const dbConn = db || tx;
-		const values = Array.isArray(data) ? data : [data]
-		const valuesToInsert = values.map(data => ({
-				userId: data.userId,
-				bloodSugar: data.bloodSugar?.toString() || null,
-				bloodSugarReadingType: data.bloodSugarReadingType,
-				heartRate: data.heartRate || null,
-				recordedAt: new Date(data.recordedAt),
-				readingSource: data.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
-			}))
-		if(valuesToInsert.length === 0) return []
+		const values = Array.isArray(data) ? data : [data];
+		const valuesToInsert = values.map((data) => ({
+			userId: data.userId,
+			bloodSugar: data.bloodSugar?.toString() || null,
+			bloodSugarReadingType: data.bloodSugarReadingType,
+			heartRate: data.heartRate || null,
+			recordedAt: new Date(data.recordedAt),
+			readingSource: data.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
+		}));
+		if (valuesToInsert.length === 0) return [];
 		const metrics = await dbConn
 			.insert(healthMetrics)
 			.values(valuesToInsert)
 			.returning()
 			.onConflictDoUpdate({
 				target: [healthMetrics.recordedAt, healthMetrics.readingSource],
-				set : { 
+				set: {
 					heartRate: sql.raw(`excluded.${healthMetrics.heartRate.name}`),
 					bloodSugar: sql.raw(`excluded.${healthMetrics.bloodSugar.name}`),
-					bloodSugarReadingType: sql.raw(`excluded.${healthMetrics.bloodSugarReadingType.name}`),
+					bloodSugarReadingType: sql.raw(
+						`excluded.${healthMetrics.bloodSugarReadingType.name}`,
+					),
 					userId: sql.raw(`excluded.${healthMetrics.userId.name}`),
-				}
-			})
+				},
+			});
 
 		return metrics;
 	}
 
 	async createHba1cMetric(data: InsertHba1cMetric, tx?: Tx) {
-		const dbConn = db || tx
-		return await dbConn.insert(hba1cMetrics).values({
-			userId: data.userId,
-			hba1c: data.hba1c,
-			recordedAt: new Date(data.recordedAt)
-		}).returning()
+		const dbConn = db || tx;
+		return await dbConn
+			.insert(hba1cMetrics)
+			.values({
+				userId: data.userId,
+				hba1c: data.hba1c,
+				recordedAt: new Date(data.recordedAt),
+			})
+			.returning();
 	}
 
 	async getTodaysMetricTotal(
@@ -204,8 +218,8 @@ export class HealthRepository {
 				return 0;
 			},
 			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: async () => {
-				return 0
-			}
+				return 0;
+			},
 		};
 
 		const f = metricTypeMap[metricType];
@@ -231,7 +245,13 @@ export class HealthRepository {
 			.select()
 			.from(healthMetrics)
 			.where(
-				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL)),
+				and(
+					bloodSugarBaseConditions,
+					eq(
+						healthMetrics.bloodSugarReadingType,
+						BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+					),
+				),
 			)
 			.orderBy(desc(healthMetrics.recordedAt))
 			.limit(2);
@@ -240,7 +260,13 @@ export class HealthRepository {
 			.select({ bloodSugar: healthMetrics.bloodSugar })
 			.from(healthMetrics)
 			.where(
-				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.FASTING)),
+				and(
+					bloodSugarBaseConditions,
+					eq(
+						healthMetrics.bloodSugarReadingType,
+						BLOOD_SUGAR_READING_TYPES_ENUM.FASTING,
+					),
+				),
 			)
 			.orderBy(desc(healthMetrics.recordedAt))
 			.limit(1);
@@ -249,7 +275,13 @@ export class HealthRepository {
 			.select({ bloodSugar: healthMetrics.bloodSugar })
 			.from(healthMetrics)
 			.where(
-				and(bloodSugarBaseConditions, eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM)),
+				and(
+					bloodSugarBaseConditions,
+					eq(
+						healthMetrics.bloodSugarReadingType,
+						BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM,
+					),
+				),
 			)
 			.orderBy(desc(healthMetrics.recordedAt))
 			.limit(1);
@@ -281,7 +313,6 @@ export class HealthRepository {
 					isNotNull(exerciseLogs.steps),
 				),
 			);
-
 
 		const latestHeartRatePromise = db
 			.select()
@@ -417,7 +448,6 @@ export class HealthRepository {
 				),
 			);
 
-
 		// Steps are in exercise_logs
 		const weeklyStepsPromise = db
 			.select({
@@ -458,7 +488,6 @@ export class HealthRepository {
 					isNotNull(healthMetrics.bloodSugar),
 				),
 			);
-
 
 		// Steps are in exercise_logs
 		const monthlyStepsPromise = db
@@ -541,7 +570,7 @@ export class HealthRepository {
 					),
 				);
 
-						// Steps are in exercise_logs
+			// Steps are in exercise_logs
 			const totalStepsPromise = db
 				.select({
 					total: sql<number>`COALESCE(AVG(CAST(${exerciseLogs.steps} AS DECIMAL)), 0)`,
@@ -563,12 +592,11 @@ export class HealthRepository {
 					),
 				);
 
-			const [totalGlucose, totalSteps, totalHeartRate] =
-				await Promise.all([
-					totalGlucosePromise,
-					totalStepsPromise,
-					totalHeartRatePromise,
-				]);
+			const [totalGlucose, totalSteps, totalHeartRate] = await Promise.all([
+				totalGlucosePromise,
+				totalStepsPromise,
+				totalHeartRatePromise,
+			]);
 			result.glucose.total = Number(totalGlucose[0]?.total);
 			result.steps.total = Number(totalSteps[0]?.total || 0);
 			result.heartRate.total = Number(totalHeartRate[0]?.total || 0);
@@ -612,15 +640,15 @@ export class HealthRepository {
 		// Fetch blood sugar records
 		const metricTypeMap: Record<MetricType, () => Promise<void>> = {
 			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE]: async () => {
-        // const d = () => new Date(new Date().setDate(new Date().getDate() - Math.floor(Math.random() * 365) + 1))
+				// const d = () => new Date(new Date().setDate(new Date().getDate() - Math.floor(Math.random() * 365) + 1))
 				// await db.insert(healthMetrics).values(
 				// 	Array(1000).fill(0).map(() => ({
 				// 		userId: userId,
-	      //     bloodSugar: String(Math.floor(Math.random() * 600) + 70),
+				//     bloodSugar: String(Math.floor(Math.random() * 600) + 70),
 				// 		waterIntake: String(Math.floor(Math.random() * 5) + 1),
 				// 		heartRate: Math.floor(Math.random() * 220) + 60,
 				// 		recordedAt: d(),
-				
+
 				// 	}))
 				// )
 				const bloodSugarQueryPromise = db
@@ -629,7 +657,7 @@ export class HealthRepository {
 						userId: healthMetrics.userId,
 						value: healthMetrics.bloodSugar,
 						recordedAt: healthMetrics.recordedAt,
-						readingType: healthMetrics.bloodSugarReadingType
+						readingType: healthMetrics.bloodSugarReadingType,
 					})
 					.from(healthMetrics)
 					.where(and(...baseConditions, isNotNull(healthMetrics.bloodSugar)))
@@ -648,7 +676,8 @@ export class HealthRepository {
 					bloodSugarQueryPromise.limit(limit).offset(offset);
 				}
 
-				result.bloodSugarRecords = await bloodSugarQueryPromise as BloodSugarMetricRecord[]
+				result.bloodSugarRecords =
+					(await bloodSugarQueryPromise) as BloodSugarMetricRecord[];
 			},
 			[METRIC_TYPE_ENUM.STEPS]: async () => {
 				const stepsBaseConditions = [
@@ -714,18 +743,26 @@ export class HealthRepository {
 				}
 			},
 			[METRIC_TYPE_ENUM.CALORIE_INTAKE]: async () => {
-				const calorieIntakeRecords = await this.foodRepository.getCaloriesIngestedPerDayBetweenDates(
-					userId, startDate, endDate
-				)
+				const calorieIntakeRecords =
+					await this.foodRepository.getCaloriesIngestedPerDayBetweenDates(
+						userId,
+						startDate,
+						endDate,
+					);
 
-				const { meals, total } = await this.foodRepository.getMealsLoggedBetweenDates(
-					userId, startDate, endDate, limit, offset
-				)
+				const { meals, total } =
+					await this.foodRepository.getMealsLoggedBetweenDates(
+						userId,
+						startDate,
+						endDate,
+						limit,
+						offset,
+					);
 
-				result.meals = meals
-        result.pagination.calorieIntake.total = total 
-				result.calorieIntakeRecords = calorieIntakeRecords
-			}
+				result.meals = meals;
+				result.pagination.calorieIntake.total = total;
+				result.calorieIntakeRecords = calorieIntakeRecords;
+			},
 		};
 		await Promise.all(requestedTypes.map((t) => metricTypeMap[t]?.()));
 
@@ -754,7 +791,7 @@ export class HealthRepository {
 					duration: Number(d.duration) || null,
 					repitition: d.repitition || null,
 					recordedAt: new Date(d.recordedAt),
-					readingSource: d.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
+					readingSource: d.readingSource || HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
 				})),
 			)
 			.onConflictDoUpdate({
@@ -772,9 +809,9 @@ export class HealthRepository {
 					duration: sql.raw(`excluded.${exerciseLogs.duration.name}`),
 					repitition: sql.raw(`excluded.${exerciseLogs.repitition.name}`),
 					userId: sql.raw(`excluded.${exerciseLogs.userId.name}`),
-				}
+				},
 			})
-			.returning()
+			.returning();
 		return logs;
 	}
 
@@ -1076,7 +1113,7 @@ export class HealthRepository {
 		userId: string,
 		dateStr: string,
 	): Promise<DailyQuickLog> {
-		const dateOnly = dateStr
+		const dateOnly = dateStr;
 		const [log] = await db
 			.select()
 			.from(dailyQuickLogs)
@@ -1103,9 +1140,7 @@ export class HealthRepository {
 	async createOrUpdateDailyQuickLog(
 		data: InsertDailyQuickLog & { logDate?: string },
 	): Promise<DailyQuickLog> {
-		const targetDate = data.logDate
-			? new Date(data.logDate)
-			: new Date();
+		const targetDate = data.logDate ? new Date(data.logDate) : new Date();
 		const logDateStr = targetDate.toISOString().split("T")[0];
 		const now = new Date();
 
@@ -1136,13 +1171,14 @@ export class HealthRepository {
 		return log;
 	}
 
-	async createDailyQuickLog(
-		data: InsertDailyQuickLog,
-	): Promise<DailyQuickLog> {
+	async createDailyQuickLog(data: InsertDailyQuickLog): Promise<DailyQuickLog> {
 		return this.createOrUpdateDailyQuickLog(data);
 	}
 
-	async getTodaysExerciseSetsCount(userId: string, date: string): Promise<number> {
+	async getTodaysExerciseSetsCount(
+		userId: string,
+		date: string,
+	): Promise<number> {
 		const dateOnly = date.split("T")[0];
 		const result = await db
 			.select({
@@ -1154,7 +1190,7 @@ export class HealthRepository {
 					eq(dailyQuickLogs.userId, userId),
 					eq(dailyQuickLogs.logDate, dateOnly),
 					ne(dailyQuickLogs.exercise, QUICK_LOG_EXERCISE_TYPE_ENUM.NONE),
-					isNotNull(dailyQuickLogs.exercise)
+					isNotNull(dailyQuickLogs.exercise),
 				),
 			);
 		return result[0]?.count ?? 0;
@@ -1189,7 +1225,13 @@ export class HealthRepository {
 		userId: string,
 		startDate: string,
 		endDate: string,
-	): Promise<Array<{ logDate: string; exercise: string | null; sleepDuration: string | null }>> {
+	): Promise<
+		Array<{
+			logDate: string;
+			exercise: string | null;
+			sleepDuration: string | null;
+		}>
+	> {
 		const rows = await db
 			.select({
 				logDate: dailyQuickLogs.logDate,
@@ -1219,7 +1261,10 @@ export class HealthRepository {
 			.where(
 				and(
 					eq(healthMetrics.userId, userId),
-					eq(healthMetrics.bloodSugarReadingType, BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL),
+					eq(
+						healthMetrics.bloodSugarReadingType,
+						BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
+					),
 					isNotNull(healthMetrics.bloodSugar),
 				),
 			)
@@ -1247,77 +1292,79 @@ export class HealthRepository {
 		return row?.bloodSugar ? parseFloat(row.bloodSugar.toString()) : null;
 	}
 
- async getLastActivityAt(userId: string): Promise<Date | null> {
-	const [ex] = await db
-		.select({ m: max(exerciseLogs.recordedAt) })
-		.from(exerciseLogs)
-		.where(eq(exerciseLogs.userId, userId));
-	const [hm] = await db
-		.select({ m: max(healthMetrics.recordedAt) })
-		.from(healthMetrics)
-		.where(eq(healthMetrics.userId, userId));
-	const [dq] = await db
-		.select({ m: max(dailyQuickLogs.recordedAt) })
-		.from(dailyQuickLogs)
-		.where(eq(dailyQuickLogs.userId, userId));
+	async getLastActivityAt(userId: string): Promise<Date | null> {
+		const [ex] = await db
+			.select({ m: max(exerciseLogs.recordedAt) })
+			.from(exerciseLogs)
+			.where(eq(exerciseLogs.userId, userId));
+		const [hm] = await db
+			.select({ m: max(healthMetrics.recordedAt) })
+			.from(healthMetrics)
+			.where(eq(healthMetrics.userId, userId));
+		const [dq] = await db
+			.select({ m: max(dailyQuickLogs.recordedAt) })
+			.from(dailyQuickLogs)
+			.where(eq(dailyQuickLogs.userId, userId));
 
-	const times = [DateManager.date(ex?.m), DateManager.date(hm?.m), DateManager.date(dq?.m)].filter(
-		(d): d is Date => d != null,
-	);
+		const times = [
+			DateManager.date(ex?.m),
+			DateManager.date(hm?.m),
+			DateManager.date(dq?.m),
+		].filter((d): d is Date => d != null);
 
-	if (times.length === 0) return null;
-	return new Date(Math.max(...times.map((d) => d.getTime())));
-}
+		if (times.length === 0) return null;
+		return new Date(Math.max(...times.map((d) => d.getTime())));
+	}
 
-async runInactivityNotificationJob(): Promise<void> {
-	const sinceCooldown = new Date(Date.now() - this.INACTIVITY_COOLDOWN_MS);
-	const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+	async runInactivityNotificationJob(): Promise<void> {
+		const sinceCooldown = new Date(Date.now() - this.INACTIVITY_COOLDOWN_MS);
+		const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-	const customerIds = await db
-		.select({ id: users.id })
-		.from(users)
-		.where(
-			and(eq(users.role, USER_ROLES.CUSTOMER), eq(users.isActive, true)),
-		);
-
-	for (const { id: userId } of customerIds) {
-		const lastAt = await this.getLastActivityAt(userId);
-		if (lastAt !== null && lastAt >= cutoff) {
-			continue;
-		}
-
-		const [recent] = await db
-			.select({ id: userPushNotifications.id })
-			.from(userPushNotifications)
+		const customerIds = await db
+			.select({ id: users.id })
+			.from(users)
 			.where(
-				and(
-					eq(userPushNotifications.userId, userId),
-					eq(
-						userPushNotifications.messageType,
-						PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
-					),
-					gte(userPushNotifications.createdAt, sinceCooldown),
-				),
-			)
-			.orderBy(desc(userPushNotifications.createdAt))
-			.limit(1);
-		if (recent) continue;
-
-		const lastIso = lastAt ? lastAt.toISOString() : null;
-
-		try {
-			await this.pushNotificationService.sendDataOnlyToUser(userId, {
-				type: PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
-				title: "We miss you",
-				body: "You have not logged any activity in the last day. A quick check-in helps you stay on track.",
-				data: { lastActivityAtIso: lastIso },
-			});
-		} catch (e) {
-			console.error(
-				`[InactivityNotificationJob] Failed for user ${userId}:`,
-				e,
+				and(eq(users.role, USER_ROLES.CUSTOMER), eq(users.isActive, true)),
 			);
+
+		for (const { id: userId } of customerIds) {
+			const lastAt = await this.getLastActivityAt(userId);
+			if (lastAt !== null && lastAt >= cutoff) {
+				continue;
+			}
+
+			const [recent] = await db
+				.select({ id: userPushNotifications.id })
+				.from(userPushNotifications)
+				.where(
+					and(
+						eq(userPushNotifications.userId, userId),
+						eq(
+							userPushNotifications.messageType,
+							PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
+						),
+						gte(userPushNotifications.createdAt, sinceCooldown),
+					),
+				)
+				.orderBy(desc(userPushNotifications.createdAt))
+				.limit(1);
+			if (recent) continue;
+
+			const lastIso = lastAt ? lastAt.toISOString() : null;
+
+			try {
+				await this.pushNotificationService.sendDataOnlyToUser(userId, {
+					type: PUSH_MESSAGE_TYPE_ENUM.INACTIVITY_ALERT,
+					title: "We miss you",
+					body: "You have not logged any activity in the last day. A quick check-in helps you stay on track.",
+					data: { lastActivityAtIso: lastIso },
+				});
+			} catch (e) {
+				console.error(
+					`[InactivityNotificationJob] Failed for user ${userId}:`,
+					e,
+				);
+			}
 		}
 	}
-}
 }

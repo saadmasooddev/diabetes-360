@@ -19,17 +19,25 @@ import { LogMealPrompt } from "../../components/FoodScanner/LogMealPrompt";
 import { toast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HealthTrendChart, IntervalType, formatTimeLabel, getDateRange, getFilteredMetricsQueryKeys } from "../../components/HealthTrendChart";
+import {
+	HealthTrendChart,
+	IntervalType,
+	formatTimeLabel,
+	getDateRange,
+	getFilteredMetricsQueryKeys,
+} from "../../components/HealthTrendChart";
 import { ReusablePagination } from "@/components/ui/ReusablePagination";
 import { DateManager, formatDate } from "@/lib/utils";
 import type { LoggedMealRow } from "@/services/foodScannerService";
 import { METRIC_TYPE_ENUM } from "@shared/schema";
-import { useFilteredMetrics, useFilteredMetricsPaginated } from "@/hooks/mutations/useHealth";
+import {
+	useFilteredMetrics,
+	useFilteredMetricsPaginated,
+} from "@/hooks/mutations/useHealth";
 
 type ScanStep = "upload" | "scanning" | "results";
 
 const PAGE_SIZE = 10;
-
 
 export function FoodScanner() {
 	const [currentStep, setCurrentStep] = useState<ScanStep>("upload");
@@ -56,22 +64,18 @@ export function FoodScanner() {
 	const { data: consumedNutrients, refetch: refetchConsumedNutrients } =
 		useConsumedNutrients();
 
-	const dateRange = getDateRange(
-		dateRangeTab,
-		customStartDate,
-		customEndDate,
-	)
+	const dateRange = getDateRange(dateRangeTab, customStartDate, customEndDate);
 
 	const {
 		data: calorieIntakeMetrics,
 		isError: isErrorCalorieProfile,
-		isLoading: isLoadingCalorieProfile
+		isLoading: isLoadingCalorieProfile,
 	} = useFilteredMetricsPaginated(
 		dateRange.startDate,
 		dateRange.endDate,
 		[METRIC_TYPE_ENUM.CALORIE_INTAKE],
 		PAGE_SIZE,
-		(mealsPage - 1) * PAGE_SIZE
+		(mealsPage - 1) * PAGE_SIZE,
 	);
 
 	useEffect(() => {
@@ -205,7 +209,7 @@ export function FoodScanner() {
 										setHasLoggedMeal(true);
 										refetchConsumedNutrients();
 									}}
-									onDismiss={() => { }}
+									onDismiss={() => {}}
 								/>
 							)}
 							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -408,7 +412,8 @@ export function FoodScanner() {
 													<thead>
 														<tr
 															style={{
-																borderBottom: "1px solid rgba(0, 133, 111, 0.15)",
+																borderBottom:
+																	"1px solid rgba(0, 133, 111, 0.15)",
 															}}
 														>
 															<Th>Date</Th>

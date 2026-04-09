@@ -19,12 +19,17 @@ const app = createApp();
 	await db.execute("SELECT 1");
 
 	const startTimeIso = DateManager.slotTimeToISO(
-	  '2026-01-13 00:00:00',
-		'22:30:00',
-		config.defaults.timezone
+		"2026-01-13 00:00:00",
+		"22:30:00",
+		config.defaults.timezone,
 	);
 
-	console.log("THe the start time iso log is", startTimeIso, "the local time is", Date(startTimeIso))
+	console.log(
+		"THe the start time iso log is",
+		startTimeIso,
+		"the local time is",
+		Date(startTimeIso),
+	);
 
 	const cronJobService = new CronJobService();
 	cronJobService.registerAll([
@@ -48,27 +53,25 @@ const app = createApp();
 			name: "meeting-link",
 			schedule: "*/5 * * * *",
 			handler: async () => {
-				await zoomService.processMeetingLinksJob()
-
+				await zoomService.processMeetingLinksJob();
 			},
 		},
 		{
 			name: "inactivity-push-notifications",
 			schedule: "15 8 * * *",
 			handler: async () => {
-				const healthService = new HealthService()
-				await healthService.runInactivityNotificationJob()
+				const healthService = new HealthService();
+				await healthService.runInactivityNotificationJob();
 			},
 		},
 		{
 			name: "meeting-reminder",
 			schedule: "*/5 * * * *",
 			handler: async () => {
-				const bookingService = new BookingService()
-				await bookingService.sendMeetingReminderJob(10)
-
-			}
-		}
+				const bookingService = new BookingService();
+				await bookingService.sendMeetingReminderJob(10);
+			},
+		},
 	]);
 	cronJobService.start();
 

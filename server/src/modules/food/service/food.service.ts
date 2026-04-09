@@ -427,10 +427,7 @@ export class FoodService {
 			userId,
 			startDate.toISOString(),
 			endDate.toISOString(),
-			[
-				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-				METRIC_TYPE_ENUM.STEPS,
-			],
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE, METRIC_TYPE_ENUM.STEPS],
 		);
 
 		// Get aggregated statistics for averages
@@ -716,5 +713,4 @@ export class FoodService {
 			calorieIntake,
 		};
 	}
-
 }

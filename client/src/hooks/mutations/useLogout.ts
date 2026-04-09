@@ -14,7 +14,7 @@ export const useLogout = () => {
 	const { toast } = useToast();
 	const logout = useAuthStore((state) => state.logout);
 	const [, navigate] = useLocation();
-	const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
 	return useMutation<void, Error, void>({
 		mutationFn: async () => {
@@ -24,14 +24,14 @@ export const useLogout = () => {
 				await authService.logout({
 					refreshToken,
 					fcmToken: fcm?.token,
-					deviceType: fcm?.deviceType
+					deviceType: fcm?.deviceType,
 				});
 			}
 			clearFcmRegistration();
 		},
 		onSuccess: () => {
 			logout();
-			queryClient.clear()
+			queryClient.clear();
 			toast({
 				title: "Logged out",
 				description: "You have been successfully logged out.",

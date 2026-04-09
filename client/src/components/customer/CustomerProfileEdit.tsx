@@ -32,7 +32,11 @@ import { useUpdateCustomerData } from "@/hooks/mutations/useCustomer";
 import type { CustomerData } from "@/services/customerService";
 import { parseDateToComponents } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
-import { DIABETES_TYPE, ProfileDataFormValues, profileDataSchema } from "@shared/schema";
+import {
+	DIABETES_TYPE,
+	ProfileDataFormValues,
+	profileDataSchema,
+} from "@shared/schema";
 
 interface CustomerProfileEditProps {
 	customerData: CustomerData;
@@ -68,7 +72,7 @@ export function CustomerProfileEdit({
 			height: customerData.height,
 			diabetesType: customerData.diabetesType as DIABETES_TYPE,
 			mainGoal: customerData.mainGoal || "",
-			onDiabetesMedicationOrInsulin: customerData.medicationInfo || ""
+			onDiabetesMedicationOrInsulin: customerData.medicationInfo || "",
 		},
 	});
 
@@ -243,7 +247,6 @@ export function CustomerProfileEdit({
 						/>
 					</div>
 				</div>
-
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<FormField

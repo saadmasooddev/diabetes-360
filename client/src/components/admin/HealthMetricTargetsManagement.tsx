@@ -83,10 +83,7 @@ export function HealthMetricTargetsManagement() {
 		if (glucoseTarget) {
 			const numValue = parseFloat(glucoseTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(
-					METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-					numValue,
-				);
+				const error = validateTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
@@ -112,8 +109,6 @@ export function HealthMetricTargetsManagement() {
 				}
 			}
 		}
-
-
 
 		if (heartRateTarget) {
 			const numValue = parseFloat(heartRateTarget);

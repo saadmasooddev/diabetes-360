@@ -4,9 +4,7 @@ import { FcmTokenRepository } from "../repositories/fcm-token.repository";
 export class NotificationsService {
 	private readonly fcmTokenRepository: FcmTokenRepository;
 
-	constructor(
-		fcmTokenRepository = new FcmTokenRepository(),
-	) {
+	constructor(fcmTokenRepository = new FcmTokenRepository()) {
 		this.fcmTokenRepository = fcmTokenRepository;
 	}
 
@@ -20,5 +18,4 @@ export class NotificationsService {
 			fcm.deviceType,
 		);
 	}
-
 }

@@ -9,17 +9,14 @@ export const useSignup = () => {
 	const { toast } = useToast();
 	const [, navigate] = useLocation();
 
-	return useMutation<
-		{ otpSent: boolean },
-		Error,
-		SignupRequest
-	>({
+	return useMutation<{ otpSent: boolean }, Error, SignupRequest>({
 		mutationFn: authService.signup,
 		onSuccess: (data, variables) => {
 			if (data.otpSent) {
 				toast({
 					title: "Check your email",
-					description: "We sent a verification code. Enter it on the next page.",
+					description:
+						"We sent a verification code. Enter it on the next page.",
 					variant: "default",
 				});
 				const params = new URLSearchParams({ email: variables.email });
@@ -36,8 +33,7 @@ export const useSignup = () => {
 		onError: (error) => {
 			toast({
 				title: "Signup Failed",
-				description:
-					error.message || "Something went wrong. Please try again.",
+				description: error.message || "Something went wrong. Please try again.",
 				variant: "destructive",
 			});
 		},
@@ -61,7 +57,8 @@ export const useVerifyEmail = () => {
 		onError: (error) => {
 			toast({
 				title: "Verification failed",
-				description: error.message || "Invalid or expired code. Please try again.",
+				description:
+					error.message || "Invalid or expired code. Please try again.",
 				variant: "destructive",
 			});
 		},

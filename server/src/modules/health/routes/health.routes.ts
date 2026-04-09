@@ -153,7 +153,6 @@ router.post(
 	(req, res) => healthController.createDailyQuickLog(req, res),
 );
 
-
 /**
  * @swagger
  * /api/health/metrics/statistics:

@@ -41,7 +41,7 @@ class AuthService {
 		return response.message ?? "Email verified successfully.";
 	}
 
-	async resendVerificationOtp(email: string){
+	async resendVerificationOtp(email: string) {
 		const response = await httpClient.post<SignupRes>(
 			API_ENDPOINTS.AUTH.RESEND_VERIFICATION_OTP,
 			{ email },
@@ -73,7 +73,7 @@ class AuthService {
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to send sign-in code");
 		}
-		return response.data
+		return response.data;
 	}
 
 	async loginWithEmailCode(email: string, code: string): Promise<AuthData> {
@@ -125,7 +125,7 @@ class AuthService {
 			API_ENDPOINTS.AUTH.RESET_PASSWORD,
 			{ token, password },
 		);
-		if (!response.success ) {
+		if (!response.success) {
 			throw new Error(response.message || "Password reset failed");
 		}
 		return response.message;
@@ -145,13 +145,10 @@ class AuthService {
 		return response.message || "Password changed successfully";
 	}
 
-	async verify2FALogin(
-		email: string,
-		token: string,
-	): Promise<AuthData> {
+	async verify2FALogin(email: string, token: string): Promise<AuthData> {
 		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.VERIFY_2FA,
-			{ email, token,  },
+			{ email, token },
 		);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "2FA verification failed");

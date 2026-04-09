@@ -46,7 +46,7 @@ export const ROUTES = {
 
 	SETTINGS: `${COMMON_PREFIX}/settings`,
 	BLOGS: `${COMMON_PREFIX}/blogs`,
-	MEETING_LINK: `${COMMON_PREFIX}/meeting/link/:bookingId`
+	MEETING_LINK: `${COMMON_PREFIX}/meeting/link/:bookingId`,
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

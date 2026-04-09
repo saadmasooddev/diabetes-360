@@ -120,7 +120,7 @@ export function SlotManagementView({
 	const debouncedPhysicianSearch = useDebounce(physicianSearchQuery, 500);
 	const searchValue =
 		debouncedPhysicianSearch.trim() === "" ||
-			debouncedPhysicianSearch.toLowerCase() === "all"
+		debouncedPhysicianSearch.toLowerCase() === "all"
 			? undefined
 			: debouncedPhysicianSearch.trim();
 
@@ -883,9 +883,9 @@ export function SlotManagementView({
 					slot={
 						editingSlot
 							? {
-								...editingSlot,
-								isCustom: editingSlot.isCustom,
-							}
+									...editingSlot,
+									isCustom: editingSlot.isCustom,
+								}
 							: undefined
 					}
 					onSubmit={editingSlot ? handleEditSlotSubmit : handleCreateCustomSlot}

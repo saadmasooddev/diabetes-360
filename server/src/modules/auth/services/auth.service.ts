@@ -29,9 +29,9 @@ export interface AuthResponse {
 	user: Omit<
 		User & { profileData?: CustomerData | PhysicianData | null },
 		"password"
-	> & { permissions?: string[]};
+	> & { permissions?: string[] };
 	tokens?: TokenPair;
-	emailVerificationCodeSent: boolean 
+	emailVerificationCodeSent: boolean;
 	requiresTwoFactor?: boolean;
 }
 
@@ -50,13 +50,12 @@ export class AuthService {
 		this.fcmTokenRepository = new FcmTokenRepository();
 	}
 
-
 	async createUserForAdmin(userData: InsertUser) {
 		const existingUser = await this.authRepository.getUserByEmail(
 			userData.email,
 		);
-		if(existingUser){
-			throw new ConflictError("An account with this email already exists")
+		if (existingUser) {
+			throw new ConflictError("An account with this email already exists");
 		}
 
 		const hashedPassword = await bcrypt.hash(
@@ -68,10 +67,10 @@ export class AuthService {
 		const user = await this.authRepository.createUser({
 			...userData,
 			password: hashedPassword,
-			emailVerified: true
+			emailVerified: true,
 		});
 
-		return user
+		return user;
 	}
 
 	async signup(userData: InsertUser): Promise<SignupResponse> {
@@ -118,14 +117,14 @@ export class AuthService {
 		user: Awaited<ReturnType<AuthRepository["getUserByEmail"]>>,
 		_userData: InsertUser,
 	): Promise<SignupResponse> {
-		if (!user) return {emailVerificationCodeSent : false };
+		if (!user) return { emailVerificationCodeSent: false };
 		const userId = user.id;
 
 		// If a valid (non-expired) OTP already exists, just return otpSent true so user can go to verify page
 		const existingValid =
 			await this.authRepository.getValidEmailVerificationTokenForUser(userId);
 		if (existingValid) {
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		}
 
 		// Rate limit new sends
@@ -148,29 +147,30 @@ export class AuthService {
 		await this.authRepository.revokeEmailVerificationCodesForUser(userId);
 		try {
 			await this.createAndSendEmailVerificationOtp(user);
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		} catch (err) {
 			console.error("Failed to send email verification OTP:", err);
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 	}
 
-	private async createAndSendEmailVerificationOtp(
-		user: { id: string; email: string; firstName: string; lastName: string },
-	): Promise<void> {
+	private async createAndSendEmailVerificationOtp(user: {
+		id: string;
+		email: string;
+		firstName: string;
+		lastName: string;
+	}): Promise<void> {
 		const code = crypto.randomInt(100_000, 999_999).toString();
 		const expiresAt = new Date();
 		expiresAt.setMinutes(
-			expiresAt.getMinutes() +
-				config.auth.emailVerificationOtpExpiryInMinutes,
+			expiresAt.getMinutes() + config.auth.emailVerificationOtpExpiryInMinutes,
 		);
 		await this.authRepository.createTokenForUser({
 			userId: user.id,
 			token: `EVC_${code}`,
 			expiresAt,
 		});
-		const userName =
-			`${user.firstName} ${user.lastName}`.trim() || "there";
+		const userName = `${user.firstName} ${user.lastName}`.trim() || "there";
 		await emailService.sendEmailVerificationOtp(user.email, code, userName);
 	}
 
@@ -202,10 +202,10 @@ export class AuthService {
 		const user = await this.authRepository.getUserByEmail(email);
 		if (!user) {
 			// Don't reveal if email exists
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 		if (user.emailVerified) {
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 		const since = new Date();
 		since.setMinutes(
@@ -225,27 +225,26 @@ export class AuthService {
 		await this.authRepository.revokeEmailVerificationCodesForUser(user.id);
 		try {
 			await this.createAndSendEmailVerificationOtp(user);
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		} catch (err) {
 			console.error("Failed to resend verification OTP:", err);
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 	}
-
 
 	async requestSignInCode(email: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
-			throw new UnauthorizedError("Invalid credentials")
+			throw new UnauthorizedError("Invalid credentials");
 		}
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user},
-		emailVerificationCodeSent: true,
-				requiresTwoFactor: false
-			}
+				user: { ...user },
+				emailVerificationCodeSent: true,
+				requiresTwoFactor: false,
+			};
 		}
 
 		if (user.provider !== PROVIDERS.MANUAL) {
@@ -255,12 +254,14 @@ export class AuthService {
 		}
 
 		const since = new Date();
-		since.setMinutes(since.getMinutes() - config.auth.signInCodeRateLimitWindowInMinutes );
+		since.setMinutes(
+			since.getMinutes() - config.auth.signInCodeRateLimitWindowInMinutes,
+		);
 		const recentCount = await this.authRepository.countRecentSignInCodes(
 			user.id,
 			since,
 		);
-		if (recentCount >= config.auth.signInCodeMaxPerWindow ) {
+		if (recentCount >= config.auth.signInCodeMaxPerWindow) {
 			throw new BadRequestError(
 				`Too many sign-in code requests. Please try again in ${config.auth.signInCodeRateLimitWindowInMinutes} minutes or sign in with your password.`,
 			);
@@ -279,22 +280,17 @@ export class AuthService {
 			expiresAt,
 		});
 
-		const userName =
-			`${user.firstName} ${user.lastName}`.trim() || "there";
+		const userName = `${user.firstName} ${user.lastName}`.trim() || "there";
 		await emailService.sendSignInCodeEmail(email, code, userName);
 
 		return {
-			user: { ...user, },
-emailVerificationCodeSent: false ,
-			requiresTwoFactor: false
-		}
+			user: { ...user },
+			emailVerificationCodeSent: false,
+			requiresTwoFactor: false,
+		};
 	}
 
-	
-	async loginWithEmailCode(
-		email: string,
-		code: string,
-	): Promise<AuthResponse> {
+	async loginWithEmailCode(email: string, code: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
@@ -303,10 +299,10 @@ emailVerificationCodeSent: false ,
 
 		if (!user.emailVerified) {
 			return {
-				user: {...user, },
-        emailVerificationCodeSent: true ,
-				requiresTwoFactor: false
-			}
+				user: { ...user },
+				emailVerificationCodeSent: true,
+				requiresTwoFactor: false,
+			};
 		}
 
 		const trimmedCode = code.trim();
@@ -321,7 +317,9 @@ emailVerificationCodeSent: false ,
 			throw new UnauthorizedError("Invalid or expired sign-in code");
 		}
 
-		await this.authRepository.markPasswordResetTokenAsUsed(`SIC_${trimmedCode}`);
+		await this.authRepository.markPasswordResetTokenAsUsed(
+			`SIC_${trimmedCode}`,
+		);
 
 		const tokens = await this.createTokens({
 			userId: user.id,
@@ -346,10 +344,7 @@ emailVerificationCodeSent: false ,
 		return response;
 	}
 
-	async login(
-		email: string,
-		password: string,
-	): Promise<AuthResponse> {
+	async login(email: string, password: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
@@ -358,10 +353,10 @@ emailVerificationCodeSent: false ,
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user, },
-emailVerificationCodeSent: true ,
+				user: { ...user },
+				emailVerificationCodeSent: true,
 				requiresTwoFactor: false,
-			}
+			};
 		}
 
 		// For OAuth users, password might be null
@@ -388,7 +383,7 @@ emailVerificationCodeSent: true ,
 					profileData: profileData as CustomerData | PhysicianData,
 					permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
 				},
-					emailVerificationCodeSent: false,
+				emailVerificationCodeSent: false,
 				tokens: {
 					accessToken: "",
 					refreshToken: "",
@@ -436,10 +431,7 @@ emailVerificationCodeSent: true ,
 	/**
 	 * Verify 2FA token and complete login
 	 */
-	async verify2FALogin(
-		email: string,
-		token: string,
-	): Promise<AuthResponse> {
+	async verify2FALogin(email: string, token: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {

@@ -29,8 +29,9 @@ export class CustomerService {
 	}
 
 	async createCustomerData(
-		userId: string, data: InsertCustomerData, 
-		additionalData?: AdditionalProfileDataValues
+		userId: string,
+		data: InsertCustomerData,
+		additionalData?: AdditionalProfileDataValues,
 	) {
 		const existing =
 			await this.customerRepository.getCustomerDataByUserId(userId);
@@ -38,7 +39,11 @@ export class CustomerService {
 			throw new ConflictError("Customer data already exists for this user");
 		}
 
-    return await this.customerRepository.createCustomerDataAndUpdateUserProfileCompleteTransaction(userId, data, additionalData)
+		return await this.customerRepository.createCustomerDataAndUpdateUserProfileCompleteTransaction(
+			userId,
+			data,
+			additionalData,
+		);
 	}
 
 	async updateCustomerData(userId: string, data: UpdateCustomerData) {

@@ -106,7 +106,9 @@ export const LogIn = (): JSX.Element => {
 	const [emailForCode, setEmailForCode] = useState("");
 	const [signInCode, setSignInCode] = useState("");
 	const [resendCount, setResendCount] = useState(0);
-	const [resendCooldownEnd, setResendCooldownEnd] = useState<number | null>(null);
+	const [resendCooldownEnd, setResendCooldownEnd] = useState<number | null>(
+		null,
+	);
 	const [codeExpiresAt, setCodeExpiresAt] = useState<number | null>(null);
 
 	const resendCooldownSeconds = useResendCooldown(resendCooldownEnd);
@@ -267,8 +269,9 @@ export const LogIn = (): JSX.Element => {
 									placeholder="helloworld@gmail.com"
 									maxLength={50}
 									disabled={codeSent}
-									className={`w-full h-auto pl-4 ${isEmailValid ? "pr-12" : "pr-4"} py-[18px] bg-white rounded-[10px] border border-solid ${errors.email ? "border-red-500" : "border-[#d8dadc]"
-										} [font-family:'Inter',Helvetica] font-normal text-black text-base truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+									className={`w-full h-auto pl-4 ${isEmailValid ? "pr-12" : "pr-4"} py-[18px] bg-white rounded-[10px] border border-solid ${
+										errors.email ? "border-red-500" : "border-[#d8dadc]"
+									} [font-family:'Inter',Helvetica] font-normal text-black text-base truncate disabled:opacity-70 disabled:cursor-not-allowed`}
 									{...register("email")}
 									data-testid="input-email"
 								/>
@@ -300,8 +303,9 @@ export const LogIn = (): JSX.Element => {
 											type={showPassword ? "text" : "password"}
 											placeholder="Enter your password"
 											maxLength={128}
-											className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${errors.password ? "border-red-500" : "border-[#d8dadc]"
-												} [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
+											className={`w-full h-auto pl-4 pr-12 py-[18px] bg-white rounded-[10px] border border-solid ${
+												errors.password ? "border-red-500" : "border-[#d8dadc]"
+											} [font-family:'Inter',Helvetica] font-normal text-black text-base truncate`}
 											{...register("password")}
 											data-testid="input-password"
 										/>
@@ -347,9 +351,7 @@ export const LogIn = (): JSX.Element => {
 									type="button"
 									onClick={handleSendSignInCode}
 									disabled={
-										!emailValue?.trim() ||
-										!!errors.email ||
-										isSendingCode
+										!emailValue?.trim() || !!errors.email || isSendingCode
 									}
 									className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] disabled:opacity-50"
 									data-testid="button-send-sign-in-code"
@@ -394,12 +396,30 @@ export const LogIn = (): JSX.Element => {
 											onChange={setSignInCode}
 										>
 											<InputOTPGroup className="gap-1 sm:gap-2">
-												<InputOTPSlot index={0} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white " />
-												<InputOTPSlot index={1} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white " />
-												<InputOTPSlot index={2} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base  bg-white " />
-												<InputOTPSlot index={3} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white " />
-												<InputOTPSlot index={4} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-												<InputOTPSlot index={5} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white " />
+												<InputOTPSlot
+													index={0}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white "
+												/>
+												<InputOTPSlot
+													index={1}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white "
+												/>
+												<InputOTPSlot
+													index={2}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base  bg-white "
+												/>
+												<InputOTPSlot
+													index={3}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white "
+												/>
+												<InputOTPSlot
+													index={4}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+												/>
+												<InputOTPSlot
+													index={5}
+													className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white "
+												/>
 											</InputOTPGroup>
 										</InputOTP>
 									</div>
@@ -418,8 +438,7 @@ export const LogIn = (): JSX.Element => {
 										type="button"
 										onClick={handleResendCode}
 										disabled={
-											resendCount >= MAX_RESENDS ||
-											resendCooldownSeconds > 0
+											resendCount >= MAX_RESENDS || resendCooldownSeconds > 0
 										}
 										className="[font-family:'Inter',Helvetica] text-sm text-[#00856f] hover:underline disabled:opacity-50 disabled:no-underline"
 										data-testid="button-resend-code"

@@ -63,17 +63,17 @@ export class UserRepository {
 	}
 
 	async getUserTimeZone(userId: string, tx?: Tx) {
-		const dbConn = tx || db
+		const dbConn = tx || db;
 		const [user] = await dbConn
 			.select()
 			.from(users)
 			.innerJoin(timeZones, eq(users.timeZoneId, timeZones.id))
 			.where(eq(users.id, userId))
-			.limit(1)
-		if(!user) {
-			throw new NotFoundError("User not found")
+			.limit(1);
+		if (!user) {
+			throw new NotFoundError("User not found");
 		}
 
-		return user.time_zones.name
+		return user.time_zones.name;
 	}
 }

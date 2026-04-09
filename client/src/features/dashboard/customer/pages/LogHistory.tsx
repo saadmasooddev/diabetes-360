@@ -67,7 +67,6 @@ export function LogHistory() {
 			bloodSugarOffset,
 		);
 
-
 	const { data: stepsData, isLoading: isLoadingSteps } =
 		useFilteredMetricsPaginated(
 			startDate,
@@ -276,7 +275,7 @@ export function LogHistory() {
 											</TableHeader>
 											<TableBody>
 												{bloodSugarData?.bloodSugarRecords &&
-													bloodSugarData.bloodSugarRecords.length > 0 ? (
+												bloodSugarData.bloodSugarRecords.length > 0 ? (
 													bloodSugarData.bloodSugarRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -292,8 +291,8 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				(bloodSugarData.bloodSugarRecords
-																					?.length || 0) -
+																			(bloodSugarData.bloodSugarRecords
+																				?.length || 0) -
 																				1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
@@ -355,7 +354,6 @@ export function LogHistory() {
 					</Card>
 
 					{/* Water Intake Table */}
-
 
 					{/* Steps Table */}
 					<Card
@@ -426,7 +424,7 @@ export function LogHistory() {
 											</TableHeader>
 											<TableBody>
 												{stepsData?.stepsRecords &&
-													stepsData.stepsRecords.length > 0 ? (
+												stepsData.stepsRecords.length > 0 ? (
 													stepsData.stepsRecords.map(
 														(record: MertricRecord, index: number) => {
 															const recordedAtStr =
@@ -442,7 +440,7 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				(stepsData.stepsRecords?.length || 0) - 1
+																			(stepsData.stepsRecords?.length || 0) - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}
@@ -571,7 +569,7 @@ export function LogHistory() {
 												</TableHeader>
 												<TableBody>
 													{heartBeatData?.heartBeatRecords &&
-														heartBeatData.heartBeatRecords.length > 0 ? (
+													heartBeatData.heartBeatRecords.length > 0 ? (
 														heartBeatData.heartBeatRecords.map(
 															(record: MertricRecord, index: number) => (
 																<TableRow
@@ -580,7 +578,7 @@ export function LogHistory() {
 																	style={{
 																		borderBottom:
 																			index <
-																				heartBeatData.heartBeatRecords.length - 1
+																			heartBeatData.heartBeatRecords.length - 1
 																				? "1px solid rgba(0, 133, 111, 0.06)"
 																				: "none",
 																	}}

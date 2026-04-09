@@ -3,11 +3,25 @@ import { BookingService } from "../service/booking.service";
 import { sendSuccess } from "../../../app/utils/response";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "../../../shared/middleware/auth";
-import { BadRequestError, ForbiddenError, ValidationError } from "../../../shared/errors";
-import { BOOKING_TYPE_QUERY_ENUM, USER_ROLES, medicineSchema } from "@shared/schema";
-import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
+import {
+	BadRequestError,
+	ForbiddenError,
+	ValidationError,
+} from "../../../shared/errors";
+import {
+	BOOKING_TYPE_QUERY_ENUM,
+	USER_ROLES,
+	medicineSchema,
+} from "@shared/schema";
+import {
+	DateManager,
+	getPaginationParams,
+} from "server/src/shared/utils/utils";
 import { PERMISSIONS } from "@shared/schema";
-import { BOOKING_STATUS_ENUM, summaryStatusEnum } from "../models/booking.schema";
+import {
+	BOOKING_STATUS_ENUM,
+	summaryStatusEnum,
+} from "../models/booking.schema";
 import type {
 	DateSlotCount,
 	SlotWithDetails,
@@ -636,7 +650,7 @@ export class BookingController {
 				throw new BadRequestError("Invalid timezone");
 			}
 
-			const { limit, offset , page } = getPaginationParams(req)
+			const { limit, offset, page } = getPaginationParams(req);
 
 			const result = await this.bookingService.getUserConsultations(
 				customerId,
@@ -692,7 +706,7 @@ export class BookingController {
 			}
 
 			const { search, startDate, endDate } = req.query;
-			const { page, limit, offset} =  getPaginationParams(req)
+			const { page, limit, offset } = getPaginationParams(req);
 
 			const options: {
 				page?: number;
@@ -704,9 +718,8 @@ export class BookingController {
 			} = {
 				page,
 				limit,
-				skip: offset
+				skip: offset,
 			};
-
 
 			if (search) {
 				options.search = search as string;
@@ -962,39 +975,39 @@ export class BookingController {
 
 	async updateConsultationNotes(req: AuthenticatedRequest, res: Response) {
 		try {
-			const bookingId = req.params.bookingId
-			const summary =  z.string().min(1).safeParse(req.body.summary)
-			if(!summary.success){
-				throw new BadRequestError("Summary not provided")
+			const bookingId = req.params.bookingId;
+			const summary = z.string().min(1).safeParse(req.body.summary);
+			if (!summary.success) {
+				throw new BadRequestError("Summary not provided");
 			}
-			const summaryStatus = summaryStatusEnum.safeParse(req.body.summaryStatus)
-			if(!summaryStatus.success) {
-				throw new BadRequestError("Summary status not provided")
+			const summaryStatus = summaryStatusEnum.safeParse(req.body.summaryStatus);
+			if (!summaryStatus.success) {
+				throw new BadRequestError("Summary status not provided");
 			}
-			const medications = medicineSchema.array().safeParse(req.body.medications)
-			if(!medications.success) {
-				throw new ValidationError(undefined, medications.error)
+			const medications = medicineSchema
+				.array()
+				.safeParse(req.body.medications);
+			if (!medications.success) {
+				throw new ValidationError(undefined, medications.error);
 			}
-			const userId = req.body.userId
-			const physicianId = req.body.physicianId
-			if(!userId || !physicianId) {
-				throw new BadRequestError("User id or physician id not provided")
+			const userId = req.body.userId;
+			const physicianId = req.body.physicianId;
+			if (!userId || !physicianId) {
+				throw new BadRequestError("User id or physician id not provided");
 			}
 
-			await this.bookingService.updateConsultationNotes(
-				{
-					userId,
-					physicianId,
-					bookingId,
-					summary: summary.data,
-					summaryStatus: summaryStatus.data,
-					medications: medications.data
-				}
-			)
-			
-			sendSuccess(res, {}, "consultation notes updated successfully")
+			await this.bookingService.updateConsultationNotes({
+				userId,
+				physicianId,
+				bookingId,
+				summary: summary.data,
+				summaryStatus: summaryStatus.data,
+				medications: medications.data,
+			});
+
+			sendSuccess(res, {}, "consultation notes updated successfully");
 		} catch (error) {
-			handleError(res, error)
+			handleError(res, error);
 		}
 	}
 
@@ -1045,19 +1058,25 @@ export class BookingController {
 		}
 	}
 
-	async getMeetingLink(req: AuthenticatedRequest, res: Response): Promise<void> {
+	async getMeetingLink(
+		req: AuthenticatedRequest,
+		res: Response,
+	): Promise<void> {
 		try {
-			const { bookingId } = req.params
-			if(!bookingId) {
-				throw new BadRequestError("Booking ID not provided")
+			const { bookingId } = req.params;
+			if (!bookingId) {
+				throw new BadRequestError("Booking ID not provided");
 			}
-			console.log("The booking link is", bookingId)
+			console.log("The booking link is", bookingId);
 
-			const userId = req.user?.userId
-			const meetingLink = await this.bookingService.getMeetingLink(bookingId, userId!)
-			sendSuccess(res, { meetingLink}, "Meeting link retrieved successfully")
+			const userId = req.user?.userId;
+			const meetingLink = await this.bookingService.getMeetingLink(
+				bookingId,
+				userId!,
+			);
+			sendSuccess(res, { meetingLink }, "Meeting link retrieved successfully");
 		} catch (error) {
-			handleError(res, error)
+			handleError(res, error);
 		}
 	}
 }

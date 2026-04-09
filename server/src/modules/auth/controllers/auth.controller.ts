@@ -8,14 +8,12 @@ import { fcmRegistrationSchema } from "@shared/schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "server/src/shared/middleware/auth";
 
-
 export class AuthController {
 	private authService: AuthService;
 
 	constructor() {
 		this.authService = new AuthService();
 	}
-
 
 	async signup(req: Request, res: Response): Promise<void> {
 		try {
@@ -32,8 +30,8 @@ export class AuthController {
 
 			sendSuccess(
 				res,
-				{ emailVerificationCodeSent : signupResponse.emailVerificationCodeSent },
-				signupResponse.emailVerificationCodeSent 
+				{ emailVerificationCodeSent: signupResponse.emailVerificationCodeSent },
+				signupResponse.emailVerificationCodeSent
 					? "Verification code sent. Please check your email."
 					: "Account created but we couldn't send the verification email. You can try again.",
 			);
@@ -49,7 +47,11 @@ export class AuthController {
 				throw new BadRequestError("Email and verification code are required");
 			}
 			await this.authService.verifyEmail(email, code);
-			sendSuccess(res, null, "Email verified successfully. You can now sign in.");
+			sendSuccess(
+				res,
+				null,
+				"Email verified successfully. You can now sign in.",
+			);
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -64,7 +66,7 @@ export class AuthController {
 			const result = await this.authService.resendVerificationOtp(email);
 			sendSuccess(
 				res,
-				{ emailVerificationCodeSent : result.emailVerificationCodeSent },
+				{ emailVerificationCodeSent: result.emailVerificationCodeSent },
 				result.emailVerificationCodeSent
 					? "Verification code sent. Please check your email."
 					: "We couldn't send the code. Please try again later.",
@@ -75,14 +77,16 @@ export class AuthController {
 	}
 
 	private loginMessage(authResponse: AuthResponse, message: string) {
-		const rotueToVerificationPage = authResponse.emailVerificationCodeSent === true
-		return rotueToVerificationPage ? "Kindly verify your email to continue." : message 
+		const rotueToVerificationPage =
+			authResponse.emailVerificationCodeSent === true;
+		return rotueToVerificationPage
+			? "Kindly verify your email to continue."
+			: message;
 	}
 
 	async login(req: Request, res: Response): Promise<void> {
 		try {
-			const { email, password, requestSignInCode, emailSignInCode } =
-				req.body;
+			const { email, password, requestSignInCode, emailSignInCode } = req.body;
 
 			if (!email) {
 				throw new BadRequestError("Email is required");
@@ -94,7 +98,10 @@ export class AuthController {
 				sendSuccess(
 					res,
 					result,
-this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5 minutes."),
+					this.loginMessage(
+						result,
+						"Sign-in code sent to your email. It expires in 5 minutes.",
+					),
 				);
 				return;
 			}
@@ -127,7 +134,7 @@ this.loginMessage(result, 					"Sign-in code sent to your email. It expires in 5
 				sendSuccess(
 					res,
 					authResponse,
-this.loginMessage(authResponse, 					"Two-factor authentication required"),
+					this.loginMessage(authResponse, "Two-factor authentication required"),
 				);
 				return;
 			}
@@ -154,16 +161,9 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 				throw new BadRequestError("Verification token must be 6 digits");
 			}
 
-			const authResponse = await this.authService.verify2FALogin(
-				email,
-				token,
-			);
+			const authResponse = await this.authService.verify2FALogin(email, token);
 
-			sendSuccess(
-				res,
-				authResponse,
-				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
-			);
+			sendSuccess(res, authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL);
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -186,20 +186,23 @@ this.loginMessage(authResponse, 					"Two-factor authentication required"),
 	}
 
 	private parseOptionalFcmFromBody(fcm?: unknown) {
-		if(!fcm) {
-			return
+		if (!fcm) {
+			return;
 		}
-		const parsed = fcmRegistrationSchema.safeParse(fcm)
-		if(!parsed.success){
-			return
+		const parsed = fcmRegistrationSchema.safeParse(fcm);
+		if (!parsed.success) {
+			return;
 		}
-		return parsed.data
+		return parsed.data;
 	}
 
 	async logout(req: Request, res: Response): Promise<void> {
 		try {
-			const { refreshToken, fcmToken,  deviceType } = req.body;
-			const fcm = this.parseOptionalFcmFromBody({ token: fcmToken, deviceType });
+			const { refreshToken, fcmToken, deviceType } = req.body;
+			const fcm = this.parseOptionalFcmFromBody({
+				token: fcmToken,
+				deviceType,
+			});
 
 			if (!refreshToken) {
 				throw new BadRequestError("Refresh token is required");

@@ -15,23 +15,17 @@ export function getFireBaseCredentials() {
 		storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
 		messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
 		appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-		vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || ""
-	}
-
+		vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || "",
+	};
 }
 export function getFirebasePublicConfig(): FirebasePublicConfig {
-	const { vapidKey, ...publicConfig} = getFireBaseCredentials()
-	return publicConfig
+	const { vapidKey, ...publicConfig } = getFireBaseCredentials();
+	return publicConfig;
 }
-
 
 export function isFirebaseMessagingConfigured(): boolean {
 	const c = getFireBaseCredentials();
 	return Boolean(
-		c.apiKey &&
-			c.projectId &&
-			c.messagingSenderId &&
-			c.appId &&
-			c.vapidKey,
+		c.apiKey && c.projectId && c.messagingSenderId && c.appId && c.vapidKey,
 	);
 }

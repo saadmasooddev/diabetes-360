@@ -65,7 +65,7 @@ export interface LoggedMealRow {
 export interface CalorieProfileResponse {
 	meals: LoggedMealRow[];
 	total: number;
-	calorieIntake: Array<{ value: number; recordedAt: Date}>;
+	calorieIntake: Array<{ value: number; recordedAt: Date }>;
 }
 
 class FoodScannerService {

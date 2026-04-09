@@ -80,12 +80,7 @@ export function UserHealthTargets() {
 						: "",
 			);
 		}
-	}, [
-		targets,
-		recommendedGlucose,
-		recommendedSteps,
-		recommendedHeartRate,
-	]);
+	}, [targets, recommendedGlucose, recommendedSteps, recommendedHeartRate]);
 
 	const validateTarget = (
 		metricType: MetricType,
@@ -121,10 +116,7 @@ export function UserHealthTargets() {
 		if (glucoseTarget) {
 			const numValue = parseFloat(glucoseTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(
-					METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-					numValue,
-				);
+				const error = validateTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
@@ -150,7 +142,6 @@ export function UserHealthTargets() {
 				}
 			}
 		}
-
 
 		if (heartRateTarget) {
 			const numValue = parseFloat(heartRateTarget);
@@ -194,10 +185,7 @@ export function UserHealthTargets() {
 		try {
 			await deleteMutation.mutateAsync(metricType);
 			// Reset to recommended value if available
-			if (
-				metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE &&
-				recommendedGlucose
-			) {
+			if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE && recommendedGlucose) {
 				setGlucoseTarget(parseFloat(recommendedGlucose.targetValue).toString());
 			} else if (metricType === METRIC_TYPE_ENUM.STEPS && recommendedSteps) {
 				setStepsTarget(parseFloat(recommendedSteps.targetValue).toString());
@@ -209,13 +197,12 @@ export function UserHealthTargets() {
 					parseFloat(recommendedHeartRate.targetValue).toString(),
 				);
 			} else {
-				if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
-					setGlucoseTarget("");
+				if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE) setGlucoseTarget("");
 				else if (metricType === METRIC_TYPE_ENUM.STEPS) setStepsTarget("");
 				else if (metricType === METRIC_TYPE_ENUM.HEART_RATE)
 					setHeartRateTarget("");
 			}
-		} catch (error) { }
+		} catch (error) {}
 	};
 
 	const hasUserTarget = (metricType: MetricType) => {
@@ -284,7 +271,9 @@ export function UserHealthTargets() {
 									/>
 									{hasUserTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE) && (
 										<Button
-											onClick={() => handleDelete(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)}
+											onClick={() =>
+												handleDelete(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
+											}
 											disabled={isSubmitting}
 											variant="outline"
 											size="icon"

@@ -53,14 +53,12 @@ export function SoapNoteModal({
 		defaultMedication(),
 	]);
 	const { mutate: updateConsultationNoteMutation, isPending } =
-		useUpdateConsultationNote()
+		useUpdateConsultationNote();
 
 	useEffect(() => {
 		if (open && consultation) {
 			setSummary(consultation.summary ?? "");
-			setMedications(
-				consultation.medications || [defaultMedication()],
-			);
+			setMedications(consultation.medications || [defaultMedication()]);
 		}
 	}, [open, consultation]);
 
@@ -68,7 +66,11 @@ export function SoapNoteModal({
 		setMedications((prev) => [...prev, defaultMedication()]);
 	};
 
-	const updateMedication = (index: number, field: keyof ConsultationMedication, value: string) => {
+	const updateMedication = (
+		index: number,
+		field: keyof ConsultationMedication,
+		value: string,
+	) => {
 		setMedications((prev) =>
 			prev.map((m, i) => (i === index ? { ...m, [field]: value } : m)),
 		);
@@ -99,8 +101,8 @@ export function SoapNoteModal({
 					summaryStatus: status,
 					medications,
 					userId: consultation.customerId,
-					physicianId: consultation.slot.physician.id
-				}
+					physicianId: consultation.slot.physician.id,
+				},
 			},
 			{
 				onSuccess: () => {
@@ -111,10 +113,11 @@ export function SoapNoteModal({
 					toast({
 						title: "Error",
 						description: "Failed to save note.",
-						variant: "destructive"
-					})
-				}
-			})
+						variant: "destructive",
+					});
+				},
+			},
+		);
 	};
 
 	const handleSaveAsDraft = () => save(SUMMARY_STATUS_ENUM.SAVE_AS_DRAFT);
@@ -138,7 +141,9 @@ export function SoapNoteModal({
 							<User className="h-3.5 w-3.5" />
 							Patient Name
 						</div>
-						<p className="text-sm font-semibold text-[#0f172a]">{patientName}</p>
+						<p className="text-sm font-semibold text-[#0f172a]">
+							{patientName}
+						</p>
 					</div>
 					<div>
 						<div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#546E7A] mb-1">
@@ -152,13 +157,18 @@ export function SoapNoteModal({
 							<Stethoscope className="h-3.5 w-3.5" />
 							Consulting Provider
 						</div>
-						<p className="text-sm font-semibold text-[#0f172a]">{physicianName}</p>
+						<p className="text-sm font-semibold text-[#0f172a]">
+							{physicianName}
+						</p>
 					</div>
 				</div>
 
 				{/* Summary */}
 				<div className="space-y-2 py-4">
-					<Label htmlFor="soap-summary" className="text-sm font-medium text-[#374151]">
+					<Label
+						htmlFor="soap-summary"
+						className="text-sm font-medium text-[#374151]"
+					>
 						Summary <span className="text-red-500">*</span>
 					</Label>
 					<Textarea
@@ -174,7 +184,9 @@ export function SoapNoteModal({
 				{/* Medications */}
 				<div className="space-y-3 py-2">
 					<div className="flex items-center justify-between">
-						<Label className="text-sm font-medium text-[#374151]">Medications</Label>
+						<Label className="text-sm font-medium text-[#374151]">
+							Medications
+						</Label>
 						<Button
 							type="button"
 							variant="outline"
@@ -197,7 +209,9 @@ export function SoapNoteModal({
 									<Input
 										placeholder="Type medication name..."
 										value={med.name}
-										onChange={(e) => updateMedication(index, "name", e.target.value)}
+										onChange={(e) =>
+											updateMedication(index, "name", e.target.value)
+										}
 										className="mt-1 border-[#EAEAEA] h-9"
 									/>
 								</div>
@@ -206,7 +220,9 @@ export function SoapNoteModal({
 									<Input
 										placeholder="e.g., 40"
 										value={med.dosage ?? ""}
-										onChange={(e) => updateMedication(index, "dosage", e.target.value)}
+										onChange={(e) =>
+											updateMedication(index, "dosage", e.target.value)
+										}
 										className="mt-1 border-[#EAEAEA] h-9"
 									/>
 								</div>
@@ -215,7 +231,9 @@ export function SoapNoteModal({
 									<Input
 										placeholder="e.g., twice daily"
 										value={med.frequency ?? ""}
-										onChange={(e) => updateMedication(index, "frequency", e.target.value)}
+										onChange={(e) =>
+											updateMedication(index, "frequency", e.target.value)
+										}
 										className="mt-1 border-[#EAEAEA] h-9"
 									/>
 								</div>
@@ -224,7 +242,9 @@ export function SoapNoteModal({
 									<Input
 										placeholder="e.g., 7 days"
 										value={med.duration ?? ""}
-										onChange={(e) => updateMedication(index, "duration", e.target.value)}
+										onChange={(e) =>
+											updateMedication(index, "duration", e.target.value)
+										}
 										className="mt-1 border-[#EAEAEA] h-9"
 									/>
 								</div>

@@ -18,11 +18,14 @@ import {
 	BloodSugarReadingTypeEnumValues,
 } from "@shared/schema";
 
-const GLUCOSE_READING_TYPE_LABELS: Record<BloodSugarReadingTypeEnumValues, string> = {
+const GLUCOSE_READING_TYPE_LABELS: Record<
+	BloodSugarReadingTypeEnumValues,
+	string
+> = {
 	[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: "Current Glucose",
 	[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: "Fasting Sugar",
 	[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: "Random Sugar",
-	[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: "HbA1c"
+	[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: "HbA1c",
 };
 
 interface AddMetricDialogProps {
@@ -31,7 +34,7 @@ interface AddMetricDialogProps {
 	metricType: MetricType;
 	value: string;
 	onValueChange: (value: string) => void;
-	bloodSugarReadingType?: BloodSugarReadingTypeEnumValues
+	bloodSugarReadingType?: BloodSugarReadingTypeEnumValues;
 	onBloodSugarReadingTypeChange?: (
 		type: BloodSugarReadingTypeEnumValues,
 	) => void;
@@ -43,7 +46,7 @@ const GLUCOSE_READING_OPTIONS: BloodSugarReadingTypeEnumValues[] = [
 	BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL,
 	BLOOD_SUGAR_READING_TYPES_ENUM.FASTING,
 	BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM,
-	BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C
+	BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C,
 ];
 
 export function AddMetricDialog({
@@ -168,13 +171,11 @@ export function AddMetricDialog({
 										<Button
 											key={option}
 											type="button"
-											variant={bloodSugarReadingType === option ? "default" : "outline"}
-											size="sm"
-											onClick={() =>
-												onBloodSugarReadingTypeChange(
-													option
-												)
+											variant={
+												bloodSugarReadingType === option ? "default" : "outline"
 											}
+											size="sm"
+											onClick={() => onBloodSugarReadingTypeChange(option)}
 											style={{
 												background:
 													bloodSugarReadingType === option

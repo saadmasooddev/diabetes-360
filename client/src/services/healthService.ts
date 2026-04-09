@@ -19,7 +19,10 @@ import type {
 } from "@shared/schema";
 import type { ApiResponse } from "@/types/auth.types";
 import type { ExtendedLimits } from "./settingsService";
-import type { ChartData, FilteredMetricResponse } from "server/src/modules/health/repository/health.repository";
+import type {
+	ChartData,
+	FilteredMetricResponse,
+} from "server/src/modules/health/repository/health.repository";
 
 export type Statistics = {
 	daily: number;
@@ -34,7 +37,9 @@ export type Target = {
 	targetValue: string;
 };
 
-export type ModifiedInsertExerciseLogs = Omit<InsertExerciseLog, "userId"> & { source?: HEALTH_METRIC_SOURCE_ENUM};
+export type ModifiedInsertExerciseLogs = Omit<InsertExerciseLog, "userId"> & {
+	source?: HEALTH_METRIC_SOURCE_ENUM;
+};
 
 export type AggregatedStatistics = {
 	glucose: Statistics;
@@ -160,9 +165,9 @@ class HealthService {
 			params.append("offset", offset.toString());
 		}
 
-		const response = await httpClient.get<
-			ApiResponse<FilteredMetricResponse>
-		>(`${API_ENDPOINTS.HEALTH.FILTERED}?${params.toString()}`);
+		const response = await httpClient.get<ApiResponse<FilteredMetricResponse>>(
+			`${API_ENDPOINTS.HEALTH.FILTERED}?${params.toString()}`,
+		);
 
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch filtered metrics");
