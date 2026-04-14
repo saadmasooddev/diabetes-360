@@ -36,7 +36,8 @@ Built with React 18, Vite, TypeScript, and Tailwind CSS. Uses a feature-based fo
 - `client/src/features/dashboard/doctor/` — DoctorHome, DoctorAppointments, DoctorPatients, PatientProfile, PatientAlerts
 - `client/src/features/dashboard/components/` — BookingCalendar, DoctorCard, PaymentScreen, HealthTrendChart, GlucoseChartSection, NutritionProgressBar, FoodOverview, ScanningAnimation
 - `client/src/components/ui/` — Base Radix UI components (button, card, dialog, input, tabs, etc.)
-- `client/src/components/layout/` — Sidebar (role-based navigation), ProtectedRoute
+- `client/src/components/layout/` — Sidebar (role-based navigation)
+- `client/src/components/auth/` — ProtectedRoute (permission-based access control)
 - `client/src/hooks/mutations/` — useLogin, useLogout, useSignup, useTwoFactor, useBooking, useFoodScanner, useHealth, useMedical, useChat, useAdmin, usePhysician, usePatients
 - `client/src/services/` — authService, bookingService, healthService, foodScannerService, notificationsService, etc.
 - `client/src/stores/` — authStore (user/tokens/isAuthenticated), appStore (mealInfo, medicationInfo)
@@ -72,7 +73,7 @@ All 15 backend modules live in `server/src/modules/` and follow a consistent str
 
 - **Middleware**: `auth.ts` (JWT guard), `errorHandler.ts` (centralized error handling)
 - **Services**: `ai.service.ts` (external AI API), `email.service.ts` (SendGrid), `zoom.service.ts` (Zoom meeting links), `timeZone.service.ts`, `cron-job.service.ts`
-- **Utilities**: `jwt.ts`, `cacheManager.ts` (node-cache), `response.ts`, `utils.ts` (DateManager)
+- **Utilities** (`server/src/shared/utils/`): `jwt.ts`, `cacheManager.ts` (node-cache), `utils.ts` (DateManager)
 
 ### Cron Jobs (registered in `server/index.ts`)
 
@@ -179,5 +180,6 @@ Key environment variables (configured in `server/src/app/config/index.ts`):
 ## Deployment
 
 - **Target**: Autoscale
-- **Build command**: `npm run build`
-- **Run command**: `node ./dist/index.cjs`
+- **Build command**: `npm run build` (lints server, builds client via Vite, bundles server via esbuild as ESM)
+- **Run command**: `node dist/index.js`
+- **Production start script**: `cross-env NODE_ENV=production node dist/index.js`
