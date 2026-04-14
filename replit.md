@@ -135,7 +135,6 @@ Schema definitions are spread across `server/src/modules/*/models/*.schema.ts` a
 - **Password hashing**: bcrypt (10 rounds)
 - **Token-based auth**: JWT access tokens (configurable expiry, default 15 min) + refresh tokens (default 7 days)
 - **2FA**: Speakeasy TOTP + QRCode generation + backup codes
-- **Passport.js**: Local strategy for credential validation
 - **Client-side**: Zustand auth store with localStorage persistence, Axios interceptors for automatic token refresh
 
 ## External Dependencies & Integrations
@@ -181,5 +180,6 @@ Key environment variables (configured in `server/src/app/config/index.ts`):
 
 - **Target**: Autoscale
 - **Build command**: `npm run build` (lints server, builds client via Vite, bundles server via esbuild as ESM)
-- **Run command**: `node dist/index.js`
+- **Run command**: `node ./dist/index.cjs` (configured in `.replit`)
 - **Production start script**: `cross-env NODE_ENV=production node dist/index.js`
+- **Note**: The esbuild step produces ESM output (`--format=esm`) to `dist/index.js`. The `.replit` deploy config references `dist/index.cjs` — verify this matches the actual build output before deploying.
