@@ -5,7 +5,7 @@ import {
 	updatePhysicianDataSchema,
 	insertCustomerDataAdminSchema,
 	updateCustomerDataSchema,
-	DIABETES_TYPE,
+	type DIABETES_TYPE,
 } from "../../auth/models/user.schema";
 import { AuthService } from "../../auth/services/auth.service";
 import { PhysicianService } from "../../physician/service/physician.service";

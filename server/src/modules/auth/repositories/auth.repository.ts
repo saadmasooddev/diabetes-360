@@ -13,6 +13,9 @@ import {
 	physicianData,
 	customerData,
 	physicianSpecialties,
+	type InsertBiometricDevice,
+	biometricDevices,
+	type LoginWithBioMetric,
 } from "../models/user.schema";
 import { eq, and, getTableColumns, gt, gte, like, sql } from "drizzle-orm";
 import { BadRequestError } from "server/src/shared/errors";
@@ -312,5 +315,22 @@ export class AuthRepository {
 
 	async deleteUser(id: string): Promise<void> {
 		await db.delete(users).where(eq(users.id, id));
+	}
+
+	async createBiometricDevice(data: InsertBiometricDevice){
+		await db.insert(biometricDevices).values(data).returning()
+	}
+
+	async getUserByBioMetricDevice(data: LoginWithBioMetric){
+    const [ user ]= await db.select().from(biometricDevices).where(
+			and(
+				eq(biometricDevices.deviceId, data.deviceId),
+				eq(biometricDevices.deviceName, data.deviceName),
+				eq(biometricDevices.deviceType, data.deviceType),
+				eq(biometricDevices.publicKey, data.publicKey)
+			)
+		)
+		.limit(1)
+		return user
 	}
 }

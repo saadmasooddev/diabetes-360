@@ -16,7 +16,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import {
 	BLOOD_SUGAR_READING_TYPES_ENUM,
-	BloodSugarReadingTypeEnumValues,
+	type BloodSugarReadingTypeEnumValues,
 	bloodSugarReadingTypeSchema,
 	users,
 } from "../../auth/models/user.schema";

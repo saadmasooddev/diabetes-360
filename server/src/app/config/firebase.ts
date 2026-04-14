@@ -1,4 +1,4 @@
-import { App, cert, initializeApp, ServiceAccount } from "firebase-admin/app";
+import { type App, cert, initializeApp, type ServiceAccount } from "firebase-admin/app";
 import { config } from ".";
 
 let firebaseApp: App | null | undefined;

@@ -43,7 +43,7 @@ import type {
 } from "../models/health.schema";
 import type { PgTable } from "drizzle-orm/pg-core";
 import { BadRequestError } from "server/src/shared/errors";
-import { LoggedMeal, Tx } from "../../food/models/food.schema";
+import type { LoggedMeal, Tx } from "../../food/models/food.schema";
 import {
 	BLOOD_SUGAR_READING_TYPES_ENUM,
 	USER_ROLES,

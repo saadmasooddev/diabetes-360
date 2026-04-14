@@ -12,7 +12,7 @@ import type {
 import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
 import {
 	BLOOD_SUGAR_READING_TYPES_ENUM,
-	CustomerData,
+	type CustomerData,
 	DIABETES_TYPE,
 } from "../../auth/models/user.schema";
 import {
@@ -115,18 +115,19 @@ export class ChatService {
 			};
 
 		records.forEach((r) => {
-			if (r.value === null && String(r.value).trim() === "") return;
+			if (r.value !== null && String(r.value).trim() !== ""){
+				const newRecord = {
+					value: String(r.value),
+					recorded_at: String(r.recordedAt),
+					reading_type:
+						readingTypeMap[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM],
+				};
+				const f =
+					this.readingTypeFunc[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM];
+				if (f)
+				  f(newRecord, result);
+			}
 
-			const newRecord = {
-				value: String(r.value),
-				recorded_at: String(r.recordedAt),
-				reading_type:
-					readingTypeMap[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM],
-			};
-			const f =
-				this.readingTypeFunc[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM];
-			if (!f) return;
-			return f(newRecord, result);
 		});
 
 		return result;

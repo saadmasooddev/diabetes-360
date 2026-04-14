@@ -6,7 +6,7 @@ import { BadRequestError, ForbiddenError } from "../../../shared/errors";
 import {
 	PERMISSIONS,
 	USER_ROLES,
-	UserRole,
+	type UserRole,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import { insertMedicationSchema } from "../models/medical.schema";

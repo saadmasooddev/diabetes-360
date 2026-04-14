@@ -1,10 +1,10 @@
-import { AuthenticatedRequest } from "server/src/shared/middleware/auth";
+import type { AuthenticatedRequest } from "server/src/shared/middleware/auth";
 import { NotificationsService } from "../services/notifications.service";
 import { fcmRegistrationSchema } from "@shared/schema";
 import { ValidationError } from "server/src/shared/errors";
 import { handleError } from "server/src/shared/middleware/errorHandler";
 import { sendSuccess } from "server/src/app/utils/response";
-import { Response } from "express";
+import type { Response } from "express";
 
 export class NotificationsController {
 	private readonly notificationsService = new NotificationsService();
@@ -16,7 +16,7 @@ export class NotificationsController {
 				throw new ValidationError(undefined, fcm.error);
 			}
 			await this.notificationsService.storeFcmToken(
-				req.user?.userId!,
+				req.user!.userId,
 				fcm.data,
 			);
 			sendSuccess(res, undefined, "FCM token stored successfully");

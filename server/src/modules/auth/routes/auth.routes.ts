@@ -554,4 +554,7 @@ router.post("/change-password", authenticateToken, (req, res) =>
 	authController.changeUserPassword(req, res),
 );
 
+router.post("/register-biometric", authenticateToken, (req, res) => 
+	authController.createBiometricDevice(req, res))
+
 export { router as authRoutes };

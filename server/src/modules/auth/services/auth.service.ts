@@ -6,6 +6,10 @@ import {
 	type PhysicianData,
 	type CustomerData,
 	PROVIDERS,
+	type InsertBiometricDevice,
+	insertBiometricDeviceSchema,
+	loginWithBioMetricSchema,
+	type LoginWithBioMetric,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
@@ -665,5 +669,49 @@ export class AuthService {
 		} catch (error) {
 			throw error;
 		}
+	}
+
+	async createBiometricDevice(data: InsertBiometricDevice){
+		return await this.authRepository.createBiometricDevice(data)
+	}
+
+	async loginWithBiometric(bioMetricData: LoginWithBioMetric): Promise<AuthResponse> {
+    const biometricDevice = await this.authRepository.getUserByBioMetricDevice(bioMetricData)
+		if(!biometricDevice){
+			throw new UnauthorizedError("Invalid credentials")
+		}
+
+		const userData = await this.authRepository.getUserById(biometricDevice.userId)
+		if(!userData){
+			throw new UnauthorizedError("Invalid credentials")
+		}
+
+		const allUserData = await this.authRepository.getUserByEmail(userData.email)
+		if(!allUserData){
+			throw new UnauthorizedError("User not found")
+		}
+
+		const tokens = await this.createTokens({
+			userId: allUserData.id,
+			email: allUserData.email,
+			firstName: allUserData.firstName,
+			lastName: allUserData.lastName,
+			role: allUserData.role,
+		})
+
+		const { password: _, profileData, ...userWithoutPassword } = allUserData;
+
+		const response: AuthResponse = {
+			user: {
+				...userWithoutPassword,
+				profileData: profileData as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[allUserData.role] || [])],
+			},
+			emailVerificationCodeSent: false,
+			tokens,
+			requiresTwoFactor: false,
+		};
+		return response;
+
 	}
 }

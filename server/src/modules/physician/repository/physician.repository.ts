@@ -337,6 +337,16 @@ export class PhysicianRepository {
 		return physiciansWithRatings.filter((p) => p.nextAvailableSlot !== null);
 	}
 
+	private getSlotTimeStamp(slot: { date: Date, startTime: string,  }, timeZone: string){
+		const date = DateManager.formatDate(slot.date);
+		const { utcDate } = DateManager.getLocalHours(
+			`${date} ${slot.startTime}`,
+			timeZone,
+		);
+		const slotTimeStamp = new Date(utcDate).getTime();
+		return slotTimeStamp
+	}
+
 	private async physicianWithRatingsAndNextAvaialbleSlot(
 		physician: {
 			id: string;
@@ -406,44 +416,34 @@ export class PhysicianRepository {
 				),
 			)
 			.orderBy(asc(availabilityDate.date))
-			.limit(10);
+			.limit(288)
 
 		const userTimeStamp = new Date(fromDate).getTime();
-		nextSlotRows
-			.sort((slot) => {
-				const date = DateManager.formatDate(slot.date);
-				const { utcDate } = DateManager.getLocalHours(
-					`${date} ${slot.startTime}`,
-					timeZone,
-				);
 
-				const slotTimeStamp = new Date(utcDate).getTime();
-				return slotTimeStamp - userTimeStamp;
+		const filteredNextSlotRows = nextSlotRows
+			.toSorted((slotA, slotB) => {
+				const slotATimeStamp = this.getSlotTimeStamp(slotA, timeZone)
+				const slotBTimeStamp = this.getSlotTimeStamp(slotB, timeZone)
+				return slotATimeStamp - slotBTimeStamp
 			})
 			.filter((slot) => {
-				const date = DateManager.formatDate(slot.date);
-				const { utcDate } = DateManager.getLocalHours(
-					`${date} ${slot.startTime}`,
-					timeZone,
-				);
-
-				const slotTimeStamp = new Date(utcDate).getTime();
-				return slotTimeStamp >= userTimeStamp;
+				const slotTimeStamp = this.getSlotTimeStamp(slot, timeZone)
+				return slotTimeStamp > userTimeStamp;
 			});
 
+		const nextFilteredSlot = filteredNextSlotRows[0]
 		const nextAvailableSlot =
-			nextSlotRows.length > 0
-				? {
-						slotId: nextSlotRows[0].slotId,
-						date: DateManager.formatDate(nextSlotRows[0].date),
-						startTime: nextSlotRows[0].startTime,
-						endTime: nextSlotRows[0].endTime,
-						slotTypeId: nextSlotRows[0].slotTypeId,
+				nextFilteredSlot ? {
+						slotId: nextFilteredSlot.slotId,
+						date: DateManager.formatDate(nextFilteredSlot.date),
+						startTime:nextFilteredSlot.startTime,
+						endTime: nextFilteredSlot.endTime,
+						slotTypeId:  nextFilteredSlot.slotTypeId,
 						slotType:
-							nextSlotRows[0].slotType === SLOT_TYPE.ONLINE
+							  nextFilteredSlot.slotType === SLOT_TYPE.ONLINE
 								? "Video Call"
 								: "In Person",
-						slotLocation: nextSlotRows[0].slotLocation,
+						slotLocation: nextFilteredSlot.slotLocation,
 					}
 				: null;
 

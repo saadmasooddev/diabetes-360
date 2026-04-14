@@ -32,13 +32,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { formatTime12, cn } from "@/lib/utils";
+import { formatTime12, cn, DateManager } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Physician } from "@/services/physicianService";
 import { CreateSlotsRequest } from "@/services/bookingService";
-import { DateManager } from "@/lib/utils";
 import { SlotStartEnd } from "server/src/modules/booking/repository/booking.repository";
 import { SLOT_TYPE } from "@shared/schema";
 
@@ -120,7 +119,7 @@ export function SlotManagementView({
 	const debouncedPhysicianSearch = useDebounce(physicianSearchQuery, 500);
 	const searchValue =
 		debouncedPhysicianSearch.trim() === "" ||
-		debouncedPhysicianSearch.toLowerCase() === "all"
+			debouncedPhysicianSearch.toLowerCase() === "all"
 			? undefined
 			: debouncedPhysicianSearch.trim();
 
@@ -132,14 +131,7 @@ export function SlotManagementView({
 
 	const physicians: Physician[] = physiciansData?.physicians || [];
 
-	function getDateString(date: Date) {
-		if (DateManager.isToday(date)) {
-			return date.toISOString();
-		}
-		return DateManager.startOfDay(date).toISOString();
-	}
 
-	const dateString = selectedDate ? getDateString(selectedDate) : null;
 
 	const { data: slotSizes = [] } = useSlotSizes();
 	const { data: slotTypes = [] } = useSlotTypes();
@@ -148,7 +140,7 @@ export function SlotManagementView({
 		isLoading: isLoadingSlots,
 		refetch: refetchSlots,
 		isRefetching: isRefetchingSlots,
-	} = useSlotsForDate(selectedPhysicianId, dateString);
+	} = useSlotsForDate(selectedPhysicianId, selectedDate);
 	const { data: ownLocations = [] } = usePhysicianLocations();
 	const { data: adminLocations = [] } =
 		usePhysicianLocationsByPhysicianId(selectedPhysicianId);
@@ -174,11 +166,12 @@ export function SlotManagementView({
 		return existingSlots.filter((slot) => !slot.isBooked);
 	}, [existingSlots]);
 
-	function generateSlots(physicianId: string, date: Date) {
+	function generateSlots(physicianId: string, dateString: Date) {
+		const date = getDateString(dateString)
 		generateSlotsMutation.mutate(
 			{
 				physicianId: hasManageAllSlots ? physicianId : undefined,
-				date: date.getTime().toString(),
+				date: new Date(date).getTime().toString(),
 				slotSizeId: selectedSlotSizeId,
 				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 			},
@@ -192,18 +185,14 @@ export function SlotManagementView({
 	}
 	// Generate slots when slot size changes
 	useEffect(() => {
-		if (selectedSlotSizeId && dateString && selectedPhysicianId) {
-			const date = new Date(dateString);
-			if (!DateManager.isToday(date)) {
-				date.setHours(0, 0, 0, 0);
-			}
+		if (selectedSlotSizeId && selectedDate && selectedPhysicianId) {
 
-			generateSlots(selectedPhysicianId, date);
+			generateSlots(selectedPhysicianId, selectedDate);
 		} else {
 			setGeneratedSlots([]);
 			setConflicts([]);
 		}
-	}, [selectedSlotSizeId, dateString, selectedPhysicianId, hasManageAllSlots]);
+	}, [selectedSlotSizeId, selectedDate, selectedPhysicianId, hasManageAllSlots]);
 
 	const handleSlotTypeToggle = (typeId: string) => {
 		setSelectedSlotTypeIds((prev) =>
@@ -307,11 +296,16 @@ export function SlotManagementView({
 		setDragStartAvailableIndex(null);
 	};
 
+	function getDateString(date: Date) {
+		return DateManager.getDateStringBasedOnTodayOrStartOfDay(date)
+	}
+	// Create only selected slots
+
 	const handleCreateSlots = async () => {
 		if (
 			!selectedSlotSizeId ||
 			selectedSlotTypeIds.length === 0 ||
-			!dateString ||
+			!selectedDate ||
 			!selectedPhysicianId
 		) {
 			toast({
@@ -341,7 +335,6 @@ export function SlotManagementView({
 			return;
 		}
 
-		// Create only selected slots
 		const slotsToCreate = Array.from(selectedAvailableSlots)
 			.sort((a, b) => a - b)
 			.map((index) => generatedSlots[index])
@@ -356,13 +349,10 @@ export function SlotManagementView({
 			return;
 		}
 
-		const date = new Date(dateString);
-		if (!DateManager.isToday(date)) {
-			date.setHours(0, 0, 0, 0);
-		}
+		const dateString = getDateString(selectedDate)
 		// Create slots in groups
 		const payload: CreateSlotsRequest = {
-			date: date.getTime().toString(),
+			date: new Date(dateString).getTime().toString(),
 			slotSizeId: selectedSlotSizeId,
 			slotTimes: slotsToCreate,
 			slotTypeIds: selectedSlotTypeIds,
@@ -400,8 +390,8 @@ export function SlotManagementView({
 			{
 				onSuccess: async (result) => {
 					await refetchSlots();
-					if (dateString)
-						generateSlots(selectedPhysicianId, new Date(dateString));
+					if (selectedDate)
+						generateSlots(selectedPhysicianId, selectedDate);
 					setSelectedExistingSlots(new Set());
 
 					if (result.failed.length > 0) {
@@ -463,8 +453,9 @@ export function SlotManagementView({
 	};
 
 	const handleCreateCustomSlot = async (data: EditSlotFormData) => {
-		if (!dateString || !selectedPhysicianId) return;
+		if (!selectedDate || !selectedPhysicianId) return;
 
+		const dateString = getDateString(selectedDate)
 		createCustomSlotMutation.mutate(
 			{
 				physicianId: hasManageAllSlots ? selectedPhysicianId : undefined,
@@ -883,9 +874,9 @@ export function SlotManagementView({
 					slot={
 						editingSlot
 							? {
-									...editingSlot,
-									isCustom: editingSlot.isCustom,
-								}
+								...editingSlot,
+								isCustom: editingSlot.isCustom,
+							}
 							: undefined
 					}
 					onSubmit={editingSlot ? handleEditSlotSubmit : handleCreateCustomSlot}

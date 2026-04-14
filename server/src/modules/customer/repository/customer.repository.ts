@@ -6,14 +6,14 @@ import {
 	type InsertCustomerData,
 	type UpdateCustomerData,
 	type User,
-	AdditionalProfileDataValues,
+	type AdditionalProfileDataValues,
 	YES_NO_NOT_SURE_VALUES,
 	BLOOD_SUGAR_READING_TYPES_ENUM,
-	BloodSugarReadingTypeEnumValues,
+	type BloodSugarReadingTypeEnumValues,
 } from "../../auth/models/user.schema";
 import { eq } from "drizzle-orm";
 import { UserRepository } from "../../user/repository/user.repository";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
 
 type BloodSugarReadingTypeData = {

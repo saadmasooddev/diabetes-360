@@ -2,7 +2,7 @@ import { BookingService } from "../../booking/service/booking.service";
 import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
 import {
-	GlucoseAlertPushPayload,
+	type GlucoseAlertPushPayload,
 	PUSH_MESSAGE_TYPE_ENUM,
 } from "../models/fcm.schema";
 import { PushNotificationService } from "./push-notification.service";

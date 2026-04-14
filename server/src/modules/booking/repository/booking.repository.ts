@@ -29,9 +29,9 @@ import {
 	BOOKING_STATUS_ENUM,
 	SLOT_TYPE,
 	BOOKING_TYPE_ENUM,
-	SUMMARY_STATUS_ENUM,
-	InsertSlotSize,
-	InsertSlotType,
+	type SUMMARY_STATUS_ENUM,
+	type InsertSlotSize,
+	type InsertSlotType,
 } from "../models/booking.schema";
 import {
 	physicianLocations,
@@ -41,31 +41,31 @@ import {
 	physicianSpecialties,
 } from "../../auth/models/user.schema";
 import {
-	SlotSize,
-	InsertAvailabilityDate,
-	AvailabilityDate,
-	InsertSlot,
-	Slot,
-	SlotType,
-	InsertSlotTypeJunction,
-	SlotTypeJunction,
-	InsertSlotPrice,
-	SlotPrice,
-	UpdateSlotPrice,
-	InsertBookedSlot,
-	BookedSlot,
-	InsertSlotLocation,
-	SlotLocation,
+	type SlotSize,
+	type InsertAvailabilityDate,
+	type AvailabilityDate,
+	type InsertSlot,
+	type Slot,
+	type SlotType,
+	type InsertSlotTypeJunction,
+	type SlotTypeJunction,
+	type InsertSlotPrice,
+	type SlotPrice,
+	type UpdateSlotPrice,
+	type InsertBookedSlot,
+	type BookedSlot,
+	type InsertSlotLocation,
+	type SlotLocation,
 	BOOKING_TYPE_QUERY_ENUM,
 } from "../models/booking.schema";
 import { alias } from "drizzle-orm/pg-core";
 import { freeTierLimits } from "../../settings/models/settings.schema";
 import { userConsultationQuotas } from "../models/consultation-quota.schema";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 import { medications } from "../../medical/models/medical.schema";
 import {
 	MedicalRepository,
-	MedicineDosage,
+	type MedicineDosage,
 } from "../../medical/repository/medical.repository";
 import { ConsultationQuotaRepository } from "./consultation-quota.repository";
 import { config } from "server/src/app/config";
@@ -1561,13 +1561,16 @@ export class BookingRepository {
 
 	async generateSlotsForDay(
 		physicianId: string,
-		date: string,
+		timestamp: number,
+		timeZone: string,
 		slotSizeId: string,
 	): Promise<{
 		availableSlots: Array<SlotStartEnd>;
 		existingSlots: Slot[];
 		conflicts: Array<SlotStartEnd>;
 	}> {
+		const date = DateManager.getLocalTime(timestamp, timeZone)
+		const dateString = DateManager.formatDate(date.toISOString())
 		const slotSize = await this.getSlotSizeById(slotSizeId);
 		if (!slotSize) {
 			throw new Error("Slot size not found");
@@ -1575,12 +1578,12 @@ export class BookingRepository {
 
 		let availability = await this.getAvailabilityDateByPhysicianAndDate(
 			physicianId,
-			date,
+			dateString,
 		);
 		if (!availability) {
 			availability = await this.createAvailabilityDate({
 				physicianId,
-				date: date,
+			  date: dateString,
 			});
 		}
 
@@ -1588,10 +1591,10 @@ export class BookingRepository {
 		const existingSlots = await this.getSlotsByAvailabilityId(availability.id);
 
 		// Generate all possible slots for the day
-		const dateObj = new Date(date);
+		const dateObj = date;
 		const allSlots: Array<SlotStartEnd> = [];
-		const currentMinutes = dateObj.getHours() * 60 + dateObj.getMinutes();
-		let startMinutes =
+		const currentMinutes = dateObj.hour() * 60 + dateObj.minute();
+		const startMinutes =
 			Math.ceil(currentMinutes / slotSize.size) * slotSize.size; // 12:00 AM
 		const endMinutes = 24 * 60; // 11:59 PM
 

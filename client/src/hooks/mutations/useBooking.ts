@@ -8,6 +8,7 @@ import {
 } from "@/services/bookingService";
 import { useToast } from "@/hooks/use-toast";
 import { getConsultationQuotasKey } from "./useCustomer";
+import { DateManager } from "@/lib/utils";
 
 const getCalculateBookingPriceKey = (physicianId: string | null) => {
 	const key = ["booking", "calculate-price", physicianId];
@@ -45,11 +46,14 @@ export const useDatesWithAvailability = (physicianId: string | null) => {
 
 export const useSlotsForDate = (
 	physicianId: string | null,
-	date: string | null,
+	date:  Date | null,
 ) => {
 	return useQuery({
 		queryKey: ["booking", "slots", physicianId, date],
-		queryFn: () => bookingService.getSlotsForDate(physicianId!, date!),
+		queryFn: () => bookingService.getSlotsForDate(
+			physicianId!, 
+			DateManager.getDateStringBasedOnTodayOrStartOfDay(date!)
+		),
 		enabled: !!physicianId && !!date,
 	});
 };

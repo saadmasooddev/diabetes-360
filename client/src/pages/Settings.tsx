@@ -43,11 +43,9 @@ import {
 	useGetConsultationQuotas,
 } from "@/hooks/mutations/useCustomer";
 import { CustomerProfileEdit } from "@/components/customer/CustomerProfileEdit";
-import { PhysicianAvailabilityManagement } from "@/components/physician/PhysicianAvailabilityManagement";
 import { ManageLocation } from "@/components/physician/ManageLocation";
 import { parseDateToComponents } from "@/lib/utils";
 import { ChangePasswordDialog } from "@/components/auth/ChangePasswordDialog";
-import { TwoFactorAuth } from "@/components/settings/TwoFactorAuth";
 import { AccessControl } from "@/components/common/AccessControl";
 import { PERMISSIONS } from "@/utils/permissions";
 import { USER_ROLES } from "@shared/schema";
@@ -648,14 +646,14 @@ export function Settings() {
 							</Card>
 						</TabsContent>
 
-						<AccessControl permission={PERMISSIONS.MANAGE_AVAILABILITY}>
+						{/* <AccessControl permission={PERMISSIONS.MANAGE_AVAILABILITY}>
 							<TabsContent
 								value="availability"
 								className="space-y-6 overflow-x-hidden"
 							>
 								<PhysicianAvailabilityManagement />
 							</TabsContent>
-						</AccessControl>
+						</AccessControl> */}
 
 						<AccessControl permission={PERMISSIONS.MANAGE_LOCATIONS}>
 							<TabsContent

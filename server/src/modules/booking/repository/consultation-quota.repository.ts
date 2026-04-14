@@ -6,7 +6,7 @@ import type {
 	UpdateUserConsultationQuota,
 	UserConsultationQuota,
 } from "../models/consultation-quota.schema";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 
 export class ConsultationQuotaRepository {
 	async getUserConsultationQuota(

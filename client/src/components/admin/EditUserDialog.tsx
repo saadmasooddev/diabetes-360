@@ -40,10 +40,8 @@ import {
 	weightOptions,
 	heightOptions,
 } from "@/mocks/profileData";
-import { AdminPhysicianSlotManagement } from "./AdminPhysicianSlotManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseDateToComponents, handleNumberInput } from "@/lib/utils";
-import { useAuthStore } from "@/stores/authStore";
 
 const updateUserSchema = z.object({
 	firstName: z.string().min(1, "First name is required").optional(),
@@ -532,19 +530,19 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											/>
 											{(physicianFields.imagePreview ||
 												physicianFields.imageUrl) && (
-												<Image
-													src={
-														physicianFields.imagePreview ||
-														physicianFields.imageUrl
-													}
-													alt="Preview"
-													className="w-24 h-24 rounded-full object-cover border"
-													pointToServer={
-														!!physicianFields.imageUrl &&
-														!physicianFields.imagePreview
-													}
-												/>
-											)}
+													<Image
+														src={
+															physicianFields.imagePreview ||
+															physicianFields.imageUrl
+														}
+														alt="Preview"
+														className="w-24 h-24 rounded-full object-cover border"
+														pointToServer={
+															!!physicianFields.imageUrl &&
+															!physicianFields.imagePreview
+														}
+													/>
+												)}
 										</div>
 									</div>
 								)}
@@ -751,11 +749,11 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 							</form>
 						</TabsContent>
 
-						{(watchedRole === "physician" || user.role === "physician") && (
+						{/* {(watchedRole === "physician" || user.role === "physician") && (
 							<TabsContent value="availability">
 								<AdminPhysicianSlotManagement physicianId={user.id} />
 							</TabsContent>
-						)}
+						)} */}
 					</Tabs>
 				</div>
 				<DialogFooter>

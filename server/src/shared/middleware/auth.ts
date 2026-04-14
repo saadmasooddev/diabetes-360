@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { JWTService } from "../utils/jwt";
 import { UnauthorizedError, ForbiddenError } from "../errors";
-import { PAYMENT_TYPE, USER_ROLES, type UserRole } from "@shared/schema";
+import { USER_ROLES, type UserRole } from "@shared/schema";
 
 export interface AuthenticatedRequest extends Request {
 	user?: {
@@ -46,11 +46,12 @@ export function requirePermission(permission: string) {
 		next: NextFunction,
 	): void => {
 		if (!req.user) {
-			return next(new UnauthorizedError("Authentication required"));
+			next(new UnauthorizedError("Authentication required"));
+			return
 		}
 
 		if (!req.user.permissions.includes(permission)) {
-			return next(
+			next(
 				new ForbiddenError(`Access denied. Required permission: ${permission}`),
 			);
 		}
@@ -66,11 +67,11 @@ export function requireAnyPermission(permissions: string[]) {
 		next: NextFunction,
 	): void => {
 		if (!req.user) {
-			return next(new UnauthorizedError("Authentication required"));
+			next(new UnauthorizedError("Authentication required"));
 		}
 
-		if (!req.user.permissions.some((p) => permissions.includes(p))) {
-			return next(
+		if (!req.user!.permissions.some((p) => permissions.includes(p))) {
+			next(
 				new ForbiddenError(
 					`Access denied. Required permission: ${permissions.join(", ")}`,
 				),

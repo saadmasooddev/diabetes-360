@@ -26,7 +26,6 @@ export function FcmForegroundListener(): null {
 	const { mutate: saveFcmToken } = useSaveFcmToken();
 
 	useEffect(() => {
-		console.log("is autneticated", isAuthenticated);
 		if (!isAuthenticated || !user?.role) {
 			return;
 		}

@@ -1,5 +1,5 @@
 import { getMessaging, type Message } from "firebase-admin/messaging";
-import { type PushMessagePayload } from "../models/fcm.schema";
+import type { PushMessagePayload } from "../models/fcm.schema";
 import { FcmTokenRepository } from "../repositories/fcm-token.repository";
 import { PushNotificationLogRepository } from "../repositories/push-notification-log.repository";
 import { getFirebaseApp } from "server/src/app/config/firebase";

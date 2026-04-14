@@ -16,8 +16,8 @@ import {
 	type MealPlanMeal,
 	type DailyPersonalizedInsight,
 	type Recipe,
-	MEAL_TYPE_ENUM,
-	Tx,
+	type MEAL_TYPE_ENUM,
+	type Tx,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
 import { PgTransaction, numeric } from "drizzle-orm/pg-core";

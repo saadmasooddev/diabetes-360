@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser } from "../models/user.schema";
-import { AuthResponse, AuthService } from "../services/auth.service";
-import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
+import { insertUserSchema, type InsertUser, insertBiometricDeviceSchema, loginWithBioMetricSchema } from "../models/user.schema";
+import { type AuthResponse, AuthService } from "../services/auth.service";
+import { SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
 import { BadRequestError, ValidationError } from "../../../shared/errors";
 import { fcmRegistrationSchema } from "@shared/schema";
@@ -86,11 +86,30 @@ export class AuthController {
 
 	async login(req: Request, res: Response): Promise<void> {
 		try {
-			const { email, password, requestSignInCode, emailSignInCode } = req.body;
+			const { email, password, requestSignInCode, emailSignInCode, biometric } = req.body;
+
+			if(biometric !== undefined && biometric !== null){
+
+				const bioMetricDataParsed = loginWithBioMetricSchema.safeParse(
+					biometric
+				)
+
+				if(!bioMetricDataParsed.success){
+					throw new ValidationError(undefined, bioMetricDataParsed.error)
+				}
+				const authResponse =await this.authService.loginWithBiometric(bioMetricDataParsed.data)
+				sendSuccess(
+					res,
+					authResponse,
+					this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL)
+				)
+				return
+			}
 
 			if (!email) {
 				throw new BadRequestError("Email is required");
 			}
+
 
 			// Request sign-in code (send OTP to email)
 			if (requestSignInCode === true) {
@@ -285,5 +304,25 @@ export class AuthController {
 		} catch (error) {
 			handleError(res, error);
 		}
+	}
+
+	async  createBiometricDevice(req:AuthenticatedRequest, res: Response){
+		try {
+			const userId = req.user?.userId
+			const biometricData = insertBiometricDeviceSchema.safeParse({
+				...req.body,
+				userId 
+			})
+			if(!biometricData.success){
+				throw new ValidationError(undefined, biometricData.error)
+			}
+			await this.authService.createBiometricDevice(biometricData.data)
+			sendSuccess(res, null, "Biometric device created successfully")
+			
+		} catch (error) {
+			handleError(res, error)
+			
+		}
+
 	}
 }

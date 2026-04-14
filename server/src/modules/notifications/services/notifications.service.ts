@@ -1,4 +1,4 @@
-import { FcmRegistrationInput } from "@shared/schema";
+import type { FcmRegistrationInput } from "@shared/schema";
 import { FcmTokenRepository } from "../repositories/fcm-token.repository";
 
 export class NotificationsService {

@@ -3,7 +3,7 @@ import { UserRepository } from "../../user/repository/user.repository";
 import type { CustomerData } from "../../auth/models/user.schema";
 import {
 	FoodRepository,
-	RecommendedNutrients,
+	type RecommendedNutrients,
 	type MealDetails,
 	type MealPlan,
 } from "../repository/food.repository";
@@ -14,7 +14,6 @@ import type {
 	LoggedMeal,
 	InsertLoggedMeal,
 } from "../models/food.schema";
-import { PersonalizedInsight } from "@/features/dashboard/components/FoodScanner/PersonalizedInsight";
 import { formatUserInfo } from "server/src/shared/utils/utils";
 import {
 	type FoodScanResponse,
@@ -23,7 +22,6 @@ import {
 } from "../../../shared/services/ai.service";
 import { METRIC_TYPE_ENUM } from "@shared/schema";
 import { dbUtils } from "server/src/app/config/db";
-import { resourceLimits } from "worker_threads";
 
 interface BreakdownItem {
 	name: string;

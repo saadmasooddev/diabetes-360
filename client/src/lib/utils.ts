@@ -63,6 +63,13 @@ export class DateManager {
 		const isBeforeToday = providedDate.isBefore(today, "day");
 		return isBeforeToday;
 	}
+
+	static getDateStringBasedOnTodayOrStartOfDay(date: Date) {
+		if (DateManager.isToday(date)) {
+			return new Date().toISOString();
+		}
+		return DateManager.startOfDay(date).toISOString();
+	}
 }
 export const formatDate = (date: Date, formatStr: string): string => {
 	const months = [

@@ -11,9 +11,9 @@ import {
 	metricTypes,
 	type MetricType,
 	type InsertExerciseLog,
-	InsertHealthMetric,
-	HealthMetricData,
-	HealthMetricReading,
+	type InsertHealthMetric,
+	type HealthMetricData,
+	type HealthMetricReading,
 	HEALTH_METRIC_SOURCE_ENUM,
 } from "../models/health.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";

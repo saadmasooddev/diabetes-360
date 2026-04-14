@@ -10,7 +10,7 @@ import {
 	jsonb,
 	integer,
 	uniqueIndex,
-	PgTransaction,
+	type PgTransaction,
 	uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";

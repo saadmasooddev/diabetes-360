@@ -10,7 +10,7 @@ import {
 } from "../../auth/models/user.schema";
 import { eq, inArray } from "drizzle-orm";
 import { NotFoundError } from "server/src/shared/errors";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 import { timeZones } from "../../food/models/timeZone.schema";
 
 export class UserRepository {

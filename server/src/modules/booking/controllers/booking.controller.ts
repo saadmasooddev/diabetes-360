@@ -172,19 +172,11 @@ export class BookingController {
 				throw new BadRequestError("Invalid timezone");
 			}
 
-			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
-				day: "numeric",
-				month: "numeric",
-				year: "numeric",
-				hour: "numeric",
-				minute: "numeric",
-				second: "numeric",
-				timeZone,
-			}).format(Number(date));
 
 			const results = await this.bookingService.createSlots(
 				physicianId,
-				dateWithTimezone,
+				numberDate,
+				timeZone,
 				slotSizeId,
 				slotTimes,
 				slotTypeIds,
@@ -922,7 +914,8 @@ export class BookingController {
 
 			const result = await this.bookingService.generateSlotsForDay(
 				physicianId,
-				dateWithTimezone,
+				timestamp,
+				timeZone,
 				slotSizeId,
 			);
 

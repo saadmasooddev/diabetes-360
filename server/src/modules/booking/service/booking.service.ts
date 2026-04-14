@@ -1,5 +1,5 @@
 import {
-	BookingPriceCalculation,
+	type BookingPriceCalculation,
 	BookingRepository,
 	type SlotWithDetails,
 } from "../repository/booking.repository";
@@ -15,7 +15,7 @@ import { db } from "../../../app/config/db";
 import {
 	PAYMENT_TYPE,
 	USER_ROLES,
-	UserRole,
+	type UserRole,
 	physicianData,
 	userRole,
 } from "../../auth/models/user.schema";
@@ -26,12 +26,12 @@ import {
 	type BOOKING_TYPE_QUERY_ENUM,
 	type InsertSlot,
 	type InsertSlotTypeJunction,
-	SUMMARY_STATUS_ENUM,
+	type SUMMARY_STATUS_ENUM,
 	BOOKED_SLOTS_STATUS,
 } from "../models/booking.schema";
 import { ConsultationService } from "./consultation.service";
 import { DateManager } from "server/src/shared/utils/utils";
-import { MedicineDosage } from "../../medical/repository/medical.repository";
+import type { MedicineDosage } from "../../medical/repository/medical.repository";
 import { PushNotificationService } from "../../notifications/services/push-notification.service";
 import { PUSH_MESSAGE_TYPE_ENUM } from "../../notifications/models/fcm.schema";
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
@@ -109,28 +109,26 @@ export class BookingService {
 
 	async createSlots(
 		physicianId: string,
-		date: string,
+		timestamp: number,
+		timeZone: string,
 		slotSizeId: string,
 		slotTimes: { startTime: string; endTime: string }[],
 		slotTypeIds: string[],
 		locationIds?: string[],
 	) {
-		if (DateManager.isBeforeToday(date)) {
-			throw new BadRequestError("Cannot create slots for past dates");
-		}
 		const { availableSlots } = await this.generateSlotsForDay(
 			physicianId,
-			date,
+			timestamp,
+			timeZone,
 			slotSizeId,
 		);
 
-		// Filter out past slots if date is today
 		const useableSlots = slotTimes.filter((st) =>
 			availableSlots.some(
 				(as) => as.startTime === st.startTime && as.endTime === st.endTime,
 			),
 		);
-		let ignoredCount = slotTimes.length - useableSlots.length;
+		const ignoredCount = slotTimes.length - useableSlots.length;
 
 		if (useableSlots.length === 0) {
 			const message =
@@ -139,7 +137,8 @@ export class BookingService {
 					: "No available slots for this date. All time slots conflict with existing slots.";
 			throw new BadRequestError(message);
 		}
-		// Get or create availability date
+
+		const date = DateManager.getLocalTime(timestamp, timeZone).toISOString()
 		let availability =
 			await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
 				physicianId,
@@ -1061,12 +1060,14 @@ export class BookingService {
 
 	async generateSlotsForDay(
 		physicianId: string,
-		date: string,
+		timeStamp: number,
+		timeZone: string,
 		slotSizeId: string,
 	) {
 		const result = await this.bookingRepository.generateSlotsForDay(
 			physicianId,
-			date,
+			timeStamp,
+			timeZone,
 			slotSizeId,
 		);
 		return {

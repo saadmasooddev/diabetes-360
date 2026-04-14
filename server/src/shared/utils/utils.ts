@@ -3,7 +3,7 @@ import { BadRequestError } from "../errors";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
-import { Request } from "express";
+import type { Request } from "express";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -55,12 +55,12 @@ export class DateManager {
 		return isBeforeToday;
 	}
 
-	static getLocalTime(date: string | Date, timezone: string) {
+	static getLocalTime(date: string | Date | number, timezone: string) {
 		return dayjs.tz(date, timezone);
 	}
 
 	static getLocalHours(date: string | Date, timezone: string) {
-		const d = this.getLocalTime(date, timezone);
+		const d = DateManager.getLocalTime(date, timezone);
 		const localHours = d.hour();
 		return { localHours, date: d, utcDate: d.utc().toISOString() };
 	}
@@ -77,7 +77,7 @@ export class DateManager {
 		const datePart = dayjs(date).utc().format("YYYY-MM-DD");
 		const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
 		const dateTime = `${datePart} ${normalized}`;
-		return this.getLocalHours(dateTime, timeZone).date.toISOString();
+		return DateManager.getLocalHours(dateTime, timeZone).date.toISOString();
 	}
 }
 
@@ -105,7 +105,7 @@ export const getPaginationParams = (req: Request) => {
 	const queryTake = parseInt(req.query.take as string, 10);
 
 	const page = req.query.page ? queryPage : 1;
-	let limit: number | undefined = undefined;
+	let limit: number | undefined ;
 
 	if (queryLimit) {
 		limit = queryLimit;

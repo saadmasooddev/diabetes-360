@@ -9,6 +9,7 @@ import {
 	boolean,
 	pgEnum,
 	uuid,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
@@ -83,6 +84,35 @@ export const users = pgTable("users", {
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const biometricDevices = pgTable("biometric_devices", {
+	id: uuid("id").primaryKey().defaultRandom(),
+   userId: varchar("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+   deviceId: varchar("device_id", { length: 64 }).notNull(),
+   deviceName: varchar("device_name", { length: 255 }).notNull(),
+   deviceType: varchar("device_type", { length: 32 }).notNull(), // e.g. "android", "ios", "web"
+   publicKey: text("public_key").notNull(),
+   createdAt: timestamp("created_at").notNull().defaultNow(),
+   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, t => [
+	uniqueIndex("unique_public_key_user_id").on(t.publicKey,t.userId)
+])
+
+export const insertBiometricDeviceSchema = createInsertSchema(biometricDevices)
+  .omit({
+		id: true,
+		createdAt: true,
+		updatedAt: true,
+})
+
+export const loginWithBioMetricSchema = insertBiometricDeviceSchema.omit({
+	userId: true
+})
+
+export type LoginWithBioMetric = z.infer<typeof loginWithBioMetricSchema>
+export type InsertBiometricDevice = z.infer<typeof insertBiometricDeviceSchema>
 
 export const refreshTokens = pgTable("refresh_tokens", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

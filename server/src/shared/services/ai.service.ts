@@ -3,7 +3,7 @@ import FormData from "form-data";
 import { config } from "../../app/config";
 import { BadRequestError } from "../errors";
 import type { MealDetails } from "server/src/modules/food/repository/food.repository";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, CHAT_ROLES } from "@shared/schema";
+import { BLOOD_SUGAR_READING_TYPES_ENUM, type CHAT_ROLES } from "@shared/schema";
 
 /**
  * AI Service Response Types

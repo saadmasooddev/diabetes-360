@@ -3,7 +3,7 @@ import {
 	type HealthInsightsData,
 	type HealthPagination,
 	HealthRepository,
-	FilteredMetricResponse,
+	type FilteredMetricResponse,
 } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
 import {

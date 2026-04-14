@@ -14,7 +14,7 @@ import {
 	users,
 	customerData,
 	diabetesTypeEnum,
-	DIABETES_TYPE,
+	type DIABETES_TYPE,
 } from "../../auth/models/user.schema";
 import { USER_ROLES } from "../../auth/models/user.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
@@ -32,7 +32,7 @@ import {
 	BOOKING_TYPE_QUERY_ENUM,
 } from "../../booking/models/booking.schema";
 import { FoodRepository } from "../../food/repository/food.repository";
-import { PgColumn } from "drizzle-orm/pg-core";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import {
 	getIndicationColor,
 	getStatusColor,

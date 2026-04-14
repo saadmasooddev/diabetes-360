@@ -11,7 +11,7 @@ import { PhysicianRepository } from "../../physician/repository/physician.reposi
 import { UserRepository } from "../../user/repository/user.repository";
 import { readdir } from "fs/promises";
 import NotFound from "@/pages/not-found";
-import { CHAT_ROLES, USER_ROLES, UserRole } from "@shared/schema";
+import { CHAT_ROLES, USER_ROLES, type UserRole } from "@shared/schema";
 
 export class MedicalService {
 	private readonly medicalRepository: MedicalRepository;

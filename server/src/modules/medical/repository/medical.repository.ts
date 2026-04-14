@@ -7,7 +7,7 @@ import type {
 	InsertLabReport,
 	LabReport,
 } from "../models/medical.schema";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 import {
 	availabilityDate,
 	bookedSlots,
