@@ -30,7 +30,6 @@ import { Menu, X } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { PERMISSIONS } from "@/utils/permissions";
 import { PAYMENT_TYPE } from "@shared/schema";
-import { useQueryClient } from "@tanstack/react-query";
 import { useLogout } from "@/hooks/mutations/useLogout";
 
 interface NavItem {
@@ -267,7 +266,6 @@ export function Sidebar({ className }: SidebarProps) {
 
 	const handleLogout = () => {
 		logout();
-		setLocation(ROUTES.LOGIN, { replace: true });
 	};
 
 	return (

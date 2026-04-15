@@ -16,6 +16,7 @@ import {
 	gt,
 	isNull,
 	desc,
+	asc,
 } from "drizzle-orm";
 import {
 	slotSize,
@@ -1799,6 +1800,7 @@ export class BookingRepository {
 			)
 			.innerJoin(slotType, eq(bookedSlots.slotTypeId, slotType.id))
 			.where(and(...conditions))
+			.orderBy(desc(availabilityDate.date), asc(bookedSlots.meetingTimeUtc))
 			.limit(limit)
 			.offset(offset);
 
@@ -1919,21 +1921,21 @@ export class BookingRepository {
 
 	async getBookedSlotsForReminder(
 		minutesToSendReminderBefore: number,
-		f: (data: BookedSlotReminder[]) => Promise<void>,
+		f: (data: BookedSlotReminder[]) => Promise<string[]>,
 	) {
 		return await dbUtils.transaction(async (tx) => {
 			try {
-				const storedTime = sql`${bookedSlots.meetingTimeUtc} AT TIME ZONE ${timeZones.name} `;
-				const currentUserTime = sql`(NOW() - (
+				const reminderAdjustedMeetingTime = sql`(${bookedSlots.meetingTimeUtc} - (
 			  ${minutesToSendReminderBefore} * INTERVAL '1 minute')
 			) AT TIME ZONE ${timeZones.name} `;
 				const timeDiff = sql`
-				(EXTRACT(EPOCH FROM ((${storedTime}) - (${currentUserTime}))) / 60)
+				(EXTRACT(EPOCH FROM (
+				    (NOW() AT TIME ZONE ${timeZones.name}) - (${reminderAdjustedMeetingTime}))
+					) / 60)::int
 			`;
 				const conditions = and(
 					isNull(bookedSlots.reminderSentAt),
-					sql`${minutesToSendReminderBefore}::int >= ${timeDiff}::int`,
-					sql`${timeDiff}::int > 0`,
+					sql`${timeDiff} >= 0 AND ${timeDiff} <= ${minutesToSendReminderBefore}`,
 				);
 
 				const physicianAlias = alias(users, "physician");
@@ -1951,6 +1953,8 @@ export class BookingRepository {
 						availabilityDate: availabilityDate.date,
 						startTime: slots.startTime,
 						timeZone: timeZones.name,
+						timeDiff,
+						currentUserTime: reminderAdjustedMeetingTime 
 					})
 					.from(bookedSlots)
 					.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
@@ -2027,7 +2031,7 @@ export class BookingRepository {
 					});
 				});
 
-				await f(reminderData);
+				const  bookingIdsWithNotificationsSent = await f(reminderData);
 
 				await tx
 					.update(bookedSlots)
@@ -2035,9 +2039,8 @@ export class BookingRepository {
 					.where(
 						inArray(
 							bookedSlots.id,
-							reminderData.map((r) => r.bookingId),
-						),
-					);
+						  bookingIdsWithNotificationsSent),
+						)
 			} catch (error) {
 				console.log(error);
 				throw error;

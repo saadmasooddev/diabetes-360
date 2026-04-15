@@ -34,6 +34,7 @@ import { StrengthTrainingProgress } from "./features/dashboard/customer/pages/St
 import { RecipeDetail } from "./features/dashboard/customer/pages/RecipeDetail";
 import { DoctorPatients } from "./features/dashboard/doctor/DoctorPatients";
 import { PatientProfile } from "./features/dashboard/doctor/PatientProfile";
+import { SoapNotePage } from "./features/dashboard/doctor/SoapNotePage";
 import { DoctorHome } from "./features/dashboard/doctor/DoctorHome";
 import { DoctorAppointments } from "./features/dashboard/doctor/DoctorAppointments";
 import { PatientAlerts } from "./features/dashboard/doctor/PatientAlerts";
@@ -166,6 +167,11 @@ function Router() {
 					<DoctorHome />
 				</ProtectedRoute>
 			</Route>
+			<Route path={ROUTES.DOCTOR_PATIENT_SOAP_NOTE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<SoapNotePage />
+				</ProtectedRoute>
+			</Route>
 			<Route path={ROUTES.DOCTOR_PATIENT_PROFILE}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
 					<PatientProfile />
@@ -190,6 +196,11 @@ function Router() {
 			<Route path={ROUTES.ADMIN_HOME}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_ALL_APPOINTMENTS]}>
 					<DoctorHome />
+				</ProtectedRoute>
+			</Route>
+			<Route path={ROUTES.ADMIN_PATIENT_SOAP_NOTE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<SoapNotePage />
 				</ProtectedRoute>
 			</Route>
 			<Route path={ROUTES.ADMIN_PATIENT_PROFILE}>

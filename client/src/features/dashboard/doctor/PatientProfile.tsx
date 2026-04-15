@@ -43,9 +43,6 @@ import { LabReportImageLightbox } from "../components/LabReportImageLightbox";
 import { ReusablePagination } from "@/components/ui/ReusablePagination";
 import type { LabReport } from "@/services/medicalService";
 import { REPORT_TYPES } from "../components/UploadMedicalReportsModal";
-import { SoapNoteModal } from "./components/SoapNoteModal";
-import { BOOKING_STATUS_ENUM } from "@shared/schema";
-import { consultations } from "@/mocks/medicalRecords";
 
 const DOCUMENTS_PAGE_SIZE = 10;
 
@@ -222,8 +219,8 @@ export function PatientProfile() {
 		<div className="flex min-h-screen bg-[#F7F9F9]">
 			<Sidebar />
 
-			<main className="flex-1 p-4 lg:p-8 overflow-auto w-full">
-				<div className="w-full max-w-5xl mx-auto space-y-6">
+			<main className="flex-1 p-4 lg:p-12 overflow-auto w-full">
+				<div className="w-full space-y-6 ">
 					{/* Back */}
 					<button
 						type="button"
@@ -326,9 +323,20 @@ export function PatientProfile() {
 						<TabsContent value="notes" className="mt-6">
 							<NotesTab
 								patient={patient}
-								isAdmin={isAdmin}
 								onSeeAllSummaries={() => setIsAllSummariesDialogOpen(true)}
-								onRefetchPatient={refetchPatient}
+								onNavigateToSoapNote={(bookingId) => {
+									if (!patientId) return;
+									const path = isAdmin
+										? ROUTES.ADMIN_PATIENT_SOAP_NOTE.replace(
+											":profileId",
+											patientId,
+										).replace(":bookingId", bookingId)
+										: ROUTES.DOCTOR_PATIENT_SOAP_NOTE.replace(
+											":profileId",
+											patientId,
+										).replace(":bookingId", bookingId);
+									navigate(path);
+								}}
 							/>
 						</TabsContent>
 
@@ -352,7 +360,7 @@ export function PatientProfile() {
 					</DialogHeader>
 					<div className="overflow-y-auto flex-1 pr-2">
 						{patient.consultationSummaries &&
-						patient.consultationSummaries.length > 0 ? (
+							patient.consultationSummaries.length > 0 ? (
 							<ul className="space-y-4">
 								{patient.consultationSummaries.map((summary, index) => (
 									<li
@@ -557,13 +565,12 @@ function OverviewTab({
 								{label}
 							</span>
 							<div
-								className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-									icon === "tick"
-										? "bg-[#00856F]/12 text-[#00856F]"
-										: icon === "cross"
-											? "bg-red-500/10 text-red-500"
-											: "bg-[#f1f5f9] text-[#94a3b8]"
-								}`}
+								className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${icon === "tick"
+									? "bg-[#00856F]/12 text-[#00856F]"
+									: icon === "cross"
+										? "bg-red-500/10 text-red-500"
+										: "bg-[#f1f5f9] text-[#94a3b8]"
+									}`}
 							>
 								{icon === "tick" && (
 									<Check className="w-4 h-4" strokeWidth={2.5} />
@@ -802,30 +809,18 @@ function AppointmentsTab({ patient }: { patient: PatientProfileType }) {
 
 function NotesTab({
 	patient,
-	isAdmin,
 	onSeeAllSummaries,
-	onRefetchPatient,
+	onNavigateToSoapNote,
 }: {
 	patient: PatientProfileType;
-	isAdmin: boolean;
 	onSeeAllSummaries: () => void;
-	onRefetchPatient?: () => void;
+	onNavigateToSoapNote: (bookingId: string) => void;
 }) {
 	const appointments = patient.appointments ?? [];
 	const completedConsultations = appointments;
 
-	const [soapNoteConsultation, setSoapNoteConsultation] =
-		useState<UserConsultation | null>(null);
-	const [soapNoteOpen, setSoapNoteOpen] = useState(false);
-
 	const handleOpenSoapNote = (consultation: UserConsultation) => {
-		setSoapNoteConsultation(consultation);
-		setSoapNoteOpen(true);
-	};
-
-	const handleCloseSoapNote = (open: boolean) => {
-		setSoapNoteOpen(open);
-		if (!open) setSoapNoteConsultation(null);
+		onNavigateToSoapNote(String(consultation.id));
 	};
 
 	return (
@@ -851,7 +846,7 @@ function NotesTab({
 							const dateStr = consultation.slot.availability.date;
 							const summaryPreview = consultation.summary
 								? consultation.summary.slice(0, 120) +
-									(consultation.summary.length > 120 ? "…" : "")
+								(consultation.summary.length > 120 ? "…" : "")
 								: "No summary yet";
 							return (
 								<li
@@ -900,15 +895,6 @@ function NotesTab({
 					</ul>
 				)}
 			</Card>
-
-			<SoapNoteModal
-				open={soapNoteOpen}
-				onOpenChange={handleCloseSoapNote}
-				consultation={soapNoteConsultation}
-				patientName={patient.name}
-				patientMrn={patient.id ?? "—"}
-				onSaved={onRefetchPatient}
-			/>
 		</>
 	);
 }
@@ -946,14 +932,14 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 		category === "all"
 			? allReports
 			: allReports.filter(
-					(r) => normalizeReportType(r.reportType) === category,
-				);
+				(r) => normalizeReportType(r.reportType) === category,
+			);
 
 	const getCount = (filter: ReportTypeFilter) =>
 		filter === "all"
 			? total
 			: allReports.filter((r) => normalizeReportType(r.reportType) === filter)
-					.length;
+				.length;
 
 	const handleViewReport = (report: LabReport) => {
 		viewMutation.mutate(
@@ -996,11 +982,10 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 						setCategory("all");
 						setPage(1);
 					}}
-					className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
-						category === "all"
-							? "bg-[#00856F] text-white"
-							: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
-					}`}
+					className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${category === "all"
+						? "bg-[#00856F] text-white"
+						: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+						}`}
 				>
 					All ({getCount("all")})
 				</button>
@@ -1012,11 +997,10 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 							setCategory(t.value as ReportTypeFilter);
 							setPage(1);
 						}}
-						className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
-							category === t.value
-								? "bg-[#00856F] text-white"
-								: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
-						}`}
+						className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${category === t.value
+							? "bg-[#00856F] text-white"
+							: "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
+							}`}
 					>
 						{t.label} ({getCount(t.value as ReportTypeFilter)})
 					</button>
@@ -1072,9 +1056,9 @@ function DocumentsTab({ patientId }: { patientId: string | null }) {
 										<td className="py-3 px-3 text-sm text-[#64748b] tabular-nums">
 											{report.dateOfReport
 												? formatDate(
-														new Date(report.dateOfReport),
-														"MMM d, yyyy",
-													)
+													new Date(report.dateOfReport),
+													"MMM d, yyyy",
+												)
 												: "—"}
 										</td>
 										<td className="py-3 px-3 text-sm text-[#64748b] tabular-nums">

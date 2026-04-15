@@ -37,17 +37,14 @@ export const useLogout = () => {
 				description: "You have been successfully logged out.",
 				variant: "default",
 			});
-			navigate(ROUTES.HOME);
+			navigate(ROUTES.LOGIN , { replace: true });
 		},
 		onError: () => {
-			clearFcmRegistration();
-			logout();
 			toast({
-				title: "Logged out",
-				description: "You have been logged out.",
+				title: "Logout Failed",
+				description: "Failed to log out. Please try again.",
 				variant: "default",
 			});
-			navigate(ROUTES.HOME);
 		},
 	});
 };
