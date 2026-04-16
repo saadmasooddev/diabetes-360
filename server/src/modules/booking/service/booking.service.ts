@@ -706,7 +706,7 @@ export class BookingService {
       customerId,
     );
 
-    const meeetingTimeUtc = this.bookingRepository.getStartTimeISO(
+    const meeetingTimeUtc = this.bookingRepository.getSlotTimeISO(
       availability.date,
       slot.startTime,
     );
@@ -725,7 +725,7 @@ export class BookingService {
       .sendDataOnlyToUser(customerId, {
         type: PUSH_MESSAGE_TYPE_ENUM.APPOINTMENT_BOOKED,
         title: "Appointment Booked",
-        body: `You appointment with ${physician.firstName} ${physician.lastName} has been booked successfully. Check your email for the meeting link`,
+        body: `Your appointment with ${physician.firstName} ${physician.lastName} has been booked successfully. Check your email for the meeting link`,
         data: {},
       })
       .then()
@@ -750,25 +750,33 @@ export class BookingService {
       async (data) => {
         const p = await Promise.allSettled(
           data.map(async (d) => {
-              await emailService.sendMeetingLinkReminderEmail(d);
-              this.pushNotificationService.sendDataOnlyToUser(d.userId, {
+            const sessionTime = DateManager.getAMPMTime(d.startTimeIso);
+            await emailService.sendMeetingLinkReminderEmail(d);
+            this.pushNotificationService
+              .sendDataOnlyToUser(d.userId, {
                 type: PUSH_MESSAGE_TYPE_ENUM.APPOINTMENT_REMINDER,
-                title: "Appointment Reminder",
+                title: `${d.slotType}: ${sessionTime}`,
                 body: "Your appointment is coming up soon. Please check your email for the meeting link",
                 data: {},
-              }).then().catch(console.error)
-              return d.bookingId
+              })
+              .then()
+              .catch(console.error);
+            return d.bookingId;
           }),
         );
-        const bookingsWithNotificationsSent = p.map(p => {
-          if(p.status === "fulfilled"){
-            return p.value
-          }
-          return ""
-        })
-        .filter(p => p !== "")
-        console.log("The booked slot with reminders sent are", bookingsWithNotificationsSent)
-        return bookingsWithNotificationsSent
+        const bookingsWithNotificationsSent = p
+          .map((p) => {
+            if (p.status === "fulfilled") {
+              return p.value;
+            }
+            return "";
+          })
+          .filter((p) => p !== "");
+        console.log(
+          "The booked slot with reminders sent are",
+          bookingsWithNotificationsSent,
+        );
+        return bookingsWithNotificationsSent;
       },
     );
   }

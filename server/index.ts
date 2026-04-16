@@ -51,7 +51,7 @@ const app = createApp();
     },
     {
       name: "meeting-link",
-      schedule: "*/5 * * * *",
+      schedule: "*/3 * * * *",
       handler: async () => {
         await zoomService.processMeetingLinksJob();
       },

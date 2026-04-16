@@ -8,130 +8,141 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export class DateManager {
-	static parseAndValidateDate(dateStr: string) {
-		if (!dateStr || typeof dateStr !== "string") {
-			throw new BadRequestError("Date is required (format: YYYY-MM-DD)");
-		}
-		if (Number.isNaN(new Date(dateStr).getTime())) {
-			throw new BadRequestError("Invalid date.");
-		}
-		return dateStr;
-	}
-	static timeToMinutes(timeStr: string): number {
-		const [hours, minutes] = timeStr.split(":").map(Number);
-		return hours * 60 + minutes;
-	}
+  static parseAndValidateDate(dateStr: string) {
+    if (!dateStr || typeof dateStr !== "string") {
+      throw new BadRequestError("Date is required (format: YYYY-MM-DD)");
+    }
+    if (Number.isNaN(new Date(dateStr).getTime())) {
+      throw new BadRequestError("Invalid date.");
+    }
+    return dateStr;
+  }
+  static timeToMinutes(timeStr: string): number {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
+  }
 
-	static date(date: string | Date | null) {
-		return dayjs(date).toDate();
-	}
-	static startOfDay(date: Date) {
-		return dayjs(date).startOf("day").toDate();
-	}
+  static date(date: string | Date | null) {
+    return dayjs(date).toDate();
+  }
+  static startOfDay(date: Date) {
+    return dayjs(date).startOf("day").toDate();
+  }
 
-	static parseLocalDate(dateStr: string): Date {
-		const parsed = dayjs(dateStr, "YYYY-MM-DD");
-		if (!parsed.isValid()) {
-			throw new BadRequestError(`Invalid date format: ${dateStr}`);
-		}
-		return parsed.toDate();
-	}
+  static parseLocalDate(dateStr: string): Date {
+    const parsed = dayjs(dateStr, "YYYY-MM-DD");
+    if (!parsed.isValid()) {
+      throw new BadRequestError(`Invalid date format: ${dateStr}`);
+    }
+    return parsed.toDate();
+  }
 
-	static formatDate(date: Date | string): string {
-		return dayjs(date).format("YYYY-MM-DD");
-	}
+  static formatDate(date: Date | string): string {
+    return dayjs(date).format("YYYY-MM-DD");
+  }
 
-	static isToday(date: string) {
-		const today = dayjs();
-		const providedDate = dayjs(date);
-		const isToday = providedDate.isSame(today, "day");
-		return isToday;
-	}
+  static isToday(date: string) {
+    const today = dayjs();
+    const providedDate = dayjs(date);
+    const isToday = providedDate.isSame(today, "day");
+    return isToday;
+  }
 
-	static isBeforeToday(date: string) {
-		const today = dayjs();
-		const providedDate = dayjs(date);
-		const isBeforeToday = providedDate.isBefore(today, "day");
-		return isBeforeToday;
-	}
+  static isBeforeToday(date: string) {
+    const today = dayjs();
+    const providedDate = dayjs(date);
+    const isBeforeToday = providedDate.isBefore(today, "day");
+    return isBeforeToday;
+  }
 
-	static getLocalTime(date: string | Date | number, timezone: string) {
-		return dayjs.tz(date, timezone);
-	}
+  static getLocalTime(date: string | Date | number, timezone: string) {
+    return dayjs.tz(date, timezone);
+  }
 
-	static getLocalHours(date: string | Date, timezone: string) {
-		const d = DateManager.getLocalTime(date, timezone);
-		const localHours = d.hour();
-		return { localHours, date: d, utcDate: d.utc().toISOString() };
-	}
+  static getLocalHours(date: string | Date, timezone: string) {
+    const d = DateManager.getLocalTime(date, timezone);
+    const localHours = d.hour();
+    return { localHours, date: d, utcDate: d.utc().toISOString() };
+  }
 
-	/**
-	 * Builds an ISO 8601 start time from an availability date and a time string (HH:MM or HH:MM:SS).
-	 * Treats the combined date+time as UTC.
-	 */
-	static slotTimeToISO(
-		date: Date | string,
-		timeStr: string,
-		timeZone: string,
-	): string {
-		const datePart = dayjs(date).utc().format("YYYY-MM-DD");
-		const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
-		const dateTime = `${datePart} ${normalized}`;
-		return DateManager.getLocalHours(dateTime, timeZone).date.toISOString();
-	}
+  static getAMPMTime(date: string) {
+    const d = new Date(date);
+
+    const timeStr = d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return timeStr;
+  }
+
+  /**
+   * Builds an ISO 8601 start time from an availability date and a time string (HH:MM or HH:MM:SS).
+   * Treats the combined date+time as UTC.
+   */
+  static slotTimeToISO(
+    date: Date | string,
+    timeStr: string,
+    timeZone: string,
+  ): string {
+    const datePart = dayjs(date).utc().format("YYYY-MM-DD");
+    const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+    const dateTime = `${datePart} ${normalized}`;
+    return DateManager.getLocalHours(dateTime, timeZone).date.toISOString();
+  }
 }
 
 export const formatUserInfo = (
-	customerData: CustomerData & { firstName?: string; lastName?: string },
+  customerData: CustomerData & { firstName?: string; lastName?: string },
 ) => {
-	return {
-		name:
-			customerData.lastName && customerData.firstName
-				? `${customerData.firstName} ${customerData.lastName}`
-				: "User",
-		gender: customerData.gender,
-		birthday: DateManager.formatDate(customerData.birthday),
-		weight: `${customerData.weight}kg`,
-		height: `${customerData.height}cm`,
-		diabetesType: customerData.diabetesType,
-	};
+  return {
+    name:
+      customerData.lastName && customerData.firstName
+        ? `${customerData.firstName} ${customerData.lastName}`
+        : "User",
+    gender: customerData.gender,
+    birthday: DateManager.formatDate(customerData.birthday),
+    weight: `${customerData.weight}kg`,
+    height: `${customerData.height}cm`,
+    diabetesType: customerData.diabetesType,
+  };
 };
 
 export const getPaginationParams = (req: Request) => {
-	const queryPage = parseInt(req.query.page as string, 10);
-	const queryLimit = parseInt(req.query.limit as string, 10);
-	const querySkip = parseInt(req.query.skip as string, 10);
-	const queryOffset = parseInt(req.query.offset as string, 10);
-	const queryTake = parseInt(req.query.take as string, 10);
+  const queryPage = parseInt(req.query.page as string, 10);
+  const queryLimit = parseInt(req.query.limit as string, 10);
+  const querySkip = parseInt(req.query.skip as string, 10);
+  const queryOffset = parseInt(req.query.offset as string, 10);
+  const queryTake = parseInt(req.query.take as string, 10);
 
-	const page = req.query.page ? queryPage : 1;
-	let limit: number | undefined ;
+  const page = req.query.page ? queryPage : 1;
+  let limit: number | undefined;
 
-	if (queryLimit) {
-		limit = queryLimit;
-	}
-	if (queryTake) {
-		limit = queryTake;
-	}
+  if (queryLimit) {
+    limit = queryLimit;
+  }
+  if (queryTake) {
+    limit = queryTake;
+  }
 
-	let offset = 0;
-	if (queryPage && limit) {
-		offset = (queryPage - 1) * limit;
-	} else if (querySkip) {
-		offset = querySkip;
-	} else if (queryOffset) {
-		offset = queryOffset;
-	}
+  let offset = 0;
+  if (queryPage && limit) {
+    offset = (queryPage - 1) * limit;
+  } else if (querySkip) {
+    offset = querySkip;
+  } else if (queryOffset) {
+    offset = queryOffset;
+  }
 
-	if (page < 1) {
-		throw new BadRequestError("page must be greater than 0");
-	}
-	if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
-		throw new BadRequestError("limit must be between 1 and 100");
-	}
-	if (offset !== undefined && (isNaN(offset) || offset < 0)) {
-		throw new BadRequestError("offset must be a non-negative integer");
-	}
+  if (page < 1) {
+    throw new BadRequestError("page must be greater than 0");
+  }
+  if (limit !== undefined && (isNaN(limit) || limit < 1 || limit > 100)) {
+    throw new BadRequestError("limit must be between 1 and 100");
+  }
+  if (offset !== undefined && (isNaN(offset) || offset < 0)) {
+    throw new BadRequestError("offset must be a non-negative integer");
+  }
 
-	return { limit, offset, page };
+  return { limit, offset, page };
 };
