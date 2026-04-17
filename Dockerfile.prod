@@ -13,6 +13,6 @@ WORKDIR /app/src
 COPY --from=builder /app/src/package* ./
 COPY --from=builder /app/src/node_modules/ ./node_modules/
 COPY --from=builder /app/src/dist/ ./dist/
-COPY --from=builder /app/src/dist/ ./dist/
+COPY --from=builder /app/src/client ./client
 
 CMD ["node", "dist/index.js"]

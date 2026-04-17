@@ -37,16 +37,18 @@ export const ROUTES = {
 	DOCTOR_PATIENTS: `${DOCTOR_DASHBOARD_PREFIX}/patients`,
 	DOCTOR_PATIENTS_ALERTS: `${DOCTOR_DASHBOARD_PREFIX}/alerts`,
 	DOCTOR_PATIENT_PROFILE: `${DOCTOR_DASHBOARD_PREFIX}/patients/:profileId/profile`,
+	DOCTOR_PATIENT_SOAP_NOTE: `${DOCTOR_DASHBOARD_PREFIX}/patients/:profileId/soap-note/:bookingId`,
 
 	ADMIN_HOME: `${ADMIN_DASHBOARD_PREFIX}/home`,
 	ADMIN_APPOINTMENTS: `${ADMIN_DASHBOARD_PREFIX}/appointments`,
 	ADMIN_PATIENTS: `${ADMIN_DASHBOARD_PREFIX}/patients`,
 	ADMIN_PATIENTS_ALERTS: `${ADMIN_DASHBOARD_PREFIX}/alerts`,
 	ADMIN_PATIENT_PROFILE: `${ADMIN_DASHBOARD_PREFIX}/patients/:profileId/profile`,
+	ADMIN_PATIENT_SOAP_NOTE: `${ADMIN_DASHBOARD_PREFIX}/patients/:profileId/soap-note/:bookingId`,
 
 	SETTINGS: `${COMMON_PREFIX}/settings`,
 	BLOGS: `${COMMON_PREFIX}/blogs`,
-	MEETING_LINK: `${COMMON_PREFIX}/meeting/link/:bookingId`
+	MEETING_LINK: `${COMMON_PREFIX}/meeting/link/:bookingId`,
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

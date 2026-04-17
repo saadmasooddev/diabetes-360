@@ -1,5 +1,12 @@
-import { DIABETES_TYPE } from "@shared/schema";
-import { SignupResponse } from "server/src/modules/auth/services/auth.service";
+import {
+	DIABETES_TYPE,
+	FCM_DEVICE_TYPE_ENUM,
+	type FcmRegistrationInput,
+} from "@shared/schema";
+import {
+	AuthResponse,
+	SignupResponse,
+} from "server/src/modules/auth/services/auth.service";
 
 export type PaymentType = "free" | "monthly" | "annual";
 
@@ -60,11 +67,7 @@ export interface ApiResponse<T = any> {
 }
 
 // Auth-specific response data
-export interface AuthData {
-	user: User & { emailVerificationCodeSent: boolean };
-	tokens: TokenPair;
-	requiresTwoFactor?: boolean;
-}
+export interface AuthData extends AuthResponse {}
 
 export interface RefreshTokenData {
 	tokens: TokenPair;
@@ -78,11 +81,10 @@ export interface ForgotPasswordData {
 	message: string;
 }
 
-
 export interface SignupRes extends ApiResponse<SignupResponse> {}
 
 // Response types for each endpoint
-export interface AuthResponse extends ApiResponse<AuthData> {}
+export interface AuthApiResponse extends ApiResponse<AuthData> {}
 export interface RefreshTokenResponse extends ApiResponse<RefreshTokenData> {}
 export interface LogoutResponse extends ApiResponse<LogoutData> {}
 export interface ForgotPasswordResponse
@@ -108,6 +110,8 @@ export interface RefreshTokenRequest {
 
 export interface LogoutRequest {
 	refreshToken: string;
+	fcmToken?: string;
+	deviceType?: FCM_DEVICE_TYPE_ENUM;
 }
 
 export interface AuthError {

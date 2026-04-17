@@ -20,17 +20,13 @@ export function HealthAssessment() {
 		useHealthInsights();
 	const insights = healthAssessment?.insights || [];
 
-	const waterIntakeInsight =
-		insights.find((i) => i.name === METRIC_TYPE_ENUM.WATER_INTAKE)?.insight ||
-		"";
 	const glucoseInsight =
-		insights.find((i) => i.name === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
-			?.insight || "";
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)?.insight ||
+		"";
 	const stepsInsight =
 		insights.find((i) => i.name === METRIC_TYPE_ENUM.STEPS)?.insight || "";
 	const heartRateInsight =
-		insights.find((i) => i.name === METRIC_TYPE_ENUM.HEART_RATE)?.insight ||
-		"";
+		insights.find((i) => i.name === METRIC_TYPE_ENUM.HEART_RATE)?.insight || "";
 	const overallHealthSummary = healthAssessment?.overallHealthSummary || "";
 	const whatToDoNext = healthAssessment?.whatToDoNext || [];
 	// Helper to get target for a metric type
@@ -54,12 +50,6 @@ export function HealthAssessment() {
 	const glucoseWeekly = statistics?.glucose.weekly ?? 0;
 	const glucoseMonthly = statistics?.glucose.monthly ?? 0;
 	const glucoseTargets = getTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE);
-
-	// Water is in liters already from the API, convert to string with 1 decimal
-	const waterDaily = (statistics?.water.daily ?? 0).toFixed(1);
-	const waterWeekly = (statistics?.water.weekly ?? 0).toFixed(1);
-	const waterMonthly = (statistics?.water.monthly ?? 0).toFixed(1);
-	const waterTargets = getTarget(METRIC_TYPE_ENUM.WATER_INTAKE);
 
 	const stepsDaily = statistics?.steps.daily ?? 0;
 	const stepsWeekly = statistics?.steps.weekly ?? 0;
@@ -195,77 +185,6 @@ export function HealthAssessment() {
 					{/* Hydration and Activity Analysis - Stacked Vertically */}
 					<div className="flex flex-col gap-6 mb-8">
 						{/* Hydration Analysis */}
-						<Card
-							className="p-6 transition-all duration-300 hover:shadow-xl"
-							style={{
-								background: "#FFFFFF",
-								border: "1px solid rgba(0, 133, 111, 0.12)",
-								borderRadius: "16px",
-								boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
-							}}
-							data-testid="section-hydration-analysis"
-						>
-							<div
-								className="flex items-center gap-3 mb-6 pb-4 border-b"
-								style={{ borderColor: "rgba(0, 133, 111, 0.1)" }}
-							>
-								<div
-									style={{
-										background:
-											"linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
-										borderRadius: "12px",
-										padding: "10px",
-									}}
-								>
-									<Droplet size={20} style={{ color: "#00856F" }} />
-								</div>
-								<h2
-									style={{
-										fontSize: "20px",
-										fontWeight: 700,
-										color: "#00453A",
-										margin: 0,
-									}}
-								>
-									Hydration Analysis
-								</h2>
-							</div>
-							<div className="flex flex-col sm:flex-row gap-8 items-center">
-								<div className="w-full flex justify-center">
-									<CircularGauge
-										value={parseFloat(waterDaily)}
-										label="Daily"
-										unit="L"
-										size={180}
-										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
-										recommendedTarget={waterTargets.recommended}
-										userTarget={waterTargets.user}
-									/>
-								</div>
-								<div className="w-full flex justify-center">
-									<CircularGauge
-										value={parseFloat(waterWeekly)}
-										label="Weekly"
-										unit="L"
-										size={180}
-										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
-										recommendedTarget={waterTargets.recommended}
-										userTarget={waterTargets.user}
-									/>
-								</div>
-								<div className="w-full flex justify-center">
-									<CircularGauge
-										value={parseFloat(waterMonthly)}
-										label="Monthly"
-										unit="L"
-										size={180}
-										metricType={METRIC_TYPE_ENUM.WATER_INTAKE}
-										recommendedTarget={waterTargets.recommended}
-										userTarget={waterTargets.user}
-									/>
-								</div>
-							</div>
-						</Card>
 
 						{/* Activity Analysis */}
 						<Card
@@ -420,22 +339,6 @@ export function HealthAssessment() {
 					<div
 						className={`grid grid-cols-1 md:grid-cols-2 ${isPaidUser ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-6 mb-8`}
 					>
-						<InsightSummaryCard
-							title="Hydration Summary"
-							icon={Droplet}
-							iconColor="#00856F"
-							gradientColors={{
-								from: "#E0F2F1",
-								to: "#B2DFDB",
-							}}
-							borderColor="rgba(0, 133, 111, 0.2)"
-							shadowColor="rgba(0, 133, 111, 0.1)"
-							iconBgColor="#00856F"
-							isLoading={insightsLoading}
-							insight={waterIntakeInsight}
-							testId="card-hydration-summary"
-						/>
-
 						<InsightSummaryCard
 							title="Glucose Summary"
 							icon={Activity}

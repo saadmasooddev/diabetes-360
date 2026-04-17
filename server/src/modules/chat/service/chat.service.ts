@@ -10,18 +10,31 @@ import type {
 	EmotionalStatePayload,
 } from "../../../shared/services/ai.service";
 import { METRIC_TYPE_ENUM } from "../../health/models/health.schema";
-import { CustomerData, DIABETES_TYPE } from "../../auth/models/user.schema";
+import {
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	type CustomerData,
+	DIABETES_TYPE,
+} from "../../auth/models/user.schema";
 import {
 	CHAT_ROLES,
 	type ChatMessage,
 	type ChatRole,
 } from "../models/chat.schema";
-import type { MertricRecord } from "../../health/models/health.schema";
+import type {
+	BloodSugarMetricRecord,
+	MertricRecord,
+} from "../../health/models/health.schema";
 import type { LoggedMeal } from "../../food/models/food.schema";
 import { DateManager, formatUserInfo } from "server/src/shared/utils/utils";
 import { PatientRepository } from "../../physician/repository/patient.repository";
 import { PATIENT_INDICATION } from "../../physician/utils/patientColors";
 import dayjs from "dayjs";
+
+type NewRecord = {
+	value: string;
+	recorded_at: string;
+	reading_type: string;
+};
 
 export class ChatService {
 	private chatRepo = new ChatRepository();
@@ -65,6 +78,61 @@ export class ChatService {
 		};
 	}
 
+	private readingTypeFunc: Record<
+		BLOOD_SUGAR_READING_TYPES_ENUM,
+		(
+			r: NewRecord,
+			bloodSugarData: AIChatPayload["health_summary"]["last_24_hours"]["blood_sugar"],
+		) => void
+	> = {
+		[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: (r, d) => {
+			d.fasting_sugar.push(r);
+		},
+		[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: (r, d) => {
+			d.current_sugar.push(r);
+		},
+		[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: (r, d) => {
+			d.random_sugar.push(r);
+		},
+		[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: (r, d) => {},
+	};
+
+	private toBloodSugarRecordedValue(
+		records: BloodSugarMetricRecord[],
+	): AIChatPayload["health_summary"]["last_24_hours"]["blood_sugar"] {
+		const readingTypeMap: Record<BLOOD_SUGAR_READING_TYPES_ENUM, string> = {
+			[BLOOD_SUGAR_READING_TYPES_ENUM.FASTING]: "Fasting Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL]: "Current Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.RANDOM]: "Random Sugar",
+			[BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C]: "HbA1c",
+		};
+
+		const result: AIChatPayload["health_summary"]["last_24_hours"]["blood_sugar"] =
+			{
+				fasting_sugar: [],
+				current_sugar: [],
+				random_sugar: [],
+			};
+
+		records.forEach((r) => {
+			if (r.value !== null && String(r.value).trim() !== ""){
+				const newRecord = {
+					value: String(r.value),
+					recorded_at: String(r.recordedAt),
+					reading_type:
+						readingTypeMap[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM],
+				};
+				const f =
+					this.readingTypeFunc[r.readingType as BLOOD_SUGAR_READING_TYPES_ENUM];
+				if (f)
+				  f(newRecord, result);
+			}
+
+		});
+
+		return result;
+	}
+
 	private toRecordedValue(
 		records: MertricRecord[],
 	): Array<{ value: string; recorded_at: string }> {
@@ -72,10 +140,7 @@ export class ChatService {
 			.filter((r) => r.value != null && String(r.value).trim() !== "")
 			.map((r) => ({
 				value: String(r.value),
-				recorded_at:
-					r.recordedAt instanceof Date
-						? r.recordedAt.toISOString()
-						: String(r.recordedAt),
+				recorded_at: String(r.recordedAt),
 			}));
 	}
 
@@ -394,7 +459,6 @@ export class ChatService {
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
 				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 				METRIC_TYPE_ENUM.STEPS,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
 				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
@@ -405,13 +469,10 @@ export class ChatService {
 		return {
 			today_data: {
 				recorded_at: recordedAt,
-				blood_sugar: this.toSummaryMetricValues(
+				blood_sugar: this.toBloodSugarRecordedValue(
 					metricsResult.bloodSugarRecords,
 				),
 				steps: this.toSummaryMetricValues(metricsResult.stepsRecords),
-				water_intake: this.toSummaryMetricValues(
-					metricsResult.waterIntakeRecords,
-				),
 				heart_rate: this.toSummaryMetricValues(metricsResult.heartBeatRecords),
 				meals: meals.map((m) => ({
 					foodName: m.foodName,
@@ -463,7 +524,7 @@ export class ChatService {
 			await this.chatRepo.getDistinctUserIdsWithChatOnDate(dateStr);
 
 		for (const { userId } of usersWithChatOnDate) {
-			const { messages }= await this.chatRepo.getByUser(userId, dateStr);
+			const { messages } = await this.chatRepo.getByUser(userId, dateStr);
 			if (messages.length === 0) continue;
 
 			const payload: OldChatMemoryPayload = {
@@ -490,11 +551,19 @@ export class ChatService {
 		userId: string,
 		dateStr: string,
 		offset?: number,
-		limit: number = 100
+		limit: number = 100,
 	): Promise<{ messages: ChatMessage[]; nudge?: string }> {
-		const { messages } = await this.chatRepo.getByUser(userId, dateStr, offset, limit, false);
+		const { messages } = await this.chatRepo.getByUser(
+			userId,
+			dateStr,
+			offset,
+			limit,
+			false,
+		);
 		const nudgeRaw =
-			(messages.length === 0 && offset === 0) ? await this.getNudge(userId, dateStr) : undefined;
+			messages.length === 0 && offset === 0
+				? await this.getNudge(userId, dateStr)
+				: undefined;
 		const nudge = nudgeRaw ?? undefined;
 		return { messages, nudge };
 	}
@@ -512,7 +581,7 @@ export class ChatService {
 
 		const [
 			customerData,
-			{messages: chatHistory},
+			{ messages: chatHistory },
 			metricsResult,
 			meals,
 			lastDaysSummaries,
@@ -523,7 +592,6 @@ export class ChatService {
 			this.healthRepo.getFilteredMetrics(userId, dateStr, dateStr, [
 				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
 				METRIC_TYPE_ENUM.STEPS,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
 				METRIC_TYPE_ENUM.HEART_RATE,
 			]),
 			this.foodRepo.getLoggedMealsByDate(userId, dateStr),
@@ -574,11 +642,14 @@ export class ChatService {
 			}
 		}
 
-		const user_info: AIChatPayload["user_info"] = formatUserInfo(customerData as unknown as CustomerData);
+		const user_info: AIChatPayload["user_info"] = formatUserInfo(
+			customerData as unknown as CustomerData,
+		);
 
-		const blood_sugar = this.toRecordedValue(metricsResult.bloodSugarRecords);
+		const blood_sugar = this.toBloodSugarRecordedValue(
+			metricsResult.bloodSugarRecords,
+		);
 		const steps = this.toRecordedValue(metricsResult.stepsRecords);
-		const water_intake = this.toRecordedValue(metricsResult.waterIntakeRecords);
 		const heart_rate = this.toRecordedValue(metricsResult.heartBeatRecords);
 		const mealsPayload = meals.map(this.mealToPayload);
 
@@ -599,7 +670,6 @@ export class ChatService {
 				last_24_hours: {
 					blood_sugar,
 					steps,
-					water_intake,
 					heart_rate,
 					meals: mealsPayload,
 				},
@@ -620,7 +690,7 @@ export class ChatService {
 		}
 
 		const recordedAtDate = new Date(recordedAt);
-		const [_, assistantMessage ] = await this.chatRepo.insertTransaction([
+		const [_, assistantMessage] = await this.chatRepo.insertTransaction([
 			{
 				userId,
 				chatDate: dateStr,

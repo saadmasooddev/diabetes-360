@@ -13,9 +13,11 @@ import { useAppStore } from "@/stores/appStore";
 
 export function Medications() {
 	const [, setLocation] = useLocation();
-	const { consultationId } = useAppStore(state => state.medicationInfo)
+	const { consultationId } = useAppStore((state) => state.medicationInfo);
 
-	const { data, isLoading } = useMedicationsByConsultationId(consultationId || null);
+	const { data, isLoading } = useMedicationsByConsultationId(
+		consultationId || null,
+	);
 
 	const handleBack = () => {
 		setLocation(ROUTES.MEDICAL_RECORDS);

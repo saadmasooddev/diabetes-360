@@ -134,7 +134,6 @@ export interface UpdateLocationRequest {
 class PhysicianService {
 	// Public consultation endpoints
 	async getSpecialties(): Promise<PhysicianSpecialty[]> {
-
 		const response = await httpClient.get<
 			ApiResponse<{ specialties: PhysicianSpecialty[] }>
 		>(`${API_ENDPOINTS.PHYSICIAN.SPECIALTIES}`);
@@ -170,8 +169,8 @@ class PhysicianService {
 			hasPrev: boolean;
 		};
 	}> {
-		const	recordedAt = new Date().toISOString()
-		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+		const recordedAt = new Date().toISOString();
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 		const queryParams = new URLSearchParams();
 		queryParams.append("date", recordedAt);
@@ -197,9 +196,7 @@ class PhysicianService {
 					hasPrev: boolean;
 				};
 			}>
-		>(
-			`${API_ENDPOINTS.PHYSICIAN.ALL_PHYSICIANS}?${queryParams.toString()}`,
-		);
+		>(`${API_ENDPOINTS.PHYSICIAN.ALL_PHYSICIANS}?${queryParams.toString()}`);
 
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch physicians");
@@ -208,11 +205,13 @@ class PhysicianService {
 	}
 
 	async getPhysiciansBySpecialty(specialtyId: string): Promise<Physician[]> {
-		const	recordedAt = new Date().toISOString()
-		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+		const recordedAt = new Date().toISOString();
+		const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 		const response = await httpClient.get<
 			ApiResponse<{ physicians: Physician[] }>
-		>(`${API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId)}?date=${recordedAt}&timeZone=${timeZone}`);
+		>(
+			`${API_ENDPOINTS.PHYSICIAN.PHYSICIANS_BY_SPECIALTY(specialtyId)}?date=${recordedAt}&timeZone=${timeZone}`,
+		);
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to fetch physicians");
 		}

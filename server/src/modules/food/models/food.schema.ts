@@ -10,7 +10,7 @@ import {
 	jsonb,
 	integer,
 	uniqueIndex,
-	PgTransaction,
+	type PgTransaction,
 	uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -257,9 +257,6 @@ export const loggedMeals = pgTable("logged_meals", {
 		.notNull()
 		.default("0"),
 	recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
-	timeZoneId: uuid("time_zone_id")
-		.notNull()
-		.references(() => timeZones.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -281,7 +278,6 @@ export const insertLoggedMealSchema = createInsertSchema(loggedMeals)
 		fats: z.number().min(0),
 		calories: z.number().min(0),
 		recordedAt: z.string().transform((val) => new Date(val)),
-		timeZoneId: z.string().min(1),
 	});
 
 export type LoggedMeal = typeof loggedMeals.$inferSelect;

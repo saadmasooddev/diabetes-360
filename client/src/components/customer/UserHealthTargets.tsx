@@ -41,9 +41,6 @@ export function UserHealthTargets() {
 	const recommendedSteps = targets?.recommended.find(
 		(t) => t.metricType === METRIC_TYPE_ENUM.STEPS,
 	);
-	const recommendedWater = targets?.recommended.find(
-		(t) => t.metricType === METRIC_TYPE_ENUM.WATER_INTAKE,
-	);
 	const recommendedHeartRate = targets?.recommended.find(
 		(t) => t.metricType === METRIC_TYPE_ENUM.HEART_RATE,
 	);
@@ -55,9 +52,6 @@ export function UserHealthTargets() {
 			);
 			const userSteps = targets.user.find(
 				(t) => t.metricType === METRIC_TYPE_ENUM.STEPS,
-			);
-			const userWater = targets.user.find(
-				(t) => t.metricType === METRIC_TYPE_ENUM.WATER_INTAKE,
 			);
 			const userHeartRate = targets.user.find(
 				(t) => t.metricType === METRIC_TYPE_ENUM.HEART_RATE,
@@ -78,13 +72,6 @@ export function UserHealthTargets() {
 						? parseFloat(recommendedSteps.targetValue).toString()
 						: "",
 			);
-			setWaterTarget(
-				userWater
-					? parseFloat(userWater.targetValue).toString()
-					: recommendedWater
-						? parseFloat(recommendedWater.targetValue).toString()
-						: "",
-			);
 			setHeartRateTarget(
 				userHeartRate
 					? parseFloat(userHeartRate.targetValue).toString()
@@ -93,13 +80,7 @@ export function UserHealthTargets() {
 						: "",
 			);
 		}
-	}, [
-		targets,
-		recommendedGlucose,
-		recommendedSteps,
-		recommendedWater,
-		recommendedHeartRate,
-	]);
+	}, [targets, recommendedGlucose, recommendedSteps, recommendedHeartRate]);
 
 	const validateTarget = (
 		metricType: MetricType,
@@ -114,11 +95,6 @@ export function UserHealthTargets() {
 			case METRIC_TYPE_ENUM.STEPS:
 				if (value < 0 || value > 50000) {
 					return "Steps target must be between 0-50,000 steps per day";
-				}
-				break;
-			case METRIC_TYPE_ENUM.WATER_INTAKE:
-				if (value < 0 || value > 4) {
-					return "Water intake target must be between 0-4 liters per day";
 				}
 				break;
 			case METRIC_TYPE_ENUM.HEART_RATE:
@@ -140,10 +116,7 @@ export function UserHealthTargets() {
 		if (glucoseTarget) {
 			const numValue = parseFloat(glucoseTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(
-					METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-					numValue,
-				);
+				const error = validateTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
@@ -164,21 +137,6 @@ export function UserHealthTargets() {
 				} else {
 					targetsToSave.push({
 						metricType: METRIC_TYPE_ENUM.STEPS,
-						targetValue: numValue,
-					});
-				}
-			}
-		}
-
-		if (waterTarget) {
-			const numValue = parseFloat(waterTarget);
-			if (!isNaN(numValue)) {
-				const error = validateTarget(METRIC_TYPE_ENUM.WATER_INTAKE, numValue);
-				if (error) {
-					errors.push(error);
-				} else {
-					targetsToSave.push({
-						metricType: METRIC_TYPE_ENUM.WATER_INTAKE,
 						targetValue: numValue,
 					});
 				}
@@ -227,18 +185,10 @@ export function UserHealthTargets() {
 		try {
 			await deleteMutation.mutateAsync(metricType);
 			// Reset to recommended value if available
-			if (
-				metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE &&
-				recommendedGlucose
-			) {
+			if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE && recommendedGlucose) {
 				setGlucoseTarget(parseFloat(recommendedGlucose.targetValue).toString());
 			} else if (metricType === METRIC_TYPE_ENUM.STEPS && recommendedSteps) {
 				setStepsTarget(parseFloat(recommendedSteps.targetValue).toString());
-			} else if (
-				metricType === METRIC_TYPE_ENUM.WATER_INTAKE &&
-				recommendedWater
-			) {
-				setWaterTarget(parseFloat(recommendedWater.targetValue).toString());
 			} else if (
 				metricType === METRIC_TYPE_ENUM.HEART_RATE &&
 				recommendedHeartRate
@@ -247,15 +197,12 @@ export function UserHealthTargets() {
 					parseFloat(recommendedHeartRate.targetValue).toString(),
 				);
 			} else {
-				if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
-					setGlucoseTarget("");
+				if (metricType === METRIC_TYPE_ENUM.BLOOD_GLUCOSE) setGlucoseTarget("");
 				else if (metricType === METRIC_TYPE_ENUM.STEPS) setStepsTarget("");
-				else if (metricType === METRIC_TYPE_ENUM.WATER_INTAKE)
-					setWaterTarget("");
 				else if (metricType === METRIC_TYPE_ENUM.HEART_RATE)
 					setHeartRateTarget("");
 			}
-		} catch (error) { }
+		} catch (error) {}
 	};
 
 	const hasUserTarget = (metricType: MetricType) => {
@@ -297,7 +244,7 @@ export function UserHealthTargets() {
 									className="text-sm font-medium text-gray-700"
 								>
 									Blood Glucose Target (mg/dL)
-									{hasUserTarget("glucose") && (
+									{hasUserTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE) && (
 										<span className="ml-2 text-xs text-teal-600">(Custom)</span>
 									)}
 								</Label>
@@ -322,9 +269,11 @@ export function UserHealthTargets() {
 											border: "1px solid rgba(0, 0, 0, 0.2)",
 										}}
 									/>
-									{hasUserTarget("glucose") && (
+									{hasUserTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE) && (
 										<Button
-											onClick={() => handleDelete("glucose")}
+											onClick={() =>
+												handleDelete(METRIC_TYPE_ENUM.BLOOD_GLUCOSE)
+											}
 											disabled={isSubmitting}
 											variant="outline"
 											size="icon"
@@ -335,7 +284,7 @@ export function UserHealthTargets() {
 								</div>
 								<p className="text-xs text-gray-500">
 									{recommendedGlucose &&
-										!hasUserTarget("glucose") &&
+										!hasUserTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE) &&
 										`Recommended: ${parseFloat(recommendedGlucose.targetValue)} mg/dL`}
 									{!recommendedGlucose &&
 										"Set your target for blood glucose levels"}
@@ -389,59 +338,6 @@ export function UserHealthTargets() {
 										!hasUserTarget(METRIC_TYPE_ENUM.STEPS) &&
 										`Recommended: ${parseFloat(recommendedSteps.targetValue)} steps/day`}
 									{!recommendedSteps && "Set your target for daily steps"}
-								</p>
-							</div>
-
-							<div className="space-y-2">
-								<Label
-									htmlFor="water-target"
-									className="text-sm font-medium text-gray-700"
-								>
-									Water Intake Target (liters)
-									{hasUserTarget(METRIC_TYPE_ENUM.WATER_INTAKE) && (
-										<span className="ml-2 text-xs text-teal-600">(Custom)</span>
-									)}
-								</Label>
-								<div className="flex gap-2">
-									<Input
-										id="water-target"
-										type="text"
-										inputMode="numeric"
-										value={waterTarget}
-										onChange={(e) => {
-											const sanitized = handleNumberInput(
-												waterTarget,
-												e.target.value,
-											);
-											setWaterTarget(sanitized);
-										}}
-										className="flex-1"
-										disabled={isSubmitting}
-										style={{
-											padding: "10px 12px",
-											borderRadius: "8px",
-											border: "1px solid rgba(0, 0, 0, 0.2)",
-										}}
-									/>
-									{hasUserTarget(METRIC_TYPE_ENUM.WATER_INTAKE) && (
-										<Button
-											onClick={() =>
-												handleDelete(METRIC_TYPE_ENUM.WATER_INTAKE)
-											}
-											disabled={isSubmitting}
-											variant="outline"
-											size="icon"
-										>
-											<X className="h-4 w-4" />
-										</Button>
-									)}
-								</div>
-								<p className="text-xs text-gray-500">
-									{recommendedWater &&
-										!hasUserTarget(METRIC_TYPE_ENUM.WATER_INTAKE) &&
-										`Recommended: ${parseFloat(recommendedWater.targetValue)} liters/day`}
-									{!recommendedWater &&
-										"Set your target for daily water intake"}
 								</p>
 							</div>
 

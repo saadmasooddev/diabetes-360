@@ -1,3 +1,4 @@
+import { TimeZoneRepository } from "server/src/shared/repository/timeZone.repository";
 import { db } from "../../../app/config/db";
 import {
 	type User,
@@ -12,11 +13,16 @@ import {
 	physicianData,
 	customerData,
 	physicianSpecialties,
+	type InsertBiometricDevice,
+	biometricDevices,
+	type LoginWithBioMetric,
 } from "../models/user.schema";
 import { eq, and, getTableColumns, gt, gte, like, sql } from "drizzle-orm";
+import { BadRequestError } from "server/src/shared/errors";
+import { config } from "server/src/app/config";
 
 export class AuthRepository {
-
+	private readonly timezoneRepository = new TimeZoneRepository();
 	private static readonly SIGN_IN_CODE_PREFIX = "SIC_";
 	private static readonly EMAIL_VERIFICATION_CODE_PREFIX = "EVC_";
 
@@ -47,8 +53,21 @@ export class AuthRepository {
 		return user[0];
 	}
 
-	async createUser(user: InsertUser ): Promise<User> {
-		const newUser = await db.insert(users).values(user).returning();
+	async createUser(user: InsertUser): Promise<User> {
+		const defaultTimeZone = await this.timezoneRepository.getTimeZone(
+			config.defaults.timezone,
+		);
+		if (!defaultTimeZone) {
+			throw new BadRequestError("Default timezone not found");
+		}
+
+		const newUser = await db
+			.insert(users)
+			.values({
+				...user,
+				timeZoneId: defaultTimeZone.id,
+			})
+			.returning();
 		return newUser[0];
 	}
 
@@ -137,7 +156,6 @@ export class AuthRepository {
 			.where(eq(passwordResetTokens.userId, userId));
 	}
 
-
 	async countRecentSignInCodes(userId: string, since: Date): Promise<number> {
 		const result = await db
 			.select({ count: sql<number>`count(*)::int` })
@@ -145,7 +163,10 @@ export class AuthRepository {
 			.where(
 				and(
 					eq(passwordResetTokens.userId, userId),
-					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.SIGN_IN_CODE_PREFIX}%`,
+					),
 					gte(passwordResetTokens.createdAt, since),
 				),
 			);
@@ -158,15 +179,17 @@ export class AuthRepository {
 			.where(
 				and(
 					eq(passwordResetTokens.userId, userId),
-					like(passwordResetTokens.token, `${AuthRepository.SIGN_IN_CODE_PREFIX}%`),
+					like(
+						passwordResetTokens.token,
+						`${AuthRepository.SIGN_IN_CODE_PREFIX}%`,
+					),
 				),
 			);
 	}
 
-	async getSignInCodeToken(tokenWithPrefix: string): Promise<
-		| (PasswordResetToken & { userId: string })
-		| undefined
-	> {
+	async getSignInCodeToken(
+		tokenWithPrefix: string,
+	): Promise<(PasswordResetToken & { userId: string }) | undefined> {
 		const row = await db
 			.select()
 			.from(passwordResetTokens)
@@ -292,5 +315,22 @@ export class AuthRepository {
 
 	async deleteUser(id: string): Promise<void> {
 		await db.delete(users).where(eq(users.id, id));
+	}
+
+	async createBiometricDevice(data: InsertBiometricDevice){
+		await db.insert(biometricDevices).values(data).returning()
+	}
+
+	async getUserByBioMetricDevice(data: LoginWithBioMetric){
+    const [ user ]= await db.select().from(biometricDevices).where(
+			and(
+				eq(biometricDevices.deviceId, data.deviceId),
+				eq(biometricDevices.deviceName, data.deviceName),
+				eq(biometricDevices.deviceType, data.deviceType),
+				eq(biometricDevices.publicKey, data.publicKey)
+			)
+		)
+		.limit(1)
+		return user
 	}
 }

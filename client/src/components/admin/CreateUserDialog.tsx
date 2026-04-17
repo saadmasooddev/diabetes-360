@@ -170,7 +170,6 @@ export function CreateUserDialog({ onClose }: CreateUserDialogProps) {
 					customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
 				}
 
-
 				userData.customerData = customerData;
 			}
 

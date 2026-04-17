@@ -75,7 +75,7 @@ export const medicineSchema = z.object({
 	frequency: z.string().optional(),
 	duration: z.string().optional(),
 	instructions: z.string().optional(),
-})
+});
 
 // Validation schemas
 export const insertMedicationSchema = createInsertSchema(medications)
@@ -89,9 +89,7 @@ export const insertMedicationSchema = createInsertSchema(medications)
 		consultationId: z.string().min(1),
 		physicianId: z.string().min(1),
 		prescriptionDate: z.coerce.date(),
-		medicines: z.array(
-			medicineSchema
-		),
+		medicines: z.array(medicineSchema),
 	});
 
 export const insertLabReportSchema = createInsertSchema(labReports)

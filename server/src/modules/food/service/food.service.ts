@@ -3,7 +3,7 @@ import { UserRepository } from "../../user/repository/user.repository";
 import type { CustomerData } from "../../auth/models/user.schema";
 import {
 	FoodRepository,
-	RecommendedNutrients,
+	type RecommendedNutrients,
 	type MealDetails,
 	type MealPlan,
 } from "../repository/food.repository";
@@ -14,7 +14,6 @@ import type {
 	LoggedMeal,
 	InsertLoggedMeal,
 } from "../models/food.schema";
-import { PersonalizedInsight } from "@/features/dashboard/components/FoodScanner/PersonalizedInsight";
 import { formatUserInfo } from "server/src/shared/utils/utils";
 import {
 	type FoodScanResponse,
@@ -23,7 +22,6 @@ import {
 } from "../../../shared/services/ai.service";
 import { METRIC_TYPE_ENUM } from "@shared/schema";
 import { dbUtils } from "server/src/app/config/db";
-import { resourceLimits } from "worker_threads";
 
 interface BreakdownItem {
 	name: string;
@@ -427,11 +425,7 @@ export class FoodService {
 			userId,
 			startDate.toISOString(),
 			endDate.toISOString(),
-			[
-				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-				METRIC_TYPE_ENUM.WATER_INTAKE,
-				METRIC_TYPE_ENUM.STEPS,
-			],
+			[METRIC_TYPE_ENUM.BLOOD_GLUCOSE, METRIC_TYPE_ENUM.STEPS],
 		);
 
 		// Get aggregated statistics for averages
@@ -494,14 +488,6 @@ export class FoodService {
 					monthly: statistics.glucose.monthly.toString(),
 				},
 				previous_days_records: bloodSugarRecords.slice(0, 10), // Ensure only 10 days
-			},
-			water_intake_history: {
-				average: {
-					daily: statistics.water.daily.toFixed(1),
-					weekly: statistics.water.weekly.toFixed(1),
-					monthly: statistics.water.monthly.toFixed(1),
-				},
-				previous_days_records: waterIntakeRecords.slice(0, 10),
 			},
 			walking_steps_history: {
 				average: {
@@ -725,5 +711,4 @@ export class FoodService {
 			calorieIntake,
 		};
 	}
-
 }

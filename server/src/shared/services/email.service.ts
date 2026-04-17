@@ -104,18 +104,76 @@ export class EmailService {
 		await sgMail.send(msg);
 	}
 
-	async sendMeetingLinkEmail(
-		options: {
-			to: string;
-			recipientName: string;
-			patientName: string;
-			physicianName: string;
-			startTimeIso: string;
-			durationMinutes: number;
-			isPhysician: boolean;
-      bookingId: string
-		},
-	): Promise<void> {
+	async sendMeetingLinkReminderEmail(options: {
+		to: string;
+		recipientName: string;
+		patientName: string;
+		physicianName: string;
+		startTimeIso: string;
+		durationMinutes: number;
+		isPhysician: boolean;
+		bookingId: string;
+	}) {
+		const meetingLinkUrl = `${config.frontendUrl}${ROUTES.MEETING_LINK.replace(":bookingId", options.bookingId)}`;
+		const startDate = new Date(options.startTimeIso);
+		const dateStr = startDate.toLocaleDateString(undefined, {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+		});
+		const timeStr = startDate.toLocaleTimeString(undefined, {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+
+		const msg = {
+			to: options.to,
+			from: {
+				email: config.email.from,
+				name: config.email.fromName,
+			},
+			subject: `Appointment Reminder - Your Consultation is Coming Up Soon (Diabetes 360)`,
+			html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #d97706;">Appointment Reminder</h2>
+          <p>Hello ${options.recipientName},</p>
+          <p>This is a reminder that your ${options.isPhysician ? "consultation with " + options.patientName : "video consultation with " + options.physicianName} is coming up shortly:</p>
+          <div style="background-color: #fff7ed; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Date:</strong> ${dateStr}</p>
+            <p style="margin: 8px 0 0 0;"><strong>Time:</strong> ${timeStr}</p>
+            <p style="margin: 8px 0 0 0;"><strong>Duration:</strong> ${options.durationMinutes} minutes</p>
+          </div>
+          <p>Please be ready to join the video call at your scheduled time using the link below:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${meetingLinkUrl}" 
+               style="background-color: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Join Video Call
+            </a>
+          </div>
+          <p style="word-break: break-all; color: #6b7280; font-size: 14px;">Or copy this link: ${meetingLinkUrl}</p>
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 14px;">
+            Best regards,<br>
+            The Diabetes 360 Team
+          </p>
+        </div>
+      `,
+		};
+
+		await sgMail.send(msg);
+	}
+
+	async sendMeetingLinkEmail(options: {
+		to: string;
+		recipientName: string;
+		patientName: string;
+		physicianName: string;
+		startTimeIso: string;
+		durationMinutes: number;
+		isPhysician: boolean;
+		bookingId: string;
+	}): Promise<void> {
 		const meetingLinkUrl = `${config.frontendUrl}${ROUTES.MEETING_LINK.replace(":bookingId", options.bookingId)}`;
 		const startDate = new Date(options.startTimeIso);
 		const dateStr = startDate.toLocaleDateString(undefined, {

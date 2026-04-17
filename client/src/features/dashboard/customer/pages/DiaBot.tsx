@@ -1,10 +1,13 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
-import { useInView } from "react-intersection-observer"
-import { Send, Mic, Square } from "lucide-react";
 import {
-	IMediaRecorder,
-	MediaRecorder,
-} from "extendable-media-recorder";
+	useState,
+	useRef,
+	useEffect,
+	useCallback,
+	useLayoutEffect,
+} from "react";
+import { useInView } from "react-intersection-observer";
+import { Send, Mic, Square } from "lucide-react";
+import { IMediaRecorder, MediaRecorder } from "extendable-media-recorder";
 
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,6 @@ function formatTime(iso: string): string {
 	return `${h}:${m} ${ampm}`;
 }
 
-
 export default function DiaBot() {
 	const [inputValue, setInputValue] = useState("");
 	const [isRecording, setIsRecording] = useState(false);
@@ -40,31 +42,41 @@ export default function DiaBot() {
 	const mediaRecorderRef = useRef<IMediaRecorder | null>(null);
 
 	const todayStr = DateManager.formatDate(new Date());
-	const { data, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, } =
-		useChatByDate(todayStr);
+	const {
+		data,
+		isLoading,
+		isError,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
+	} = useChatByDate(todayStr);
 	const sendMessage = useSendChatMessage(todayStr);
 	const transcribeAudio = useTranscribeAudio();
 	const { toast } = useToast();
-	const { ref: intersectionRef, inView, entry } = useInView({
-		threshold: 0.2
-	})
+	const {
+		ref: intersectionRef,
+		inView,
+		entry,
+	} = useInView({
+		threshold: 0.2,
+	});
 	const previousScrollHeightRef = useRef(0);
 
-	const messages = data?.pages.map(page => page.messages).flat() || []
+	const messages = data?.pages.map((page) => page.messages).flat() || [];
 	const nudge = data?.pages[0]?.nudge;
 	const isSending = sendMessage.isPending;
 	const isTranscribing = transcribeAudio.isPending;
-	const canSendText = Boolean(inputValue.trim()) && !isSending && !isTranscribing;
+	const canSendText =
+		Boolean(inputValue.trim()) && !isSending && !isTranscribing;
 	const canSend = canSendText;
 
 	useEffect(() => {
 		if (inView && hasNextPage && !isFetchingNextPage) {
-			const element = chatContainerRef.current
-			previousScrollHeightRef.current = element?.scrollHeight || 0
-			fetchNextPage()
+			const element = chatContainerRef.current;
+			previousScrollHeightRef.current = element?.scrollHeight || 0;
+			fetchNextPage();
 		}
-	}, [inView, hasNextPage, isFetchingNextPage])
-
+	}, [inView, hasNextPage, isFetchingNextPage]);
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,15 +87,17 @@ export default function DiaBot() {
 	}, [isSending, isTranscribing]);
 
 	useLayoutEffect(() => {
-		const element = chatContainerRef.current
+		const element = chatContainerRef.current;
 		if (element) {
 			const newScrollHeight = chatContainerRef.current.scrollHeight;
-			const heightDifference = newScrollHeight - previousScrollHeightRef.current;
+			const heightDifference =
+				newScrollHeight - previousScrollHeightRef.current;
 			chatContainerRef.current.scrollTop += heightDifference;
 		}
 
-		previousScrollHeightRef.current = chatContainerRef.current?.scrollHeight || 0;
-	}, [messages.length])
+		previousScrollHeightRef.current =
+			chatContainerRef.current?.scrollHeight || 0;
+	}, [messages.length]);
 
 	const stopStream = useCallback(() => {
 		streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -122,17 +136,16 @@ export default function DiaBot() {
 								description: "Try recording again or type your message.",
 								variant: "destructive",
 							});
-							return
+							return;
 						}
 						sendMessage.mutate(text);
 					},
 				});
-
 			};
 			recorder.start();
 			setIsRecording(true);
 		} catch (err) {
-			console.log(err)
+			console.log(err);
 			toast({
 				title: "Microphone access needed",
 				description: "Allow microphone access to record voice messages.",
@@ -162,7 +175,7 @@ export default function DiaBot() {
 
 		setInputValue("");
 		sendMessage.mutate(trimmed);
-	}
+	};
 
 	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {
@@ -268,7 +281,6 @@ export default function DiaBot() {
 								)}
 
 								{messages.map((msg) => (
-
 									<div
 										key={msg.id}
 										className={`flex ${msg.role === "assistant" ? "justify-end" : "justify-start"}`}
@@ -461,7 +473,9 @@ export default function DiaBot() {
 										? "rgba(198, 40, 40, 0.1)"
 										: "transparent",
 								}}
-								aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+								aria-label={
+									isRecording ? "Stop recording" : "Start voice recording"
+								}
 								data-testid="button-mic"
 							>
 								{isRecording ? (
@@ -481,7 +495,9 @@ export default function DiaBot() {
 									fontWeight: 400,
 									color: "#263238",
 								}}
-								disabled={isLoading || isSending || isRecording || isTranscribing}
+								disabled={
+									isLoading || isSending || isRecording || isTranscribing
+								}
 								data-testid="input-message"
 							/>
 

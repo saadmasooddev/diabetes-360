@@ -227,9 +227,12 @@ export class PhysicianController {
 		try {
 			const search = req.query.search as string | undefined;
 			const specialtyId = req.query.specialtyId as string | undefined;
-			const { page, limit, offset  } = getPaginationParams(req)
+			const { page, limit, offset } = getPaginationParams(req);
 
-			const { date, timeZone } = req.query as { date: string; timeZone: string };
+			const { date, timeZone } = req.query as {
+				date: string;
+				timeZone: string;
+			};
 
 			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
 				throw new BadRequestError("Invalid timezone");
@@ -258,7 +261,7 @@ export class PhysicianController {
 				specialtyId,
 				date,
 				timeZone,
-				dateWithTimezone
+				dateWithTimezone,
 			});
 
 			sendSuccess(res, result, "Physicians retrieved successfully");
@@ -277,7 +280,10 @@ export class PhysicianController {
 			if (!specialtyId) {
 				throw new BadRequestError("Specialty ID is required");
 			}
-			const { date, timeZone } = req.query as { date: string; timeZone: string };
+			const { date, timeZone } = req.query as {
+				date: string;
+				timeZone: string;
+			};
 
 			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
 				throw new BadRequestError("Invalid timezone");
@@ -298,13 +304,12 @@ export class PhysicianController {
 				timeZone,
 			}).format(Number(numberDate));
 
-			const physicians =
-				await this.physicianService.getPhysiciansBySpecialty(
-					specialtyId,
-					timeZone,
-					date,
-					dateWithTimezone,
-				);
+			const physicians = await this.physicianService.getPhysiciansBySpecialty(
+				specialtyId,
+				timeZone,
+				date,
+				dateWithTimezone,
+			);
 			sendSuccess(res, { physicians }, "Physicians retrieved successfully");
 		} catch (error: any) {
 			handleError(res, error);
@@ -542,7 +547,7 @@ export class PhysicianController {
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const { limit, offset, page } = getPaginationParams(req)
+			const { limit, offset, page } = getPaginationParams(req);
 			const search = req.query.search as string | undefined;
 			const physicianId =
 				req.user?.role === USER_ROLES.PHYSICIAN ? req.user?.userId : undefined;

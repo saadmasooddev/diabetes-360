@@ -101,12 +101,8 @@ export const VerifyEmail = (): JSX.Element => {
 			onSuccess: (data) => {
 				if (data.otpSent) {
 					setResendCount((c) => c + 1);
-					setResendCooldownEnd(
-						Date.now() + RESEND_COOLDOWN_SECONDS * 1000,
-					);
-					setCodeExpiresAt(
-						Date.now() + VERIFY_CODE_EXPIRY_MINUTES * 60 * 1000,
-					);
+					setResendCooldownEnd(Date.now() + RESEND_COOLDOWN_SECONDS * 1000);
+					setCodeExpiresAt(Date.now() + VERIFY_CODE_EXPIRY_MINUTES * 60 * 1000);
 					setCode("");
 				}
 			},
@@ -173,18 +169,32 @@ export const VerifyEmail = (): JSX.Element => {
 								Enter code
 							</Label>
 							<div className="flex justify-start">
-								<InputOTP
-									maxLength={6}
-									value={code}
-									onChange={setCode}
-								>
+								<InputOTP maxLength={6} value={code} onChange={setCode}>
 									<InputOTPGroup className="gap-1 sm:gap-2">
-										<InputOTPSlot index={0} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-										<InputOTPSlot index={1} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-										<InputOTPSlot index={2} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-										<InputOTPSlot index={3} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-										<InputOTPSlot index={4} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
-										<InputOTPSlot index={5} className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white" />
+										<InputOTPSlot
+											index={0}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
+										<InputOTPSlot
+											index={1}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
+										<InputOTPSlot
+											index={2}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
+										<InputOTPSlot
+											index={3}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
+										<InputOTPSlot
+											index={4}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
+										<InputOTPSlot
+											index={5}
+											className="h-12 w-10 sm:w-12 rounded-[10px] border-[#d8dadc] text-base bg-white"
+										/>
 									</InputOTPGroup>
 								</InputOTP>
 							</div>

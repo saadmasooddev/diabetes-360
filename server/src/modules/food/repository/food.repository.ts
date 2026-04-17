@@ -16,12 +16,13 @@ import {
 	type MealPlanMeal,
 	type DailyPersonalizedInsight,
 	type Recipe,
-	MEAL_TYPE_ENUM,
-	Tx,
+	type MEAL_TYPE_ENUM,
+	type Tx,
 } from "../models/food.schema";
 import { sql as rawSql } from "drizzle-orm";
 import { PgTransaction, numeric } from "drizzle-orm/pg-core";
 import { timeZones } from "../models/timeZone.schema";
+import { users } from "../../auth/models/user.schema";
 
 export interface RecommendedNutrients {
 	carbs: {
@@ -340,7 +341,8 @@ export class FoodRepository {
 				timeZone: timeZones.name,
 			})
 			.from(loggedMeals)
-			.innerJoin(timeZones, eq(loggedMeals.timeZoneId, timeZones.id))
+			.innerJoin(users, eq(users.id, loggedMeals.userId))
+			.innerJoin(timeZones, eq(timeZones.id, users.timeZoneId))
 			.where(
 				and(
 					eq(loggedMeals.userId, userId),
@@ -370,7 +372,6 @@ export class FoodRepository {
 				fats: meal.fats.toString(),
 				calories: meal.calories.toString(),
 				recordedAt: meal.recordedAt,
-				timeZoneId: meal.timeZoneId,
 			})
 			.returning();
 
@@ -670,7 +671,7 @@ export class FoodRepository {
 		startDateStr: string,
 		endDateStr: string,
 		limit?: number,
-		offset?: number
+		offset?: number,
 	) {
 		const rows = db
 			.select({
@@ -690,11 +691,9 @@ export class FoodRepository {
 			.orderBy(asc(sql`DATE(${loggedMeals.mealDate})`));
 
 		if (limit !== undefined && offset !== undefined) {
-			rows.limit(limit).offset(offset)
+			rows.limit(limit).offset(offset);
 		}
 
 		return rows;
 	}
-
-
 }

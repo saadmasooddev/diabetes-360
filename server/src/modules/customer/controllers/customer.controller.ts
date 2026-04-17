@@ -68,25 +68,27 @@ export class CustomerController {
 
 			const customerDataInput = {
 				...req.body,
-			}
+			};
 
 			const validationResult =
 				insertCustomerDataSchema.safeParse(customerDataInput);
 			if (!validationResult.success) {
-				throw new ValidationError(undefined, validationResult.error)
+				throw new ValidationError(undefined, validationResult.error);
 			}
 
-			const additionalProfileDataValidation = additionalProfileDataSchema.safeParse(
-				req.body
-			) 
-			if(!additionalProfileDataValidation.success){
-				throw new ValidationError(undefined, additionalProfileDataValidation.error)
+			const additionalProfileDataValidation =
+				additionalProfileDataSchema.safeParse(req.body);
+			if (!additionalProfileDataValidation.success) {
+				throw new ValidationError(
+					undefined,
+					additionalProfileDataValidation.error,
+				);
 			}
 
 			const data = await this.customerService.createCustomerData(
 				userId,
 				validationResult.data,
-				additionalProfileDataValidation.data
+				additionalProfileDataValidation.data,
 			);
 			sendSuccess(res, { profileData: data }, "Profile completed successfully");
 		} catch (error: any) {

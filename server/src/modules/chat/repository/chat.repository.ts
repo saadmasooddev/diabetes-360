@@ -24,45 +24,39 @@ export class ChatRepository {
 		dateStr: string,
 		offset?: number,
 		limit?: number,
-		filterByDate = true
-	): Promise<{ totalMessages: number, messages: ChatMessage[]}> {
-		const conditions = [
-			eq(chatMessages.userId, userId),
-		]
-		if(filterByDate){
-			conditions.push(
-				sql`DATE(${chatMessages.chatDate}) = DATE(${dateStr})`,
-			)
+		filterByDate = true,
+	): Promise<{ totalMessages: number; messages: ChatMessage[] }> {
+		const conditions = [eq(chatMessages.userId, userId)];
+		if (filterByDate) {
+			conditions.push(sql`DATE(${chatMessages.chatDate}) = DATE(${dateStr})`);
 		}
 
-		const totalMessagesPromise = db.select({ count: sql<number>`count(*)`})
-		.from(chatMessages)
-		.where(and(...conditions))
+		const totalMessagesPromise = db
+			.select({ count: sql<number>`count(*)` })
+			.from(chatMessages)
+			.where(and(...conditions));
 
 		const messagesPromise = db
 			.select()
 			.from(chatMessages)
-			.where(
-				and(
-					...conditions
-				),
-			)
-			.orderBy(desc(chatMessages.recordedAt))
-			if(offset){
-				messagesPromise.offset(offset)
-			}
-			if(limit){
-				messagesPromise.limit(limit)
-			}
+			.where(and(...conditions))
+			.orderBy(desc(chatMessages.recordedAt));
+		if (offset) {
+			messagesPromise.offset(offset);
+		}
+		if (limit) {
+			messagesPromise.limit(limit);
+		}
 
+		const [totalMessages, messages] = await Promise.all([
+			totalMessagesPromise,
+			messagesPromise,
+		]);
 
-			const [totalMessages, messages]= await Promise.all([totalMessagesPromise, messagesPromise])
-
-			return {
-				totalMessages: totalMessages[0].count || 0,
-				messages: messages
-			}
-
+		return {
+			totalMessages: totalMessages[0].count || 0,
+			messages: messages,
+		};
 	}
 
 	/**

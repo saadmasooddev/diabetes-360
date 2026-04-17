@@ -6,7 +6,6 @@ import type {
 	InsertFoodScanLimits,
 	UpdateFoodScanLimits,
 	FoodScanLimits,
-	ExtendedLimits,
 } from "../models/settings.schema";
 import { BadRequestError, NotFoundError } from "server/src/shared/errors";
 import {
@@ -30,7 +29,7 @@ export class SettingsService {
 
 		return {
 			...limits,
-		 // TODO: make heart rate limits dynamic
+			// TODO: make heart rate limits dynamic
 			heartRateLimits: 100,
 			foodScanLimits: {
 				freeTier: foodScanLimits.freeUserLimit,
@@ -47,8 +46,6 @@ export class SettingsService {
 				return limits.glucoseLimit;
 			case METRIC_TYPE_ENUM.STEPS:
 				return limits.stepsLimit;
-			case METRIC_TYPE_ENUM.WATER_INTAKE:
-				return limits.waterLimit;
 			default:
 				throw new BadRequestError("Invalid metric type");
 		}

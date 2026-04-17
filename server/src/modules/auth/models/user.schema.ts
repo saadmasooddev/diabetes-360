@@ -9,10 +9,12 @@ import {
 	boolean,
 	pgEnum,
 	uuid,
+	uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 import { z } from "zod";
+import { timeZones } from "../../food/models/timeZone.schema";
 
 export const USER_ROLES = {
 	CUSTOMER: "customer",
@@ -76,9 +78,41 @@ export const users = pgTable("users", {
 	paymentType: paymentType("payment_type").default("free").notNull(), // 'monthly', 'annual', or 'free'
 	isActive: boolean("is_active").default(true),
 	profileComplete: boolean("profile_complete").default(false),
+	timeZoneId: uuid("time_zone_id")
+		.notNull()
+		.references(() => timeZones.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const biometricDevices = pgTable("biometric_devices", {
+	id: uuid("id").primaryKey().defaultRandom(),
+   userId: varchar("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+   deviceId: varchar("device_id", { length: 64 }).notNull(),
+   deviceName: varchar("device_name", { length: 255 }).notNull(),
+   deviceType: varchar("device_type", { length: 32 }).notNull(), // e.g. "android", "ios", "web"
+   publicKey: text("public_key").notNull(),
+   createdAt: timestamp("created_at").notNull().defaultNow(),
+   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, t => [
+	uniqueIndex("unique_public_key_user_id").on(t.publicKey,t.userId)
+])
+
+export const insertBiometricDeviceSchema = createInsertSchema(biometricDevices)
+  .omit({
+		id: true,
+		createdAt: true,
+		updatedAt: true,
+})
+
+export const loginWithBioMetricSchema = insertBiometricDeviceSchema.omit({
+	userId: true
+})
+
+export type LoginWithBioMetric = z.infer<typeof loginWithBioMetricSchema>
+export type InsertBiometricDevice = z.infer<typeof insertBiometricDeviceSchema>
 
 export const refreshTokens = pgTable("refresh_tokens", {
 	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -101,19 +135,21 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 	used: boolean("used").default(false),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-	firstName: true,
-	lastName: true,
-	password: true,
-	email: true,
-	provider: true,
-	providerId: true,
-	role: true,
-	isActive: true,
-	emailVerified: true
-}).extend({
-	emailVerified: z.boolean().optional().default(false)
-});
+export const insertUserSchema = createInsertSchema(users)
+	.pick({
+		firstName: true,
+		lastName: true,
+		password: true,
+		email: true,
+		provider: true,
+		providerId: true,
+		role: true,
+		isActive: true,
+		emailVerified: true,
+	})
+	.extend({
+		emailVerified: z.boolean().optional().default(false),
+	});
 
 export const insertRefreshTokenSchema = createInsertSchema(refreshTokens).omit({
 	id: true,
@@ -253,12 +289,15 @@ export enum DIABETES_TYPE {
 	PREDIABETES = "prediabetes",
 }
 
-export const diabetesTypeEnum = z.enum([
-	DIABETES_TYPE.TYPE1,
-	DIABETES_TYPE.TYPE2,
-	DIABETES_TYPE.GESTATIONAL,
-	DIABETES_TYPE.PREDIABETES,
-], { error: "Invalid diabetes type"});
+export const diabetesTypeEnum = z.enum(
+	[
+		DIABETES_TYPE.TYPE1,
+		DIABETES_TYPE.TYPE2,
+		DIABETES_TYPE.GESTATIONAL,
+		DIABETES_TYPE.PREDIABETES,
+	],
+	{ error: "Invalid diabetes type" },
+);
 
 export const diabetesTypePgEnum = pgEnum("diabetes_type_enum", [
 	DIABETES_TYPE.TYPE1,
@@ -636,7 +675,6 @@ type NewPermission<T, Prefix extends string = ""> = T extends object
 		}[keyof T]
 	: never;
 
-
 export enum YES_NO_NOT_SURE_VALUES {
 	YES = "yes",
 	NO = "no",
@@ -647,12 +685,14 @@ export enum BLOOD_SUGAR_READING_TYPES_ENUM {
 	FASTING = "fasting",
 	RANDOM = "random",
 	HBA1C = "hba1c",
-	NORMAL = "normal"
+	NORMAL = "normal",
 }
-const yesNoNotSureEnum = z.enum(Object.values(YES_NO_NOT_SURE_VALUES) as [string, ...string[]] );
+const yesNoNotSureEnum = z.enum(
+	Object.values(YES_NO_NOT_SURE_VALUES) as [string, ...string[]],
+);
 export const bloodSugarReadingTypeSchema = z.enum([
-		...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM),
-	] as [string, ...string[]]);
+	...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM),
+] as [string, ...string[]]);
 
 export const profileDataSchema = z
 	.object({
@@ -738,26 +778,29 @@ export const profileDataSchema = z
 						path: ["bloodSugarReading"],
 					});
 				}
-				if(data.bloodSugarType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (num < 0 || num > 100)){
+				if (
+					data.bloodSugarType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C &&
+					(num < 0 || num > 100)
+				) {
 					ctx.addIssue({
 						code: "custom",
 						message: "HbA1c value must be between 0-100",
 						path: ["bloodSugarReading"],
 					});
-				} 
+				}
 			}
 		}
 	});
 
-export const additionalProfileDataSchema = 
-	profileDataSchema.pick({ 
-		knowsBloodSugarValue: true, 
-		bloodSugarReading: true, 
-		bloodSugarType: true, 
-	})
-
-
+export const additionalProfileDataSchema = profileDataSchema.pick({
+	knowsBloodSugarValue: true,
+	bloodSugarReading: true,
+	bloodSugarType: true,
+});
 
 export type ProfileDataFormValues = z.infer<typeof profileDataSchema>;
-export type AdditionalProfileDataValues = z.infer<typeof additionalProfileDataSchema>
-export type BloodSugarReadingTypeEnumValues = `${BLOOD_SUGAR_READING_TYPES_ENUM}`
+export type AdditionalProfileDataValues = z.infer<
+	typeof additionalProfileDataSchema
+>;
+export type BloodSugarReadingTypeEnumValues =
+	`${BLOOD_SUGAR_READING_TYPES_ENUM}`;

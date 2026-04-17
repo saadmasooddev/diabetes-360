@@ -5,8 +5,11 @@ import {
 	type InsertUser,
 	type PhysicianData,
 	type CustomerData,
-	UserRole,
 	PROVIDERS,
+	type InsertBiometricDevice,
+	insertBiometricDeviceSchema,
+	loginWithBioMetricSchema,
+	type LoginWithBioMetric,
 } from "../models/user.schema";
 import { AuthRepository } from "../repositories/auth.repository";
 import { config } from "../../../app/config";
@@ -23,13 +26,16 @@ import {
 import { emailService } from "../../../shared/services/email.service";
 import { ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
+import { FcmTokenRepository } from "../../notifications/repositories/fcm-token.repository";
+import type { FcmRegistrationInput } from "../../notifications/models/fcm.schema";
 
 export interface AuthResponse {
 	user: Omit<
 		User & { profileData?: CustomerData | PhysicianData | null },
 		"password"
-	> & { permissions?: string[],  emailVerificationCodeSent: boolean };
+	> & { permissions?: string[] };
 	tokens?: TokenPair;
+	emailVerificationCodeSent: boolean;
 	requiresTwoFactor?: boolean;
 }
 
@@ -40,11 +46,35 @@ export interface SignupResponse {
 export class AuthService {
 	private authRepository: AuthRepository;
 	private twoFactorService: TwoFactorService;
-
+	private fcmTokenRepository: FcmTokenRepository;
 
 	constructor() {
 		this.authRepository = new AuthRepository();
 		this.twoFactorService = new TwoFactorService();
+		this.fcmTokenRepository = new FcmTokenRepository();
+	}
+
+	async createUserForAdmin(userData: InsertUser) {
+		const existingUser = await this.authRepository.getUserByEmail(
+			userData.email,
+		);
+		if (existingUser) {
+			throw new ConflictError("An account with this email already exists");
+		}
+
+		const hashedPassword = await bcrypt.hash(
+			userData.password!,
+			config.bcryptRounds,
+		);
+
+		// Create user with hashed password, emailVerified defaults to false
+		const user = await this.authRepository.createUser({
+			...userData,
+			password: hashedPassword,
+			emailVerified: true,
+		});
+
+		return user;
 	}
 
 	async createUserForAdmin(userData: InsertUser) {
@@ -113,14 +143,14 @@ export class AuthService {
 		user: Awaited<ReturnType<AuthRepository["getUserByEmail"]>>,
 		_userData: InsertUser,
 	): Promise<SignupResponse> {
-		if (!user) return {emailVerificationCodeSent : false };
+		if (!user) return { emailVerificationCodeSent: false };
 		const userId = user.id;
 
 		// If a valid (non-expired) OTP already exists, just return otpSent true so user can go to verify page
 		const existingValid =
 			await this.authRepository.getValidEmailVerificationTokenForUser(userId);
 		if (existingValid) {
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		}
 
 		// Rate limit new sends
@@ -143,29 +173,30 @@ export class AuthService {
 		await this.authRepository.revokeEmailVerificationCodesForUser(userId);
 		try {
 			await this.createAndSendEmailVerificationOtp(user);
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		} catch (err) {
 			console.error("Failed to send email verification OTP:", err);
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 	}
 
-	private async createAndSendEmailVerificationOtp(
-		user: { id: string; email: string; firstName: string; lastName: string },
-	): Promise<void> {
+	private async createAndSendEmailVerificationOtp(user: {
+		id: string;
+		email: string;
+		firstName: string;
+		lastName: string;
+	}): Promise<void> {
 		const code = crypto.randomInt(100_000, 999_999).toString();
 		const expiresAt = new Date();
 		expiresAt.setMinutes(
-			expiresAt.getMinutes() +
-				config.auth.emailVerificationOtpExpiryInMinutes,
+			expiresAt.getMinutes() + config.auth.emailVerificationOtpExpiryInMinutes,
 		);
 		await this.authRepository.createTokenForUser({
 			userId: user.id,
 			token: `EVC_${code}`,
 			expiresAt,
 		});
-		const userName =
-			`${user.firstName} ${user.lastName}`.trim() || "there";
+		const userName = `${user.firstName} ${user.lastName}`.trim() || "there";
 		await emailService.sendEmailVerificationOtp(user.email, code, userName);
 	}
 
@@ -197,10 +228,10 @@ export class AuthService {
 		const user = await this.authRepository.getUserByEmail(email);
 		if (!user) {
 			// Don't reveal if email exists
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 		if (user.emailVerified) {
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 		const since = new Date();
 		since.setMinutes(
@@ -220,26 +251,26 @@ export class AuthService {
 		await this.authRepository.revokeEmailVerificationCodesForUser(user.id);
 		try {
 			await this.createAndSendEmailVerificationOtp(user);
-			return {emailVerificationCodeSent : true };
+			return { emailVerificationCodeSent: true };
 		} catch (err) {
 			console.error("Failed to resend verification OTP:", err);
-			return {emailVerificationCodeSent : false };
+			return { emailVerificationCodeSent: false };
 		}
 	}
-
 
 	async requestSignInCode(email: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
 		if (!user) {
-			throw new UnauthorizedError("Invalid credentials")
+			throw new UnauthorizedError("Invalid credentials");
 		}
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user, emailVerificationCodeSent: true},
-				requiresTwoFactor: false
-			}
+				user: { ...user },
+				emailVerificationCodeSent: true,
+				requiresTwoFactor: false,
+			};
 		}
 
 		if (user.provider !== PROVIDERS.MANUAL) {
@@ -249,12 +280,14 @@ export class AuthService {
 		}
 
 		const since = new Date();
-		since.setMinutes(since.getMinutes() - config.auth.signInCodeRateLimitWindowInMinutes );
+		since.setMinutes(
+			since.getMinutes() - config.auth.signInCodeRateLimitWindowInMinutes,
+		);
 		const recentCount = await this.authRepository.countRecentSignInCodes(
 			user.id,
 			since,
 		);
-		if (recentCount >= config.auth.signInCodeMaxPerWindow ) {
+		if (recentCount >= config.auth.signInCodeMaxPerWindow) {
 			throw new BadRequestError(
 				`Too many sign-in code requests. Please try again in ${config.auth.signInCodeRateLimitWindowInMinutes} minutes or sign in with your password.`,
 			);
@@ -273,17 +306,16 @@ export class AuthService {
 			expiresAt,
 		});
 
-		const userName =
-			`${user.firstName} ${user.lastName}`.trim() || "there";
+		const userName = `${user.firstName} ${user.lastName}`.trim() || "there";
 		await emailService.sendSignInCodeEmail(email, code, userName);
 
 		return {
-			user: { ...user, emailVerificationCodeSent: false },
-			requiresTwoFactor: false
-		}
+			user: { ...user },
+			emailVerificationCodeSent: false,
+			requiresTwoFactor: false,
+		};
 	}
 
-	
 	async loginWithEmailCode(email: string, code: string): Promise<AuthResponse> {
 		const user = await this.authRepository.getUserByEmail(email);
 
@@ -293,9 +325,10 @@ export class AuthService {
 
 		if (!user.emailVerified) {
 			return {
-				user: {...user, emailVerificationCodeSent: true },
-				requiresTwoFactor: false
-			}
+				user: { ...user },
+				emailVerificationCodeSent: true,
+				requiresTwoFactor: false,
+			};
 		}
 
 		const trimmedCode = code.trim();
@@ -310,7 +343,9 @@ export class AuthService {
 			throw new UnauthorizedError("Invalid or expired sign-in code");
 		}
 
-		await this.authRepository.markPasswordResetTokenAsUsed(`SIC_${trimmedCode}`);
+		await this.authRepository.markPasswordResetTokenAsUsed(
+			`SIC_${trimmedCode}`,
+		);
 
 		const tokens = await this.createTokens({
 			userId: user.id,
@@ -322,16 +357,17 @@ export class AuthService {
 
 		const { password: _, profileData, ...userWithoutPassword } = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent: false
 			},
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		return response;
 	}
 
 	async login(email: string, password: string): Promise<AuthResponse> {
@@ -343,9 +379,10 @@ export class AuthService {
 
 		if (!user.emailVerified) {
 			return {
-				user: { ...user, emailVerificationCodeSent: true },
+				user: { ...user },
+				emailVerificationCodeSent: true,
 				requiresTwoFactor: false,
-			}
+			};
 		}
 
 		// For OAuth users, password might be null
@@ -371,8 +408,8 @@ export class AuthService {
 					...userWithoutPassword,
 					profileData: profileData as CustomerData | PhysicianData,
 					permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-					emailVerificationCodeSent: false
 				},
+				emailVerificationCodeSent: false,
 				tokens: {
 					accessToken: "",
 					refreshToken: "",
@@ -404,16 +441,17 @@ export class AuthService {
 			...userWithoutPassword2
 		} = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword2,
 				profileData: user.profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent:false
 			},
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		return response;
 	}
 
 	/**
@@ -443,16 +481,17 @@ export class AuthService {
 
 		const { password: _, profileData, ...userWithoutPassword } = user;
 		const userRole = user.role;
-		return {
+		const response: AuthResponse = {
 			user: {
 				...userWithoutPassword,
-				profileData: user.profileData as CustomerData | PhysicianData,
+				profileData: profileData as CustomerData | PhysicianData,
 				permissions: [...(ROLE_PERMISSIONS[userRole] || [])],
-				emailVerificationCodeSent: false
 			},
+			emailVerificationCodeSent: false,
 			tokens,
 			requiresTwoFactor: false,
 		};
+		return response;
 	}
 
 	async refreshTokens(refreshToken: string): Promise<TokenPair> {
@@ -487,12 +526,22 @@ export class AuthService {
 		return tokens;
 	}
 
-	async logout(refreshToken: string): Promise<void> {
+	async logout(
+		refreshToken: string,
+		fcm?: FcmRegistrationInput,
+	): Promise<void> {
 		const payload = JWTService.verifyAccessToken(refreshToken);
 		if (!payload.tokenId) {
 			throw new BadRequestError("invalid refresh token");
 		}
 		await this.authRepository.revokeRefreshToken(payload.tokenId);
+		if (fcm) {
+			await this.fcmTokenRepository.deleteToken(
+				payload.userId,
+				fcm.token,
+				fcm.deviceType,
+			);
+		}
 	}
 
 	async logoutAll(userId: string): Promise<void> {
@@ -642,5 +691,49 @@ export class AuthService {
 		} catch (error) {
 			throw error;
 		}
+	}
+
+	async createBiometricDevice(data: InsertBiometricDevice){
+		return await this.authRepository.createBiometricDevice(data)
+	}
+
+	async loginWithBiometric(bioMetricData: LoginWithBioMetric): Promise<AuthResponse> {
+    const biometricDevice = await this.authRepository.getUserByBioMetricDevice(bioMetricData)
+		if(!biometricDevice){
+			throw new UnauthorizedError("Invalid credentials")
+		}
+
+		const userData = await this.authRepository.getUserById(biometricDevice.userId)
+		if(!userData){
+			throw new UnauthorizedError("Invalid credentials")
+		}
+
+		const allUserData = await this.authRepository.getUserByEmail(userData.email)
+		if(!allUserData){
+			throw new UnauthorizedError("User not found")
+		}
+
+		const tokens = await this.createTokens({
+			userId: allUserData.id,
+			email: allUserData.email,
+			firstName: allUserData.firstName,
+			lastName: allUserData.lastName,
+			role: allUserData.role,
+		})
+
+		const { password: _, profileData, ...userWithoutPassword } = allUserData;
+
+		const response: AuthResponse = {
+			user: {
+				...userWithoutPassword,
+				profileData: profileData as CustomerData | PhysicianData,
+				permissions: [...(ROLE_PERMISSIONS[allUserData.role] || [])],
+			},
+			emailVerificationCodeSent: false,
+			tokens,
+			requiresTwoFactor: false,
+		};
+		return response;
+
 	}
 }

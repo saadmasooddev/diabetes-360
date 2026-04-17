@@ -1,9 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
-import { insertUserSchema, type InsertUser } from "../models/user.schema";
-import { AuthService } from "../services/auth.service";
-import { HTTP_STATUS, SUCCESS_MESSAGES } from "../../../app/constants";
+import { insertUserSchema, type InsertUser, insertBiometricDeviceSchema, loginWithBioMetricSchema } from "../models/user.schema";
+import { type AuthResponse, AuthService } from "../services/auth.service";
+import { SUCCESS_MESSAGES } from "../../../app/constants";
 import { sendSuccess } from "../../../app/utils/response";
-import { BadRequestError } from "../../../shared/errors";
+import { BadRequestError, ValidationError } from "../../../shared/errors";
+import { fcmRegistrationSchema } from "@shared/schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
 import type { AuthenticatedRequest } from "server/src/shared/middleware/auth";
 
@@ -29,8 +30,8 @@ export class AuthController {
 
 			sendSuccess(
 				res,
-				{ emailVerificationCodeSent : signupResponse.emailVerificationCodeSent },
-				signupResponse.emailVerificationCodeSent 
+				{ emailVerificationCodeSent: signupResponse.emailVerificationCodeSent },
+				signupResponse.emailVerificationCodeSent
 					? "Verification code sent. Please check your email."
 					: "Account created but we couldn't send the verification email. You can try again.",
 			);
@@ -46,7 +47,11 @@ export class AuthController {
 				throw new BadRequestError("Email and verification code are required");
 			}
 			await this.authService.verifyEmail(email, code);
-			sendSuccess(res, null, "Email verified successfully. You can now sign in.");
+			sendSuccess(
+				res,
+				null,
+				"Email verified successfully. You can now sign in.",
+			);
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -61,7 +66,7 @@ export class AuthController {
 			const result = await this.authService.resendVerificationOtp(email);
 			sendSuccess(
 				res,
-				{ emailVerificationCodeSent : result.emailVerificationCodeSent },
+				{ emailVerificationCodeSent: result.emailVerificationCodeSent },
 				result.emailVerificationCodeSent
 					? "Verification code sent. Please check your email."
 					: "We couldn't send the code. Please try again later.",
@@ -71,14 +76,40 @@ export class AuthController {
 		}
 	}
 
+	private loginMessage(authResponse: AuthResponse, message: string) {
+		const rotueToVerificationPage =
+			authResponse.emailVerificationCodeSent === true;
+		return rotueToVerificationPage
+			? "Kindly verify your email to continue."
+			: message;
+	}
+
 	async login(req: Request, res: Response): Promise<void> {
 		try {
-			const { email, password, requestSignInCode, emailSignInCode } =
-				req.body;
+			const { email, password, requestSignInCode, emailSignInCode, biometric } = req.body;
+
+			if(biometric !== undefined && biometric !== null){
+
+				const bioMetricDataParsed = loginWithBioMetricSchema.safeParse(
+					biometric
+				)
+
+				if(!bioMetricDataParsed.success){
+					throw new ValidationError(undefined, bioMetricDataParsed.error)
+				}
+				const authResponse =await this.authService.loginWithBiometric(bioMetricDataParsed.data)
+				sendSuccess(
+					res,
+					authResponse,
+					this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL)
+				)
+				return
+			}
 
 			if (!email) {
 				throw new BadRequestError("Email is required");
 			}
+
 
 			// Request sign-in code (send OTP to email)
 			if (requestSignInCode === true) {
@@ -86,7 +117,10 @@ export class AuthController {
 				sendSuccess(
 					res,
 					result,
-					"Sign-in code sent to your email. It expires in 5 minutes.",
+					this.loginMessage(
+						result,
+						"Sign-in code sent to your email. It expires in 5 minutes.",
+					),
 				);
 				return;
 			}
@@ -95,16 +129,14 @@ export class AuthController {
 				if (typeof emailSignInCode !== "string") {
 					throw new BadRequestError("Sign-in code must be a string");
 				}
-				const authResponse =
-					await this.authService.loginWithEmailCode(email, emailSignInCode);
+				const authResponse = await this.authService.loginWithEmailCode(
+					email,
+					emailSignInCode,
+				);
 				sendSuccess(
 					res,
-					{
-						user: authResponse.user,
-						tokens: authResponse.tokens,
-						requiresTwoFactor: false,
-					},
-					SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+					authResponse,
+					this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
 				);
 				return;
 			}
@@ -120,23 +152,16 @@ export class AuthController {
 			if (authResponse.requiresTwoFactor) {
 				sendSuccess(
 					res,
-					{
-						user: authResponse.user,
-						requiresTwoFactor: true,
-					},
-					"Two-factor authentication required",
+					authResponse,
+					this.loginMessage(authResponse, "Two-factor authentication required"),
 				);
 				return;
 			}
 
 			sendSuccess(
 				res,
-				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
-					requiresTwoFactor: false,
-				},
-				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+				authResponse,
+				this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
 			);
 		} catch (error: any) {
 			handleError(res, error);
@@ -157,14 +182,7 @@ export class AuthController {
 
 			const authResponse = await this.authService.verify2FALogin(email, token);
 
-			sendSuccess(
-				res,
-				{
-					user: authResponse.user,
-					tokens: authResponse.tokens,
-				},
-				SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
-			);
+			sendSuccess(res, authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL);
 		} catch (error: any) {
 			handleError(res, error);
 		}
@@ -186,15 +204,30 @@ export class AuthController {
 		}
 	}
 
+	private parseOptionalFcmFromBody(fcm?: unknown) {
+		if (!fcm) {
+			return;
+		}
+		const parsed = fcmRegistrationSchema.safeParse(fcm);
+		if (!parsed.success) {
+			return;
+		}
+		return parsed.data;
+	}
+
 	async logout(req: Request, res: Response): Promise<void> {
 		try {
-			const { refreshToken } = req.body;
+			const { refreshToken, fcmToken, deviceType } = req.body;
+			const fcm = this.parseOptionalFcmFromBody({
+				token: fcmToken,
+				deviceType,
+			});
 
 			if (!refreshToken) {
 				throw new BadRequestError("Refresh token is required");
 			}
 
-			await this.authService.logout(refreshToken);
+			await this.authService.logout(refreshToken, fcm);
 
 			sendSuccess(res, null, "Logged out successfully");
 		} catch (error: any) {
@@ -271,5 +304,25 @@ export class AuthController {
 		} catch (error) {
 			handleError(res, error);
 		}
+	}
+
+	async  createBiometricDevice(req:AuthenticatedRequest, res: Response){
+		try {
+			const userId = req.user?.userId
+			const biometricData = insertBiometricDeviceSchema.safeParse({
+				...req.body,
+				userId 
+			})
+			if(!biometricData.success){
+				throw new ValidationError(undefined, biometricData.error)
+			}
+			await this.authService.createBiometricDevice(biometricData.data)
+			sendSuccess(res, null, "Biometric device created successfully")
+			
+		} catch (error) {
+			handleError(res, error)
+			
+		}
+
 	}
 }

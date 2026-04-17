@@ -1,7 +1,7 @@
 import { TimeZoneRepository } from "server/src/shared/repository/timeZone.repository";
 import { SettingsRepository } from "../../settings/repository/settings.repository";
-import { BookingRepository } from "../../booking/repository/booking.repository";
 import { SLOT_TYPE, slotSize } from "../../booking/models/booking.schema";
+import { BookingRepository } from "../../booking/repository/booking.repository";
 
 export class SeedingService {
 	settingsRepository: SettingsRepository;

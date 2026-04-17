@@ -14,7 +14,11 @@ function getMeetingLinkUrl(
 	if (typeof data === "string" && data.startsWith("http")) {
 		return data;
 	}
-	if (data && typeof data === "object" && typeof (data as { meetingLink?: string }).meetingLink === "string") {
+	if (
+		data &&
+		typeof data === "object" &&
+		typeof (data as { meetingLink?: string }).meetingLink === "string"
+	) {
 		const url = (data as { meetingLink: string }).meetingLink;
 		return url.startsWith("http") ? url : null;
 	}

@@ -106,7 +106,6 @@ export class PhysicianService {
 		search?: string;
 		specialtyId?: string;
 	}) {
-
 		// Validate specialty if provided
 		if (params.specialtyId) {
 			const specialty = await this.physicianRepository.getSpecialtyById(

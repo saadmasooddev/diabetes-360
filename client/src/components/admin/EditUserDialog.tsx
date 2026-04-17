@@ -40,7 +40,6 @@ import {
 	weightOptions,
 	heightOptions,
 } from "@/mocks/profileData";
-import { AdminPhysicianSlotManagement } from "./AdminPhysicianSlotManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseDateToComponents, handleNumberInput } from "@/lib/utils";
 import { USER_ROLES } from "@shared/schema";
@@ -264,7 +263,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 						const paddedDay = String(customerFields.birthDay).padStart(2, "0");
 						customerData.birthday = `${customerFields.birthYear}-${paddedMonth}-${paddedDay}`;
 					}
-
 
 					updateData.customerData = customerData;
 				}
@@ -661,7 +659,6 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 											</div>
 										</div>
 
-
 										<div className="grid grid-cols-2 gap-4">
 											<div className="space-y-2">
 												<Label htmlFor="customerWeight">Weight (kg)</Label>
@@ -755,11 +752,11 @@ export function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 							</form>
 						</TabsContent>
 
-						{(watchedRole === "physician" || user.role === "physician") && (
+						{/* {(watchedRole === "physician" || user.role === "physician") && (
 							<TabsContent value="availability">
 								<AdminPhysicianSlotManagement physicianId={user.id} />
 							</TabsContent>
-						)}
+						)} */}
 					</Tabs>
 				</div>
 				<DialogFooter>

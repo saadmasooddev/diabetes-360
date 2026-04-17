@@ -11,13 +11,15 @@ import { ROUTES } from "@/config/routes";
 
 export const useRequestSignInCode = () => {
 	const { toast } = useToast();
-	const [, navigate] = useLocation()
+	const [, navigate] = useLocation();
 
 	return useMutation({
 		mutationFn: (email: string) => authService.requestSignInCode(email),
 		onSuccess: (data) => {
-			console.log("The data is", data)
-			navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
+			if (data?.emailVerificationCodeSent === true) {
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`);
+				return;
+			}
 			toast({
 				title: "Code sent",
 				description: "Code sent to your email. It will expire in 5 minutes.",
@@ -40,11 +42,16 @@ export const useLogin = () => {
 	const [, navigate] = useLocation();
 
 	return useMutation<AuthData, Error, LoginRequest>({
-		mutationFn: (data) => authService.login(data),
+		mutationFn: async (data) => {
+			const result = await authService.login({
+				...data,
+			});
+			return result;
+		},
 		onSuccess: (data) => {
-			if(data?.user.emailVerificationCodeSent){
-				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`)
-				return
+			if (data?.emailVerificationCodeSent === true) {
+				navigate(`${ROUTES.VERIFY_EMAIL}?email=${data.user.email}`);
+				return;
 			}
 
 			if (data.requiresTwoFactor) {
@@ -77,7 +84,10 @@ export const useVerify2FALogin = () => {
 	const [, navigate] = useLocation();
 
 	return useMutation<AuthData, Error, { email: string; token: string }>({
-		mutationFn: ({ email, token }) => authService.verify2FALogin(email, token),
+		mutationFn: async ({ email, token }) => {
+			const result = await authService.verify2FALogin(email, token);
+			return result;
+		},
 		onSuccess: (data) => {
 			setAuth(data.user, data.tokens);
 			toast({

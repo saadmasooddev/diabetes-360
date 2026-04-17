@@ -18,7 +18,6 @@ export interface PatientDocumentsResponse {
 	}>;
 }
 
-
 export interface PatientStats {
 	diseaseDistribution: Array<{
 		name: DIABETES_TYPE;
@@ -220,7 +219,9 @@ class PatientService {
 
 	// TODO: Backend endpoint not yet created. Replace with real API call when endpoint is ready.
 	// Expected server response type: PatientDocumentsResponse
-	async getPatientDocuments(_patientId: string): Promise<PatientDocumentsResponse> {
+	async getPatientDocuments(
+		_patientId: string,
+	): Promise<PatientDocumentsResponse> {
 		// const response = await httpClient.get<ApiResponse<PatientDocumentsResponse>>(
 		//   API_ENDPOINTS.PHYSICIAN.PATIENT_DOCUMENTS(patientId)
 		// );

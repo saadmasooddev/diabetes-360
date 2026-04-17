@@ -2,164 +2,164 @@ import { db } from "../../../app/config/db";
 import { medications, labReports, AZURE_FILE_STATUS } from "../models/medical.schema";
 import { eq, desc, and, gte, lte, sql, getTableColumns } from "drizzle-orm";
 import type {
-  InsertMedication,
-  Medication,
-  InsertLabReport,
-  LabReport,
+	InsertMedication,
+	Medication,
+	InsertLabReport,
+	LabReport,
 } from "../models/medical.schema";
-import { Tx } from "../../food/models/food.schema";
+import type { Tx } from "../../food/models/food.schema";
 import {
-  availabilityDate,
-  bookedSlots,
-  slots,
+	availabilityDate,
+	bookedSlots,
+	slots,
 } from "../../booking/models/booking.schema";
 
 export interface MedicineDosage {
-  name: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  instructions?: string;
+	name: string;
+	dosage?: string;
+	frequency?: string;
+	duration?: string;
+	instructions?: string;
 }
 
 export class MedicalRepository {
-  async createMedication(data: InsertMedication, tx?: Tx): Promise<Medication> {
-    const dbConn = tx || db;
-    const medicationsFound = await this.getMedicationByConsultationId(
-      data.consultationId,
-      tx,
-    );
-    if (medicationsFound.length > 0) {
-      const updateData = {
-        userId: data.userId,
-        consultationId: data.consultationId,
-        physicianId: data.physicianId,
-        prescriptionDate: data.prescriptionDate,
-        medicines: data.medicines,
-        updatedAt: new Date(),
-      };
-      const [updated] = await dbConn
-        .update(medications)
-        .set(updateData)
-        .where(eq(medications.id, medicationsFound[0].id))
-        .returning();
-      return updated;
-    }
-    const [medication] = await dbConn
-      .insert(medications)
-      .values({
-        userId: data.userId,
-        consultationId: data.consultationId,
-        physicianId: data.physicianId,
-        prescriptionDate: data.prescriptionDate,
-        medicines: data.medicines,
-      })
-      .returning();
+	async createMedication(data: InsertMedication, tx?: Tx): Promise<Medication> {
+		const dbConn = tx || db;
+		const medicationsFound = await this.getMedicationByConsultationId(
+			data.consultationId,
+			tx,
+		);
+		if (medicationsFound.length > 0) {
+			const updateData = {
+				userId: data.userId,
+				consultationId: data.consultationId,
+				physicianId: data.physicianId,
+				prescriptionDate: data.prescriptionDate,
+				medicines: data.medicines,
+				updatedAt: new Date(),
+			};
+			const [updated] = await dbConn
+				.update(medications)
+				.set(updateData)
+				.where(eq(medications.id, medicationsFound[0].id))
+				.returning();
+			return updated;
+		}
+		const [medication] = await dbConn
+			.insert(medications)
+			.values({
+				userId: data.userId,
+				consultationId: data.consultationId,
+				physicianId: data.physicianId,
+				prescriptionDate: data.prescriptionDate,
+				medicines: data.medicines,
+			})
+			.returning();
 
-    return medication;
-  }
+		return medication;
+	}
 
-  async getMedicationsByUserId(
-    userId: string,
-    limit: number = 10,
-    offset: number = 0,
-  ): Promise<Medication[]> {
-    const results = await db
-      .select({
-        ...getTableColumns(medications),
-        consultation: {
-          date: availabilityDate.date,
-          startTime: slots.startTime,
-        },
-      })
-      .from(medications)
-      .innerJoin(bookedSlots, eq(medications.consultationId, bookedSlots.id))
-      .innerJoin(slots, eq(bookedSlots.slotId, slots.id))
-      .innerJoin(
-        availabilityDate,
-        eq(availabilityDate.id, slots.availabilityId),
-      )
-      .where(eq(medications.userId, userId))
-      .orderBy(desc(medications.prescriptionDate))
-      .limit(limit)
-      .offset(offset);
+	async getMedicationsByUserId(
+		userId: string,
+		limit: number = 10,
+		offset: number = 0,
+	): Promise<Medication[]> {
+		const results = await db
+			.select({
+				...getTableColumns(medications),
+				consultation: {
+					date: availabilityDate.date,
+					startTime: slots.startTime,
+				},
+			})
+			.from(medications)
+			.innerJoin(bookedSlots, eq(medications.consultationId, bookedSlots.id))
+			.innerJoin(slots, eq(bookedSlots.slotId, slots.id))
+			.innerJoin(
+				availabilityDate,
+				eq(availabilityDate.id, slots.availabilityId),
+			)
+			.where(eq(medications.userId, userId))
+			.orderBy(desc(medications.prescriptionDate))
+			.limit(limit)
+			.offset(offset);
 
-    return results;
-  }
+		return results;
+	}
 
-  async getMedicationsCountByUserId(userId: string): Promise<number> {
-    const result = await db
-      .select({ count: medications.id })
-      .from(medications)
-      .where(eq(medications.userId, userId));
+	async getMedicationsCountByUserId(userId: string): Promise<number> {
+		const result = await db
+			.select({ count: medications.id })
+			.from(medications)
+			.where(eq(medications.userId, userId));
 
-    return result.length;
-  }
+		return result.length;
+	}
 
-  async getMedicationByConsultationId(consultationId: string, tx?: Tx) {
-    const dbConn = tx || db;
-    const med = await dbConn
-      .select()
-      .from(medications)
-      .where(eq(medications.consultationId, consultationId));
-    return med || null;
-  }
+	async getMedicationByConsultationId(consultationId: string, tx?: Tx) {
+		const dbConn = tx || db;
+		const med = await dbConn
+			.select()
+			.from(medications)
+			.where(eq(medications.consultationId, consultationId));
+		return med || null;
+	}
 
-  async getMedicationsByPhysicianAndDate(
-    userId: string,
-    physicianId: string,
-    prescriptionDate: string,
-  ): Promise<Medication[]> {
-    const results = await db
-      .select()
-      .from(medications)
-      .where(
-        and(
-          eq(medications.userId, userId),
-          eq(medications.physicianId, physicianId),
-          gte(
-            sql<Date>`DATE(${medications.prescriptionDate})`,
-            prescriptionDate,
-          ),
-        ),
-      )
-      .orderBy(desc(medications.prescriptionDate));
+	async getMedicationsByPhysicianAndDate(
+		userId: string,
+		physicianId: string,
+		prescriptionDate: string,
+	): Promise<Medication[]> {
+		const results = await db
+			.select()
+			.from(medications)
+			.where(
+				and(
+					eq(medications.userId, userId),
+					eq(medications.physicianId, physicianId),
+					gte(
+						sql<Date>`DATE(${medications.prescriptionDate})`,
+						prescriptionDate,
+					),
+				),
+			)
+			.orderBy(desc(medications.prescriptionDate));
 
-    return results;
-  }
+		return results;
+	}
 
-  async getMedicationById(
-    medicationId: string,
-    userId: string,
-  ): Promise<Medication | null> {
-    const [medication] = await db
-      .select()
-      .from(medications)
-      .where(
-        and(eq(medications.id, medicationId), eq(medications.userId, userId)),
-      )
-      .limit(1);
+	async getMedicationById(
+		medicationId: string,
+		userId: string,
+	): Promise<Medication | null> {
+		const [medication] = await db
+			.select()
+			.from(medications)
+			.where(
+				and(eq(medications.id, medicationId), eq(medications.userId, userId)),
+			)
+			.limit(1);
 
-    return medication || null;
-  }
+		return medication || null;
+	}
 
-  // Lab Reports Methods
-  async createLabReport(data: InsertLabReport): Promise<LabReport> {
-    const [report] = await db
-      .insert(labReports)
-      .values({
-        userId: data.userId,
-        fileName: data.fileName,
-        filePath: data.filePath,
-        fileSize: data.fileSize,
-        reportName: data.reportName ?? null,
-        reportType: data.reportType ?? null,
-        dateOfReport: data.dateOfReport,
-      })
-      .returning();
+	// Lab Reports Methods
+	async createLabReport(data: InsertLabReport): Promise<LabReport> {
+		const [report] = await db
+			.insert(labReports)
+			.values({
+				userId: data.userId,
+				fileName: data.fileName,
+				filePath: data.filePath,
+				fileSize: data.fileSize,
+				reportName: data.reportName ?? null,
+				reportType: data.reportType ?? null,
+				dateOfReport: data.dateOfReport,
+			})
+			.returning();
 
-    return report;
-  }
+		return report;
+	}
 
   async getLabReportsByUserId(userId: string): Promise<LabReport[]> {
     const results = await db
@@ -173,8 +173,8 @@ eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
       )
       .orderBy(desc(labReports.uploadedAt));
 
-    return results;
-  }
+		return results;
+	}
 
   async getLabReportsPaginated(
     userId: string,
@@ -191,25 +191,25 @@ eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
     }
     const whereClause = and(...baseConditions);
 
-    const [reports, countResult] = await Promise.all([
-      db
-        .select()
-        .from(labReports)
-        .where(whereClause)
-        .orderBy(desc(labReports.uploadedAt))
-        .limit(limit)
-        .offset(offset),
-      db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(labReports)
-        .where(whereClause),
-    ]);
+		const [reports, countResult] = await Promise.all([
+			db
+				.select()
+				.from(labReports)
+				.where(whereClause)
+				.orderBy(desc(labReports.uploadedAt))
+				.limit(limit)
+				.offset(offset),
+			db
+				.select({ count: sql<number>`count(*)::int` })
+				.from(labReports)
+				.where(whereClause),
+		]);
 
-    return {
-      reports,
-      total: countResult[0]?.count ?? 0,
-    };
-  }
+		return {
+			reports,
+			total: countResult[0]?.count ?? 0,
+		};
+	}
 
   async getLabReportById(
     reportId: string,
@@ -224,14 +224,14 @@ eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
       conditions.push(eq(labReports.status, status))
     }
 
-    const [report] = await db
-      .select()
-      .from(labReports)
-      .where(and(...conditions))
-      .limit(1);
+		const [report] = await db
+			.select()
+			.from(labReports)
+			.where(and(...conditions))
+			.limit(1);
 
-    return report || null;
-  }
+		return report || null;
+	}
 
   async updateLabReport(
     reportId: string,
@@ -247,16 +247,16 @@ eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
       .where(and(eq(labReports.id, reportId), eq(labReports.userId, userId)))
       .returning();
 
-    if (!updated) {
-      throw new Error("Lab report not found");
-    }
+		if (!updated) {
+			throw new Error("Lab report not found");
+		}
 
-    return updated;
-  }
+		return updated;
+	}
 
-  async deleteLabReport(reportId: string, userId: string): Promise<void> {
-    await db
-      .delete(labReports)
-      .where(and(eq(labReports.id, reportId), eq(labReports.userId, userId)));
-  }
+	async deleteLabReport(reportId: string, userId: string): Promise<void> {
+		await db
+			.delete(labReports)
+			.where(and(eq(labReports.id, reportId), eq(labReports.userId, userId)));
+	}
 }

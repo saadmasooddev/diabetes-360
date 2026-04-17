@@ -100,7 +100,9 @@ export const useCreateDailyQuickLog = () => {
 			stressLevel: QuickLogStressLevelTypeEnumValues;
 		}) => healthService.createDailyQuickLog(data),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.HEALTH.LATEST] });
+			queryClient.invalidateQueries({
+				queryKey: [API_ENDPOINTS.HEALTH.LATEST],
+			});
 			toast({
 				title: "Success",
 				description: "Daily quick log saved successfully",

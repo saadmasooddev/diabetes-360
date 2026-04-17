@@ -5,38 +5,46 @@ import { useAuthStore } from "@/stores/authStore";
 import { useLocation } from "wouter";
 import { ROUTES } from "@/config/routes";
 import { TokenManager } from "@/utils/tokenManager";
+import {
+	clearFcmRegistration,
+	readFcmRegistration,
+} from "@/lib/fcm/fcmTokenStorage";
 
 export const useLogout = () => {
 	const { toast } = useToast();
 	const logout = useAuthStore((state) => state.logout);
 	const [, navigate] = useLocation();
-	const queryClient = useQueryClient()
+	const queryClient = useQueryClient();
 
 	return useMutation<void, Error, void>({
 		mutationFn: async () => {
 			const refreshToken = TokenManager.getRefreshToken();
+			const fcm = readFcmRegistration();
 			if (refreshToken) {
-				await authService.logout({ refreshToken });
+				await authService.logout({
+					refreshToken,
+					fcmToken: fcm?.token,
+					deviceType: fcm?.deviceType,
+				});
 			}
+			clearFcmRegistration();
 		},
 		onSuccess: () => {
 			logout();
-			queryClient.clear()
+			queryClient.clear();
 			toast({
 				title: "Logged out",
 				description: "You have been successfully logged out.",
 				variant: "default",
 			});
-			navigate(ROUTES.HOME);
+			navigate(ROUTES.LOGIN , { replace: true });
 		},
 		onError: () => {
-			logout();
 			toast({
-				title: "Logged out",
-				description: "You have been logged out.",
+				title: "Logout Failed",
+				description: "Failed to log out. Please try again.",
 				variant: "default",
 			});
-			navigate(ROUTES.HOME);
 		},
 	});
 };

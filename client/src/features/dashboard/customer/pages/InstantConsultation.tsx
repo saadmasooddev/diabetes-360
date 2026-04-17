@@ -38,7 +38,11 @@ function mapPhysicianToDoctor(physician: Physician): Doctor {
 	};
 }
 
-function formatNextSlotLabel(slot: { date: string; startTime: string, endTime: string }): string {
+function formatNextSlotLabel(slot: {
+	date: string;
+	startTime: string;
+	endTime: string;
+}): string {
 	const d = new Date(slot.date);
 	if (isNaN(d.getTime())) return "";
 	return `${dayjs(d).format("DD MMM YYYY")}, ${formatTime12(slot.startTime)} - ${formatTime12(slot.endTime)}`;
@@ -46,8 +50,12 @@ function formatNextSlotLabel(slot: { date: string; startTime: string, endTime: s
 
 export function InstantConsultation() {
 	const [currentStep, setCurrentStep] = useState<ConsultationStep>("concern");
-	const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<string | null>(null);
-	const [selectedPhysician, setSelectedPhysician] = useState<Physician | null>(null);
+	const [selectedSpecialtyId, setSelectedSpecialtyId] = useState<string | null>(
+		null,
+	);
+	const [selectedPhysician, setSelectedPhysician] = useState<Physician | null>(
+		null,
+	);
 
 	const { toast } = useToast();
 	const { data: specialties = [], isLoading: isLoadingSpecialties } =
@@ -110,14 +118,13 @@ export function InstantConsultation() {
 			});
 			setCurrentStep("doctors");
 			setSelectedPhysician(null);
-			refetchPhysicians()
+			refetchPhysicians();
 		} catch (err: unknown) {
 			toast({
 				title: "Booking failed",
 				description: "Failed to book appointment. Please try again",
 				variant: "destructive",
 			});
-
 		}
 	};
 
@@ -229,7 +236,9 @@ export function InstantConsultation() {
 									</div>
 								) : doctors.length > 0 ? (
 									doctors.map((doctor) => {
-										const physician = physicians.find((p) => p.id === doctor.id);
+										const physician = physicians.find(
+											(p) => p.id === doctor.id,
+										);
 										const nextSlotLabel = physician?.nextAvailableSlot
 											? formatNextSlotLabel(physician.nextAvailableSlot)
 											: null;
@@ -256,174 +265,180 @@ export function InstantConsultation() {
 						</div>
 					)}
 
-					{currentStep === "confirm" && selectedPhysician?.nextAvailableSlot && (
-						<div data-testid="section-confirm-booking">
-							<div className="flex items-center gap-4 mb-8">
-								<button
-									onClick={handleBackFromConfirm}
-									className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
-									data-testid="button-back-confirm"
+					{currentStep === "confirm" &&
+						selectedPhysician?.nextAvailableSlot && (
+							<div data-testid="section-confirm-booking">
+								<div className="flex items-center gap-4 mb-8">
+									<button
+										onClick={handleBackFromConfirm}
+										className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
+										data-testid="button-back-confirm"
+										style={{
+											background: "#FFFFFF",
+											border: "1px solid rgba(0, 0, 0, 0.1)",
+										}}
+									>
+										<ArrowLeft size={24} color="#00453A" />
+									</button>
+									<h1
+										style={{
+											fontSize: "28px",
+											fontWeight: 600,
+											color: "#00453A",
+										}}
+									>
+										Confirm booking
+									</h1>
+								</div>
+
+								<Card
+									className="p-8 max-w-full "
 									style={{
 										background: "#FFFFFF",
 										border: "1px solid rgba(0, 0, 0, 0.1)",
+										borderRadius: "12px",
 									}}
 								>
-									<ArrowLeft size={24} color="#00453A" />
-								</button>
-								<h1
-									style={{
-										fontSize: "28px",
-										fontWeight: 600,
-										color: "#00453A",
-									}}
-								>
-									Confirm booking
-								</h1>
-							</div>
-
-							<Card
-								className="p-8 max-w-full "
-								style={{
-									background: "#FFFFFF",
-									border: "1px solid rgba(0, 0, 0, 0.1)",
-									borderRadius: "12px",
-								}}
-							>
-								<div className="mb-6 p-4 rounded-lg" style={{ background: "#F7F9F9" }}>
-									<p
-										className="mb-2 text-xs font-semibold uppercase tracking-wider"
-										style={{ color: "#00856F" }}
-									>
-										Consulting Doctor
-									</p>
-									<div className="flex items-center gap-3">
-										<PhysicianAvatar
-											firstName={selectedPhysician.firstName}
-											lastName={selectedPhysician.lastName}
-											imageUrl={
-												selectedPhysician.imageUrl ||
-												selectedPhysician.avatar ||
-												undefined
-											}
-											className="h-12 w-12"
-											imgClassName="border-2 border-[#E0F2F1]"
-										/>
-										<div>
-											<h4 className="font-semibold text-[#00453A]">
-												{selectedPhysician.firstName} {selectedPhysician.lastName}
-											</h4>
-											<p className="text-sm text-[#00856F]">
-												{selectedPhysician.specialty}
-											</p>
+									<div className="mb-6 p-4 rounded-lg" style={{ background: "#F7F9F9" }}>
+										<p
+											className="mb-2 text-xs font-semibold uppercase tracking-wider"
+											style={{ color: "#00856F" }}
+										>
+											Consulting Doctor
+										</p>
+										<div className="flex items-center gap-3">
+											<PhysicianAvatar
+												firstName={selectedPhysician.firstName}
+												lastName={selectedPhysician.lastName}
+												imageUrl={
+													selectedPhysician.imageUrl ||
+													selectedPhysician.avatar ||
+													undefined
+												}
+												className="h-12 w-12"
+												imgClassName="border-2 border-[#E0F2F1]"
+											/>
+											<div>
+												<h4 className="font-semibold text-[#00453A]">
+													{selectedPhysician.firstName} {selectedPhysician.lastName}
+												</h4>
+												<p className="text-sm text-[#00856F]">
+													{selectedPhysician.specialty}
+												</p>
+											</div>
 										</div>
 									</div>
-								</div>
 
-								<div className="mb-6">
-									<p className="text-sm text-[#64748b] mb-1">Time slot</p>
-									<p className="font-medium text-[#00453A]">
-										{formatNextSlotLabel(selectedPhysician.nextAvailableSlot)}
-									</p>
-								</div>
-
-								{isLoadingPrice ? (
-									<div className="py-4 flex items-center gap-2 text-[#546E7A]">
-										<ButtonSpinner className="h-4 w-4" />
-										Calculating price...
+									<div className="mb-6">
+										<p className="text-sm text-[#64748b] mb-1">Time slot</p>
+										<p className="font-medium text-[#00453A]">
+											{formatNextSlotLabel(selectedPhysician.nextAvailableSlot)}
+										</p>
 									</div>
-								) : bookingPrice ? (
-									<div className="border-t pt-4 space-y-2">
-										<div className="flex justify-between text-sm">
-											<span className="text-[#64748b]">Original fee</span>
-											<span className="font-medium">
-												PKR{" "}
-												{parseFloat(bookingPrice.originalFee).toLocaleString(
-													"en-US",
-													{
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													},
-												)}
-											</span>
+
+									{isLoadingPrice ? (
+										<div className="py-4 flex items-center gap-2 text-[#546E7A]">
+											<ButtonSpinner className="h-4 w-4" />
+											Calculating price...
 										</div>
-										{bookingPrice.isDiscounted && bookingPrice.discountPercentage != null && (
+									) : bookingPrice ? (
+										<div className="border-t pt-4 space-y-2">
 											<div className="flex justify-between text-sm">
-												<span className="text-[#64748b]">Discount applied</span>
-												<span className="font-medium text-green-600">
-													{bookingPrice.discountPercentage} %
+												<span className="text-[#64748b]">Original fee</span>
+												<span className="font-medium">
+													PKR{" "}
+													{parseFloat(bookingPrice.originalFee).toLocaleString(
+														"en-US",
+														{
+															minimumFractionDigits: 2,
+															maximumFractionDigits: 2,
+														},
+													)}
 												</span>
 											</div>
-										)}
-										{bookingPrice.isFree && (
-											<div className="flex justify-between text-sm">
-												<span className="text-[#64748b]">Discount applied</span>
-												<span className="font-medium text-green-600">100 %</span>
-											</div>
-										)}
-										<div className="flex justify-between pt-2 border-t font-semibold text-[#00453A]">
-											<span>Total</span>
-											<span className="text-[#00856F]">
-												PKR{" "}
-												{parseFloat(bookingPrice.finalPrice).toLocaleString(
-													"en-US",
-													{
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													},
+											{bookingPrice.isDiscounted &&
+												bookingPrice.discountPercentage != null && (
+													<div className="flex justify-between text-sm">
+														<span className="text-[#64748b]">
+															Discount applied
+														</span>
+														<span className="font-medium text-green-600">
+															{bookingPrice.discountPercentage} %
+														</span>
+													</div>
 												)}
-											</span>
-										</div>
-										{bookingPrice.isDiscounted &&
-											bookingPrice.discountPercentage != null && (
-												<p className="text-xs text-green-600">
-													You saved {bookingPrice.discountPercentage}% on this
-													consultation
-												</p>
+											{bookingPrice.isFree && (
+												<div className="flex justify-between text-sm">
+													<span className="text-[#64748b]">
+														Discount applied
+													</span>
+													<span className="font-medium text-green-600">
+														100 %
+													</span>
+												</div>
 											)}
-									</div>
-								) : (
-									<p className="text-sm text-red-600 py-2">
-										Unable to load price. Please try again.
-									</p>
-								)}
+											<div className="flex justify-between pt-2 border-t font-semibold text-[#00453A]">
+												<span>Total</span>
+												<span className="text-[#00856F]">
+													PKR{" "}
+													{parseFloat(bookingPrice.finalPrice).toLocaleString(
+														"en-US",
+														{
+															minimumFractionDigits: 2,
+															maximumFractionDigits: 2,
+														},
+													)}
+												</span>
+											</div>
+											{bookingPrice.isDiscounted &&
+												bookingPrice.discountPercentage != null && (
+													<p className="text-xs text-green-600">
+														You saved {bookingPrice.discountPercentage}% on this
+														consultation
+													</p>
+												)}
+										</div>
+									) : (
+										<p className="text-sm text-red-600 py-2">
+											Unable to load price. Please try again.
+										</p>
+									)}
 
-								<div className="flex gap-3 mt-6">
-									<Button
-										variant="outline"
-										onClick={handleBackFromConfirm}
-										disabled={bookSlotMutation.isPending}
-										className="flex-1"
-									>
-										Back
-									</Button>
-									<Button
-										onClick={handleBookAppointment}
-										disabled={
-											!bookingPrice || bookSlotMutation.isPending
-										}
-										className="flex-1"
-										style={{
-											background:
-												bookingPrice && !bookSlotMutation.isPending
-													? "#00856F"
-													: "#B0BEC5",
-											color: "#FFFFFF",
-										}}
-										data-testid="button-book-appointment"
-									>
-										{bookSlotMutation.isPending ? (
-											<>
-												<ButtonSpinner className="mr-2 h-4 w-4" />
-												Booking...
-											</>
-										) : (
-											"Book appointment"
-										)}
-									</Button>
-								</div>
-							</Card>
-						</div>
-					)}
+									<div className="flex gap-3 mt-6">
+										<Button
+											variant="outline"
+											onClick={handleBackFromConfirm}
+											disabled={bookSlotMutation.isPending}
+											className="flex-1"
+										>
+											Back
+										</Button>
+										<Button
+											onClick={handleBookAppointment}
+											disabled={!bookingPrice || bookSlotMutation.isPending}
+											className="flex-1"
+											style={{
+												background:
+													bookingPrice && !bookSlotMutation.isPending
+														? "#00856F"
+														: "#B0BEC5",
+												color: "#FFFFFF",
+											}}
+											data-testid="button-book-appointment"
+										>
+											{bookSlotMutation.isPending ? (
+												<>
+													<ButtonSpinner className="mr-2 h-4 w-4" />
+													Booking...
+												</>
+											) : (
+												"Book appointment"
+											)}
+										</Button>
+									</div>
+								</Card>
+							</div>
+						)}
 				</div>
 			</main>
 		</div>

@@ -310,7 +310,10 @@ export function Home() {
 														size="icon"
 														className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full border-[#EAEAEA] bg-white shadow-md hover:bg-[#F7F9F9] md:left-2"
 														onClick={() => carouselApi?.scrollPrev()}
-														disabled={selectedIndex === 0 && !carouselApi?.canScrollPrev()}
+														disabled={
+															selectedIndex === 0 &&
+															!carouselApi?.canScrollPrev()
+														}
 													>
 														<ChevronLeft className="h-5 w-5 text-[#00856F]" />
 														<span className="sr-only">Previous meal</span>
@@ -321,7 +324,8 @@ export function Home() {
 														className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full border-[#EAEAEA] bg-white shadow-md hover:bg-[#F7F9F9] md:right-2"
 														onClick={() => carouselApi?.scrollNext()}
 														disabled={
-															selectedIndex === mealsForTimeOfDay.meals.length - 1 &&
+															selectedIndex ===
+																mealsForTimeOfDay.meals.length - 1 &&
 															!carouselApi?.canScrollNext()
 														}
 													>

@@ -37,9 +37,7 @@ export function HealthMetricTargetsManagement() {
 			const steps = recommendedTargets.find(
 				(t) => t.metricType === METRIC_TYPE_ENUM.STEPS,
 			);
-			const water = recommendedTargets.find(
-				(t) => t.metricType === METRIC_TYPE_ENUM.WATER_INTAKE,
-			);
+
 			const heartRate = recommendedTargets.find(
 				(t) => t.metricType === METRIC_TYPE_ENUM.HEART_RATE,
 			);
@@ -48,7 +46,6 @@ export function HealthMetricTargetsManagement() {
 				glucose ? parseFloat(glucose.targetValue).toString() : "",
 			);
 			setStepsTarget(steps ? parseFloat(steps.targetValue).toString() : "");
-			setWaterTarget(water ? parseFloat(water.targetValue).toString() : "");
 			setHeartRateTarget(
 				heartRate ? parseFloat(heartRate.targetValue).toString() : "",
 			);
@@ -70,11 +67,6 @@ export function HealthMetricTargetsManagement() {
 					return "Steps target must be between 0-50,000 steps per day";
 				}
 				break;
-			case METRIC_TYPE_ENUM.WATER_INTAKE:
-				if (value < 0 || value > 4) {
-					return "Water intake target must be between 0-4 liters per day";
-				}
-				break;
 			case METRIC_TYPE_ENUM.HEART_RATE:
 				if (value < 40 || value > 200) {
 					return "Heart rate target must be between 40-200 bpm";
@@ -91,10 +83,7 @@ export function HealthMetricTargetsManagement() {
 		if (glucoseTarget) {
 			const numValue = parseFloat(glucoseTarget);
 			if (!isNaN(numValue)) {
-				const error = validateTarget(
-					METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
-					numValue,
-				);
+				const error = validateTarget(METRIC_TYPE_ENUM.BLOOD_GLUCOSE, numValue);
 				if (error) {
 					errors.push(error);
 				} else {
@@ -115,21 +104,6 @@ export function HealthMetricTargetsManagement() {
 				} else {
 					targets.push({
 						metricType: METRIC_TYPE_ENUM.STEPS,
-						targetValue: numValue,
-					});
-				}
-			}
-		}
-
-		if (waterTarget) {
-			const numValue = parseFloat(waterTarget);
-			if (!isNaN(numValue)) {
-				const error = validateTarget(METRIC_TYPE_ENUM.WATER_INTAKE, numValue);
-				if (error) {
-					errors.push(error);
-				} else {
-					targets.push({
-						metricType: METRIC_TYPE_ENUM.WATER_INTAKE,
 						targetValue: numValue,
 					});
 				}

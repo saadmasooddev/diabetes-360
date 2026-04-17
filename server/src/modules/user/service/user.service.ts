@@ -1,7 +1,7 @@
 import { NotFoundError } from "server/src/shared/errors";
 import { UserRepository } from "../repository/user.repository";
 import { ROLE_PERMISSIONS } from "server/src/shared/constants/roles";
-import { UserRole } from "../../auth/models/user.schema";
+import type { UserRole } from "../../auth/models/user.schema";
 import { TwoFactorService } from "../../twoFactor/service/twoFactor.service";
 
 export class UserService {

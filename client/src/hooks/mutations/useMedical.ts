@@ -1,102 +1,102 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
-  medicalService,
-  type Medication,
-  type LabReport,
+	medicalService,
+	type Medication,
+	type LabReport,
 } from "@/services/medicalService";
 import { API_ENDPOINTS } from "@/config/endpoints";
 import {
-  UpdateConsultationNotePayload,
-  bookingService,
+	UpdateConsultationNotePayload,
+	bookingService,
 } from "@/services/bookingService";
 
 // Medications Hooks
 export const useMedications = (params?: {
-  limit?: number;
-  offset?: number;
+	limit?: number;
+	offset?: number;
 }) => {
-  return useQuery<{
-    medications: Medication[];
-    total: number;
-    page: number;
-    limit: number;
-  }>({
-    queryKey: [
-      API_ENDPOINTS.MEDICAL.MEDICATIONS,
-      params?.limit,
-      params?.offset,
-    ],
-    queryFn: () => medicalService.getMedications(params),
-    refetchOnMount: "always",
-    staleTime: 0,
-  });
+	return useQuery<{
+		medications: Medication[];
+		total: number;
+		page: number;
+		limit: number;
+	}>({
+		queryKey: [
+			API_ENDPOINTS.MEDICAL.MEDICATIONS,
+			params?.limit,
+			params?.offset,
+		],
+		queryFn: () => medicalService.getMedications(params),
+		refetchOnMount: "always",
+		staleTime: 0,
+	});
 };
 
 export const useMedicationsByConsultationId = (
-  consultationId: string | null,
+	consultationId: string | null,
 ) => {
-  return useQuery<{
-    medications: Medication[];
-    physician: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      specialty?: string;
-    } | null;
-    prescriptionDate: string;
-  }>({
-    queryKey: [
-      API_ENDPOINTS.MEDICAL.MEDICATIONS_BY_CONSULTATION_ID,
-      consultationId,
-    ],
-    queryFn: () => medicalService.getMedicationsConsultationId(consultationId!),
-    enabled: !!consultationId,
-    refetchOnMount: "always",
-    staleTime: 0,
-  });
+	return useQuery<{
+		medications: Medication[];
+		physician: {
+			id: string;
+			firstName: string;
+			lastName: string;
+			specialty?: string;
+		} | null;
+		prescriptionDate: string;
+	}>({
+		queryKey: [
+			API_ENDPOINTS.MEDICAL.MEDICATIONS_BY_CONSULTATION_ID,
+			consultationId,
+		],
+		queryFn: () => medicalService.getMedicationsConsultationId(consultationId!),
+		enabled: !!consultationId,
+		refetchOnMount: "always",
+		staleTime: 0,
+	});
 };
 
 // Lab Reports Hooks
 export const useLabReports = (params?: {
-  limit?: number;
-  offset?: number;
-  search?: string;
+	limit?: number;
+	offset?: number;
+	search?: string;
 }) => {
-  return useQuery<{ reports: LabReport[]; total: number }>({
-    queryKey: [
-      API_ENDPOINTS.MEDICAL.LAB_REPORTS,
-      params?.limit,
-      params?.offset,
-      params?.search,
-    ],
-    queryFn: () => medicalService.getLabReports(params),
-    refetchOnMount: "always",
-    staleTime: 0,
-  });
+	return useQuery<{ reports: LabReport[]; total: number }>({
+		queryKey: [
+			API_ENDPOINTS.MEDICAL.LAB_REPORTS,
+			params?.limit,
+			params?.offset,
+			params?.search,
+		],
+		queryFn: () => medicalService.getLabReports(params),
+		refetchOnMount: "always",
+		staleTime: 0,
+	});
 };
 
 export const useLabReportsByUserId = (
-  userId: string | null,
-  params?: { limit?: number; offset?: number; search?: string },
+	userId: string | null,
+	params?: { limit?: number; offset?: number; search?: string },
 ) => {
-  return useQuery<{ reports: LabReport[]; total: number }>({
-    queryKey: [
-      userId ? API_ENDPOINTS.MEDICAL.LAB_REPORTS_BY_USER(userId) : null,
-      params?.limit,
-      params?.offset,
-      params?.search,
-    ],
-    queryFn: () => medicalService.getLabReportsByUserId(userId!, params),
-    enabled: !!userId,
-    refetchOnMount: "always",
-    staleTime: 0,
-  });
+	return useQuery<{ reports: LabReport[]; total: number }>({
+		queryKey: [
+			userId ? API_ENDPOINTS.MEDICAL.LAB_REPORTS_BY_USER(userId) : null,
+			params?.limit,
+			params?.offset,
+			params?.search,
+		],
+		queryFn: () => medicalService.getLabReportsByUserId(userId!, params),
+		enabled: !!userId,
+		refetchOnMount: "always",
+		staleTime: 0,
+	});
 };
 
 export const useUploadLabReport = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+	const { toast } = useToast();
+	const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (
@@ -139,8 +139,8 @@ export const useUploadLabReport = () => {
 };
 
 export const useDeleteLabReport = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+	const { toast } = useToast();
+	const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (reportId: string) => medicalService.deleteLabReport(reportId),
@@ -170,15 +170,15 @@ export const useDeleteLabReport = () => {
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp)$/i;
 
 export function isImageFileName(fileName: string): boolean {
-  return IMAGE_EXTENSIONS.test(fileName);
+	return IMAGE_EXTENSIONS.test(fileName);
 }
 
 export function isPdfFileName(fileName: string): boolean {
-  return /\.pdf$/i.test(fileName);
+	return /\.pdf$/i.test(fileName);
 }
 
 export const useViewLabReport = () => {
-  const { toast } = useToast();
+	const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (arg: {
@@ -204,7 +204,7 @@ export const useViewLabReport = () => {
 };
 
 export const useDownloadLabReport = () => {
-  const { toast } = useToast();
+	const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (reportId: string) => {
@@ -232,13 +232,13 @@ export const useDownloadLabReport = () => {
 };
 
 export const useUpdateConsultationNote = () => {
-  return useMutation({
-    mutationFn: ({
-      bookingId,
-      payload,
-    }: {
-      bookingId: string;
-      payload: UpdateConsultationNotePayload;
-    }) => bookingService.updateConsultationNote(bookingId, payload),
-  });
+	return useMutation({
+		mutationFn: ({
+			bookingId,
+			payload,
+		}: {
+			bookingId: string;
+			payload: UpdateConsultationNotePayload;
+		}) => bookingService.updateConsultationNote(bookingId, payload),
+	});
 };

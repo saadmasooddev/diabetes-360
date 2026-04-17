@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { FcmForegroundListener } from "@/components/notifications/FcmForegroundListener";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuthInit } from "@/hooks/useAuthInit";
@@ -33,6 +34,7 @@ import { StrengthTrainingProgress } from "./features/dashboard/customer/pages/St
 import { RecipeDetail } from "./features/dashboard/customer/pages/RecipeDetail";
 import { DoctorPatients } from "./features/dashboard/doctor/DoctorPatients";
 import { PatientProfile } from "./features/dashboard/doctor/PatientProfile";
+import { SoapNotePage } from "./features/dashboard/doctor/SoapNotePage";
 import { DoctorHome } from "./features/dashboard/doctor/DoctorHome";
 import { DoctorAppointments } from "./features/dashboard/doctor/DoctorAppointments";
 import { PatientAlerts } from "./features/dashboard/doctor/PatientAlerts";
@@ -165,6 +167,11 @@ function Router() {
 					<DoctorHome />
 				</ProtectedRoute>
 			</Route>
+			<Route path={ROUTES.DOCTOR_PATIENT_SOAP_NOTE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<SoapNotePage />
+				</ProtectedRoute>
+			</Route>
 			<Route path={ROUTES.DOCTOR_PATIENT_PROFILE}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
 					<PatientProfile />
@@ -191,6 +198,11 @@ function Router() {
 					<DoctorHome />
 				</ProtectedRoute>
 			</Route>
+			<Route path={ROUTES.ADMIN_PATIENT_SOAP_NOTE}>
+				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
+					<SoapNotePage />
+				</ProtectedRoute>
+			</Route>
 			<Route path={ROUTES.ADMIN_PATIENT_PROFILE}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_PATIENT_PROFILES]}>
 					<PatientProfile />
@@ -211,7 +223,6 @@ function Router() {
 					<PatientAlerts />
 				</ProtectedRoute>
 			</Route>
-
 			// common routes
 			<Route path={ROUTES.MEETING_LINK}>
 				<ProtectedRoute permissions={[PERMISSIONS.VIEW_MEETING_LINK]}>
@@ -229,6 +240,7 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<TooltipProvider>
 				<Toaster />
+				<FcmForegroundListener />
 				<Router />
 			</TooltipProvider>
 		</QueryClientProvider>

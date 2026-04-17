@@ -4,7 +4,7 @@ import type {
 	SignupRequest,
 	SignupRes,
 	LoginRequest,
-	AuthResponse,
+	AuthApiResponse,
 	RefreshTokenRequest,
 	LogoutRequest,
 	RefreshTokenResponse,
@@ -14,6 +14,7 @@ import type {
 	RefreshTokenData,
 	ApiResponse,
 } from "@/types/auth.types";
+import type { FcmRegistrationInput } from "@shared/schema";
 
 class AuthService {
 	async signup(data: SignupRequest): Promise<{ otpSent: boolean }> {
@@ -40,7 +41,7 @@ class AuthService {
 		return response.message ?? "Email verified successfully.";
 	}
 
-	async resendVerificationOtp(email: string){
+	async resendVerificationOtp(email: string) {
 		const response = await httpClient.post<SignupRes>(
 			API_ENDPOINTS.AUTH.RESEND_VERIFICATION_OTP,
 			{ email },
@@ -54,7 +55,7 @@ class AuthService {
 	}
 
 	async login(data: LoginRequest): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.LOGIN,
 			data,
 		);
@@ -72,11 +73,11 @@ class AuthService {
 		if (!response.success || !response.data) {
 			throw new Error(response.message || "Failed to send sign-in code");
 		}
-		return response.data
+		return response.data;
 	}
 
 	async loginWithEmailCode(email: string, code: string): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.LOGIN,
 			{ email, emailSignInCode: code },
 		);
@@ -124,7 +125,7 @@ class AuthService {
 			API_ENDPOINTS.AUTH.RESET_PASSWORD,
 			{ token, password },
 		);
-		if (!response.success ) {
+		if (!response.success) {
 			throw new Error(response.message || "Password reset failed");
 		}
 		return response.message;
@@ -145,7 +146,7 @@ class AuthService {
 	}
 
 	async verify2FALogin(email: string, token: string): Promise<AuthData> {
-		const response = await httpClient.post<AuthResponse>(
+		const response = await httpClient.post<AuthApiResponse>(
 			API_ENDPOINTS.AUTH.VERIFY_2FA,
 			{ email, token },
 		);

@@ -57,8 +57,8 @@ export default function ResetPassword() {
 					</h2>
 
 					<p className="[font-family:'Inter',Helvetica] font-normal text-gray-600 text-sm mb-8">
-						The password reset link is invalid or has expired. Please request a new
-						link to reset your password.
+						The password reset link is invalid or has expired. Please request a
+						new link to reset your password.
 					</p>
 
 					<Button
@@ -170,7 +170,9 @@ export default function ResetPassword() {
 								onClick={() => setShowConfirmPassword((p) => !p)}
 								className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#00856f] transition-colors"
 								tabIndex={-1}
-								aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+								aria-label={
+									showConfirmPassword ? "Hide password" : "Show password"
+								}
 							>
 								{showConfirmPassword ? (
 									<EyeOffIcon className="w-5 h-5" />
@@ -192,7 +194,9 @@ export default function ResetPassword() {
 						className="w-full lg:w-[353px] h-14 bg-[#00856f] hover:bg-[#00856f]/90 rounded-[10px] mb-4 disabled:opacity-50"
 					>
 						<span className="[font-family:'Inter',Helvetica] font-semibold text-white text-base tracking-[0] leading-5">
-							{resetPasswordMutation.isPending ? "Resetting Password..." : "Reset Password"}
+							{resetPasswordMutation.isPending
+								? "Resetting Password..."
+								: "Reset Password"}
 						</span>
 					</Button>
 

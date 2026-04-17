@@ -120,6 +120,15 @@ router.post("/resend-verification-otp", (req, res) =>
  *                 type: string
  *                 format: password
  *                 example: SecurePass123!
+ *               fcm:
+ *                 type: object
+ *                 description: Optional FCM registration; stored when login returns valid tokens
+ *                 properties:
+ *                   token:
+ *                     type: string
+ *                   deviceType:
+ *                     type: string
+ *                     enum: [ios, android, web]
  *     responses:
  *       200:
  *         description: Login successful
@@ -296,6 +305,15 @@ router.post("/login", (req, res) => authController.login(req, res));
  *                 maxLength: 6
  *                 example: "123456"
  *                 description: 6-digit TOTP code from authenticator app or backup code
+ *               fcm:
+ *                 type: object
+ *                 description: Optional FCM registration for this device
+ *                 properties:
+ *                   token:
+ *                     type: string
+ *                   deviceType:
+ *                     type: string
+ *                     enum: [ios, android, web]
  *     responses:
  *       200:
  *         description: 2FA verified successfully, login complete
@@ -382,6 +400,15 @@ router.post("/refresh", (req, res) => authController.refreshTokens(req, res));
  *               refreshToken:
  *                 type: string
  *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *               fcm:
+ *                 type: object
+ *                 description: When provided, removes this FCM token for the authenticated user
+ *                 properties:
+ *                   token:
+ *                     type: string
+ *                   deviceType:
+ *                     type: string
+ *                     enum: [ios, android, web]
  *     responses:
  *       200:
  *         description: Logout successful
@@ -526,5 +553,8 @@ router.post("/reset-password", (req, res) =>
 router.post("/change-password", authenticateToken, (req, res) =>
 	authController.changeUserPassword(req, res),
 );
+
+router.post("/register-biometric", authenticateToken, (req, res) => 
+	authController.createBiometricDevice(req, res))
 
 export { router as authRoutes };

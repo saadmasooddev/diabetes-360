@@ -38,7 +38,7 @@ export function MedicationsTable({
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [page, setPage] = useState(1);
 	const pageLimit = 10;
-	const { setMedicationInfo } = useAppStore()
+	const { setMedicationInfo } = useAppStore();
 
 	const { data: medicationsData, isLoading } = useMedications({
 		limit,
@@ -50,8 +50,8 @@ export function MedicationsTable({
 	});
 
 	const handleRowClick = (medication: Medication) => {
-		setMedicationInfo({ consultationId: medication.consultationId })
-		setLocation(ROUTES.MEDICATIONS)
+		setMedicationInfo({ consultationId: medication.consultationId });
+		setLocation(ROUTES.MEDICATIONS);
 	};
 
 	const formatPrescriptionDate = (dateString: string): string => {
@@ -185,7 +185,8 @@ export function MedicationsTable({
 										)}
 									</TableCell>
 									<TableCell className="text-gray-500 text-xs sm:text-sm">
-										{DateManager.formatDate(medication.consultation.date)}{" "}{formatTime12(medication.consultation.startTime)}
+										{DateManager.formatDate(medication.consultation.date)}{" "}
+										{formatTime12(medication.consultation.startTime)}
 									</TableCell>
 									<TableCell className="text-xs sm:text-sm text-gray-700">
 										{medication.medicines.length} medicine

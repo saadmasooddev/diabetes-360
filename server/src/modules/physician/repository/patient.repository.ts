@@ -14,7 +14,7 @@ import {
 	users,
 	customerData,
 	diabetesTypeEnum,
-	DIABETES_TYPE,
+	type DIABETES_TYPE,
 } from "../../auth/models/user.schema";
 import { USER_ROLES } from "../../auth/models/user.schema";
 import { HealthRepository } from "../../health/repository/health.repository";
@@ -32,7 +32,7 @@ import {
 	BOOKING_TYPE_QUERY_ENUM,
 } from "../../booking/models/booking.schema";
 import { FoodRepository } from "../../food/repository/food.repository";
-import { PgColumn } from "drizzle-orm/pg-core";
+import type { PgColumn } from "drizzle-orm/pg-core";
 import {
 	getIndicationColor,
 	getStatusColor,
@@ -482,19 +482,16 @@ export class PatientRepository {
 			macros,
 			latestBloodGlucose,
 		] = await Promise.all([
-			this.healthRepository.getFilteredMetrics(
-				patient.id,
-				startDate,
-				endDate,
-				[METRIC_TYPE_ENUM.BLOOD_GLUCOSE],
-			),
+			this.healthRepository.getFilteredMetrics(patient.id, startDate, endDate, [
+				METRIC_TYPE_ENUM.BLOOD_GLUCOSE,
+			]),
 			this.bookingRepository.getUserConsultations(patient.id, {
 				limit: undefined,
 				skip: 0,
 				type: BOOKING_TYPE_QUERY_ENUM.PAST,
 				physicianId,
 				date: new Date().toISOString(),
-				timeZone: config.defaults.timezone
+				timeZone: config.defaults.timezone,
 			}),
 			this.bookingRepository.getUserConsultations(patient.id, {
 				limit: 3,
@@ -502,11 +499,15 @@ export class PatientRepository {
 				type: BOOKING_TYPE_QUERY_ENUM.UPCOMING,
 				physicianId,
 				date: new Date().toISOString(),
-				timeZone: config.defaults.timezone
+				timeZone: config.defaults.timezone,
 			}),
 			this.getConsultationSummaries(patient.id, physicianId, 100),
 			this.healthRepository.getHba1cTrend(patient.id, startDate, endDate),
-			this.healthRepository.getQuickLogsForDateRange(patient.id, startDate, endDate),
+			this.healthRepository.getQuickLogsForDateRange(
+				patient.id,
+				startDate,
+				endDate,
+			),
 			this.foodRepository.getDietTrendLast7Days(patient.id),
 			this.foodRepository.getMacrosLast7Days(patient.id),
 			this.healthRepository.getLatestBloodGlucose(patient.id),
@@ -574,10 +575,10 @@ export class PatientRepository {
 		};
 		const byDay = quickLogs.map((q) => {
 			const hours = q.sleepDuration
-				? durationToHours[q.sleepDuration] ?? 6
+				? (durationToHours[q.sleepDuration] ?? 6)
 				: 0;
 			const quality = q.sleepDuration
-				? durationToQuality[q.sleepDuration] ?? "Unknown"
+				? (durationToQuality[q.sleepDuration] ?? "Unknown")
 				: "No data";
 			return { day: q.logDate, hours, quality };
 		});

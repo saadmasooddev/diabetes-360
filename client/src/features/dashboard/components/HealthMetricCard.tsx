@@ -67,15 +67,6 @@ export function HealthMetricCard({
 			iconColor: "#2196F3",
 			borderColor: "#2196F3",
 		},
-		[METRIC_TYPE_ENUM.WATER_INTAKE]: {
-			title: "Water Intake",
-			unit: "L",
-			showUploadButton: false,
-			icon: Droplet,
-			gradient: "linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%)",
-			iconColor: "#00856F",
-			borderColor: "#00856F",
-		},
 		[METRIC_TYPE_ENUM.HEART_RATE]: {
 			title: "Heart Rate",
 			unit: "bpm",
@@ -101,13 +92,6 @@ export function HealthMetricCard({
 					? latestValue
 					: parseFloat(latestValue.toString());
 			return Math.round(numValue).toLocaleString();
-		}
-		if (type === METRIC_TYPE_ENUM.WATER_INTAKE) {
-			const numValue =
-				typeof latestValue === "number"
-					? latestValue
-					: parseFloat(latestValue.toString());
-			return numValue.toFixed(1);
 		}
 		if (type === METRIC_TYPE_ENUM.HEART_RATE) {
 			const numValue =

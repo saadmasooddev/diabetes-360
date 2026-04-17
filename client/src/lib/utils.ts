@@ -3,7 +3,12 @@ import { connect, disconnect } from "extendable-media-recorder-wav-encoder";
 import { twMerge } from "tailwind-merge";
 import type { Slot } from "@/services/bookingService";
 import type { AuthData, CustomerData, User } from "@/types/auth.types";
-import { HEALTH_METRIC_SOURCE_ENUM, HealthMetricReading, USER_ROLES, type UserRole } from "@shared/schema";
+import {
+	HEALTH_METRIC_SOURCE_ENUM,
+	HealthMetricReading,
+	USER_ROLES,
+	type UserRole,
+} from "@shared/schema";
 import {
 	ADMIN_DASHBOARD_PREFIX,
 	AUTH_PREFIX,
@@ -58,6 +63,13 @@ export class DateManager {
 		const isBeforeToday = providedDate.isBefore(today, "day");
 		return isBeforeToday;
 	}
+
+	static getDateStringBasedOnTodayOrStartOfDay(date: Date) {
+		if (DateManager.isToday(date)) {
+			return new Date().toISOString();
+		}
+		return DateManager.startOfDay(date).toISOString();
+	}
 }
 export const formatDate = (date: Date, formatStr: string): string => {
 	const months = [
@@ -82,7 +94,6 @@ export const formatDate = (date: Date, formatStr: string): string => {
 	}
 	return date.toLocaleDateString();
 };
-
 
 export const formatTime12 = (time: string): string => {
 	if (!time) return "";
@@ -277,12 +288,17 @@ class Utils {
 		},
 	};
 
-	addToHealthMetricReading(array: HealthMetricReading[], value: number, recordedAt?: string, source?: HEALTH_METRIC_SOURCE_ENUM){
+	addToHealthMetricReading(
+		array: HealthMetricReading[],
+		value: number,
+		recordedAt?: string,
+		source?: HEALTH_METRIC_SOURCE_ENUM,
+	) {
 		array.push({
 			value,
 			recordedAt: recordedAt || new Date().toISOString(),
-			readingSource: source || HEALTH_METRIC_SOURCE_ENUM.CUSTOM
-		})
+			readingSource: source || HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
+		});
 	}
 }
 export function sortLocationByDistance(
@@ -687,7 +703,6 @@ class CalorieUtils {
 }
 
 export class GeneralUtils {
-
 	private wavEncoderRegistered = false;
 
 	async ensureWavEncoderRegistered(): Promise<void> {
@@ -698,7 +713,6 @@ export class GeneralUtils {
 	}
 }
 
-export const generalUtils = new GeneralUtils()
+export const generalUtils = new GeneralUtils();
 export const calorieUtils = new CalorieUtils();
 export const utils = new Utils();
-

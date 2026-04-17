@@ -3,7 +3,7 @@ import {
 	type HealthInsightsData,
 	type HealthPagination,
 	HealthRepository,
-	FilteredMetricResponse,
+	type FilteredMetricResponse,
 } from "../repository/health.repository";
 import { SettingsService } from "../../settings/service/settings.service";
 import {
@@ -25,7 +25,10 @@ import type { ExtendedLimits } from "../../settings/models/settings.schema";
 import { ConsultationService } from "../../booking/service/consultation.service";
 import { CustomerService } from "../../customer/service/customer.service";
 import { formatUserInfo } from "server/src/shared/utils/utils";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, type CustomerData } from "../../auth/models/user.schema";
+import {
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	type CustomerData,
+} from "../../auth/models/user.schema";
 import { aiService } from "../../../shared/services/ai.service";
 import { UserService } from "../../user/service/user.service";
 
@@ -44,10 +47,7 @@ export class HealthService {
 		this.userService = new UserService();
 	}
 
-	async createMetric(
-		data: InsertHealthMetric,
-		userId: string,
-	){
+	async createMetric(data: InsertHealthMetric, userId: string) {
 		const userLimits = await this.getUserRemainingLimits(
 			data.userId,
 			data.recordedAt,
@@ -59,8 +59,6 @@ export class HealthService {
 
 		if (data.bloodSugar) {
 			key = "glucoseLimit";
-		} else if (data.waterIntake) {
-			key = "waterLimit";
 		} else if (data.heartRate) {
 			key = "heartRateLimits";
 		}
@@ -75,28 +73,6 @@ export class HealthService {
 					throw new BadRequestError(
 						"You have already reached the daily limit for blood sugar",
 					);
-				}
-			},
-			waterLimit: async () => {
-				if (data.waterIntake !== null && data.waterIntake !== undefined) {
-					if (userLimits.remainingLimits.waterLimit <= 0) {
-						throw new BadRequestError(
-							"You have already reached the daily limit for water",
-						);
-					}
-					const todaysWaterTotal =
-						await this.healthRepository.getTodaysMetricTotal(
-							data.userId,
-							METRIC_TYPE_ENUM.WATER_INTAKE,
-							data.recordedAt,
-						);
-					const waterValue = parseFloat(data.waterIntake.toString());
-					const newTotal = todaysWaterTotal + waterValue;
-					if (newTotal > 4) {
-						throw new BadRequestError(
-							`Adding ${waterValue}L would exceed the daily limit of 4L. Current total: ${todaysWaterTotal.toFixed(2)}L.`,
-						);
-					}
 				}
 			},
 			heartRateLimits: async () => {
@@ -131,8 +107,6 @@ export class HealthService {
 
 			if (data.bloodSugar) {
 				metricType = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-			} else if (data.waterIntake) {
-				metricType = METRIC_TYPE_ENUM.WATER_INTAKE;
 			}
 
 			if (metricType) {
@@ -156,22 +130,20 @@ export class HealthService {
 			}
 		}
 
-    if(data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C) {
-			const result =await this.createHba1cMetric(data.userId, {
+		if (data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C) {
+			const result = await this.createHba1cMetric(data.userId, {
 				hba1c: data.bloodSugar!.toString(),
-				recordedAt: data.recordedAt
-			})
-			return
+				recordedAt: data.recordedAt,
+			});
+			return;
 		}
 
 		await this.healthRepository.createMetricsBatch(data);
-		return
+		return;
 	}
 
-	async createMetricsBatch(
-		data: InsertHealthMetric[],
-	){
-		return await this.healthRepository.createMetricsBatch(data)
+	async createMetricsBatch(data: InsertHealthMetric[]) {
+		return await this.healthRepository.createMetricsBatch(data);
 	}
 
 	async getLatestMetric(
@@ -204,14 +176,16 @@ export class HealthService {
 	}> {
 		const userLimits = await this.getUserRemainingLimits(userId, startOfDay);
 		const latestMetrics = await this.getLatestMetric(userId, startOfDay);
-		const quickLog =
-			await this.healthRepository.getDailyQuickLogForDate(userId, startOfDay);
+		const quickLog = await this.healthRepository.getDailyQuickLogForDate(
+			userId,
+			startOfDay,
+		);
 		return {
 			current: latestMetrics.current,
 			previous: latestMetrics.previous,
 			limits: userLimits.limits,
 			remainingLimits: userLimits.remainingLimits,
-			quickLog: quickLog
+			quickLog: quickLog,
 		};
 	}
 
@@ -233,7 +207,6 @@ export class HealthService {
 		total: boolean = false,
 	): Promise<{
 		glucose: { daily: number; weekly: number; monthly: number };
-		water: { daily: number; weekly: number; monthly: number };
 		steps: { daily: number; weekly: number; monthly: number };
 		heartRate: { daily: number; weekly: number; monthly: number };
 		targets: {
@@ -276,8 +249,8 @@ export class HealthService {
 		data: InsertExerciseLog[],
 	): Promise<ExerciseLog[]> {
 		// Validate steps if provided
-		const logs: ExerciseLog[] = []
-		const logMap = new Map<string, ExerciseLog[]>()
+		const logs: ExerciseLog[] = [];
+		const logMap = new Map<string, ExerciseLog[]>();
 		for (const log of data) {
 			if (log.steps !== null && log.steps !== undefined) {
 				if (log.steps < 0) {
@@ -296,19 +269,22 @@ export class HealthService {
 						`Adding ${log.steps} steps would exceed the daily limit of 20,000 steps. Current total: ${Math.round(todaysStepsTotal)} steps.`,
 					);
 				}
-		    const logData = await this.healthRepository.createExerciseLogsBatch([log]);
-				if(logData.length > 0){
-					const stored = logMap.get(`${log.recordedAt}-${log.readingSource}`) || []
-					stored.push(...logData)
-					logMap.set(log.recordedAt, stored)
+				const logData = await this.healthRepository.createExerciseLogsBatch([
+					log,
+				]);
+				if (logData.length > 0) {
+					const stored =
+						logMap.get(`${log.recordedAt}-${log.readingSource}`) || [];
+					stored.push(...logData);
+					logMap.set(log.recordedAt, stored);
 				}
 			}
 		}
-		for(const [_, mappedLogs] of Array.from(logMap.entries())){
-			if(mappedLogs.length === 0) continue
-			logs.push(mappedLogs[mappedLogs.length - 1])
+		for (const [_, mappedLogs] of Array.from(logMap.entries())) {
+			if (mappedLogs.length === 0) continue;
+			logs.push(mappedLogs[mappedLogs.length - 1]);
 		}
-		return logs
+		return logs;
 	}
 
 	async getStrengthProgress(
@@ -464,11 +440,6 @@ export class HealthService {
 			startOfDay,
 			METRIC_TYPE_ENUM.STEPS,
 		);
-		const waterLogsCount = await this.getTodaysMetricCount(
-			userId,
-			startOfDay,
-			METRIC_TYPE_ENUM.WATER_INTAKE,
-		);
 
 		const heartRateLogsCount = await this.getTodaysMetricCount(
 			userId,
@@ -482,10 +453,9 @@ export class HealthService {
 
 		const remainingBloodSugarLogs = limits.glucoseLimit - bloodSugarLogsCount;
 		const remainingStepsLogs = limits.stepsLimit - stepsLogsCount;
-		const remainingWaterLogs = limits.waterLimit - waterLogsCount;
 		const remainingFreeFoodScanLogs =
 			limits.foodScanLimits?.freeTier || 0 - foodScanLogsCount;
-		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount
+		const remainingHeartRateLogs = limits.heartRateLimits - heartRateLogsCount;
 		const remainingPaidFoodScanLogs =
 			limits.foodScanLimits?.paidTier || 0 - foodScanLogsCount;
 		const remainingDiscountedConsultations =
@@ -494,14 +464,12 @@ export class HealthService {
 		const remainingFreeConsultations =
 			limits.freeConsultationQuota ||
 			0 - (consultationQuota?.freeConsultationsUsed || 0);
-		
 
 		return {
 			limits,
 			remainingLimits: {
 				glucoseLimit: remainingBloodSugarLogs,
 				stepsLimit: remainingStepsLogs,
-				waterLimit: remainingWaterLogs,
 				heartRateLimits: remainingHeartRateLogs,
 				discountedConsultationQuota: remainingDiscountedConsultations,
 				freeConsultationQuota: remainingFreeConsultations,
@@ -550,20 +518,6 @@ export class HealthService {
 						)?.targetValue || "",
 				},
 			},
-			water_intake_history: {
-				daily: statistics.water.daily.toFixed(1),
-				weekly: statistics.water.weekly.toFixed(1),
-				monthly: statistics.water.monthly.toFixed(1),
-				targets: {
-					recommended_target:
-						statistics.targets.recommended.find(
-							(t) => t.metricType === "water_intake",
-						)?.targetValue || "",
-					user_target:
-						statistics.targets.user.find((t) => t.metricType === "water_intake")
-							?.targetValue || "",
-				},
-			},
 			walking_steps_history: {
 				daily: statistics.steps.daily.toFixed(0),
 				weekly: statistics.steps.weekly.toFixed(0),
@@ -602,8 +556,6 @@ export class HealthService {
 					let name: MetricType = "" as MetricType;
 					if (i.name === "glucose") {
 						name = METRIC_TYPE_ENUM.BLOOD_GLUCOSE;
-					} else if (i.name === "water") {
-						name = METRIC_TYPE_ENUM.WATER_INTAKE;
 					} else if (i.name === "steps") {
 						name = METRIC_TYPE_ENUM.STEPS;
 					} else if (i.name === "heart_rate") {
@@ -679,5 +631,9 @@ export class HealthService {
 			imageMimetype,
 		);
 		return response.data;
+	}
+
+	async runInactivityNotificationJob() {
+		await this.healthRepository.runInactivityNotificationJob();
 	}
 }

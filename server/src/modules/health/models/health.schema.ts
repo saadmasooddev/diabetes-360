@@ -14,38 +14,60 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { BLOOD_SUGAR_READING_TYPES_ENUM, BloodSugarReadingTypeEnumValues, bloodSugarReadingTypeSchema, users } from "../../auth/models/user.schema";
+import {
+	BLOOD_SUGAR_READING_TYPES_ENUM,
+	type BloodSugarReadingTypeEnumValues,
+	bloodSugarReadingTypeSchema,
+	users,
+} from "../../auth/models/user.schema";
 
-export const bloodSugarReadingTypeEnumPg = pgEnum("blood_sugar_reading_type_enum", [ ...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM)] as [string, ...string[]]);
+export const bloodSugarReadingTypeEnumPg = pgEnum(
+	"blood_sugar_reading_type_enum",
+	[...Object.values(BLOOD_SUGAR_READING_TYPES_ENUM)] as [string, ...string[]],
+);
 
 export enum HEALTH_METRIC_SOURCE_ENUM {
-	MOBILE = 'mobile',
-	CGM = 'cgm',
-	WATCH = 'watch',
-	CUSTOM = 'custom'
+	MOBILE = "mobile",
+	CGM = "cgm",
+	WATCH = "watch",
+	CUSTOM = "custom",
 }
-export const healthMetricReadingSourceEnum = z.enum(Object.values(HEALTH_METRIC_SOURCE_ENUM))
+export const healthMetricReadingSourceEnum = z.enum(
+	Object.values(HEALTH_METRIC_SOURCE_ENUM),
+);
 export const healthMetricReadingSourceEnumPg = pgEnum(
 	"health_metric_reading_source_enum",
-	 [...Object.values(HEALTH_METRIC_SOURCE_ENUM) as [string, ...string[]]]
-	)
+	[...(Object.values(HEALTH_METRIC_SOURCE_ENUM) as [string, ...string[]])],
+);
 
-export const healthMetrics = pgTable("health_metrics", {
-	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-	userId: varchar("user_id")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	bloodSugar: numeric("blood_sugar"),
-	bloodSugarReadingType: bloodSugarReadingTypeEnumPg("blood_sugar_reading_type").notNull().default(BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL),
-	waterIntake: numeric("water_intake"),
-	heartRate: integer("heart_rate"),
-	recordedAt: timestamp("recorded_at", { withTimezone: true })
-		.notNull()
-		.defaultNow(),
-	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
-}, table => [
-	uniqueIndex("idx_health_metrics_recorded_at_reading_source").on(table.recordedAt, table.readingSource)
-]);
+export const healthMetrics = pgTable(
+	"health_metrics",
+	{
+		id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+		userId: varchar("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		bloodSugar: numeric("blood_sugar"),
+		bloodSugarReadingType: bloodSugarReadingTypeEnumPg(
+			"blood_sugar_reading_type",
+		)
+			.notNull()
+			.default(BLOOD_SUGAR_READING_TYPES_ENUM.NORMAL),
+		heartRate: integer("heart_rate"),
+		recordedAt: timestamp("recorded_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		readingSource: healthMetricReadingSourceEnumPg("reading_source").default(
+			HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
+		),
+	},
+	(table) => [
+		uniqueIndex("idx_health_metrics_recorded_at_reading_source").on(
+			table.recordedAt,
+			table.readingSource,
+		),
+	],
+);
 
 export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 	.omit({
@@ -55,13 +77,16 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 		userId: z.string().min(1),
 		bloodSugar: z.number().nullable().optional(),
 		bloodSugarReadingType: bloodSugarReadingTypeSchema.optional(),
-		waterIntake: z.number().nullable().optional(),
 		heartRate: z.number().int().nullable().optional(),
 		recordedAt: z.string(),
-		readingSource: healthMetricReadingSourceEnum.optional()
+		readingSource: healthMetricReadingSourceEnum.optional(),
 	})
 	.superRefine((data, ctx) => {
-		if (data.bloodSugar && data.bloodSugarReadingType !== BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (data.bloodSugar < 1 || data.bloodSugar > 2700)) {
+		if (
+			data.bloodSugar &&
+			data.bloodSugarReadingType !== BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C &&
+			(data.bloodSugar < 1 || data.bloodSugar > 2700)
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: "Blood glucose value must be between 70-2700 mg/dL",
@@ -69,19 +94,15 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 			});
 		}
 
-		if (data.bloodSugar && data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C && (data.bloodSugar < 0 || data.bloodSugar > 100)) {
+		if (
+			data.bloodSugar &&
+			data.bloodSugarReadingType === BLOOD_SUGAR_READING_TYPES_ENUM.HBA1C &&
+			(data.bloodSugar < 0 || data.bloodSugar > 100)
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: "HbA1c value value must be between 0 and 100",
 				path: ["bloodSugar"],
-			});
-		}
-
-		if (data.waterIntake && (data.waterIntake < 0 || data.waterIntake > 5)) {
-			ctx.addIssue({
-				code: "custom",
-				message: "Water intake value must be between 0-5 liters per day",
-				path: ["waterIntake"],
 			});
 		}
 
@@ -93,10 +114,7 @@ export const insertHealthMetricSchema = createInsertSchema(healthMetrics)
 			});
 		}
 
-		if (
-			data.recordedAt &&
-			isNaN(new Date(data.recordedAt).getTime())
-		)
+		if (data.recordedAt && isNaN(new Date(data.recordedAt).getTime()))
 			ctx.addIssue({
 				code: "custom",
 				message: "Invalid date format",
@@ -112,6 +130,11 @@ export type MertricRecord = {
 	value: number | null;
 	recordedAt: Date;
 };
+
+export type BloodSugarMetricRecord = MertricRecord & {
+	readingType: BLOOD_SUGAR_READING_TYPES_ENUM;
+};
+
 export type ExtendedHealthMetric = HealthMetric & {
 	steps?: number;
 	fastingSugar?: string | null;
@@ -133,29 +156,38 @@ export const activityTypeEnum = pgEnum(
 );
 export const activityTypeSchema = z.enum(Object.values(ACTIVITY_TYPE_ENUM));
 
-export const exerciseLogs = pgTable("exercise_logs", {
-	id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-	userId: varchar("user_id")
-		.notNull()
-		.references(() => users.id, { onDelete: "cascade" }),
-	exerciseType: varchar("exercise_type"),
-	exerciseName: varchar("exercise_name").notNull(),
-	calories: integer("calories").notNull(),
-	activityType: activityTypeEnum("activity_type").notNull(),
-	pace: varchar("pace"),
-	sets: varchar("sets"),
-	weight: varchar("weight"),
-	steps: varchar("steps"),
-	muscle: varchar("muscle"),
-	duration: integer("duration"),
-	repitition: varchar("repitition"),
-	recordedAt: timestamp("recorded_at", { withTimezone: true })
-		.notNull()
-		.defaultNow(),
-	readingSource: healthMetricReadingSourceEnumPg("reading_source").default(HEALTH_METRIC_SOURCE_ENUM.CUSTOM)
-}, table => [
-	uniqueIndex("idx_exercise_logs_recorded_at_reading_source").on(table.recordedAt, table.readingSource)
-]);
+export const exerciseLogs = pgTable(
+	"exercise_logs",
+	{
+		id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+		userId: varchar("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		exerciseType: varchar("exercise_type"),
+		exerciseName: varchar("exercise_name").notNull(),
+		calories: integer("calories").notNull(),
+		activityType: activityTypeEnum("activity_type").notNull(),
+		pace: varchar("pace"),
+		sets: varchar("sets"),
+		weight: varchar("weight"),
+		steps: varchar("steps"),
+		muscle: varchar("muscle"),
+		duration: integer("duration"),
+		repitition: varchar("repitition"),
+		recordedAt: timestamp("recorded_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		readingSource: healthMetricReadingSourceEnumPg("reading_source").default(
+			HEALTH_METRIC_SOURCE_ENUM.CUSTOM,
+		),
+	},
+	(table) => [
+		uniqueIndex("idx_exercise_logs_recorded_at_reading_source").on(
+			table.recordedAt,
+			table.readingSource,
+		),
+	],
+);
 
 export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
 	.omit({
@@ -180,7 +212,7 @@ export const insertExerciseLogSchema = createInsertSchema(exerciseLogs)
 			.optional(),
 		repitition: z.string().nullable().optional(),
 		recordedAt: z.string(),
-		readingSource: healthMetricReadingSourceEnum.optional()
+		readingSource: healthMetricReadingSourceEnum.optional(),
 	});
 
 export type InsertExerciseLog = z.infer<typeof insertExerciseLogSchema>;
@@ -190,9 +222,8 @@ export type ExerciseLog = typeof exerciseLogs.$inferSelect;
 export enum METRIC_TYPE_ENUM {
 	BLOOD_GLUCOSE = "blood_glucose",
 	STEPS = "steps",
-	WATER_INTAKE = "water_intake",
 	HEART_RATE = "heart_rate",
-	CALORIE_INTAKE = "calorie_intake"
+	CALORIE_INTAKE = "calorie_intake",
 }
 
 export const metricTypes = Object.values(METRIC_TYPE_ENUM);
@@ -200,7 +231,10 @@ export type MetricType =
 	(typeof METRIC_TYPE_ENUM)[keyof typeof METRIC_TYPE_ENUM];
 export const metricTypeEnum = pgEnum(
 	"metric_type_enum",
-	metricTypes.filter(t => t !== METRIC_TYPE_ENUM.CALORIE_INTAKE) as [string, ...string[]],
+	metricTypes.filter((t) => t !== METRIC_TYPE_ENUM.CALORIE_INTAKE) as [
+		string,
+		...string[],
+	],
 );
 
 export const healthMetricTargets = pgTable("health_metric_targets", {
@@ -227,9 +261,6 @@ const validateTargetValue = (
 		case METRIC_TYPE_ENUM.STEPS:
 			// Reasonable daily steps: 0-50,000 (very active person max)
 			return value >= 0 && value <= 50000;
-		case METRIC_TYPE_ENUM.WATER_INTAKE:
-			// Maximum 5L per day (recommended max is 3-4L, but 5L is absolute max)
-			return value >= 0 && value <= 5;
 		case METRIC_TYPE_ENUM.HEART_RATE:
 			// Normal resting: 60-100 bpm, max during exercise: ~220 - age
 			// Target range: 40-200 bpm (covers all scenarios)
@@ -259,20 +290,6 @@ export const insertHealthMetricTargetSchema = createInsertSchema(
 					ctx.addIssue({
 						code: "custom",
 						message: "Blood glucose target must be between 70-200 mg/dL",
-						path: ["targetValue"],
-					});
-					break;
-				case METRIC_TYPE_ENUM.WATER_INTAKE:
-					ctx.addIssue({
-						code: "custom",
-						message: "Water intake target must be between 0-4 liters per day",
-						path: ["targetValue"],
-					});
-					break;
-				case METRIC_TYPE_ENUM.STEPS:
-					ctx.addIssue({
-						code: "custom",
-						message: "Steps target must be between 0-50,000 steps per day",
 						path: ["targetValue"],
 					});
 					break;
@@ -332,7 +349,7 @@ export const hba1cMetrics = pgTable("hba1c_metrics", {
 		.defaultNow(),
 });
 
-export type Hba1cMetrics = typeof hba1cMetrics.$inferSelect
+export type Hba1cMetrics = typeof hba1cMetrics.$inferSelect;
 export const insertHba1cMetricSchema = createInsertSchema(hba1cMetrics)
 	.omit({
 		id: true,
@@ -356,14 +373,13 @@ export const insertHba1cMetricSchema = createInsertSchema(hba1cMetrics)
 			ctx.addIssue({
 				code: "custom",
 				message: "HbA1c value must be between 0-100",
-				path: ["hba1c"]
+				path: ["hba1c"],
 			});
 		}
 	});
 export type InsertHba1cMetric = z.infer<typeof insertHba1cMetricSchema>;
 
 // Daily Quick Logs - Exercise, Diet, Sleep, Medicines, Stress
-
 
 export enum QUICK_LOG_EXERCISE_TYPE_ENUM {
 	NONE = "none",
@@ -372,43 +388,73 @@ export enum QUICK_LOG_EXERCISE_TYPE_ENUM {
 	INTENSE = "intense",
 }
 
-export const quickLogExerciseTypeEnum = pgEnum("quick_log_exercise_type_enum", Object.values(QUICK_LOG_EXERCISE_TYPE_ENUM) as [string, ...string[]])
-export const quickLogExerciseTypeSchema = z.enum(Object.values(QUICK_LOG_EXERCISE_TYPE_ENUM))
-export type QuickLogExerciseTypeEnumValues = typeof QUICK_LOG_EXERCISE_TYPE_ENUM[keyof typeof QUICK_LOG_EXERCISE_TYPE_ENUM]
+export const quickLogExerciseTypeEnum = pgEnum(
+	"quick_log_exercise_type_enum",
+	Object.values(QUICK_LOG_EXERCISE_TYPE_ENUM) as [string, ...string[]],
+);
+export const quickLogExerciseTypeSchema = z.enum(
+	Object.values(QUICK_LOG_EXERCISE_TYPE_ENUM),
+);
+export type QuickLogExerciseTypeEnumValues =
+	(typeof QUICK_LOG_EXERCISE_TYPE_ENUM)[keyof typeof QUICK_LOG_EXERCISE_TYPE_ENUM];
 
 export enum QUICK_LOG_DIET_TYPE_ENUM {
 	MOSTLY_HOME_COOKED = "mostly_home_cooked",
 	MIXED = "mixed",
 	HIGH_CARB_OUTSIDE = "high_carb_outside",
 }
-export const quickLogDietTypeEnum = pgEnum("quick_log_diet_type_enum", Object.values(QUICK_LOG_DIET_TYPE_ENUM) as [string, ...string[]])
-export const quickLogDietTypeSchema = z.enum(Object.values(QUICK_LOG_DIET_TYPE_ENUM))
-export type QuickLogDietTypeEnumValues = typeof QUICK_LOG_DIET_TYPE_ENUM[keyof typeof QUICK_LOG_DIET_TYPE_ENUM]
+export const quickLogDietTypeEnum = pgEnum(
+	"quick_log_diet_type_enum",
+	Object.values(QUICK_LOG_DIET_TYPE_ENUM) as [string, ...string[]],
+);
+export const quickLogDietTypeSchema = z.enum(
+	Object.values(QUICK_LOG_DIET_TYPE_ENUM),
+);
+export type QuickLogDietTypeEnumValues =
+	(typeof QUICK_LOG_DIET_TYPE_ENUM)[keyof typeof QUICK_LOG_DIET_TYPE_ENUM];
 
 export enum QUICK_LOG_SLEEP_DURATION_TYPE_ENUM {
 	LESS_5 = "less_5",
 	FIVE_SEVEN = "5_7",
 	MORE_7 = "more_7",
 }
-export const quickLogSleepDurationTypeEnum = pgEnum("quick_log_sleep_duration_type_enum", Object.values(QUICK_LOG_SLEEP_DURATION_TYPE_ENUM) as [string, ...string[]])
-export const quickLogSleepDurationTypeSchema = z.enum(Object.values(QUICK_LOG_SLEEP_DURATION_TYPE_ENUM))
-export type QuickLogSleepDurationTypeEnumValues = typeof QUICK_LOG_SLEEP_DURATION_TYPE_ENUM[keyof typeof QUICK_LOG_SLEEP_DURATION_TYPE_ENUM]
+export const quickLogSleepDurationTypeEnum = pgEnum(
+	"quick_log_sleep_duration_type_enum",
+	Object.values(QUICK_LOG_SLEEP_DURATION_TYPE_ENUM) as [string, ...string[]],
+);
+export const quickLogSleepDurationTypeSchema = z.enum(
+	Object.values(QUICK_LOG_SLEEP_DURATION_TYPE_ENUM),
+);
+export type QuickLogSleepDurationTypeEnumValues =
+	(typeof QUICK_LOG_SLEEP_DURATION_TYPE_ENUM)[keyof typeof QUICK_LOG_SLEEP_DURATION_TYPE_ENUM];
 export enum QUICK_LOG_MEDICINES_TYPE_ENUM {
 	TAKEN = "taken",
 	MISSED = "missed",
 }
-export const quickLogMedicinesTypeEnum = pgEnum("quick_log_medicines_type_enum", Object.values(QUICK_LOG_MEDICINES_TYPE_ENUM) as [string, ...string[]])
-export const quickLogMedicinesTypeSchema = z.enum(Object.values(QUICK_LOG_MEDICINES_TYPE_ENUM))
-export type QuickLogMedicinesTypeEnumValues = typeof QUICK_LOG_MEDICINES_TYPE_ENUM[keyof typeof QUICK_LOG_MEDICINES_TYPE_ENUM]
+export const quickLogMedicinesTypeEnum = pgEnum(
+	"quick_log_medicines_type_enum",
+	Object.values(QUICK_LOG_MEDICINES_TYPE_ENUM) as [string, ...string[]],
+);
+export const quickLogMedicinesTypeSchema = z.enum(
+	Object.values(QUICK_LOG_MEDICINES_TYPE_ENUM),
+);
+export type QuickLogMedicinesTypeEnumValues =
+	(typeof QUICK_LOG_MEDICINES_TYPE_ENUM)[keyof typeof QUICK_LOG_MEDICINES_TYPE_ENUM];
 
 export enum QUICK_LOG_STRESS_LEVEL_TYPE_ENUM {
 	LOW = "low",
 	MODERATE = "moderate",
 	HIGH = "high",
 }
-export const quickLogStressLevelTypeEnum = pgEnum("quick_log_stress_level_type_enum", Object.values(QUICK_LOG_STRESS_LEVEL_TYPE_ENUM) as [string, ...string[]])
-export const quickLogStressLevelTypeSchema = z.enum(Object.values(QUICK_LOG_STRESS_LEVEL_TYPE_ENUM))
-export type QuickLogStressLevelTypeEnumValues = typeof QUICK_LOG_STRESS_LEVEL_TYPE_ENUM[keyof typeof QUICK_LOG_STRESS_LEVEL_TYPE_ENUM]
+export const quickLogStressLevelTypeEnum = pgEnum(
+	"quick_log_stress_level_type_enum",
+	Object.values(QUICK_LOG_STRESS_LEVEL_TYPE_ENUM) as [string, ...string[]],
+);
+export const quickLogStressLevelTypeSchema = z.enum(
+	Object.values(QUICK_LOG_STRESS_LEVEL_TYPE_ENUM),
+);
+export type QuickLogStressLevelTypeEnumValues =
+	(typeof QUICK_LOG_STRESS_LEVEL_TYPE_ENUM)[keyof typeof QUICK_LOG_STRESS_LEVEL_TYPE_ENUM];
 
 export const dailyQuickLogs = pgTable(
 	"daily_quick_logs",
@@ -446,8 +492,15 @@ export const insertDailyQuickLogSchema = createInsertSchema(dailyQuickLogs)
 		medicines: quickLogMedicinesTypeSchema.optional().nullable(),
 		stressLevel: quickLogStressLevelTypeSchema.optional().nullable(),
 		recordedAt: z.string().optional(),
-	}).superRefine((data, ctx) => {
-		if (!data.exercise && !data.diet && !data.sleepDuration && !data.medicines && !data.stressLevel) {
+	})
+	.superRefine((data, ctx) => {
+		if (
+			!data.exercise &&
+			!data.diet &&
+			!data.sleepDuration &&
+			!data.medicines &&
+			!data.stressLevel
+		) {
 			ctx.addIssue({
 				code: "custom",
 				message: "At least one field must be filled",
@@ -459,27 +512,30 @@ export const insertDailyQuickLogSchema = createInsertSchema(dailyQuickLogs)
 export type InsertDailyQuickLog = z.infer<typeof insertDailyQuickLogSchema>;
 export type DailyQuickLog = typeof dailyQuickLogs.$inferSelect;
 
-
-export type HealthMetricReading = { value: number, recordedAt: string, readingSource: HEALTH_METRIC_SOURCE_ENUM }
+export type HealthMetricReading = {
+	value: number;
+	recordedAt: string;
+	readingSource: HEALTH_METRIC_SOURCE_ENUM;
+};
 
 export type HealthMetricData = {
-	userId: string,
-	bloodSugar: HealthMetricReading[] 
-	heartRate: HealthMetricReading[]
-	waterIntake: HealthMetricReading[]
-	bloodSugarReadingType: BloodSugarReadingTypeEnumValues
-}
+	userId: string;
+	bloodSugar: HealthMetricReading[];
+	heartRate: HealthMetricReading[];
+	waterIntake: HealthMetricReading[];
+	bloodSugarReadingType: BloodSugarReadingTypeEnumValues;
+};
 
 export const healthMetricReadingSchema = z.object({
 	value: z.number().min(0),
 	recordedAt: z.string(),
-	source: healthMetricReadingSourceEnum
-})
+	source: healthMetricReadingSourceEnum,
+});
 
 export const healthMetricDataSchema = z.object({
 	userId: z.string().min(1),
 	bloodSugar: z.array(z.object(healthMetricReadingSchema)),
 	heartRate: z.array(z.object(healthMetricReadingSchema)),
 	waterIntake: z.array(z.object(healthMetricReadingSchema)),
-	bloodSugarReadingType: bloodSugarReadingTypeSchema
-})
+	bloodSugarReadingType: bloodSugarReadingTypeSchema,
+});

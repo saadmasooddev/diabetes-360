@@ -172,7 +172,7 @@ function createMulterConfigMultiple(
 	return upload.array(fieldName, maxCount);
 }
 
-const MAX_AUDIO_SIZE = 3 * 1024 * 1024; 
+const MAX_AUDIO_SIZE = 3 * 1024 * 1024;
 const ALLOWED_AUDIO_WAV_TYPES = ["audio/wav", "audio/wave", "audio/x-wav"];
 
 export const imageMemoryUpload = multer({
@@ -204,8 +204,7 @@ export const audioWavMemoryUpload = multer({
 		file: Express.Multer.File,
 		cb: multer.FileFilterCallback,
 	) => {
-		const ok =
-			ALLOWED_AUDIO_WAV_TYPES.includes(file.mimetype)
+		const ok = ALLOWED_AUDIO_WAV_TYPES.includes(file.mimetype);
 		if (ok) {
 			cb(null, true);
 		} else {
