@@ -54,28 +54,6 @@ export class AuthService {
 		this.fcmTokenRepository = new FcmTokenRepository();
 	}
 
-	async createUserForAdmin(userData: InsertUser) {
-		const existingUser = await this.authRepository.getUserByEmail(
-			userData.email,
-		);
-		if (existingUser) {
-			throw new ConflictError("An account with this email already exists");
-		}
-
-		const hashedPassword = await bcrypt.hash(
-			userData.password!,
-			config.bcryptRounds,
-		);
-
-		// Create user with hashed password, emailVerified defaults to false
-		const user = await this.authRepository.createUser({
-			...userData,
-			password: hashedPassword,
-			emailVerified: true,
-		});
-
-		return user;
-	}
 
 	async createUserForAdmin(userData: InsertUser) {
 		const existingUser = await this.authRepository.getUserByEmail(
