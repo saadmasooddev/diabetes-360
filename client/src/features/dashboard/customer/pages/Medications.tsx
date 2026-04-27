@@ -1,4 +1,3 @@
-import { useSearch } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card } from "@/components/ui/card";
 import { useMedicationsByConsultationId } from "@/hooks/mutations/useMedical";

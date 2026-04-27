@@ -4,6 +4,7 @@ import fs from "fs";
 import { BadRequestError, UnauthorizedError } from "../errors";
 import type { AuthenticatedRequest } from "../middleware/auth";
 import { MedicalService } from "server/src/modules/medical/service/medical.service";
+import { ALLOWED_TYPES } from "@shared/schema";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = [
@@ -221,3 +222,15 @@ export const uploadPhysicianImage = createMulterConfig({
 	destination: join("public", "uploads", "physicians"),
 	fieldName: "image",
 });
+
+const LAB_REPORT_MAX_BYTES = Math.max(
+	...Object.values(ALLOWED_TYPES).map((c) => c.maxSize),
+);
+
+export const labReportMemoryUpload = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: LAB_REPORT_MAX_BYTES,
+		files: 1
+	}
+})

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { LabReport } from "@/services/medicalService";
+import { toast } from "@/hooks/use-toast";
 
 export const REPORT_TYPES = [
 	{ value: "blood_test", label: "Blood Test" },
@@ -112,6 +113,15 @@ export function UploadMedicalReportsModal({
 
 	const handleUpload = () => {
 		if (!selectedFile) return;
+		if (!dateOfReport) {
+			toast({
+				title: "Error",
+				description: "Date of report is required",
+				variant: "destructive",
+			})
+			return;
+		}
+
 		uploadMutation.mutate(
 			{
 				file: selectedFile,
@@ -310,7 +320,7 @@ export function UploadMedicalReportsModal({
 												size="sm"
 												onClick={() =>
 													deleteMutation.mutate(report.id, {
-														onSuccess: () => {},
+														onSuccess: () => { },
 													})
 												}
 												disabled={deleteMutation.isPending}
@@ -409,6 +419,7 @@ export function UploadMedicalReportsModal({
 								value={reportName}
 								onChange={(e) => setReportName(e.target.value)}
 								className="border-gray-200"
+								required
 							/>
 						</div>
 
@@ -447,6 +458,7 @@ export function UploadMedicalReportsModal({
 								value={dateOfReport}
 								onChange={(e) => setDateOfReport(e.target.value)}
 								className="border-gray-200"
+								required
 							/>
 						</div>
 

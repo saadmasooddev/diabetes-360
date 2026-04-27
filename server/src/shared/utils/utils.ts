@@ -90,6 +90,14 @@ export class DateManager {
     const dateTime = `${datePart} ${normalized}`;
     return DateManager.getLocalHours(dateTime, timeZone).date.toISOString();
   }
+
+  static getResolvedTimeZone(timeZone: string){
+    try {
+      return Intl.DateTimeFormat(undefined, { timeZone }).resolvedOptions().timeZone;
+    } catch (error) {
+      throw new BadRequestError("Invalid timezone specified")
+    }
+  }
 }
 
 export const formatUserInfo = (
@@ -145,6 +153,8 @@ export const getPaginationParams = (req: Request) => {
   }
 
   return { limit, offset, page };
+
+
 };
 
 
@@ -152,5 +162,5 @@ export const ALLOWED_TYPES = {
 		'image/jpeg': { maxSize: 10 * 1024 * 1024, ext: 'jpg' },     // 10MB
 		'image/png': { maxSize: 10 * 1024 * 1024, ext: 'png' },      // 10MB
 		'image/webp': { maxSize: 5 * 1024 * 1024, ext: 'webp' },     // 5MB
-		'application/pdf': { maxSize: 50 * 1024 * 1024, ext: 'pdf' }, // 50MB
+		'application/pdf': { maxSize: 30 * 1024 * 1024, ext: 'pdf' }, // 50MB
 	};

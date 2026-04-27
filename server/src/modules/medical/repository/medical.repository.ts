@@ -155,6 +155,7 @@ export class MedicalRepository {
 				reportName: data.reportName ?? null,
 				reportType: data.reportType ?? null,
 				dateOfReport: data.dateOfReport,
+				status: AZURE_FILE_STATUS.CONFIRMED,
 			})
 			.returning();
 
@@ -211,18 +212,14 @@ eq(labReports.status, AZURE_FILE_STATUS.CONFIRMED)
 		};
 	}
 
-  async getLabReportById(
-    reportId: string,
-    userId?: string,
-    status?: AZURE_FILE_STATUS
-  ): Promise<LabReport | null> {
-    const conditions = [eq(labReports.id, reportId)];
-    if (userId) {
-      conditions.push(eq(labReports.userId, userId));
-    }
-    if(status) {
-      conditions.push(eq(labReports.status, status))
-    }
+	async getLabReportById(
+		reportId: string,
+		userId?: string,
+	): Promise<LabReport | null> {
+		const conditions = [eq(labReports.id, reportId)];
+		if (userId) {
+			conditions.push(eq(labReports.userId, userId));
+		}
 
 		const [report] = await db
 			.select()

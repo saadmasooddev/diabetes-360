@@ -164,6 +164,7 @@ export class AuthController {
 				this.loginMessage(authResponse, SUCCESS_MESSAGES.LOGIN_SUCCESSFUL),
 			);
 		} catch (error: any) {
+			console.log("The error is", error)
 			handleError(res, error);
 		}
 	}

@@ -168,10 +168,7 @@ export class BookingController {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			if (!Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
-
+      DateManager.getResolvedTimeZone(timeZone)
 
 			const results = await this.bookingService.createSlots(
 				physicianId,
@@ -638,9 +635,7 @@ export class BookingController {
 			}
 
 			const timeZone = req.query.timeZone as string;
-			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
+			DateManager.getResolvedTimeZone(timeZone)
 
 			const { limit, offset, page } = getPaginationParams(req);
 
@@ -884,9 +879,7 @@ export class BookingController {
 				throw new ForbiddenError("You do not have permission to manage slots");
 			}
 
-			if (!Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
+			DateManager.getResolvedTimeZone(timeZone)
 
 			// For admin, require physicianId; for physician, use their own ID
 			const physicianId = hasManageAllSlots
@@ -902,15 +895,6 @@ export class BookingController {
 				throw new BadRequestError("Invalid date format");
 			}
 
-			const dateWithTimezone = new Intl.DateTimeFormat("en-US", {
-				day: "numeric",
-				month: "numeric",
-				year: "numeric",
-				hour: "numeric",
-				minute: "numeric",
-				second: "numeric",
-				timeZone,
-			}).format(timestamp);
 
 			const result = await this.bookingService.generateSlotsForDay(
 				physicianId,

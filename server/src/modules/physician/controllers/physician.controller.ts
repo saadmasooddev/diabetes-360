@@ -15,7 +15,7 @@ import {
 	USER_ROLES,
 } from "../../auth/models/user.schema";
 import { handleError } from "../../../shared/middleware/errorHandler";
-import { getPaginationParams } from "server/src/shared/utils/utils";
+import { DateManager, getPaginationParams } from "server/src/shared/utils/utils";
 import { config } from "server/src/app/config";
 
 export class PhysicianController {
@@ -234,9 +234,7 @@ export class PhysicianController {
 				timeZone: string;
 			};
 
-			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
+			DateManager.getResolvedTimeZone(timeZone)
 
 			const numberDate = new Date(date).getTime();
 			if (isNaN(numberDate)) {
@@ -285,9 +283,7 @@ export class PhysicianController {
 				timeZone: string;
 			};
 
-			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
+			DateManager.getResolvedTimeZone(timeZone)
 
 			const numberDate = new Date(date).getTime();
 			if (isNaN(numberDate)) {
@@ -357,64 +353,25 @@ export class PhysicianController {
 		}
 	}
 
-	async requestPhysicianProfileUploadUrl(
+	async uploadPhysicianImage(
 		req: AuthenticatedRequest,
 		res: Response,
 		next: NextFunction,
 	): Promise<void> {
 		try {
-			const { userId } = req.params;
-			if (!userId) {
-				throw new BadRequestError("User ID is required");
+			const file = req.file;
+			if (!file) {
+				throw new BadRequestError("Image file is required");
 			}
-			const body = req.body as {
-				fileName?: string;
-				contentType?: string;
-				fileSize?: number;
-			};
-			if (!body.fileName || !body.contentType || body.fileSize == null) {
-				throw new BadRequestError(
-					"fileName, contentType, and fileSize are required",
-				);
-			}
-			const result = await this.physicianService.getPhysicianProfileUploadUrl(
-				userId,
-				{
-					fileName: body.fileName,
-					contentType: body.contentType,
-					fileSize: Number(body.fileSize),
-				},
-			);
-			sendSuccess(res, result, "Upload URL issued");
-		} catch (error: any) {
-			handleError(res, error);
-		}
-	}
 
-	async confirmPhysicianProfileUpload(
-		req: AuthenticatedRequest,
-		res: Response,
-		next: NextFunction,
-	): Promise<void> {
-		try {
-			const { userId } = req.params;
-			if (!userId) {
-				throw new BadRequestError("User ID is required");
-			}
-			const body = req.body as { blobPath?: string };
-			if (!body.blobPath) {
-				throw new BadRequestError("blobPath is required");
-			}
-			const physicianData =
-				await this.physicianService.confirmPhysicianProfileUpload(
-					userId,
-					body.blobPath,
+			const targetUserId = req.body.userId || req.user!.userId
+			const imageUrl =
+				await this.physicianService.uploadPhysicianProfileImageFromFile(
+					targetUserId,
+					file,
 				);
-			sendSuccess(
-				res,
-				{ physicianData },
-				"Profile image confirmed",
-			);
+
+			sendSuccess(res, { imageUrl }, "Image uploaded successfully");
 		} catch (error: any) {
 			handleError(res, error);
 		}

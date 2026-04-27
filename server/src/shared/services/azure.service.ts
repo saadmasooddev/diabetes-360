@@ -1,4 +1,6 @@
 import { BlobSASPermissions, BlobServiceClient, ContainerClient, SASProtocol, StorageSharedKeyCredential, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import type { Response } from "express";
+import { pipeline } from "node:stream/promises";
 import { config } from 'server/src/app/config';
 
 export class AzureService {
@@ -23,15 +25,49 @@ export class AzureService {
   }
 
   async uploadFile(file: Express.Multer.File, key: string) {
-
     const blockBlobClient = this.containerClient.getBlockBlobClient(key);
     return await blockBlobClient.uploadData(file.buffer, {
       blockSize: file.size,
       blobHTTPHeaders: {
         blobContentType: file.mimetype,
-      }
+      },
     });
-      
+  }
+
+  /** Upload a server-local temp file (e.g. multer diskStorage) to blob storage, then delete is caller's responsibility. */
+  async uploadLocalFileToBlob(
+    localFilePath: string,
+    key: string,
+    contentType: string,
+  ) {
+    const blockBlobClient = this.containerClient.getBlockBlobClient(key);
+    return await blockBlobClient.uploadFile(localFilePath, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+  }
+
+  async pipeBlobToResponse(
+    blobKey: string,
+    res: Response,
+    downloadFileName: string,
+  ): Promise<void> {
+    const blobClient = this.containerClient.getBlockBlobClient(blobKey);
+    const downloadResponse = await blobClient.download();
+    const contentType =
+      downloadResponse.contentType || "application/octet-stream";
+
+    res.setHeader("Content-Type", contentType);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(downloadFileName)}"`,
+    );
+
+    const body = downloadResponse.readableStreamBody;
+    if (!body) {
+      throw new Error("Blob download returned empty body");
+    }
+
+    await pipeline(body, res);
   }
 
   async deleteFile(key: string) {

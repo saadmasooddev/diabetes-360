@@ -98,73 +98,103 @@ export const useUploadLabReport = () => {
 	const { toast } = useToast();
 	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (
-      arg:
-        | File
-        | {
-            file: File;
-            metadata?: {
-              reportName?: string;
-              reportType?: string;
-              dateOfReport?: string;
-            };
-          },
-    ) => {
-      const file = arg instanceof File ? arg : arg.file;
-      const metadata = arg instanceof File ? undefined : arg.metadata;
-      return medicalService.uploadLabReport(file, metadata);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
-      });
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          (query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
-      });
-      toast({
-        title: "Success",
-        description: "Lab report uploaded successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload lab report",
-        variant: "destructive",
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: (
+			arg:
+				| File
+				| {
+						file: File;
+						metadata?: {
+							reportName?: string;
+							reportType?: string;
+							dateOfReport?: string;
+						};
+				  },
+		) => {
+			const file = arg instanceof File ? arg : arg.file;
+			const metadata = arg instanceof File ? undefined : arg.metadata;
+			return medicalService.uploadLabReport(file, metadata);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
+			});
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
+			});
+			toast({
+				title: "Success",
+				description: "Lab report uploaded successfully",
+			});
+		},
+		onError: (error: any) => {
+			toast({
+				title: "Error",
+				description: error.message || "Failed to upload lab report",
+				variant: "destructive",
+			});
+		},
+	});
+};
+
+export const useUpdateLabReport = () => {
+	const { toast } = useToast();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (arg: { reportId: string; file: File }) =>
+			medicalService.updateLabReport(arg.reportId, arg.file),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
+			});
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
+			});
+			toast({
+				title: "Success",
+				description: "Lab report updated successfully",
+			});
+		},
+		onError: (error: any) => {
+			toast({
+				title: "Error",
+				description: error.message || "Failed to update lab report",
+				variant: "destructive",
+			});
+		},
+	});
 };
 
 export const useDeleteLabReport = () => {
 	const { toast } = useToast();
 	const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (reportId: string) => medicalService.deleteLabReport(reportId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
-      });
-      queryClient.invalidateQueries({
-        predicate: (query) =>
-          (query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
-      });
-      toast({
-        title: "Success",
-        description: "Lab report deleted successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete lab report",
-        variant: "destructive",
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: (reportId: string) => medicalService.deleteLabReport(reportId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: [API_ENDPOINTS.MEDICAL.LAB_REPORTS],
+			});
+			queryClient.invalidateQueries({
+				predicate: (query) =>
+					(query.queryKey[0] as string)?.includes?.("lab-reports") ?? false,
+			});
+			toast({
+				title: "Success",
+				description: "Lab report deleted successfully",
+			});
+		},
+		onError: (error: any) => {
+			toast({
+				title: "Error",
+				description: error.message || "Failed to delete lab report",
+				variant: "destructive",
+			});
+		},
+	});
 };
 
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp)$/i;
@@ -180,55 +210,59 @@ export function isPdfFileName(fileName: string): boolean {
 export const useViewLabReport = () => {
 	const { toast } = useToast();
 
-  return useMutation({
-    mutationFn: async (arg: {
-      reportId: string;
-      fileName: string;
-      forUserId?: string;
-    }): Promise<{ url: string; isPdf: boolean }> => {
-      const url = await medicalService.getLabReportViewUrl(arg.reportId);
-      const isPdf = isPdfFileName(arg.fileName);
-      if (isPdf) {
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
-      return { url, isPdf };
-    },
-    onError: (error: unknown) => {
-      toast({
-        title: "Error",
-        description: (error as Error).message || "Failed to open report",
-        variant: "destructive",
-      });
-    },
-  });
+	return useMutation({
+		mutationFn: async (arg: {
+			reportId: string;
+			fileName: string;
+			forUserId?: string;
+		}): Promise<{ url: string; isPdf: boolean }> => {
+			const url = await medicalService.getLabReportViewUrl(arg.reportId);
+			const isPdf = isPdfFileName(arg.fileName);
+			if (isPdf) {
+				window.open(url, "_blank", "noopener,noreferrer");
+			}
+			return { url, isPdf };
+		},
+		onError: (error: unknown) => {
+			toast({
+				title: "Error",
+				description: (error as Error).message || "Failed to open report",
+				variant: "destructive",
+			});
+		},
+	});
 };
 
 export const useDownloadLabReport = () => {
 	const { toast } = useToast();
 
-  return useMutation({
-    mutationFn: async (reportId: string) => {
-      const { downloadUrl, fileName } =
-        await medicalService.downloadLabReport(reportId);
+	return useMutation({
+		mutationFn: async (reportId: string) => {
+			const { downloadUrl, fileName } =
+				await medicalService.downloadLabReport(reportId);
 
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = fileName;
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+			const link = document.createElement("a");
+			link.href = downloadUrl;
+			link.download = fileName;
+			link.target = "_blank";
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
 
-      return { downloadUrl, fileName };
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to download lab report",
-        variant: "destructive",
-      });
-    },
-  });
+			window.setTimeout(() => {
+				URL.revokeObjectURL(downloadUrl);
+			}, 60_000);
+
+			return { downloadUrl, fileName };
+		},
+		onError: (error: any) => {
+			toast({
+				title: "Error",
+				description: error.message || "Failed to download lab report",
+				variant: "destructive",
+			});
+		},
+	});
 };
 
 export const useUpdateConsultationNote = () => {

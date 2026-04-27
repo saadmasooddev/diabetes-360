@@ -3,9 +3,9 @@ import { PhysicianController } from "../controllers/physician.controller";
 import {
 	authenticateToken,
 	requireAnyPermission,
-	requirePermission,
 } from "../../../shared/middleware/auth";
 import { PERMISSIONS } from "../../auth/models/user.schema";
+import { imageMemoryUpload } from "../../../shared/config/multer.config";
 
 const router = Router();
 
@@ -514,28 +514,19 @@ router.put("/admin/physician-data/:userId", (req, res, next) =>
 
 /**
  * @swagger
- * /api/physician/admin/physician-data/{userId}/profile-image/upload-url:
+ * /api/physician/admin/upload-image:
  *   post:
- *     summary: Get SAS URL to upload physician profile image to Azure (Admin)
+ *     summary: Upload physician profile image (multipart); server stores file in Azure
  *     tags: [Admin]
  */
 router.post(
-	"/admin/physician-data/:userId/profile-image/upload-url",
-	(req, res, next) =>
-		physicianController.requestPhysicianProfileUploadUrl(req, res, next),
-);
-
-/**
- * @swagger
- * /api/physician/admin/physician-data/{userId}/profile-image/confirm:
- *   post:
- *     summary: Confirm profile image after blob upload (Admin)
- *     tags: [Admin]
- */
-router.post(
-	"/admin/physician-data/:userId/profile-image/confirm",
-	(req, res, next) =>
-		physicianController.confirmPhysicianProfileUpload(req, res, next),
+	"/admin/upload-image",
+	requireAnyPermission([
+		PERMISSIONS.CREATE_USERS,
+		PERMISSIONS.UPDATE_USERS,
+	]),
+	(req, res, next) => imageMemoryUpload.single("image")(req, res, next),
+	(req, res, next) => physicianController.uploadPhysicianImage(req, res, next),
 );
 
 /**

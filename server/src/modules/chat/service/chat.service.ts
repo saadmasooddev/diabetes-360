@@ -67,8 +67,8 @@ export class ChatService {
 		const mealDate = m.mealDate;
 
 		return {
-			mealDate,
-			foodName: m.foodName,
+			meal_date: mealDate,
+			food_name: m.foodName,
 			carbs: String(m.carbs ?? "0"),
 			sugars: String(m.sugars ?? "0"),
 			fibres: String(m.fibres ?? "0"),
@@ -599,6 +599,10 @@ export class ChatService {
 			this.chatRepo.getChatMemoriesForUserLastDays(userId, 30),
 		]);
 
+		if(!customerData){ 
+			throw new Error("User not found")
+		}
+
 		const filteredMessage = this.filterNoise(trimmed);
 		const wordCountFiltered = this.wordCount(filteredMessage);
 		const shouldCheckEmotional =
@@ -682,7 +686,10 @@ export class ChatService {
 			emotional_state: emotionalStateForPayload || undefined,
 		};
 
+		const requestStartTime = Date.now()
 		const response = await aiService.chat(payload);
+		const requestEndTime = Date.now()
+
 		const data = response.data;
 		const assistantText = data.reply || "";
 		if (!assistantText) {
@@ -690,6 +697,8 @@ export class ChatService {
 		}
 
 		const recordedAtDate = new Date(recordedAt);
+		const requestDuration = requestEndTime - requestStartTime
+
 		const [_, assistantMessage] = await this.chatRepo.insertTransaction([
 			{
 				userId,
@@ -703,7 +712,7 @@ export class ChatService {
 				chatDate: dateStr,
 				role: CHAT_ROLES.ASSISTANT,
 				message: assistantText,
-				recordedAt: new Date(),
+				recordedAt: new Date(recordedAtDate.getTime() + requestDuration),
 			},
 		]);
 

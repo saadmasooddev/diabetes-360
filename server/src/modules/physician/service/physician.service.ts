@@ -10,6 +10,7 @@ import type {
 } from "../../auth/models/user.schema";
 import { BadRequestError, NotFoundError } from "../../../shared/errors";
 import path from "path";
+import { randomUUID } from "node:crypto";
 import { ALLOWED_TYPES } from "@shared/schema";
 import { azureService } from "server/src/shared/services/azure.service";
 import {
@@ -167,12 +168,13 @@ export class PhysicianService {
 	}
 
 	/**
-	 * SAS upload URL for admin; blob path is `${userId}/profile-picture/{uuid}.{ext}`.
+	 * Admin uploads profile image to the server; file is stored in Azure Blob Storage.
+	 * Returns the blob key stored in `physician_data.imageUrl` (same shape as SAS flow).
 	 */
-	async getPhysicianProfileUploadUrl(
+	async uploadPhysicianProfileImageFromFile(
 		targetUserId: string,
-		data: { fileName: string; contentType: string; fileSize: number },
-	) {
+		file: Express.Multer.File,
+	): Promise<string> {
 		const existing =
 			await this.physicianRepository.getPhysicianDataByUserId(targetUserId);
 		if (!existing) {
@@ -181,63 +183,33 @@ export class PhysicianService {
 
 		const imageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
 		const typeConfig =
-			ALLOWED_TYPES[data.contentType as keyof typeof ALLOWED_TYPES];
+			ALLOWED_TYPES[file.mimetype as keyof typeof ALLOWED_TYPES];
 		if (
 			!typeConfig ||
-			!imageTypes.includes(
-				data.contentType as (typeof imageTypes)[number],
-			)
+			!imageTypes.includes(file.mimetype as (typeof imageTypes)[number])
 		) {
 			throw new BadRequestError("File type not allowed for profile images");
 		}
-		if (Number(data.fileSize) > typeConfig.maxSize) {
+		if (file.size > typeConfig.maxSize) {
 			throw new BadRequestError(
-				`File size exceeds maximum of ${typeConfig.maxSize / (1024 * 1024)}MB for ${data.contentType}`,
+				`File size exceeds maximum of ${typeConfig.maxSize / (1024 * 1024)}MB for ${file.mimetype}`,
 			);
 		}
 
-		const fileId = crypto.randomUUID();
-		const ext = path.extname(data.fileName) || `.${typeConfig.ext}`;
-		const blobFileName = `${fileId}${ext}`;
+		const ext = path.extname(file.originalname) || `.${typeConfig.ext}`;
+		const blobFileName = `${randomUUID()}${ext}`;
 		const azureKey = azureService.createKeyForProfilePicture(
 			blobFileName,
 			targetUserId,
 		);
-		const sasResult = await azureService.generateUploadSAS(azureKey);
 
-		return {
-			uploadUrl: sasResult.uploadUrl,
-			blobPath: azureKey,
-			expiresOn: sasResult.expiresOn,
-			headers: {
-				"x-ms-blob-type": "BlockBlob",
-				"Content-Type": data.contentType,
-			},
-		};
-	}
-
-	async confirmPhysicianProfileUpload(targetUserId: string, blobPath: string) {
-		const existing =
-			await this.physicianRepository.getPhysicianDataByUserId(targetUserId);
-		if (!existing) {
-			throw new NotFoundError("Physician data not found");
-		}
-		const expectedPrefix = `${targetUserId}/profile-picture/`;
-		if (!blobPath.startsWith(expectedPrefix)) {
-			throw new BadRequestError("Invalid profile image path");
-		}
-
-		try {
-			await azureService.getBlobProperties(blobPath);
-		} catch {
-			throw new BadRequestError("Profile image not found in storage");
-		}
+		await azureService.uploadFile(file, azureKey);
 
 		const oldUrl = existing.imageUrl;
 		if (
 			oldUrl &&
 			isStoredPhysicianBlobKey(oldUrl) &&
-			oldUrl !== blobPath
+			oldUrl !== azureKey
 		) {
 			try {
 				await azureService.deleteFile(oldUrl);
@@ -246,9 +218,11 @@ export class PhysicianService {
 			}
 		}
 
-		return await this.physicianRepository.updatePhysicianData(targetUserId, {
-			imageUrl: blobPath,
+		await this.physicianRepository.updatePhysicianData(targetUserId, {
+			imageUrl: azureKey,
 		});
+
+		return azureKey;
 	}
 
 	async getPhysicianDataWithProfileReadUrl(userId: string) {

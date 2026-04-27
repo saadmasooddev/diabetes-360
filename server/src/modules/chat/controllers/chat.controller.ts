@@ -8,6 +8,7 @@ import {
 	DateManager,
 	getPaginationParams,
 } from "server/src/shared/utils/utils";
+import { AxiosError } from "axios";
 
 export class ChatController {
 	private chatService = new ChatService();

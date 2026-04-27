@@ -164,10 +164,7 @@ export class FoodController {
 			}
 
 			const timeZone = req.body?.timeZone;
-			if (!timeZone || !Intl.supportedValuesOf("timeZone").includes(timeZone)) {
-				throw new BadRequestError("Invalid timezone");
-			}
-			const tz = await this.timeZoneService.getTimeZone(timeZone);
+			DateManager.getResolvedTimeZone(timeZone)
 			const body = insertLoggedMealSchema.safeParse({
 				...req.body,
 				mealDate: dateStr,

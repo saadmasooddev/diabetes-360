@@ -79,10 +79,6 @@ export const API_ENDPOINTS = {
 			UPLOAD_IMAGE: "/api/physician/admin/upload-image",
 			LOCATIONS: (physicianId: string) =>
 				`/api/physician/admin/locations/${physicianId}`,
-      PROFILE_IMAGE_UPLOAD_URL: (userId: string) =>
-        `/api/physician/admin/physician-data/${userId}/profile-image/upload-url`,
-      PROFILE_IMAGE_CONFIRM: (userId: string) =>
-        `/api/physician/admin/physician-data/${userId}/profile-image/confirm`,
 		},
 	},
 	CUSTOMER: {
@@ -146,11 +142,6 @@ export const API_ENDPOINTS = {
 			`/api/medical/lab-reports/${id}/download`,
 		LAB_REPORT_UPDATE: (id: string) => `/api/medical/lab-reports/${id}`,
 		LAB_REPORT_DELETE: (id: string) => `/api/medical/lab-reports/${id}`,
-    LAB_REPORT_REQUEST_UPLOAD: "/api/medical/lab-reports/request-upload",
-    LAB_REPORT_CONFIRM: (id: string) =>
-      `/api/medical/lab-reports/${id}/confirm`,
-    LAB_REPORT_DOWNLOAD_URL: (id: string) =>
-      `/api/medical/lab-reports/${id}/download-url`,
 	},
 	NOTIFICATIONS: {
 		STORE_FCM_TOKEN: "/api/notifications/fcm-token",

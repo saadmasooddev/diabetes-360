@@ -166,98 +166,53 @@ class MedicalService {
 		return response.data;
 	}
 
-  async requestLabReportUploadUrl(body: {
-    fileName: string;
-    contentType: string;
-    fileSize: number;
-    reportName?: string;
-    reportType?: string;
-    dateOfReport?: string;
-  }): Promise<{
-    reportId: string;
-    uploadUrl: string;
-    blobName: string;
-    expiresOn: string;
-    headers: { "x-ms-blob-type": string; "Content-Type": string };
-  }> {
-    const response = await httpClient.post<
-      ApiResponse<{
-        reportId: string;
-        uploadUrl: string;
-        blobName: string;
-        expiresOn: string;
-        headers: { "x-ms-blob-type": string; "Content-Type": string };
-      }>
-    >(API_ENDPOINTS.MEDICAL.LAB_REPORT_REQUEST_UPLOAD, body);
+	async uploadLabReport(
+		file: File,
+		metadata?: {
+			reportName?: string;
+			reportType?: string;
+			dateOfReport?: string;
+		},
+	): Promise<LabReport> {
+		const formData = new FormData();
+		formData.append("file", file);
+		if (metadata?.reportName != null && metadata.reportName !== "") {
+			formData.append("reportName", metadata.reportName);
+		}
+		if (metadata?.reportType != null && metadata.reportType !== "") {
+			formData.append("reportType", metadata.reportType);
+		}
+		if (metadata?.dateOfReport != null && metadata.dateOfReport !== "") {
+			formData.append("dateOfReport", metadata.dateOfReport);
+		}
 
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.message || "Failed to get lab report upload URL",
-      );
-    }
+		const response = await httpClient.post<ApiResponse<LabReport>>(
+			API_ENDPOINTS.MEDICAL.LAB_REPORTS,
+			formData,
+		);
 
-    return response.data;
-  }
-
-  async confirmLabReport(reportId: string): Promise<LabReport> {
-    const response = await httpClient.post<ApiResponse<LabReport>>(
-      API_ENDPOINTS.MEDICAL.LAB_REPORT_CONFIRM(reportId),
-    );
-
-    if (!response.success || !response.data) {
-      throw new Error(response.message || "Failed to confirm lab report");
-    }
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to upload lab report");
+		}
 
 		return response.data;
 	}
 
-  async getLabReportDownloadUrl(
-    reportId: string,
-  ): Promise<{ downloadUrl: string; fileName: string; expiresOn: string }> {
-    const response = await httpClient.get<
-      ApiResponse<{
-        downloadUrl: string;
-        fileName: string;
-        expiresOn: string;
-      }>
-    >(API_ENDPOINTS.MEDICAL.LAB_REPORT_DOWNLOAD_URL(reportId));
+	async updateLabReport(reportId: string, file: File): Promise<LabReport> {
+		const formData = new FormData();
+		formData.append("file", file);
 
-    if (!response.success || !response.data) {
-      throw new Error(
-        response.message || "Failed to get lab report download URL",
-      );
-    }
+		const response = await httpClient.put<ApiResponse<LabReport>>(
+			API_ENDPOINTS.MEDICAL.LAB_REPORT_UPDATE(reportId),
+			formData,
+		);
 
-    return response.data;
-  }
+		if (!response.success || !response.data) {
+			throw new Error(response.message || "Failed to update lab report");
+		}
 
-  async uploadLabReport(
-    file: File,
-    metadata?: {
-      reportName?: string;
-      reportType?: string;
-      dateOfReport?: string;
-    },
-  ): Promise<LabReport> {
-    const { reportId, uploadUrl, headers } =
-      await this.requestLabReportUploadUrl({
-        fileName: file.name,
-        contentType: file.type,
-        fileSize: file.size,
-        reportName: metadata?.reportName,
-        reportType: metadata?.reportType,
-        dateOfReport: metadata?.dateOfReport,
-      });
-
-    await axios.put(uploadUrl, file, {
-      headers: {
-        "x-ms-blob-type": headers["x-ms-blob-type"],
-        "Content-Type": headers["Content-Type"],
-      },
-    });
-
-    return this.confirmLabReport(reportId);
-  }
+		return response.data;
+	}
 
 	async deleteLabReport(reportId: string): Promise<void> {
 		const response = await httpClient.delete<ApiResponse<null>>(
@@ -299,18 +254,18 @@ class MedicalService {
     };
   }
 
-  async downloadLabReport(
-    reportId: string,
-  ): Promise<{ downloadUrl: string; fileName: string }> {
-    const { downloadUrl, fileName } =
-      await this.getLabReportDownloadUrl(reportId);
-    return { downloadUrl, fileName };
-  }
+	async downloadLabReport(
+		reportId: string,
+	): Promise<{ downloadUrl: string; fileName: string }> {
+		const { blob, fileName } = await this.fetchLabReportBlob(reportId);
+		const downloadUrl = URL.createObjectURL(blob);
+		return { downloadUrl, fileName };
+	}
 
-  async getLabReportViewUrl(reportId: string): Promise<string> {
-    const { downloadUrl } = await this.getLabReportDownloadUrl(reportId);
-    return downloadUrl;
-  }
+	async getLabReportViewUrl(reportId: string): Promise<string> {
+		const { blob } = await this.fetchLabReportBlob(reportId);
+		return URL.createObjectURL(blob);
+	}
 }
 
 export const medicalService = new MedicalService();

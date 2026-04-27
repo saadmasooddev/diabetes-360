@@ -140,8 +140,8 @@ export interface AIChatPayload {
                         steps: Array<{ value: string; recorded_at: string }>;
                         heart_rate: Array<{ value: string; recorded_at: string }>;
                         meals: Array<{
-                                mealDate: string;
-                                foodName: string;
+                                meal_date: string;
+                                food_name: string;
                                 carbs: string;
                                 sugars: string;
                                 fibres: string;
@@ -435,7 +435,8 @@ class AIService {
         }
 
         async chat(payload: AIChatPayload): Promise<AIBaseResponse<AIChatResponse>> {
-                const response = await axios.post<AIBaseResponse<AIChatResponse>>(
+                try {
+                 const response = await axios.post<AIBaseResponse<AIChatResponse>>(
                         `${this.baseUrl}/api/chat/`,
                         payload,
                         {
@@ -451,6 +452,15 @@ class AIService {
                 });
 
                 return response.data;
+                       
+                } catch (error) { 
+
+                        if(error instanceof AxiosError){
+                                console.log(error.message)
+                        }
+                        throw error
+
+                 } 
         }
 
         async getLastDaysHealthSummary(
