@@ -50,10 +50,10 @@ export class PatientService {
 		return await this.patientRepository.getPatientAlerts(physicianId);
 	}
 
-	async getPatientsHome(physicianId: string, date: string) {
+	async getPatientsHome(physicianId: string, date: string, isAdmin: boolean) {
 		const appointments = await this.bookingService.getAppointments(
-			physicianId,
-			false,
+			isAdmin ? null : physicianId,
+			isAdmin,
 			{
 				limit: 3,
 				skip: 0,
@@ -62,7 +62,7 @@ export class PatientService {
 			},
 		);
 
-		const alerts = await this.patientRepository.getPatientAlerts(physicianId);
+		const alerts = await this.patientRepository.getPatientAlerts(isAdmin ? null : physicianId);
 		const slicedAlerts = [
 			...alerts.highRisk,
 			...alerts.needsAttention,

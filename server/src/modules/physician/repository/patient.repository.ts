@@ -760,7 +760,7 @@ export class PatientRepository {
 		};
 	}
 
-	async getPatientAlerts(physicianId?: string): Promise<{
+	async getPatientAlerts(physicianId?: string | null): Promise<{
 		highRisk: PatientAlert[];
 		stable: PatientAlert[];
 		needsAttention: PatientAlert[];

@@ -1097,6 +1097,7 @@ router.get(
 	requireAnyPermission([
 		PERMISSIONS.READ_PATIENT_ALERTS,
 		PERMISSIONS.READ_OWN_APPOINTMENTS,
+		PERMISSIONS.READ_ALL_APPOINTMENTS,
 	]),
 	(req, res) => physicianController.getPatientsHome(req, res),
 );

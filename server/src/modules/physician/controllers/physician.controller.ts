@@ -594,6 +594,7 @@ export class PhysicianController {
 	): Promise<void> {
 		try {
 			const physicianId = req.user?.userId;
+			const role = req.user?.role
 			const date = req.query.date as string;
 			if (!date || isNaN(new Date(date).getTime())) {
 				throw new BadRequestError("Invalid date format");
@@ -602,6 +603,7 @@ export class PhysicianController {
 			const result = await this.patientService.getPatientsHome(
 				physicianId!,
 				date,
+				role === USER_ROLES.ADMIN,
 			);
 			return sendSuccess(
 				res,

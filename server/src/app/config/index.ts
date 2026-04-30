@@ -10,7 +10,7 @@ export const config = {
         email: {
                 apiKey: process.env.SENDGRID_API_KEY || "",
                 from: process.env.EMAIL_FROM || "",
-                fromName: process.env.EMAIL_FROM_NAME || "Diabetes 360",
+                fromName: process.env.EMAIL_FROM_NAME || "",
         },
         frontendUrl:
                 process.env.FRONTEND_URL || process.env.VITE_REACT_API_BASE_URL || "",
