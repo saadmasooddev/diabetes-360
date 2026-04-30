@@ -140,10 +140,11 @@ export class BookingService {
     }
 
     const date = DateManager.getLocalTime(timestamp, timeZone).toISOString();
+    const dateString = DateManager.formatDate(date);
     let availability =
       await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
         physicianId,
-        date,
+        dateString,
       );
 
     if (!availability) {
