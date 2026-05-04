@@ -12,8 +12,6 @@ export const ROUTES = {
 	FORGOT_PASSWORD: `${AUTH_PREFIX}/forgot-password`,
 	RESET_PASSWORD: `${AUTH_PREFIX}/reset-password`,
 
-	// Dashboard
-	HOME: `${USER_DASHBOARD_PREFIX}/home`,
 	DASHBOARD: `${USER_DASHBOARD_PREFIX}/my-dashboard`,
 	HEALTH_ASSESSMENT: `${USER_DASHBOARD_PREFIX}/health-assessment`,
 	HEALTH_METRICS_HISTORY: `${USER_DASHBOARD_PREFIX}/health-metrics-history`,

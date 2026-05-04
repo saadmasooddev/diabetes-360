@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,10 +26,9 @@ import { Medications } from "@/features/dashboard/customer/pages/Medications";
 import { HealthPlans } from "@/features/dashboard/customer/pages/HealthPlans";
 import { Payments } from "@/features/dashboard/customer/pages/Payments";
 import { ProfileData } from "@/features/dashboard/customer/pages/ProfileData";
-import { Home } from "@/features/dashboard/customer/pages/Home";
 import DiaBot from "@/features/dashboard/customer/pages/DiaBot";
 import { Settings } from "@/pages/Settings";
-import { ROUTES } from "@/config/routes";
+import { ROUTES, USER_DASHBOARD_PREFIX } from "@/config/routes";
 import { StrengthTrainingProgress } from "./features/dashboard/customer/pages/StrengthTrainingProgress";
 import { RecipeDetail } from "./features/dashboard/customer/pages/RecipeDetail";
 import { DoctorPatients } from "./features/dashboard/doctor/DoctorPatients";
@@ -66,9 +65,9 @@ function Router() {
 			<Route path={ROUTES.FORGOT_PASSWORD} component={ForgotPassword} />
 			<Route path={ROUTES.RESET_PASSWORD} component={ResetPassword} />
 			{/* Protected routes */}
-			<Route path={ROUTES.HOME}>
+			<Route path={`${USER_DASHBOARD_PREFIX}/home`}>
 				<ProtectedRoute permissions={[PERMISSIONS.READ_OWN_PROFILE]}>
-					<Home />
+					<Redirect to={ROUTES.DASHBOARD} />
 				</ProtectedRoute>
 			</Route>
 			<Route path={ROUTES.HEALTH_ASSESSMENT}>

@@ -26,7 +26,7 @@ export const useAuthInit = () => {
 			}
 
 			if (pathname === ROUTES.LOGIN || pathname === ROUTES.SIGNUP) {
-				navigate(ROUTES.HOME);
+				navigate(ROUTES.DASHBOARD);
 			}
 		};
 

@@ -244,7 +244,7 @@ export const LogIn = (): JSX.Element => {
 					{/* Back Button - Only show on mobile */}
 					<button
 						className="lg:hidden flex items-center mb-6 text-black"
-						onClick={() => navigate(ROUTES.HOME)}
+						onClick={() => navigate(ROUTES.DASHBOARD)}
 						type="button"
 						data-testid="button-back"
 					>

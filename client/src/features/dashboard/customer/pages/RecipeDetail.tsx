@@ -50,7 +50,7 @@ export function RecipeDetail() {
 				<div className="mx-auto max-w-full px-4 py-8 lg:px-10 lg:py-10">
 					<div className="mb-6 flex items-center gap-3">
 						<button
-							onClick={() => setLocation(ROUTES.HOME)}
+							onClick={() => setLocation(ROUTES.DASHBOARD)}
 							className="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-gray-100"
 							style={{ color: "#212529" }}
 							aria-label="Go back"

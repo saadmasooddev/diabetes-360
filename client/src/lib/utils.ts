@@ -277,7 +277,7 @@ class Utils {
 			if (!data.user.profileComplete) {
 				return navigate(ROUTES.PROFILE_DATA);
 			}
-			navigate(ROUTES.HOME);
+			navigate(ROUTES.DASHBOARD);
 			return;
 		},
 		[USER_ROLES.PHYSICIAN]: (data, navigate) => {

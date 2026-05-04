@@ -136,13 +136,6 @@ export function Sidebar({ className }: SidebarProps) {
 
 	const mainNavItems: NavItem[] = [
 		{
-			label: "Home",
-			icon: <Home className="h-5 w-5" />,
-			path: () => ROUTES.HOME,
-			testId: "nav-home",
-			permissions: [PERMISSIONS.READ_OWN_PROFILE],
-		},
-		{
 			label: "My Dashboard",
 			icon: <LayoutDashboard className="h-5 w-5" />,
 			path: () => ROUTES.DASHBOARD,

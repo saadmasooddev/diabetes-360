@@ -53,7 +53,7 @@ export const MeetingLink = () => {
 					</p>
 					<Button
 						variant="outline"
-						onClick={() => navigate(ROUTES.HOME)}
+						onClick={() => navigate(ROUTES.DASHBOARD)}
 						className="border-[#00856f] text-[#00856f] hover:bg-[#00856f]/5 rounded-[10px]"
 					>
 						Go to home
@@ -108,7 +108,7 @@ export const MeetingLink = () => {
 						</Button>
 						<Button
 							variant="outline"
-							onClick={() => navigate(ROUTES.HOME)}
+							onClick={() => navigate(ROUTES.DASHBOARD)}
 							className="border-[#00856f] text-[#00856f] hover:bg-[#00856f]/5 rounded-[10px]"
 						>
 							Go to home
@@ -144,7 +144,7 @@ export const MeetingLink = () => {
 				</Button>
 				<button
 					type="button"
-					onClick={() => navigate(ROUTES.HOME)}
+					onClick={() => navigate(ROUTES.DASHBOARD)}
 					className="mt-6 flex items-center justify-center gap-2 w-full [font-family:'Inter',Helvetica] text-sm text-[#00856f] hover:underline"
 				>
 					<ArrowLeft className="h-4 w-4" />

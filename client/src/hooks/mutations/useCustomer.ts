@@ -36,7 +36,7 @@ export const useCreateCustomerData = () => {
 				variant: "default",
 			});
 
-			navigate(ROUTES.HOME);
+			navigate(ROUTES.DASHBOARD);
 		},
 		onError: (error: any) => {
 			toast({
