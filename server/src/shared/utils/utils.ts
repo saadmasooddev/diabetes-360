@@ -59,10 +59,17 @@ export class DateManager {
     return dayjs.utc(date).tz(timezone);
   }
 
-  static getLocalHours(date: string | Date, timezone: string) {
+  static getLocalHoursFromUtc(date: string | Date, timezone: string) {
     const d = DateManager.getLocalTime(date, timezone);
     const localHours = d.hour();
     return { localHours, date: d, utcDate: d.utc().toISOString() };
+  }
+
+  static getUtcFromLocal(date: string | Date, timeStr: string, timezone: string) {
+    const datePart = dayjs(date).utc().format("YYYY-MM-DD");
+    const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
+    const dateTime = `${datePart} ${normalized}`;
+    return dayjs.tz(dateTime, timezone).toISOString();
   }
 
   static getAMPMTime(date: string) {
@@ -85,10 +92,7 @@ export class DateManager {
     timeStr: string,
     timeZone: string,
   ): string {
-    const datePart = dayjs(date).utc().format("YYYY-MM-DD");
-    const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
-    const dateTime = `${datePart} ${normalized}`;
-    return DateManager.getLocalHours(dateTime, timeZone).date.toISOString();
+    return DateManager.getUtcFromLocal(date, timeStr, timeZone)
   }
 
   static getResolvedTimeZone(timeZone: string){

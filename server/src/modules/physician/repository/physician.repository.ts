@@ -338,13 +338,8 @@ export class PhysicianRepository {
 	}
 
 	private getSlotTimeStamp(slot: { date: Date, startTime: string,  }, timeZone: string){
-		const date = DateManager.formatDate(slot.date);
-		const { utcDate } = DateManager.getLocalHours(
-			`${date} ${slot.startTime}`,
-			timeZone,
-		);
-		const slotTimeStamp = new Date(utcDate).getTime();
-		return slotTimeStamp
+		const slotTimeIso = DateManager.getUtcFromLocal(slot.date, slot.startTime, timeZone)
+		return new Date(slotTimeIso).getTime()
 	}
 
 	private async physicianWithRatingsAndNextAvaialbleSlot(

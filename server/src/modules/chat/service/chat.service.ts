@@ -233,7 +233,7 @@ export class ChatService {
 		// late_dinner: 3+ consecutive days with at least one meal logged after 9PM (by createdAt)
 		const daysWithLateMeal = new Set<string>();
 		for (const m of mealsInRange) {
-			const { localHours, date: d } = DateManager.getLocalHours(
+			const { localHours, date: d } = DateManager.getLocalHoursFromUtc(
 				m.recordedAt,
 				m.timeZone,
 			);
