@@ -833,6 +833,7 @@ export class BookingService {
     year: number,
     isCount: boolean,
     selectedDate: string,
+    userTime?: string
   ) {
     const currentDate = new Date();
     const monthsDiff =
@@ -867,6 +868,7 @@ export class BookingService {
     result.slots = await this.bookingRepository.getOrganizedSlotsForDate(
       physicianId,
       selectedDate,
+      userTime
     );
 
     return result;

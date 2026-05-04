@@ -8,6 +8,15 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export class DateManager {
+
+  static isAfter(date1: string | Date, date2: string | Date) {
+    return dayjs(date1).isAfter(date2)
+  }
+
+  static isBefore(date1: string | Date, date2: string | Date) {
+    return dayjs(date1).isBefore(date2)
+  }
+
   static parseAndValidateDate(dateStr: string) {
     if (!dateStr || typeof dateStr !== "string") {
       throw new BadRequestError("Date is required (format: YYYY-MM-DD)");
@@ -66,7 +75,7 @@ export class DateManager {
   }
 
   static getUtcFromLocal(date: string | Date, timeStr: string, timezone: string) {
-    const datePart = dayjs(date).utc().format("YYYY-MM-DD");
+    const datePart = DateManager.getLocalTime(date, timezone).format("YYYY-MM-DD");
     const normalized = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
     const dateTime = `${datePart} ${normalized}`;
     return dayjs.tz(dateTime, timezone).toISOString();
@@ -92,7 +101,8 @@ export class DateManager {
     timeStr: string,
     timeZone: string,
   ): string {
-    return DateManager.getUtcFromLocal(date, timeStr, timeZone)
+    const utcDate = DateManager.getUtcFromLocal(date, timeStr, timeZone)
+    return utcDate
   }
 
   static getResolvedTimeZone(timeZone: string){

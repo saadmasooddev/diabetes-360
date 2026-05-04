@@ -995,6 +995,7 @@ export class BookingRepository {
   async getOrganizedSlotsForDate(
     physicianId: string,
     date: string,
+    userTime?: string
   ): Promise<SlotWithDetails[]> {
     const availability = await this.getAvailabilityDateByPhysicianAndDate(
       physicianId,
@@ -1108,6 +1109,11 @@ export class BookingRepository {
 
       const types = typesMap.get(slot.id) || [];
 
+      const slotTime = DateManager.slotTimeToISO(availability.date, slot.startTime, config.defaults.timezone)
+      if(userTime && DateManager.isBefore(slotTime, userTime)) {
+        return null 
+      }
+
       return {
         id: slot.id,
         startTime: slot.startTime,
@@ -1117,7 +1123,7 @@ export class BookingRepository {
         locations: organizedLocations,
         isBooked: bookedSlotIds.has(slot.id),
       };
-    });
+    }).filter(slot => slot !== null);
   }
 
   /** Returns true if the physician has any booking (pending/confirmed/completed) with the patient */

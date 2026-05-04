@@ -226,6 +226,7 @@ class BookingService {
 		queryParams.append("year", params.year.toString());
 		queryParams.append("isCount", params.isCount.toString());
 		queryParams.append("selectedDate", params.selectedDate);
+		queryParams.append("date", new Date().toISOString())
 
 		const response = await httpClient.get<
 			ApiResponse<{

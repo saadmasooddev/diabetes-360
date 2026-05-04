@@ -558,6 +558,11 @@ export class BookingController {
 				throw new BadRequestError("Invalid date format");
 			}
 
+			const userTime = req.query.date as string | undefined
+      if(userTime && isNaN(new Date(userTime).getTime())) {
+				throw new BadRequestError("invalid time provided")
+			}
+
 			const isBeforeToday = (inputDate: Date) => {
 				const dateToCheck = inputDate;
 				const today = new Date();
@@ -577,6 +582,7 @@ export class BookingController {
 				yearNum,
 				isCountBool,
 				selectedDate as string,
+				userTime
 			);
 
 			sendSuccess(res, result, "Physician dates retrieved successfully");
