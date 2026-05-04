@@ -139,18 +139,19 @@ export class BookingService {
       throw new BadRequestError(message);
     }
 
-    const date = DateManager.getLocalTime(timestamp, timeZone).toISOString();
-    const dateString = DateManager.formatDate(date);
+    const dateObj= DateManager.getLocalTime(timestamp, timeZone)
+    const date = dateObj.format('YYYY-MM-DD');
+
     let availability =
       await this.bookingRepository.getAvailabilityDateByPhysicianAndDate(
         physicianId,
-        dateString,
+        date,
       );
 
     if (!availability) {
       availability = await this.bookingRepository.createAvailabilityDate({
         physicianId,
-        date: date,
+        date,
       });
     }
 

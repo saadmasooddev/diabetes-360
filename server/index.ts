@@ -28,8 +28,10 @@ const app = createApp();
     "THe the start time iso log is",
     startTimeIso,
     "the local time is",
-    Date(startTimeIso),
+    new Date(startTimeIso),
   );
+
+
 
   const cronJobService = new CronJobService();
   cronJobService.registerAll([

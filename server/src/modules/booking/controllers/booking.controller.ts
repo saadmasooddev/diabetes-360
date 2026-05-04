@@ -906,8 +906,7 @@ export class BookingController {
 			sendSuccess(res, result, "Slots generated successfully");
 		} catch (error: any) {
 			const today = new Date().toISOString();
-			const providedDate = new Date(date).toISOString();
-			handleError(res, error, { today, providedDate });
+			handleError(res, error, { today, providedDate: date });
 		}
 	}
 

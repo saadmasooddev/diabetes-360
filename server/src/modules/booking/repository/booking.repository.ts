@@ -1572,7 +1572,7 @@ export class BookingRepository {
     conflicts: Array<SlotStartEnd>;
   }> {
     const date = DateManager.getLocalTime(timestamp, timeZone);
-    const dateString = DateManager.formatDate(date.toISOString());
+    const dateString = date.format("YYYY-MM-DD");
     const slotSize = await this.getSlotSizeById(slotSizeId);
     if (!slotSize) {
       throw new Error("Slot size not found");

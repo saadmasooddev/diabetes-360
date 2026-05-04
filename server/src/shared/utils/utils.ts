@@ -56,7 +56,7 @@ export class DateManager {
   }
 
   static getLocalTime(date: string | Date | number, timezone: string) {
-    return dayjs.tz(date, timezone);
+    return dayjs.utc(date).tz(timezone);
   }
 
   static getLocalHours(date: string | Date, timezone: string) {
